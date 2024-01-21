@@ -27,6 +27,9 @@ public class AgentFactory {
 		} else if (cmd.getBoolean(AgentParams.OPT_PRECHECK, false)) {
 			agent = new PrecheckAgent(cmd, inst);
 			agent.setInstrumentation(inst);
+		} else if (cmd.getBoolean(AgentParams.OPT_SHARED_DETECTION, true)) {
+			agent = new AggrePlaySharedVariableAgent();
+			agent.setInstrumentation(inst);
 		} else {
 			agent = new TraceAgent(cmd);
 			agent.setInstrumentation(inst);

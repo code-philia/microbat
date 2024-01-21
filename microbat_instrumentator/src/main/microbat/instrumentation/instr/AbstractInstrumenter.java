@@ -36,6 +36,9 @@ public abstract class AbstractInstrumenter {
 
 	public byte[] instrument(String classFName, byte[] classfileBuffer) throws Exception {
 		String className = classFName.replace("/", ".");
+		if (!shouldInstrument(className)) { 
+			return null;
+		}
 		ClassParser cp = new ClassParser(new java.io.ByteArrayInputStream(classfileBuffer), classFName);
 		JavaClass jc = cp.parse();
 		// First, make sure we have to instrument this class:
@@ -45,6 +48,10 @@ public abstract class AbstractInstrumenter {
 		}
 		
 		return instrument(classFName, className, jc);
+	}
+	
+	protected boolean shouldInstrument(String className) {
+		return true;
 	}
 	
 	protected abstract boolean instrumentMethod(ClassGen classGen, ConstantPoolGen constPool, MethodGen methodGen, Method method,
