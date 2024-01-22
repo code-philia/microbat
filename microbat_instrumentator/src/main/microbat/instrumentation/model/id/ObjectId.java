@@ -1,11 +1,18 @@
 package microbat.instrumentation.model.id;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class ObjectId {
+import microbat.instrumentation.model.storage.Storable;
+
+public class ObjectId implements Storable {
 	private long threadId;
 	private long objectCounter;
 	private static ThreadLocal<Long> objectCounterThraedLocal = ThreadLocal.withInitial(new Supplier<Long>() {
@@ -14,7 +21,7 @@ public class ObjectId {
 			return 0L;
 		}
 	});
-	private ConcurrentHashMap<String, HashSet<Long>> fieldAccessMap = new ConcurrentHashMap<>();
+	private Map<String, Set<Long>> fieldAccessMap = new HashMap<>();
 	
 	public ObjectId() {
 		this.threadId = Thread.currentThread().getId();
@@ -23,9 +30,9 @@ public class ObjectId {
 	}
 	
 	private void assertHashSet(String field) {
-		if (!fieldAccessMap.contains(field)) {
+		if (!fieldAccessMap.containsKey(field)) {
 			synchronized (fieldAccessMap) {
-				if (!fieldAccessMap.contains(field)) {
+				if (!fieldAccessMap.containsKey(field)) {
 					fieldAccessMap.put(field, new HashSet<Long>());
 				}
 			}
@@ -34,10 +41,30 @@ public class ObjectId {
 	
 	public void addAccess(long threadId, String field) {
 		assertHashSet(field);
-		HashSet<Long> hSet = fieldAccessMap.get(field);
+		Set<Long> hSet = fieldAccessMap.get(field);
 		synchronized (hSet) {
 			hSet.add(threadId);
 		}
+	}
+	
+	public Collection<String> getMultiThreadFields() {
+		LinkedList<String> fieldsAccessedLinkedList = new LinkedList<>();
+		for (String fieldString : fieldAccessMap.keySet()) {
+			
+			if (fieldAccessMap.get(fieldString).size() > 1) {
+				fieldsAccessedLinkedList.add(fieldString);
+			}
+		}
+		return fieldsAccessedLinkedList;
+	}
+	
+	public String store() {
+		StringBuilder resultBuilder = new StringBuilder();
+		resultBuilder.append(threadId);
+		resultBuilder.append(Storable.STORE_DELIM_STRING);
+		resultBuilder.append(objectCounter);
+		resultBuilder.append(Storable.STORE_DELIM_STRING);
+		return resultBuilder.toString();
 	}
 
 	@Override

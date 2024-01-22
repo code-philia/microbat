@@ -2,12 +2,19 @@ package microbat.instrumentation;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.util.HashSet;
+import java.util.Map;
 
+import microbat.instrumentation.instr.SystemClassTransformer;
+import microbat.instrumentation.instr.aggreplay.SharedVariableTransformer;
+import microbat.instrumentation.instr.aggreplay.TimeoutThread;
 import microbat.instrumentation.model.generator.IdGenerator;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
-import microbat.instrumentation.model.id.ListId;
+import microbat.instrumentation.model.id.ThreadId;
 import microbat.instrumentation.model.id.ObjectId;
+import microbat.instrumentation.model.storage.FileStorage;
+import microbat.instrumentation.model.storage.Storable;
 
 /**
  * Dynamically determines whether a memory location is shared or not
@@ -16,10 +23,11 @@ import microbat.instrumentation.model.id.ObjectId;
  */
 public class AggrePlaySharedVariableAgent extends Agent {
 	
-	private ClassFileTransformer transformer;
-	private IdGenerator<Thread, ListId> threadGenerator = new ThreadIdGenerator();
-	private IdGenerator<Object, ObjectId> objectIdGenerator = new ObjectIdGenerator();
+	private ClassFileTransformer transformer = new SharedVariableTransformer();
+	private ThreadIdGenerator threadGenerator = new ThreadIdGenerator();
+	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
 	private static AggrePlaySharedVariableAgent agent = new AggrePlaySharedVariableAgent();
+	private TimeoutThread timeoutThread = new TimeoutThread();
 	
 	/**
 	 * Generates id for thread on thread start.
@@ -44,13 +52,25 @@ public class AggrePlaySharedVariableAgent extends Agent {
 
 	@Override
 	public void startup0(long vmStartupTime, long agentPreStartup) {
-		// TODO Auto-generated method stub
-		
+		SystemClassTransformer.attachThreadId(getInstrumentation());
+		agent.timeoutThread.setDaemon(true);
+		agent.timeoutThread.start();
 	}
 
 	@Override
 	public void shutdown() throws Exception {
 		// TODO Auto-generated method stub
+		write();
+		AgentLogger.debug("Ended program");
+	}	
+	
+	private void write() {
+		// todo: read this from args
+		FileStorage fileStorage = new FileStorage("temp.txt");
+		HashSet<Storable> toStoreHashSet = new HashSet<>();
+		toStoreHashSet.add(agent.threadGenerator);
+		toStoreHashSet.addAll(agent.objectIdGenerator.generateToStoreHashSet());
+		fileStorage.store(toStoreHashSet);
 		
 	}
 
@@ -68,8 +88,7 @@ public class AggrePlaySharedVariableAgent extends Agent {
 
 	@Override
 	public ClassFileTransformer getTransformer0() {
-		// TODO Auto-generated method stub
-		return null;
+		return transformer;
 	}
 
 	@Override

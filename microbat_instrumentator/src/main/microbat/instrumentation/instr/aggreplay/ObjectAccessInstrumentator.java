@@ -1,7 +1,5 @@
 package microbat.instrumentation.instr.aggreplay;
 
-import java.io.ObjectOutputStream.PutField;
-
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.ClassGen;
@@ -15,6 +13,7 @@ import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.LDC;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.PUTFIELD;
+import org.apache.bcel.generic.SWAP;
 
 import javassist.bytecode.Opcode;
 import microbat.instrumentation.instr.AbstractInstrumenter;
@@ -70,16 +69,17 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 		for (Method method : classGen.getMethods()) {
 			MethodGen mGen = new MethodGen(method, className, constPool);
 			InstructionList iList =  mGen.getInstructionList();
-			InstructionList newList = new InstructionList();
 			for (InstructionHandle handle: iList) {
+				InstructionList newList = new InstructionList();
 				if (handle.getInstruction().getOpcode() == Opcode.NEW) {
-					newList.append(handle.getInstruction());
 					newList.append(dup);
 					newList.append(onNewObjectInvoke);
-					continue;
-				}
-				if (!(handle.getInstruction() instanceof FieldInstruction)) {
-					newList.append(handle.getInstruction());
+					if(handle.getNext() == null) {
+						iList.append(newList);
+					} else {
+						insertInsnHandler(iList, newList, handle.getNext());
+					}
+					newList.dispose();
 					continue;
 				}
 				if (handle.getInstruction().getOpcode() == Opcode.GETFIELD) {
@@ -88,22 +88,26 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 					newList.append(dup); // object, object
 					newList.append(new LDC(fieldRef)); // object, object, fieldName
 					newList.append(onObjectReadInvoke); // object
-					newList.append(handle.getInstruction());
+					insertInsnHandler(iList, newList, handle);
+					newList.dispose();
 					continue;
 				}
 				if (handle.getInstruction().getOpcode() == Opcode.PUTFIELD) {
 					PUTFIELD putField = (PUTFIELD) handle.getInstruction();
 					int fieldRef = addFieldName(constPool, putField);
+					newList.append(new SWAP());
 					newList.append(dup); // object, object
+					
 					newList.append(new LDC(fieldRef)); // object, object, fieldName
 					newList.append(onObjectWriteInvoke); // object
-					newList.append(handle.getInstruction());
+					newList.append(new SWAP());
+					insertInsnHandler(iList, newList, handle);
+					newList.dispose();
 					continue;
 				}
 				
 			}
 			
-			mGen.setInstructionList(newList);
 			mGen.setMaxLocals();
 			mGen.setMaxStack();
 			classGen.replaceMethod(method, mGen.getMethod());

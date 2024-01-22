@@ -1,5 +1,9 @@
 package microbat.instrumentation.instr.aggreplay;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.ALOAD;
@@ -27,6 +31,7 @@ public class ThreadIdInstrumenter extends AbstractInstrumenter {
 	@Override
 	protected byte[] instrument(String classFName, String className, JavaClass jc) {
 		// TODO Auto-generated method stub
+		System.out.println("Instrumeted thread " + classFName);
 		ClassGen classGen = new ClassGen(jc);
 		Method startMethod = null;
 		for (Method method: classGen.getMethods()) {
@@ -48,6 +53,7 @@ public class ThreadIdInstrumenter extends AbstractInstrumenter {
 				aggrePlayClassNameString, "_onThreadStart", "(Ljava/lang/Thread;)V"));
 		iList.insert(invokestatic);
 		iList.insert(aload);
+		iList.setPositions();
 		mGen.setMaxLocals();
 		mGen.setMaxStack();
 		cg.replaceMethod(startMethod, mGen.getMethod());

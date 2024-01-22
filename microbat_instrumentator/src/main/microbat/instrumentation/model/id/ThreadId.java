@@ -2,13 +2,16 @@ package microbat.instrumentation.model.id;
 
 import java.util.Objects;
 
-public class ListId {
+import microbat.instrumentation.model.storage.Storable;
+
+public class ThreadId implements Storable {
 	
 	private static class ListNode {
 		long value;
 		ListNode parent;
 		public ListNode(long value, ListNode parent) {
 			this.value = value;
+			this.parent = parent;
 		}
 		@Override
 		public boolean equals(Object obj) {
@@ -26,15 +29,17 @@ public class ListId {
 	}
 	private ListNode rootListNode = null;
 	private long idCounter = 0;
+	private long threadId;
 
 	public int internalHashCode = 100002301;
 	
-	public ListId() {
+	public ThreadId(long threadId) {
 		rootListNode = new ListNode(0, null);
 		precomputeHashCode();
+		this.threadId = threadId;
 	}
 	
-	private ListId(ListNode rootListNode) {
+	private ThreadId(ListNode rootListNode) {
 		this.rootListNode = rootListNode;
 		precomputeHashCode();
 	}
@@ -49,14 +54,18 @@ public class ListId {
 		}
 	}
 	
-	public ListId createChild() {
+	public ThreadId createChildWithThread(long threadId) {
 		long value = idCounter++;
-		return createChild(value);
+		ThreadId childId = createChild(value);
+		childId.threadId = threadId;
+		return childId;
 	}
 	
-	public ListId createChild(long value) {
+	
+	
+	public ThreadId createChild(long value) {
 		ListNode rootListNode = new ListNode(value, this.rootListNode);
-		return new ListId(rootListNode);
+		return new ThreadId(rootListNode);
 	}
 
 	@Override
@@ -72,8 +81,24 @@ public class ListId {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ListId other = (ListId) obj;
+		ThreadId other = (ThreadId) obj;
 		return internalHashCode == other.internalHashCode
 				&& other.rootListNode.equals(this.rootListNode);
+	}
+
+	@Override
+	public String store() {
+		StringBuilder resultBuilder = new StringBuilder();
+		ListNode currListNode = rootListNode;
+		resultBuilder.append("ThreadId=");
+		resultBuilder.append(this.threadId);
+		resultBuilder.append(Storable.STORE_DELIM_STRING);
+		while (currListNode != null) {
+			resultBuilder.append(currListNode.value);
+			if(currListNode.parent == null) break; 
+			resultBuilder.append(Storable.STORE_DELIM_STRING);
+			currListNode = currListNode.parent;
+		}
+		return resultBuilder.toString();
 	}
 }
