@@ -17,19 +17,28 @@ import org.apache.bcel.generic.SWAP;
 
 import javassist.bytecode.Opcode;
 import microbat.instrumentation.instr.AbstractInstrumenter;
+import microbat.instrumentation.model.id.AggrePlayMethods;
 
 public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 
-	private Class<?> agentClass;
-	// new
-	private static final String ON_NEW_OBJECT = "_onNewObject";
-	private static final String ON_NEW_OBJECT_SIG = "(Ljava/lang/Object;)V";
+	protected Class<?> agentClass;
+	/**
+	 * Fired after a new object is created
+	 */
+	public static final String ON_NEW_OBJECT = "_onNewObject";
+	public static final String ON_NEW_OBJECT_SIG = "(Ljava/lang/Object;)V";
 	
 	// for getfield and putfield instructions
-	private static final String ON_OBJECT_WRITE = "_onObjectWrite";
-	private static final String ON_OBJECT_WRITE_SIG = "(Ljava/lang/Object;Ljava/lang/String;)V";
-	private static final String ON_OBJECT_READ = "_onObjectRead";
-	private static final String ON_OBJECT_READ_SIG = "(Ljava/lang/Object;Ljava/lang/String;)V";
+	/**
+	 * Before object write
+	 */
+	public static final String ON_OBJECT_WRITE = "_onObjectWrite";
+	public static final String ON_OBJECT_WRITE_SIG = "(Ljava/lang/Object;Ljava/lang/String;)V";
+	/**
+	 * Before object read
+	 */
+	public static final String ON_OBJECT_READ = "_onObjectRead";
+	public static final String ON_OBJECT_READ_SIG = "(Ljava/lang/Object;Ljava/lang/String;)V";
 	
 	public ObjectAccessInstrumentator(Class<?> agentClass) {
 		this.agentClass = agentClass;
@@ -84,25 +93,12 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 				}
 				if (handle.getInstruction().getOpcode() == Opcode.GETFIELD) {
 					GETFIELD getfield = (GETFIELD) handle.getInstruction();
-					int fieldRef = addFieldName(constPool, getfield);
-					newList.append(dup); // object, object
-					newList.append(new LDC(fieldRef)); // object, object, fieldName
-					newList.append(onObjectReadInvoke); // object
-					insertInsnHandler(iList, newList, handle);
-					newList.dispose();
+					instrumentGetField(constPool, onObjectReadInvoke, iList, handle, getfield);
 					continue;
 				}
 				if (handle.getInstruction().getOpcode() == Opcode.PUTFIELD) {
 					PUTFIELD putField = (PUTFIELD) handle.getInstruction();
-					int fieldRef = addFieldName(constPool, putField);
-					newList.append(new SWAP());
-					newList.append(dup); // object, object
-					
-					newList.append(new LDC(fieldRef)); // object, object, fieldName
-					newList.append(onObjectWriteInvoke); // object
-					newList.append(new SWAP());
-					insertInsnHandler(iList, newList, handle);
-					newList.dispose();
+					instrumentPutField(constPool, onObjectWriteInvoke, iList, handle, putField);
 					continue;
 				}
 				
@@ -112,10 +108,42 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 			mGen.setMaxStack();
 			classGen.replaceMethod(method, mGen.getMethod());
 		}
-		
-		
-		// TODO Auto-generated method stub
+	
 		return classGen.getJavaClass().getBytes();
+	}
+
+	protected void instrumentPutField(ConstantPoolGen constPool, final INVOKESTATIC onObjectWriteInvoke, InstructionList iList,
+			InstructionHandle handle, PUTFIELD putField) {
+		InstructionList newList = new InstructionList();
+		int fieldRef = addFieldName(constPool, putField);
+		newList.append(new SWAP());
+		newList.append(new DUP()); // object, object
+		
+		newList.append(new LDC(fieldRef)); // object, object, fieldName
+		newList.append(onObjectWriteInvoke); // object
+		newList.append(new SWAP());
+		insertInsnHandler(iList, newList, handle);
+		newList.dispose();
+	}
+
+	protected void instrumentGetField(
+			ConstantPoolGen constPool, final INVOKESTATIC onObjectReadInvoke,
+			InstructionList iList, InstructionHandle handle, GETFIELD getfield) {
+		InstructionList newList = new InstructionList();
+		int fieldRef = addFieldName(constPool, getfield);
+		newList.append(new DUP()); // object, object
+		newList.append(new LDC(fieldRef)); // object, object, fieldName
+		newList.append(onObjectReadInvoke); // object
+		insertInsnHandler(iList, newList, handle);
+		newList.dispose();
+	}
+	
+	protected INVOKESTATIC createInvokeStatic(ConstantPoolGen cpg, Class<?> clazz, AggrePlayMethods method) {
+		return createInvokeStatic(cpg, clazz, method.methodName, method.methodSig);
+	}
+	
+	protected INVOKESTATIC createInvokeStatic(ConstantPoolGen cpg, Class<?> clazz, String methodName, String signature) {
+		return new INVOKESTATIC(cpg.addMethodref(clazz.getName().replace(".", "/"), methodName, signature));
 	}
 
 }

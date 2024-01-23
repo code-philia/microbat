@@ -1,5 +1,12 @@
 package microbat.instrumentation.model.id;
 
-public interface MemoryLocation {
-	public String generateWrittenString();
+/**
+ * A unique identifier for an objects field,
+ * array index or static field
+ * @author Gabau
+ *
+ */
+public class MemoryLocation {
+	
+	
 }

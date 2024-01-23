@@ -1,6 +1,7 @@
-package microbat.instrumentation.instr.aggreplay;
+package microbat.instrumentation.instr.aggreplay.shared;
 
-import microbat.instrumentation.AggrePlaySharedVariableAgent;
+import microbat.instrumentation.instr.aggreplay.ObjectAccessInstrumentator;
+import microbat.instrumentation.instr.aggreplay.agents.AggrePlaySharedVariableAgent;
 
 public class SharedObjectAccessInstrumentator extends ObjectAccessInstrumentator {
 

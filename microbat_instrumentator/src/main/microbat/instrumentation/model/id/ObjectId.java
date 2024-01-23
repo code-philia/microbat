@@ -1,5 +1,6 @@
 package microbat.instrumentation.model.id;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,11 +11,17 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import microbat.instrumentation.instr.aggreplay.ThreadIdInstrumenter;
 import microbat.instrumentation.model.storage.Storable;
 
-public class ObjectId implements Storable {
-	private long threadId;
-	private long objectCounter;
+/**
+ * Uniquely identifies an ojbect
+ * @author Gabau
+ *
+ */
+public class ObjectId extends Storable {
+	public ThreadId threadId;
+	public long objectCounter;
 	private static ThreadLocal<Long> objectCounterThraedLocal = ThreadLocal.withInitial(new Supplier<Long>() {
 		@Override
 		public Long get() {
@@ -24,9 +31,19 @@ public class ObjectId implements Storable {
 	private Map<String, Set<Long>> fieldAccessMap = new HashMap<>();
 	
 	public ObjectId() {
-		this.threadId = Thread.currentThread().getId();
-		this.objectCounter = objectCounterThraedLocal.get();
-		objectCounterThraedLocal.set(objectCounter + 1);
+		this(true);
+	}
+	
+	/**
+	 * 
+	 * @param incrementLocalCounter false iff this is a reference object
+	 */
+	public ObjectId(boolean incrementLocalCounter) {
+		this.threadId = ThreadIdInstrumenter.threadGenerator.getId(Thread.currentThread());
+		if (incrementLocalCounter) {
+			this.objectCounter = objectCounterThraedLocal.get();
+			objectCounterThraedLocal.set(objectCounter + 1);
+		}
 	}
 	
 	private void assertHashSet(String field) {
@@ -58,13 +75,33 @@ public class ObjectId implements Storable {
 		return fieldsAccessedLinkedList;
 	}
 	
-	public String store() {
-		StringBuilder resultBuilder = new StringBuilder();
-		resultBuilder.append(threadId);
-		resultBuilder.append(Storable.STORE_DELIM_STRING);
-		resultBuilder.append(objectCounter);
-		resultBuilder.append(Storable.STORE_DELIM_STRING);
-		return resultBuilder.toString();
+	public Map<String, String> store() {
+		HashMap<String, String> fieldMap = new HashMap<String, String>();
+		Field[] fields = getClass().getFields();
+		for (Field f : fields) {
+			if (f.getName().equals("fieldAccessMap")) {
+				continue;
+			}
+			try {
+				Object value = f.get(this);
+				fieldMap.put(f.getName(), fromObject(value));
+			} catch (IllegalArgumentException | IllegalAccessException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		Collection<String> concAccessedFieldSet = getMultiThreadFields();
+		StringBuilder fieldStringBuilder = new StringBuilder();
+		fieldStringBuilder.append("[");
+		for (String fieldname : concAccessedFieldSet) {
+			fieldStringBuilder.append(fieldname);
+			fieldStringBuilder.append(";");
+		}
+		fieldStringBuilder.append("]");
+		fieldMap.put("fieldAccessMap", fieldStringBuilder.toString());
+		
+		return fieldMap;
+		
 	}
 
 	@Override

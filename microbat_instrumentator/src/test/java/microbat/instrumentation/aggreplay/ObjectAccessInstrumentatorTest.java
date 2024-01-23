@@ -62,6 +62,7 @@ public class ObjectAccessInstrumentatorTest {
 			TestClass tClass2 = new TestClass();
 			tClass.value = 1000;
 			tClass.value = 100;
+			tClass2.value = tClass.value;
 		}
 	}
 	private ClassGen getClassGen(byte[] classData, String classFName) throws ClassFormatException, IOException {
@@ -70,6 +71,10 @@ public class ObjectAccessInstrumentatorTest {
 		JavaClass javaClass = cParser.parse();
 		ClassGen cGen = new ClassGen(javaClass);
 		return cGen;
+	}
+	
+	private static void assertInstructionOpcode(int opcode, InstructionHandle handle) {
+		assertEquals(opcode, handle.getInstruction().getOpcode());
 	}
 	
 	public void testInstrumentation(Class<?> testClass) throws Exception {
@@ -86,7 +91,7 @@ public class ObjectAccessInstrumentatorTest {
 		result = toTestInstrumentor.instrument(jClass.getClassName(), jClass.getBytes());
 		assert(result != null);
 		
-		// verify that
+		// verify that NEW, GETFIELD and PUTFIELD is instrumented corretly
 		ClassGen cGen = getClassGen(result, jClass.getClassName());
 		for (Method method : cGen.getMethods()) {
 			Code code = method.getCode();
@@ -105,6 +110,18 @@ public class ObjectAccessInstrumentatorTest {
 					INVOKESTATIC invokestatic = (INVOKESTATIC) nextNextInstructionHandle.getInstruction();
 					assertEquals(invokestatic.getClassName(cGen.getConstantPool()), 
 							InjectedObjectAccessInstrumentor.class.getName());
+
+					continue;
+				}
+				
+				if (iHandle.getInstruction().getOpcode() == Opcode.GETFIELD) {
+					InstructionHandle previousInstructionHandle = iHandle.getPrev();
+					assertNotNull(previousInstructionHandle);
+					// should be invoke static 
+					assertInstructionOpcode(Opcode.INVOKESTATIC, previousInstructionHandle);
+					InstructionHandle ppInstructionHandle = previousInstructionHandle.getPrev();
+					assertInstructionOpcode(Opcode.LDC, ppInstructionHandle);
+					assertInstructionOpcode(Opcode.DUP, ppInstructionHandle.getPrev());
 					continue;
 				}
 

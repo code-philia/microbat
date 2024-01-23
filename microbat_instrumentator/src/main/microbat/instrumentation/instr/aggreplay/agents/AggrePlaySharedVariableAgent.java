@@ -1,13 +1,16 @@
-package microbat.instrumentation;
+package microbat.instrumentation.instr.aggreplay.agents;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.util.HashSet;
 import java.util.Map;
 
+import microbat.instrumentation.Agent;
+import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.instr.SystemClassTransformer;
-import microbat.instrumentation.instr.aggreplay.SharedVariableTransformer;
+import microbat.instrumentation.instr.aggreplay.ThreadIdInstrumenter;
 import microbat.instrumentation.instr.aggreplay.TimeoutThread;
+import microbat.instrumentation.instr.aggreplay.shared.SharedVariableTransformer;
 import microbat.instrumentation.model.generator.IdGenerator;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
@@ -24,19 +27,10 @@ import microbat.instrumentation.model.storage.Storable;
 public class AggrePlaySharedVariableAgent extends Agent {
 	
 	private ClassFileTransformer transformer = new SharedVariableTransformer();
-	private ThreadIdGenerator threadGenerator = new ThreadIdGenerator();
 	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
 	private static AggrePlaySharedVariableAgent agent = new AggrePlaySharedVariableAgent();
 	private TimeoutThread timeoutThread = new TimeoutThread();
-	
-	/**
-	 * Generates id for thread on thread start.
-	 * @param thread
-	 */
-	public static void _onThreadStart(Thread thread) {
-		agent.threadGenerator.createId(thread);
-	}
-	
+
 	/**
 	 * Generate object id on object creation
 	 * @param object
@@ -68,7 +62,7 @@ public class AggrePlaySharedVariableAgent extends Agent {
 		// todo: read this from args
 		FileStorage fileStorage = new FileStorage("temp.txt");
 		HashSet<Storable> toStoreHashSet = new HashSet<>();
-		toStoreHashSet.add(agent.threadGenerator);
+		toStoreHashSet.add(ThreadIdInstrumenter.threadGenerator);
 		toStoreHashSet.addAll(agent.objectIdGenerator.generateToStoreHashSet());
 		fileStorage.store(toStoreHashSet);
 		

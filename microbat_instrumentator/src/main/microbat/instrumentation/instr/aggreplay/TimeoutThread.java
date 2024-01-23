@@ -3,6 +3,10 @@ package microbat.instrumentation.instr.aggreplay;
 import microbat.instrumentation.AgentLogger;
 
 public class TimeoutThread extends Thread {
+	
+	public TimeoutThread() {
+		super.setDaemon(true);
+	}
 	@Override
 	public void run() {
 		try {

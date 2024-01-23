@@ -13,8 +13,9 @@ import org.apache.bcel.generic.INVOKESTATIC;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.MethodGen;
 
-import microbat.instrumentation.AggrePlaySharedVariableAgent;
 import microbat.instrumentation.instr.AbstractInstrumenter;
+import microbat.instrumentation.instr.aggreplay.agents.AggrePlaySharedVariableAgent;
+import microbat.instrumentation.model.generator.ThreadIdGenerator;
 
 /**
  * Instrumenter solely for generating thread id
@@ -23,6 +24,13 @@ import microbat.instrumentation.instr.AbstractInstrumenter;
  */
 public class ThreadIdInstrumenter extends AbstractInstrumenter {
 
+	public static final ThreadIdGenerator threadGenerator = new ThreadIdGenerator();
+	public static void _onThreadStart(Thread thread) {
+		threadGenerator.createId(thread);
+	}
+	
+	
+	
 	@Override
 	protected boolean shouldInstrument(String className) {
 		return className.equals(Thread.class.getName());
@@ -47,10 +55,10 @@ public class ThreadIdInstrumenter extends AbstractInstrumenter {
 		MethodGen mGen = new MethodGen(startMethod, cg.getClassName(), cg.getConstantPool());
 		InstructionList iList = mGen.getInstructionList();
 		ConstantPoolGen constantPoolGen = cg.getConstantPool();
-		String aggrePlayClassNameString = AggrePlaySharedVariableAgent.class.getName().replace(".", "/");
+		String threadStartClass = getClass().getName().replace(".", "/");
 		ALOAD aload = new ALOAD(0);
 		INVOKESTATIC invokestatic = new INVOKESTATIC(constantPoolGen.addMethodref(
-				aggrePlayClassNameString, "_onThreadStart", "(Ljava/lang/Thread;)V"));
+				threadStartClass, "_onThreadStart", "(Ljava/lang/Thread;)V"));
 		iList.insert(invokestatic);
 		iList.insert(aload);
 		iList.setPositions();

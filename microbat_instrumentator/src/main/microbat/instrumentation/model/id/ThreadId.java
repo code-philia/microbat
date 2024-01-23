@@ -4,9 +4,9 @@ import java.util.Objects;
 
 import microbat.instrumentation.model.storage.Storable;
 
-public class ThreadId implements Storable {
+public class ThreadId extends Storable {
 	
-	private static class ListNode {
+	private static class ListNode extends Storable {
 		long value;
 		ListNode parent;
 		public ListNode(long value, ListNode parent) {
@@ -24,10 +24,21 @@ public class ThreadId implements Storable {
 			ListNode other = (ListNode) obj;
 			return value == other.value && Objects.equals(parent, other.parent);
 		}
+		@Override
+		public String getFromStore() {
+			StringBuilder result = new StringBuilder();
+			ListNode temp = this;
+			while (temp != null) {
+				result.append(temp.value);
+				result.append(";");
+				temp = temp.parent;
+			}
+			return result.toString();
+		}
 		
 		
 	}
-	private ListNode rootListNode = null;
+	public ListNode rootListNode = null;
 	private long idCounter = 0;
 	private long threadId;
 
@@ -54,6 +65,11 @@ public class ThreadId implements Storable {
 		}
 	}
 	
+	/**
+	 * Not synchronised, because this should be called in the parent thread.
+	 * @param threadId
+	 * @return
+	 */
 	public ThreadId createChildWithThread(long threadId) {
 		long value = idCounter++;
 		ThreadId childId = createChild(value);
@@ -86,19 +102,8 @@ public class ThreadId implements Storable {
 				&& other.rootListNode.equals(this.rootListNode);
 	}
 
-	@Override
-	public String store() {
-		StringBuilder resultBuilder = new StringBuilder();
-		ListNode currListNode = rootListNode;
-		resultBuilder.append("ThreadId=");
-		resultBuilder.append(this.threadId);
-		resultBuilder.append(Storable.STORE_DELIM_STRING);
-		while (currListNode != null) {
-			resultBuilder.append(currListNode.value);
-			if(currListNode.parent == null) break; 
-			resultBuilder.append(Storable.STORE_DELIM_STRING);
-			currListNode = currListNode.parent;
-		}
-		return resultBuilder.toString();
+	public long getId() {
+		return this.threadId;
 	}
+
 }

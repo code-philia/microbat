@@ -1,15 +1,15 @@
 package microbat.instrumentation.model.generator;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import microbat.instrumentation.model.id.ThreadId;
 import microbat.instrumentation.model.storage.Storable;
 
-public class ThreadIdGenerator implements IdGenerator<Thread, ThreadId>, Storable {
+public class ThreadIdGenerator extends Storable implements IdGenerator<Thread, ThreadId> {
 	private ConcurrentHashMap<Long, ThreadId> idMap = new ConcurrentHashMap<>();
 	private ThreadId rootId = new ThreadId(Thread.currentThread().getId());
-	private static final String MAIN_STORE_STRING = ":";
 	public ThreadIdGenerator() {
 		idMap.put(Thread.currentThread().getId(), rootId);
 	}
@@ -34,13 +34,13 @@ public class ThreadIdGenerator implements IdGenerator<Thread, ThreadId>, Storabl
 	}
 
 	@Override
-	public String store() {
-		StringBuilder sBuilder = new StringBuilder();
-		for (Map.Entry<Long, ThreadId> entry : idMap.entrySet()) {
-			sBuilder.append(entry.getValue().store());
-			sBuilder.append(MAIN_STORE_STRING);
+	protected Map<String, String> store() {
+		Map<String, String> result = new HashMap<>();
+		for (Map.Entry<Long, ThreadId> entry : this.idMap.entrySet()) {
+			result.put(entry.getKey().toString(), entry.getValue().getFromStore());
 		}
-		return sBuilder.toString();
+		return result;
 	}
+
 
 }

@@ -5,6 +5,7 @@ import java.lang.instrument.Instrumentation;
 import microbat.instrumentation.AgentParams.LogType;
 import microbat.instrumentation.cfgcoverage.CoverageAgent;
 import microbat.instrumentation.cfgcoverage.CoverageAgentParams;
+import microbat.instrumentation.instr.aggreplay.agents.AggrePlaySharedVariableAgent;
 import microbat.instrumentation.precheck.PrecheckAgent;
 
 /**

@@ -1,4 +1,4 @@
-package microbat.instrumentation.instr.aggreplay;
+package microbat.instrumentation.instr.aggreplay.shared;
 
 import java.io.File;
 import java.io.FileOutputStream;

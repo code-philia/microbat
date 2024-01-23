@@ -21,12 +21,10 @@ public class FileStorage implements Storage {
 		try {
 			FileOutputStream fileOutputStream = new FileOutputStream(file);
 			for (Storable storable: objects) {
-				fileOutputStream.write(storable.getClass().getName().getBytes());
-				fileOutputStream.write(CLASS_DELIM_STRING.getBytes());
-				
-				fileOutputStream.write(storable.store().getBytes());
-				fileOutputStream.write(Storage.itemDelimString.getBytes());
+				fileOutputStream.write(storable.getFromStore().getBytes());
+				fileOutputStream.write(Storage.OBJECT_SEPARATOR.getBytes());
 			}
+			fileOutputStream.write('!');
 			fileOutputStream.close();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
