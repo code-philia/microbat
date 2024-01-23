@@ -15,7 +15,7 @@ public class ObjectIdGenerator implements IdGenerator<Object, ObjectId> {
 	@Override
 	public ObjectId createId(Object object) {
 		int hashCode = System.identityHashCode(object);
-		if (objectIdMap.contains(hashCode)) {
+		if (objectIdMap.containsKey(hashCode)) {
 			return objectIdMap.get(object);
 		}
 		ObjectId objectId =  new ObjectId();

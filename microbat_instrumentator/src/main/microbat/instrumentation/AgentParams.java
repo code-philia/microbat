@@ -25,6 +25,7 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_LOG = CommonParams.OPT_LOG;
 	
 	public static final String OPT_SHARED_DETECTION = "detect_share";
+	public static final String OPT_CONC_RECORD = "record_conc";
 	public static final String OPT_PRECHECK = "precheck";
 	public static final String OPT_ENTRY_POINT = "entry_point";
 	public static final String OPT_LAUNCH_CLASS = "launch_class";

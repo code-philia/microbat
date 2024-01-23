@@ -10,8 +10,16 @@ import java.security.ProtectionDomain;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.instr.AbstractInstrumenter;
 
-public class SharedVariableTransformer implements ClassFileTransformer {
+public class BasicTransformer implements ClassFileTransformer {
 	private AbstractInstrumenter instrumenter = new SharedObjectAccessInstrumentator();
+	
+	public BasicTransformer() {
+		
+	}
+	
+	public BasicTransformer(AbstractInstrumenter inst) {
+		this.instrumenter = inst;
+	}
 
 	@Override
 	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,

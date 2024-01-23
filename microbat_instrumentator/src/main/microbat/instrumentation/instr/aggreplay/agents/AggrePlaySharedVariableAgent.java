@@ -7,10 +7,12 @@ import java.util.Map;
 
 import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentLogger;
+import microbat.instrumentation.AgentParams;
+import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.instr.SystemClassTransformer;
 import microbat.instrumentation.instr.aggreplay.ThreadIdInstrumenter;
 import microbat.instrumentation.instr.aggreplay.TimeoutThread;
-import microbat.instrumentation.instr.aggreplay.shared.SharedVariableTransformer;
+import microbat.instrumentation.instr.aggreplay.shared.BasicTransformer;
 import microbat.instrumentation.model.generator.IdGenerator;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
@@ -26,11 +28,17 @@ import microbat.instrumentation.model.storage.Storable;
  */
 public class AggrePlaySharedVariableAgent extends Agent {
 	
-	private ClassFileTransformer transformer = new SharedVariableTransformer();
+	private ClassFileTransformer transformer = new BasicTransformer();
 	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
 	private static AggrePlaySharedVariableAgent agent = new AggrePlaySharedVariableAgent();
 	private TimeoutThread timeoutThread = new TimeoutThread();
-
+	private AgentParams agentParams = null;
+	
+	public static AggrePlaySharedVariableAgent getAgent(CommandLine cmd) {
+		agent.agentParams = AgentParams.initFrom(cmd);
+		return agent;
+	}
+	
 	/**
 	 * Generate object id on object creation
 	 * @param object
@@ -46,6 +54,7 @@ public class AggrePlaySharedVariableAgent extends Agent {
 
 	@Override
 	public void startup0(long vmStartupTime, long agentPreStartup) {
+		System.out.println("Started shared variable detection");
 		SystemClassTransformer.attachThreadId(getInstrumentation());
 		agent.timeoutThread.setDaemon(true);
 		agent.timeoutThread.start();
@@ -60,7 +69,8 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	
 	private void write() {
 		// todo: read this from args
-		FileStorage fileStorage = new FileStorage("temp.txt");
+		FileStorage fileStorage = new FileStorage(agentParams.getDumpFile());
+		
 		HashSet<Storable> toStoreHashSet = new HashSet<>();
 		toStoreHashSet.add(ThreadIdInstrumenter.threadGenerator);
 		toStoreHashSet.addAll(agent.objectIdGenerator.generateToStoreHashSet());

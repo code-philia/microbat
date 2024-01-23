@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import microbat.instrumentation.model.id.ObjectId;
+import microbat.instrumentation.model.id.RecorderObjectId;
 import microbat.instrumentation.model.id.ThreadId;
 import microbat.instrumentation.model.storage.Storage;
 import microbat.instrumentation.output.OutputReader;
@@ -33,6 +34,51 @@ public class SharedDataParser {
 	public static class ParseData {
 		Map<String, ParseData> innerDataMap = new HashMap<>();
 		String actualData = null;
+		
+		public String getObjectType() {
+			return innerDataMap.get("ObjectType").actualData;
+		}
+		
+		public boolean isClass(Class<?> clazz) {
+			return getObjectType().equals(clazz.getName());
+		}
+	}
+	
+	public ThreadId createThreadId(ParseData data) {
+		int internalHashCode = Integer.parseInt(data.innerDataMap.get("internalHashCode").actualData);
+		return ThreadId.createThread(internalHashCode, data.innerDataMap.get("rootListNode").actualData);
+	}
+	
+	private HashSet<String> parseSet(String setString) {
+		HashSet<String> result = new HashSet<>();
+		// TODO: add the values in the string to the set.
+		String[] fieldNames = setString.split(Storage.STORE_DELIM_STRING);
+		for (String fieldName : fieldNames) {
+			result.add(fieldName);
+		}
+		return result;
+	}
+	
+	public RecorderObjectId parseRecordObject(ParseData data) {
+		ParseData threadId = data.innerDataMap.get("threadId");
+		ThreadId actualThreadId = createThreadId(threadId);
+		int objectCounter = Integer.parseInt(data.innerDataMap.get("objectCounter").actualData);
+		ObjectId objectId = new ObjectId(actualThreadId, objectCounter);
+		HashSet<String> fieldNames = parseSet(data.innerDataMap.get("fieldAccessMap").actualData);
+		RecorderObjectId result = new RecorderObjectId(objectId);
+		result.updateSharedFieldSet(fieldNames);
+		return result;
+	}
+	
+	public Map<ObjectId, RecorderObjectId> generateObjectIds(List<ParseData> data) {
+		HashMap<ObjectId, RecorderObjectId> resultObjectIdsHashMap = new HashMap<>();
+		for (ParseData value : data) {
+			if (value.isClass(ObjectId.class)) {
+				RecorderObjectId roiObjectId = parseRecordObject(value);
+				resultObjectIdsHashMap.put(roiObjectId.getObjectId(), roiObjectId);
+			}
+		}
+		return resultObjectIdsHashMap;
 	}
 	
 	public List<ParseData> parse(Reader data) throws IOException {
@@ -48,44 +94,6 @@ public class SharedDataParser {
 			k = data.read();
 		}
 		return result;
-	}
-	
-	public static void main(String[] args) throws IOException {
-		String r = "{\r\n"
-		+ "ObjectType:microbat.instrumentation.model.generator.ThreadIdGenerator,\r\n"
-		+ "    1:{\r\n"
-		+ "        ObjectType:microbat.instrumentation.model.id.ThreadId,\r\n"
-		+ "        rootListNode:0;,\r\n"
-		+ "        internalHashCode:-594882159,\r\n"
-		+ "    },\r\n"
-		+ "23:{\r\n"
-		+ "ObjectType:microbat.instrumentation.model.id.ThreadId,\r\n"
-		+ "rootListNode:1;0;,\r\n"
-		+ "internalHashCode:-535803366,\r\n"
-		+ "},\r\n"
-		+ "12:{\r\n"
-		+ "ObjectType:microbat.instrumentation.model.id.ThreadId,\r\n"
-		+ "rootListNode:0;0;,\r\n"
-		+ "internalHashCode:-535803403,\r\n"
-		+ "},\r\n"
-		+ "14:{\r\n"
-		+ "ObjectType:microbat.instrumentation.model.id.ThreadId,\r\n"
-		+ "rootListNode:2;0;,\r\n"
-		+ "internalHashCode:-535803329,\r\n"
-		+ "},\r\n"
-		+ "},{\r\n"
-		+ "ObjectType:microbat.instrumentation.model.id.ObjectId,\r\n"
-		+ "threadId:{\r\n"
-		+ "ObjectType:microbat.instrumentation.model.id.ThreadId,\r\n"
-		+ "rootListNode:0;,\r\n"
-		+ "internalHashCode:-594882159,\r\n"
-		+ "},\r\n"
-		+ "fieldAccessMap:[value;],\r\n"
-		+ "objectCounter:1,\r\n"
-		+ "},";
-		SharedDataParser parser = new SharedDataParser();
-		BufferedReader br = new BufferedReader(new StringReader(r));
-		parser.parse(br);
 	}
 	
 	private ParseData parseInner(Reader reader) throws IOException {

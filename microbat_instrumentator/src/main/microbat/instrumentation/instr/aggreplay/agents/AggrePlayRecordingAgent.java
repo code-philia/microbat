@@ -1,34 +1,63 @@
 package microbat.instrumentation.instr.aggreplay.agents;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Semaphore;
 import java.util.function.Supplier;
 
 import microbat.instrumentation.Agent;
+import microbat.instrumentation.AgentFactory;
+import microbat.instrumentation.AgentParams;
+import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.instr.SystemClassTransformer;
 import microbat.instrumentation.instr.aggreplay.TimeoutThread;
+import microbat.instrumentation.instr.aggreplay.record.RecordingInstrumentor;
+import microbat.instrumentation.instr.aggreplay.shared.BasicTransformer;
+import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser;
 import microbat.instrumentation.model.generator.IdGenerator;
-import microbat.instrumentation.model.generator.ReferenceObjectIdGenerator;
+import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.generator.SharedMemoryGenerator;
 import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.MemoryLocation;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.ReadCountVector;
 import microbat.instrumentation.model.id.ReadWriteAccessList;
+import microbat.instrumentation.model.id.RecorderObjectId;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
 import microbat.instrumentation.model.id.ThreadId;
 
 public class AggrePlayRecordingAgent extends Agent {
 
-	public static AggrePlayRecordingAgent attachedAgent;
+	private static AggrePlayRecordingAgent attachedAgent = new AggrePlayRecordingAgent();
 	private HashSet<MemoryLocation> sharedMemoryLocations = new HashSet<>();
-	private ReferenceObjectIdGenerator objectIdGenerator = new ReferenceObjectIdGenerator();
+	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
 	private SharedMemoryGenerator sharedGenerator = new SharedMemoryGenerator(objectIdGenerator);
 	private TimeoutThread timeoutThread = new TimeoutThread();
 	private ReadCountVector rcVector = new ReadCountVector();
 	private ReadWriteAccessList rwal = new ReadWriteAccessList();
+	private ClassFileTransformer transformer = new BasicTransformer(new RecordingInstrumentor());
+
+	public static final Semaphore LOCK_OBJECT = new Semaphore(1);
+	private AgentParams agentParams;
+	
+	public void setAgentParams(AgentParams params) {
+		this.agentParams = agentParams;
+	}
+	
+	public static AggrePlayRecordingAgent getAttached(CommandLine cmd) {
+		attachedAgent.agentParams = new AgentParams(cmd);
+		return attachedAgent;
+	}
+	
 	// last write, these two variables are used for computation,
 	// not for the actual last write, last read
 	private ThreadLocal<Event> lw = ThreadLocal.withInitial(new Supplier<Event>() {
@@ -44,6 +73,22 @@ public class AggrePlayRecordingAgent extends Agent {
 			return null;
 		}
 	});
+	private boolean wasShared = false;
+	
+
+	public static void _acquireLock() {
+		try {
+			LOCK_OBJECT.acquire();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public static void _releaseLock() {
+		LOCK_OBJECT.release();
+	}
+	
 	
 	
 	public static void attachAgent(AggrePlayRecordingAgent agent) {
@@ -56,8 +101,7 @@ public class AggrePlayRecordingAgent extends Agent {
 	 * @return
 	 */
 	private boolean isShared(Object object, String fieldName) {
-		SharedMemoryLocation location = this.sharedGenerator.ofField(object, fieldName);
-		return sharedMemoryLocations.contains(location.getLocation());
+		return sharedGenerator.isSharedObject(object, fieldName);
 	}
 	
 	private boolean isSharedStatic(String className, String fieldName) {
@@ -97,6 +141,7 @@ public class AggrePlayRecordingAgent extends Agent {
 	 */
 	public static void _onObjectRead(Object object, String field) {
 		if (!attachedAgent.isShared(object, field)) {
+			attachedAgent.wasShared = false;
 			return;
 		}
 		SharedMemoryLocation smLocation = attachedAgent.sharedGenerator.ofField(object, field);
@@ -109,6 +154,7 @@ public class AggrePlayRecordingAgent extends Agent {
 		rcVector.increment(Thread.currentThread().getId(), smLocation.getLocation());
 		Event lastWrite = smLocation.getLastWrite();
 		attachedAgent.lw.set(lastWrite);
+		attachedAgent.wasShared = true;
 	}
 	
 	
@@ -116,8 +162,9 @@ public class AggrePlayRecordingAgent extends Agent {
 	 * Function called after object read.
 	 */
 	public static void _afterObjectRead() {
+		if (!attachedAgent.wasShared) return;
 		Event lw = attachedAgent.lw.get();
-		Event lr = attachedAgent.lw.get();
+		Event lr = attachedAgent.lr.get();
 		lr.getLocation().appendExList(lw, lr);;
 	}
 	
@@ -135,13 +182,35 @@ public class AggrePlayRecordingAgent extends Agent {
 		// TODO Auto-generated method stub
 		SystemClassTransformer.attachThreadId(getInstrumentation());
 		timeoutThread.start();
-		sharedGenerator.setObjectIdGenerator(objectIdGenerator);
+		SharedDataParser parser = new SharedDataParser();
+		// TODO: get from cmd
+		String dumpFileStr = agentParams.getDumpFile();
+		if (dumpFileStr == null) dumpFileStr = "temp.txt";
+		File dumpFile = new File(dumpFileStr);
+		FileReader fileReader = null;
+		try {
+			fileReader = new FileReader(dumpFile);
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			throw new RuntimeException("Failed to find dump file");
+		}
+		
+		try {
+			Map<ObjectId, RecorderObjectId> valueMap = parser.generateObjectIds(parser.parse(fileReader));
+			sharedGenerator.setObjectIdRecorderMap(valueMap);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	public void shutdown() throws Exception {
 		// TODO Auto-generated method stub
-		
+		System.out.println("Shutdownm");
+		System.out.println(rcVector.toString());
+		System.out.println("Made it here");
 	}
 
 	@Override
@@ -158,8 +227,7 @@ public class AggrePlayRecordingAgent extends Agent {
 
 	@Override
 	public ClassFileTransformer getTransformer0() {
-		// TODO Auto-generated method stub
-		return null;
+		return transformer;
 	}
 
 	@Override

@@ -55,6 +55,25 @@ public class ThreadId extends Storable {
 		precomputeHashCode();
 	}
 	
+	private ThreadId(int internalHashCode, String threadId) {
+		this.internalHashCode = internalHashCode;
+		this.rootListNode = fromString(threadId);
+	}
+	
+	public static ListNode fromString(String hashedId) {
+ 		String[] splitValues = hashedId.split(";");
+ 		ListNode result = new ListNode(Integer.parseInt(splitValues[splitValues.length - 1]), null);
+ 		for (int i = splitValues.length - 2; i >= 0; i--) {
+			int value = Integer.parseInt(splitValues[i]);
+			result = new ListNode(value, result);
+		}
+		return result;
+	}
+	
+	public static ThreadId createThread(int internalHashCode, String threadId) {
+		return new ThreadId(internalHashCode, threadId);
+	}
+	
 	private void precomputeHashCode() {
 		ListNode temp = rootListNode;
 		while (temp != null) {

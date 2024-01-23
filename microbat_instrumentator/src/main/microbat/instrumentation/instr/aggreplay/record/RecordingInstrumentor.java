@@ -22,7 +22,6 @@ import microbat.instrumentation.model.id.AggrePlayMethods;
 
 public class RecordingInstrumentor extends ObjectAccessInstrumentator {
 	
-	public static final Semaphore LOCK_OBJECT = new Semaphore(1);
 	public static final String ACQUIRE_LOCK_STRING = "_acquireLock";
 	public static final String RELEASE_LOCK_STRING = "_releaseLock";
 	public static final String LOCK_SIG_STRING = "()V";
@@ -35,19 +34,6 @@ public class RecordingInstrumentor extends ObjectAccessInstrumentator {
 		super(clazz);
 	}
 
-	public static void _acquireLock() {
-		try {
-			LOCK_OBJECT.acquire();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	public static void _releaseLock() {
-		LOCK_OBJECT.release();
-	}
-	
 	
 
 	@Override
@@ -57,14 +43,9 @@ public class RecordingInstrumentor extends ObjectAccessInstrumentator {
 		// TODO Auto-generated method stub
 		InstructionList beforeInstructionList = new InstructionList();
 		InstructionList afterInstructionList = new InstructionList();
-		// load lock object
-		final int acquireLockRef = constPool.addMethodref(getClass().getName().replace(".", "/"),
-				ACQUIRE_LOCK_STRING, LOCK_SIG_STRING);
-		final int releaseLockRef = constPool.addMethodref(getClass().getName().replace(".", "/"),
-				RELEASE_LOCK_STRING, LOCK_SIG_STRING);
 
-		INVOKESTATIC acquireLockInvokestatic = new INVOKESTATIC(acquireLockRef);
-		INVOKESTATIC releaseLockInvokestatic = new INVOKESTATIC(releaseLockRef);
+		INVOKESTATIC acquireLockInvokestatic = createInvokeStatic(constPool, agentClass, AggrePlayMethods.ACQUIRE_LOCK);
+		INVOKESTATIC releaseLockInvokestatic = createInvokeStatic(constPool, agentClass, AggrePlayMethods.RELEASE_LOCK);
 		beforeInstructionList.append(acquireLockInvokestatic);
 		// objectRef, value
 		beforeInstructionList.append(new SWAP());

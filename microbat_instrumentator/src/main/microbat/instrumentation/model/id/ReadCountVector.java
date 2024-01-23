@@ -8,11 +8,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ReadCountVector {
 	
 	private ConcurrentHashMap<Long, Map<MemoryLocation, Map<Long, Integer>>> 
-		rcVectorClockConcurrentHashMap;
+		rcVectorClockConcurrentHashMap = new ConcurrentHashMap<>();
 	public ReadCountVector() {
-		
+	
 	}
 	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return rcVectorClockConcurrentHashMap.toString();
+	}
+
 	public Map<Long, Integer> get(MemoryLocation memoryLocation, long threadId) {
 		assertThreadId(threadId);
 		Map<Long, Integer> otherMap = rcVectorClockConcurrentHashMap.get(threadId).get(memoryLocation);
@@ -20,10 +26,10 @@ public class ReadCountVector {
 	}
 	
 	private void assertThreadId(long threadId) {
-		if (!rcVectorClockConcurrentHashMap.contains(threadId)) {
+		if (!rcVectorClockConcurrentHashMap.containsKey(threadId)) {
 			synchronized (rcVectorClockConcurrentHashMap) {
 				// additional check in case another thread reaches this line
-				if (!rcVectorClockConcurrentHashMap.contains(threadId)) {
+				if (!rcVectorClockConcurrentHashMap.containsKey(threadId)) {
 					rcVectorClockConcurrentHashMap.put(threadId, 
 							new ConcurrentHashMap<MemoryLocation, Map<Long, Integer>>());
 				}

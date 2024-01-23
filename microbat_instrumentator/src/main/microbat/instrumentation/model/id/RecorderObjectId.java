@@ -3,6 +3,7 @@ package microbat.instrumentation.model.id;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import microbat.instrumentation.instr.aggreplay.ThreadIdInstrumenter;
@@ -13,15 +14,15 @@ import microbat.instrumentation.instr.aggreplay.ThreadIdInstrumenter;
  * @author Gabau
  *
  */
-public class ReferenceObjectId {
+public class RecorderObjectId {
 
 	//  the fields of this object that are shared.
-	private final ObjectId objectId = new ObjectId();
+	private final ObjectId objectId;
 	// the memory locations of the shared fields.
 	private ConcurrentHashMap<String, SharedMemoryLocation> fieldMemoryLocations = new ConcurrentHashMap<>();
 	
-	public ReferenceObjectId() {
-		
+	public RecorderObjectId(ObjectId objectId) {
+		this.objectId = objectId;
 	}
 	
 	
@@ -31,6 +32,10 @@ public class ReferenceObjectId {
 					this.objectId);
 			fieldMemoryLocations.put(fieldName, new SharedMemoryLocation(location));
 		}
+	}
+	
+	public Set<String> getField() {
+		return fieldMemoryLocations.keySet();
 	}
 	
 	public ObjectId getObjectId() {
@@ -63,7 +68,7 @@ public class ReferenceObjectId {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ReferenceObjectId other = (ReferenceObjectId) obj;
+		RecorderObjectId other = (RecorderObjectId) obj;
 		return Objects.equals(objectId, other.objectId);
 	}
 

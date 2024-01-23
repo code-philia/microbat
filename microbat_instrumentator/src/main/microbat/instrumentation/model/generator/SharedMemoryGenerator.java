@@ -1,8 +1,11 @@
 package microbat.instrumentation.model.generator;
 
+import java.util.Map;
+
 import org.apache.commons.lang.NotImplementedException;
 
-import microbat.instrumentation.model.id.ReferenceObjectId;
+import microbat.instrumentation.model.id.ObjectId;
+import microbat.instrumentation.model.id.RecorderObjectId;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
 
 /**
@@ -13,19 +16,31 @@ import microbat.instrumentation.model.id.SharedMemoryLocation;
  *
  */
 public class SharedMemoryGenerator {
+
+	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
+	private Map<ObjectId, RecorderObjectId> objectIdRecorderMap;
 	
-	private IdGenerator<Object, ReferenceObjectId> generator;
-	
-	public SharedMemoryGenerator(IdGenerator<Object, ReferenceObjectId> generator) {
-		this.generator = generator;
+	public SharedMemoryGenerator(ObjectIdGenerator objIdGenerator) {
+		this.objectIdGenerator = objIdGenerator;
 	}
 	
-	public void setObjectIdGenerator(IdGenerator<Object, ReferenceObjectId> generator) {
-		this.generator = generator;
+	public void setObjectIdRecorderMap(Map<ObjectId, RecorderObjectId> map) {
+		this.objectIdRecorderMap = map;
+	}
+	
+	public void init() {
+		
+	}
+	
+	public boolean isSharedObject(Object object, String field) {
+		return ofField(object, field) != null;
 	}
 
 	public SharedMemoryLocation ofField(Object object, String fieldName) {
-		return generator.getId(object).getField(fieldName);
+		ObjectId objectId = objectIdGenerator.getId(object);
+		RecorderObjectId value = objectIdRecorderMap.get(objectId);
+		if (value == null) return null;
+		return value.getField(fieldName);
 	}
 	
 	public SharedMemoryLocation ofStaticField(String className, String fieldName) {

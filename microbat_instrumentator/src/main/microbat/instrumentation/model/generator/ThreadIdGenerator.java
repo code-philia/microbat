@@ -16,7 +16,7 @@ public class ThreadIdGenerator extends Storable implements IdGenerator<Thread, T
 	
 	@Override
 	public ThreadId createId(Thread thread) { 
-		if (idMap.contains(thread.getId())) {
+		if (idMap.containsKey(thread.getId())) {
 			return idMap.get(thread.getId());
 		}
 		ThreadId currentId = idMap.get(Thread.currentThread().getId());

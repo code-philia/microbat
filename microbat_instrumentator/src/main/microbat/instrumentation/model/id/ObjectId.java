@@ -13,6 +13,7 @@ import java.util.function.Supplier;
 
 import microbat.instrumentation.instr.aggreplay.ThreadIdInstrumenter;
 import microbat.instrumentation.model.storage.Storable;
+import microbat.instrumentation.model.storage.Storage;
 
 /**
  * Uniquely identifies an ojbect
@@ -22,6 +23,7 @@ import microbat.instrumentation.model.storage.Storable;
 public class ObjectId extends Storable {
 	public ThreadId threadId;
 	public long objectCounter;
+	
 	private static ThreadLocal<Long> objectCounterThraedLocal = ThreadLocal.withInitial(new Supplier<Long>() {
 		@Override
 		public Long get() {
@@ -32,6 +34,11 @@ public class ObjectId extends Storable {
 	
 	public ObjectId() {
 		this(true);
+	}
+	
+	public ObjectId(ThreadId threadId, long objectCounter) {
+		this.threadId = threadId;
+		this.objectCounter = objectCounter;
 	}
 	
 	/**
@@ -56,6 +63,12 @@ public class ObjectId extends Storable {
 		}
 	}
 	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return getFromStore();
+	}
+
 	public void addAccess(long threadId, String field) {
 		assertHashSet(field);
 		Set<Long> hSet = fieldAccessMap.get(field);
@@ -92,12 +105,10 @@ public class ObjectId extends Storable {
 		}
 		Collection<String> concAccessedFieldSet = getMultiThreadFields();
 		StringBuilder fieldStringBuilder = new StringBuilder();
-		fieldStringBuilder.append("[");
 		for (String fieldname : concAccessedFieldSet) {
 			fieldStringBuilder.append(fieldname);
-			fieldStringBuilder.append(";");
+			fieldStringBuilder.append(Storage.STORE_DELIM_STRING);
 		}
-		fieldStringBuilder.append("]");
 		fieldMap.put("fieldAccessMap", fieldStringBuilder.toString());
 		
 		return fieldMap;
@@ -118,7 +129,7 @@ public class ObjectId extends Storable {
 		if (getClass() != obj.getClass())
 			return false;
 		ObjectId other = (ObjectId) obj;
-		return objectCounter == other.objectCounter && threadId == other.threadId;
+		return objectCounter == other.objectCounter && threadId.equals(other.threadId);
 	}
 	
 	

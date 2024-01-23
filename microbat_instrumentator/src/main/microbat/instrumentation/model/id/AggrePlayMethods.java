@@ -5,7 +5,8 @@ package microbat.instrumentation.model.id;
  *
  */
 public enum AggrePlayMethods {
-	// called after a NEW instruction
+	ACQUIRE_LOCK("_acquireLock", "()V"),
+	RELEASE_LOCK("_releaseLock", "()V"),
 	ON_NEW_OBJECT("_onNewObject", "(Ljava/lang/Object;)V"),
 	BEFORE_OBJECT_READ("_onObjectRead", "(Ljava/lang/Object;Ljava/lang/String;)V"),
 	AFTER_OBJECT_READ("_afterObjectRead", "()V"),
