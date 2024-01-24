@@ -34,6 +34,8 @@ import microbat.instrumentation.model.id.ReadWriteAccessList;
 import microbat.instrumentation.model.id.RecorderObjectId;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
 import microbat.instrumentation.model.id.ThreadId;
+import microbat.instrumentation.model.storage.FileStorage;
+import microbat.instrumentation.model.storage.Storable;
 
 public class AggrePlayRecordingAgent extends Agent {
 
@@ -89,6 +91,12 @@ public class AggrePlayRecordingAgent extends Agent {
 		LOCK_OBJECT.release();
 	}
 	
+	// TODO: to call after monitorenter
+	// use locking objects -> we keep track of the lock per object
+	public static void _onLockAcquire(Object lockObject) {
+		ObjectId lockObjectOther = attachedAgent.objectIdGenerator.getId(lockObject);
+		lockObjectOther.lockAcquire();
+	}
 	
 	
 	public static void attachAgent(AggrePlayRecordingAgent agent) {
@@ -127,10 +135,13 @@ public class AggrePlayRecordingAgent extends Agent {
 			return;
 		}
 		SharedMemoryLocation smLocation = attachedAgent.sharedGenerator.ofField(object, field);
+		onWrite(smLocation);
+	}
+
+	private static void onWrite(SharedMemoryLocation smLocation) {
 		Event writeEvent = new Event(smLocation);
 		attachedAgent.updateReadVectors(writeEvent);
-		Event lastWrite = smLocation.getLastWrite();
-		attachedAgent.lw.set(lastWrite);
+		smLocation.write(writeEvent);
 	}
 	
 
@@ -208,9 +219,11 @@ public class AggrePlayRecordingAgent extends Agent {
 	@Override
 	public void shutdown() throws Exception {
 		// TODO Auto-generated method stub
-		System.out.println("Shutdownm");
-		System.out.println(rcVector.toString());
-		System.out.println("Made it here");
+		FileStorage fileStorage = new FileStorage(this.agentParams.getConcDumpFile());
+		HashSet<Storable> toStore = new HashSet<>();
+		toStore.add(rcVector);
+		toStore.add(rwal);
+		fileStorage.store(toStore);
 	}
 
 	@Override

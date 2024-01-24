@@ -3,13 +3,48 @@ package microbat.instrumentation.model.storage;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class Storable {
 
+	public static <T> String fromList(List<T> list) {
+		StringBuilder values = new StringBuilder();
+		values.append("[");
+		for (T val : list) {
+			values.append(fromObject(val));
+			values.append(":");
+		}
+		values.append("]");
+		return values.toString();
+	}
+	
+	// store [value, {}]
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static <T, V> String fromMap(Map<T, V> map) {
+		StringBuilder result = new StringBuilder();
+		result.append("[");
+		for (Map.Entry<T, V> entry : map.entrySet()) {
+			
+			result.append(fromObject(entry.getKey()));
+			result.append(",");
+			result.append(fromObject(entry.getValue()));
+			result.append(",");
+		}
+		result.append("]");
+		return result.toString();
+	}
+	
+	@SuppressWarnings("unchecked")
 	public static String fromObject(Object object) {
 		if (object instanceof Storable) {
 			return ((Storable) object).getFromStore();
+		}
+		if (object instanceof List) {
+			return fromList((List) object);
+		}
+		if (object instanceof Map) {
+			return fromMap((Map) object);
 		}
 		return object.toString();
 	}

@@ -3,8 +3,11 @@ package microbat.instrumentation.model.id;
 import java.util.Objects;
 
 public class ObjectFieldMemoryLocation extends MemoryLocation {
-	private final String fieldName;
-	private final ObjectId objectId;
+	/**
+	 * Public fields for storage.
+	 */
+	public final String fieldName;
+	public final ObjectId objectId;	
 
 	public ObjectFieldMemoryLocation(String fieldName, ObjectId objectId) {
 		super();

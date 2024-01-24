@@ -30,9 +30,13 @@ public class ThreadIdGenerator extends Storable implements IdGenerator<Thread, T
 
 	@Override
 	public ThreadId getId(Thread object) {
-		return idMap.get(object.getId());
+		return getId(object.getId());
 	}
 
+	public ThreadId getId(long threadId) {
+		return idMap.get(threadId);
+	}
+	
 	@Override
 	protected Map<String, String> store() {
 		Map<String, String> result = new HashMap<>();

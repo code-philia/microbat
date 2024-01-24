@@ -23,6 +23,11 @@ import microbat.instrumentation.model.storage.Storage;
 public class ObjectId extends Storable {
 	public ThreadId threadId;
 	public long objectCounter;
+	private LinkedList<Event> lockAcquisitionEvents = new LinkedList<>();
+	
+	public void lockAcquire() {
+		lockAcquisitionEvents.add(new Event(null));
+	}
 	
 	private static ThreadLocal<Long> objectCounterThraedLocal = ThreadLocal.withInitial(new Supplier<Long>() {
 		@Override

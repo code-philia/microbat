@@ -17,6 +17,7 @@ import microbat.instrumentation.model.generator.IdGenerator;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.model.id.ThreadId;
+import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.storage.FileStorage;
 import microbat.instrumentation.model.storage.Storable;
@@ -51,6 +52,8 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	public static void _onObjectAccess(Object object, String field) {
 		agent.objectIdGenerator.getId(object).addAccess(Thread.currentThread().getId(), field);
 	}
+	
+
 
 	@Override
 	public void startup0(long vmStartupTime, long agentPreStartup) {

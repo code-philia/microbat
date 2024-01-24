@@ -11,6 +11,7 @@ import org.apache.bcel.generic.INVOKESTATIC;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.LDC;
+import org.apache.bcel.generic.MONITORENTER;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.SWAP;
@@ -101,6 +102,10 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 					instrumentPutField(constPool, onObjectWriteInvoke, iList, handle, putField);
 					continue;
 				}
+				if (handle.getInstruction().getOpcode() == Opcode.MONITORENTER) {
+					instrumentMonitorEnter(constPool, iList, handle);
+					continue;
+				}
 				
 			}
 			
@@ -110,6 +115,12 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 		}
 	
 		return classGen.getJavaClass().getBytes();
+	}
+	
+	protected void instrumentMonitorEnter(ConstantPoolGen constPool,
+			InstructionList instructionList,
+			InstructionHandle handle) {
+		
 	}
 
 	protected void instrumentPutField(ConstantPoolGen constPool, final INVOKESTATIC onObjectWriteInvoke, InstructionList iList,

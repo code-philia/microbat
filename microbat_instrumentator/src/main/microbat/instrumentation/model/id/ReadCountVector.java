@@ -4,19 +4,24 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import microbat.instrumentation.model.storage.Storable;
 
-public class ReadCountVector {
+
+public class ReadCountVector extends Storable {
 	
 	private ConcurrentHashMap<Long, Map<MemoryLocation, Map<Long, Integer>>> 
 		rcVectorClockConcurrentHashMap = new ConcurrentHashMap<>();
-	public ReadCountVector() {
-	
-	}
 	
 	@Override
-	public String toString() {
-		// TODO Auto-generated method stub
-		return rcVectorClockConcurrentHashMap.toString();
+	protected Map<String, String> store() {
+		Map<String, String> result = new HashMap<>();
+		String resultString = fromMap(rcVectorClockConcurrentHashMap);
+		result.put("rcVectorClockConcurrentHashMap", resultString);
+		return result;
+	}
+
+	public ReadCountVector() {
+	
 	}
 
 	public Map<Long, Integer> get(MemoryLocation memoryLocation, long threadId) {

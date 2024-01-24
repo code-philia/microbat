@@ -1,8 +1,13 @@
 package microbat.instrumentation.model.id;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
-public class Event {
+import microbat.instrumentation.instr.aggreplay.ThreadIdInstrumenter;
+import microbat.instrumentation.model.storage.Storable;
+
+public class Event extends Storable {
 	private static ThreadLocal<Integer> eventCounterLocal = ThreadLocal.withInitial(new Supplier<Integer>() {
 		@Override
 		public Integer get() {
@@ -28,5 +33,17 @@ public class Event {
 	public long getThreadId() {
 		return threadId;
 	}
+
+	@Override
+	protected Map<String, String> store() {
+		Map<String, String> result = new HashMap<>();
+		ThreadId threadId = ThreadIdInstrumenter.threadGenerator.getId(this.threadId);
+		result.put("threadId", fromObject(threadId));
+		result.put("eventId", eventId + "");
+		return result;
+		
+	}
+	
+	
 	
 }

@@ -37,6 +37,17 @@ public class RecordingInstrumentor extends ObjectAccessInstrumentator {
 	
 
 	@Override
+	protected void instrumentMonitorEnter(ConstantPoolGen constPool, InstructionList instructionList,
+			InstructionHandle handle) {
+
+		InstructionList beforeInstructionList = new InstructionList();
+		InstructionList afterInstructionList = new InstructionList();
+		beforeInstructionList.append(new DUP());
+		afterInstructionList.append(createInvokeStatic(constPool, agentClass, AggrePlayMethods.ON_LOCK_ACQUIRE));
+		
+	}
+
+	@Override
 	protected void instrumentPutField(ConstantPoolGen constPool, INVOKESTATIC onObjectWriteInvoke,
 			InstructionList iList, InstructionHandle handle, PUTFIELD putField) {
 

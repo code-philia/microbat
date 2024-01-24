@@ -2,8 +2,10 @@ package microbat.instrumentation.model.id;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
+import microbat.instrumentation.model.storage.Storable;
 import sav.common.core.Pair;
 
 /**
@@ -13,12 +15,14 @@ import sav.common.core.Pair;
  * @author Gabau
  *
  */
-public class SharedMemoryLocation {
-	private Event lastWrite;
+public class SharedMemoryLocation extends Storable {
+	public Event lastWrite;
 	/**
 	 * The location this object is at.
 	 */
-	private MemoryLocation location;
+	public MemoryLocation location;
+	private List<Event> writeEventList = new LinkedList<>();
+	
 	
 	public SharedMemoryLocation(MemoryLocation location) {
 		this.location = location;
@@ -26,6 +30,10 @@ public class SharedMemoryLocation {
 	
 	public MemoryLocation getLocation() {
 		return this.location;
+	}
+	
+	public void write(Event event) {
+		writeEventList.add(event);
 	}
 	
 	/**
@@ -40,6 +48,7 @@ public class SharedMemoryLocation {
 	 */
 	
 	public synchronized void setLastWrite(Event event) {
+		setLastWrite(event);
 		lastWrite = event;
 	}
 	

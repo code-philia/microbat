@@ -6,7 +6,6 @@ public class ObjectIdParser implements IdGenerator<String, RecorderObjectId>{
 
 	@Override
 	public RecorderObjectId createId(String object) {
-		
 		return null;
 	}
 

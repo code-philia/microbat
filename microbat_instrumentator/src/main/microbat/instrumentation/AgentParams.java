@@ -31,6 +31,7 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_LAUNCH_CLASS = "launch_class";
 	public static final String OPT_JAVA_HOME = "java_home";
 	public static final String OPT_DUMP_FILE = "dump_file_path";
+	public static final String OPT_CONC_RECORD_DUMP = "conc_dump_file_path";
 	public static final String OPT_TCP_PORT = "tcp_port";
 	public static final String OPT_INCLUDES = "includes";
 	public static final String OPT_EXCLUDES = "excludes";
@@ -48,7 +49,7 @@ public class AgentParams extends CommonParams {
 	
 	private boolean precheck;
 	private EntryPoint entryPoint;
-	
+	private String concDumpFile;
 	private String javaHome;
 	private String launchClass;
 	private int tcpPort = -1;
@@ -89,6 +90,7 @@ public class AgentParams extends CommonParams {
 		
 		tcpPort = cmd.getInt(OPT_TCP_PORT, -1);
 		dumpFile = cmd.getString(OPT_DUMP_FILE);
+		concDumpFile = cmd.getString(OPT_CONC_RECORD_DUMP);
 		includesExpression = getFilterExpression(cmd, OPT_INCLUDES_FILE, OPT_INCLUDES);
 		excludesExpression = getFilterExpression(cmd, OPT_EXCLUDES_FILE, OPT_EXCLUDES);
 		variableLayer = cmd.getInt(OPT_VARIABLE_LAYER, 2);
@@ -159,6 +161,10 @@ public class AgentParams extends CommonParams {
 
 	public String getDumpFile() {
 		return dumpFile;
+	}
+	
+	public String getConcDumpFile() {
+		return concDumpFile;
 	}
 
 	public String getExcludesExpression() {
