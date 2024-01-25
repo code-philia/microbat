@@ -22,10 +22,12 @@ import microbat.instrumentation.instr.SystemClassTransformer;
 import microbat.instrumentation.instr.aggreplay.TimeoutThread;
 import microbat.instrumentation.instr.aggreplay.record.RecordingInstrumentor;
 import microbat.instrumentation.instr.aggreplay.shared.BasicTransformer;
+import microbat.instrumentation.instr.aggreplay.shared.RecordingOutput;
 import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser;
 import microbat.instrumentation.model.generator.IdGenerator;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.generator.SharedMemoryGenerator;
+import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.MemoryLocation;
 import microbat.instrumentation.model.id.ObjectId;
@@ -52,7 +54,7 @@ public class AggrePlayRecordingAgent extends Agent {
 	private AgentParams agentParams;
 	
 	public void setAgentParams(AgentParams params) {
-		this.agentParams = agentParams;
+		this.agentParams = params;
 	}
 	
 	public static AggrePlayRecordingAgent getAttached(CommandLine cmd) {
@@ -82,7 +84,6 @@ public class AggrePlayRecordingAgent extends Agent {
 		try {
 			LOCK_OBJECT.acquire();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -190,11 +191,9 @@ public class AggrePlayRecordingAgent extends Agent {
 	@Override
 	public void startup0(long vmStartupTime, long agentPreStartup) {
 		AggrePlayRecordingAgent.attachAgent(this);
-		// TODO Auto-generated method stub
 		SystemClassTransformer.attachThreadId(getInstrumentation());
 		timeoutThread.start();
 		SharedDataParser parser = new SharedDataParser();
-		// TODO: get from cmd
 		String dumpFileStr = agentParams.getDumpFile();
 		if (dumpFileStr == null) dumpFileStr = "temp.txt";
 		File dumpFile = new File(dumpFileStr);
@@ -202,7 +201,6 @@ public class AggrePlayRecordingAgent extends Agent {
 		try {
 			fileReader = new FileReader(dumpFile);
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new RuntimeException("Failed to find dump file");
 		}
@@ -211,16 +209,16 @@ public class AggrePlayRecordingAgent extends Agent {
 			Map<ObjectId, RecorderObjectId> valueMap = parser.generateObjectIds(parser.parse(fileReader));
 			sharedGenerator.setObjectIdRecorderMap(valueMap);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
 	@Override
 	public void shutdown() throws Exception {
-		// TODO Auto-generated method stub
 		FileStorage fileStorage = new FileStorage(this.agentParams.getConcDumpFile());
 		HashSet<Storable> toStore = new HashSet<>();
+		List<ThreadId> threadIds = ThreadIdGenerator.threadGenerator.getThreadIds();
+		RecordingOutput output = new RecordingOutput(rcVector, rwal, threadIds, null, null);
 		toStore.add(rcVector);
 		toStore.add(rwal);
 		fileStorage.store(toStore);
@@ -228,13 +226,11 @@ public class AggrePlayRecordingAgent extends Agent {
 
 	@Override
 	public void startTest(String junitClass, String junitMethod) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void finishTest(String junitClass, String junitMethod) {
-		// TODO Auto-generated method stub
 		
 	}
 
@@ -246,19 +242,16 @@ public class AggrePlayRecordingAgent extends Agent {
 	@Override
 	public void retransformBootstrapClasses(Instrumentation instrumentation, Class<?>[] retransformableClasses)
 			throws Exception {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public void exitTest(String testResultMsg, String junitClass, String junitMethod, long threadId) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public boolean isInstrumentationActive0() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 	

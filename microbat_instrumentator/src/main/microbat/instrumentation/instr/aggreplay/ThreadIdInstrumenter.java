@@ -24,11 +24,9 @@ import microbat.instrumentation.model.generator.ThreadIdGenerator;
  */
 public class ThreadIdInstrumenter extends AbstractInstrumenter {
 
-	public static final ThreadIdGenerator threadGenerator = new ThreadIdGenerator();
 	public static void _onThreadStart(Thread thread) {
-		threadGenerator.createId(thread);
+		ThreadIdGenerator.threadGenerator.createId(thread);
 	}
-	
 	
 	
 	@Override
@@ -38,7 +36,6 @@ public class ThreadIdInstrumenter extends AbstractInstrumenter {
 
 	@Override
 	protected byte[] instrument(String classFName, String className, JavaClass jc) {
-		// TODO Auto-generated method stub
 		System.out.println("Instrumeted thread " + classFName);
 		ClassGen classGen = new ClassGen(jc);
 		Method startMethod = null;
@@ -71,7 +68,6 @@ public class ThreadIdInstrumenter extends AbstractInstrumenter {
 	@Override
 	protected boolean instrumentMethod(ClassGen classGen, ConstantPoolGen constPool, MethodGen methodGen, Method method,
 			boolean isAppClass, boolean isMainMethod, boolean isEntry) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 

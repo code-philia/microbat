@@ -40,7 +40,6 @@ public class ObjectAccessInstrumentatorTest {
 		private static int counter = 0;
 		public InjectedObjectAccessInstrumentor() {
 			super(InjectedObjectAccessInstrumentor.class);
-			// TODO Auto-generated constructor stub
 		}
 		public static void _onNewObject(Object object) {
 			counter++;
@@ -84,7 +83,6 @@ public class ObjectAccessInstrumentatorTest {
 		try {
 			jClass = Repository.lookupClass(testClass);
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		byte[] result =  null;

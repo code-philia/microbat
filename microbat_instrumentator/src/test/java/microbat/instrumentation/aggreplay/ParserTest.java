@@ -7,8 +7,8 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser;
-import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser.ParseData;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.RecorderObjectId;
 
@@ -55,7 +55,6 @@ public class ParserTest {
 			List<ParseData> data = parser.parse(reader);
 			Map<ObjectId, RecorderObjectId> objectIds = parser.generateObjectIds(data);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

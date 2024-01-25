@@ -1,17 +1,54 @@
 package microbat.instrumentation.model.id;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import microbat.instrumentation.instr.aggreplay.shared.ParseData;
+import microbat.instrumentation.instr.aggreplay.shared.Parser;
+import microbat.instrumentation.instr.aggreplay.shared.parser.MemoryLocationParser;
+import microbat.instrumentation.instr.aggreplay.shared.parser.RCVectorParser;
 import microbat.instrumentation.model.storage.Storable;
+import sav.common.core.Pair;
 
 
-public class ReadCountVector extends Storable {
+public class ReadCountVector extends Storable implements Parser<ReadCountVector> {
 	
 	private ConcurrentHashMap<Long, Map<MemoryLocation, Map<Long, Integer>>> 
 		rcVectorClockConcurrentHashMap = new ConcurrentHashMap<>();
 	
+	private static Map<Long, Integer> parseInnerMap(ParseData data) {
+		return new RCVectorParser().parse(data);
+	}
+	
+	private static Map<MemoryLocation, Map<Long, Integer>> parseMap(ParseData data) {
+		List<Pair<ParseData, ParseData>> objectMap = data.toPairList();
+		Map<Long, Integer> rcMap;
+		Map<MemoryLocation, Map<Long, Integer>> rcVector = new HashMap<>();
+		MemoryLocationParser parser = new MemoryLocationParser();
+		for (Pair<ParseData, ParseData> innerData : objectMap) {
+			MemoryLocation mlocation = parser.parse(innerData.first());
+			rcMap = parseInnerMap(innerData.second());
+			rcVector.put(mlocation, rcMap);
+		}
+		return rcVector;
+	}
+	@Override
+	public ReadCountVector parse(ParseData data) {
+		ParseData mapData = data.getField("rcVectorClockConcurrentHashMap");
+		List<Pair<ParseData, ParseData>> objectMap = mapData.toPairList();
+		Long keyValueLong = 0L;
+		Map<MemoryLocation, Map<Long, Integer>> rcVector = null;
+		for (Pair<ParseData, ParseData> innerData : objectMap) {
+			keyValueLong = Long.parseLong(innerData.first().getValue());
+			rcVector = parseMap(innerData.second());
+			rcVectorClockConcurrentHashMap.put(keyValueLong, rcVector);
+		}
+		return this;
+	}
+
 	@Override
 	protected Map<String, String> store() {
 		Map<String, String> result = new HashMap<>();
@@ -27,6 +64,7 @@ public class ReadCountVector extends Storable {
 	public Map<Long, Integer> get(MemoryLocation memoryLocation, long threadId) {
 		assertThreadId(threadId);
 		Map<Long, Integer> otherMap = rcVectorClockConcurrentHashMap.get(threadId).get(memoryLocation);
+		if (otherMap == null) return new HashMap<>();
 		return new HashMap<>(otherMap);
 	}
 	
@@ -77,5 +115,24 @@ public class ReadCountVector extends Storable {
 		assertThreadId(threadId);
 		
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(rcVectorClockConcurrentHashMap);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ReadCountVector other = (ReadCountVector) obj;
+		return Objects.equals(rcVectorClockConcurrentHashMap, other.rcVectorClockConcurrentHashMap);
+	}
+	
+	
 	
 }

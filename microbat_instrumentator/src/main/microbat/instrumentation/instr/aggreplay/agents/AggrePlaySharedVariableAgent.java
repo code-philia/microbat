@@ -10,7 +10,6 @@ import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.instr.SystemClassTransformer;
-import microbat.instrumentation.instr.aggreplay.ThreadIdInstrumenter;
 import microbat.instrumentation.instr.aggreplay.TimeoutThread;
 import microbat.instrumentation.instr.aggreplay.shared.BasicTransformer;
 import microbat.instrumentation.model.generator.IdGenerator;
@@ -75,7 +74,7 @@ public class AggrePlaySharedVariableAgent extends Agent {
 		FileStorage fileStorage = new FileStorage(agentParams.getDumpFile());
 		
 		HashSet<Storable> toStoreHashSet = new HashSet<>();
-		toStoreHashSet.add(ThreadIdInstrumenter.threadGenerator);
+		toStoreHashSet.add(ThreadIdGenerator.threadGenerator);
 		toStoreHashSet.addAll(agent.objectIdGenerator.generateToStoreHashSet());
 		fileStorage.store(toStoreHashSet);
 		

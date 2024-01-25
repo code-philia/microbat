@@ -1,8 +1,11 @@
 package microbat.instrumentation.model.generator;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import microbat.instrumentation.model.id.ThreadId;
 import microbat.instrumentation.model.storage.Storable;
@@ -10,8 +13,13 @@ import microbat.instrumentation.model.storage.Storable;
 public class ThreadIdGenerator extends Storable implements IdGenerator<Thread, ThreadId> {
 	private ConcurrentHashMap<Long, ThreadId> idMap = new ConcurrentHashMap<>();
 	private ThreadId rootId = new ThreadId(Thread.currentThread().getId());
+	public static final ThreadIdGenerator threadGenerator = new ThreadIdGenerator();
 	public ThreadIdGenerator() {
 		idMap.put(Thread.currentThread().getId(), rootId);
+	}
+	
+	public List<ThreadId> getThreadIds() {
+		return idMap.values().stream().collect(Collectors.<ThreadId>toList());
 	}
 	
 	@Override

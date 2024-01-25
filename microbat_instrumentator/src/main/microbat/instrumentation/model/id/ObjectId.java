@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-import microbat.instrumentation.instr.aggreplay.ThreadIdInstrumenter;
+import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.model.storage.Storable;
 import microbat.instrumentation.model.storage.Storage;
 
@@ -51,7 +51,7 @@ public class ObjectId extends Storable {
 	 * @param incrementLocalCounter false iff this is a reference object
 	 */
 	public ObjectId(boolean incrementLocalCounter) {
-		this.threadId = ThreadIdInstrumenter.threadGenerator.getId(Thread.currentThread());
+		this.threadId = ThreadIdGenerator.threadGenerator.getId(Thread.currentThread());
 		if (incrementLocalCounter) {
 			this.objectCounter = objectCounterThraedLocal.get();
 			objectCounterThraedLocal.set(objectCounter + 1);

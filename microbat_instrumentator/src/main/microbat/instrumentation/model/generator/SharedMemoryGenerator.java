@@ -17,6 +17,16 @@ import microbat.instrumentation.model.id.SharedMemoryLocation;
  */
 public class SharedMemoryGenerator {
 
+	/**
+	 * TODO:
+	 * ObjectId generator currently stores data on the
+	 * object id's lock acquisition,
+	 * while object id recorder map stores data on
+	 * the field's shared memory locations. Would
+	 * be better to have the two data in one object,
+	 * but it isn't straightforward to implement.
+	 * 
+	 */
 	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
 	private Map<ObjectId, RecorderObjectId> objectIdRecorderMap;
 	

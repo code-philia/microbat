@@ -4,7 +4,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
+import microbat.instrumentation.instr.aggreplay.shared.ParseData;
+import microbat.instrumentation.instr.aggreplay.shared.Parser;
+import microbat.instrumentation.instr.aggreplay.shared.parser.MemoryLocationParser;
 import microbat.instrumentation.model.storage.Storable;
 import sav.common.core.Pair;
 
@@ -15,7 +19,7 @@ import sav.common.core.Pair;
  * @author Gabau
  *
  */
-public class SharedMemoryLocation extends Storable {
+public class SharedMemoryLocation extends Storable implements Parser<SharedMemoryLocation> {
 	public Event lastWrite;
 	/**
 	 * The location this object is at.
@@ -71,4 +75,32 @@ public class SharedMemoryLocation extends Storable {
 		assertThreadExists(threadId);
 		threadExListMap.get(threadId).add(Pair.of(lw, readEvent));
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(location, threadExListMap, writeEventList);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SharedMemoryLocation other = (SharedMemoryLocation) obj;
+		return Objects.equals(location, other.location) && Objects.equals(threadExListMap, other.threadExListMap)
+				&& Objects.equals(writeEventList, other.writeEventList);
+	}
+
+	@Override
+	public SharedMemoryLocation parse(ParseData data) {
+		this.lastWrite = null;
+		this.location = new MemoryLocationParser().parse(data.getField("location"));
+		
+		return this;
+	}
+	
+	
 }
