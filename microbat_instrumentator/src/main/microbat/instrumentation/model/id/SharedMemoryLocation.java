@@ -27,6 +27,10 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	public MemoryLocation location;
 	private List<Event> writeEventList = new LinkedList<>();
 	
+	public SharedMemoryLocation() {
+		this.location = null;
+		this.writeEventList = null;
+	}
 	
 	public SharedMemoryLocation(MemoryLocation location) {
 		this.location = location;

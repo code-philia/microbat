@@ -65,7 +65,15 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 				return new ObjectIdParser().parse(parseData);
 			}
 		});
-		sharedMemoryLocations = parseData.toList((parseData) -> new SharedMemoryLocation(null).parse(parseData)))
+		this.sharedMemoryLocations = 
+				parseData.toList(new Function<ParseData, SharedMemoryLocation>() {
+
+					@Override
+					public SharedMemoryLocation apply(ParseData t) {
+						return new SharedMemoryLocation().parse(t);
+					}
+					
+				});
 		return this;
 	}
 	

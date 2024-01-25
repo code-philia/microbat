@@ -56,7 +56,7 @@ public class RecordingOutputTest {
 	}
 	
 	@Test
-	public void testThreadParsing() {
+	public void testThreadParsing() throws IOException {
 		ThreadId r = new ThreadId(100);
 		ThreadId g = r.createChild(0);
 		ThreadId b = g.createChild(10);
@@ -71,7 +71,7 @@ public class RecordingOutputTest {
 				toTest, 
 				Collections.<ObjectId>emptyList(), 
 				Collections.<SharedMemoryLocation>emptyList());
-		
+		testRecordingOutputParsing(output);
 		
 	}
 	
