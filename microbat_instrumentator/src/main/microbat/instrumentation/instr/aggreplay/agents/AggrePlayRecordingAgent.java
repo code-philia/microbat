@@ -7,12 +7,16 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentFactory;
@@ -212,16 +216,33 @@ public class AggrePlayRecordingAgent extends Agent {
 			e.printStackTrace();
 		}
 	}
+	
+	// TODO: grab the shared object ids
+	private List<ObjectId> getObjectIds() {
+		Collection<ObjectId> objectIds = objectIdGenerator.getObjects();
+		return objectIds.stream().filter(new Predicate<ObjectId>() {
+			@Override
+			public boolean test(ObjectId o) {
+				return sharedGenerator.isSharedObject(o);
+			}
+		}).collect(Collectors.<ObjectId>toList());
+	}
+	
+	private List<SharedMemoryLocation> getSharedMemoryLocations() {
+		return null;
+	}
 
 	@Override
 	public void shutdown() throws Exception {
 		FileStorage fileStorage = new FileStorage(this.agentParams.getConcDumpFile());
 		HashSet<Storable> toStore = new HashSet<>();
 		List<ThreadId> threadIds = ThreadIdGenerator.threadGenerator.getThreadIds();
-		RecordingOutput output = new RecordingOutput(rcVector, rwal, threadIds, null, null);
-		toStore.add(rcVector);
-		toStore.add(rwal);
-		fileStorage.store(toStore);
+		List<ObjectId> objectIds = getObjectIds();
+		List<SharedMemoryLocation> sharedMemoryLocations = getSharedMemoryLocations();
+		RecordingOutput output = new RecordingOutput(rcVector, rwal, threadIds, objectIds, sharedMemoryLocations);
+		List<Storable> values = new LinkedList<>();
+		values.add(output);
+		fileStorage.store(values);
 	}
 
 	@Override

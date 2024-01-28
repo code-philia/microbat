@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Stack;
+import java.util.function.Function;
 
 import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.Parser;
@@ -26,6 +28,8 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	 */
 	public MemoryLocation location;
 	private List<Event> writeEventList = new LinkedList<>();
+	// TODO: get this stack from the input
+	private Stack<Event> writeEventStack;
 	
 	public SharedMemoryLocation() {
 		this.location = null;
@@ -58,6 +62,10 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	public synchronized void setLastWrite(Event event) {
 		setLastWrite(event);
 		lastWrite = event;
+	}
+	
+	public synchronized boolean isSameAsLastWrite() {
+		return this.lastWrite.equals(writeEventStack.peek());
 	}
 	
 	public synchronized Event getLastWrite() {
@@ -102,7 +110,12 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	public SharedMemoryLocation parse(ParseData data) {
 		this.lastWrite = null;
 		this.location = new MemoryLocationParser().parse(data.getField("location"));
-		
+		this.writeEventList = data.toList(new Function<ParseData, Event>() {
+			@Override
+			public Event apply(ParseData parseData) {
+				return Event.parseEvent(parseData);
+			}
+		});
 		return this;
 	}
 	

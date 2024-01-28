@@ -2,6 +2,7 @@ package microbat.model.trace;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -414,8 +415,9 @@ public class Trace {
 		this.includedLibraryClasses = includedLibraryClasses;
 	}
 
+	// TODO(Gab): Remove the botch Linked list (used cause of an unknown concurrent access bug)
 	public List<String> getExcludedLibraryClasses() {
-		return CollectionUtils.nullToEmpty(excludedLibraryClasses);
+		return new LinkedList<>(CollectionUtils.nullToEmpty(excludedLibraryClasses));
 	}
 
 	public void setExcludedLibraryClasses(List<String> excludedLibraryClasses) {

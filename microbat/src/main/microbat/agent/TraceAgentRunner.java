@@ -91,6 +91,41 @@ public class TraceAgentRunner extends AgentVmRunner {
 		}
 		return true;
 	}
+	
+	public boolean runAggrePlayConc(Reader reader) throws SavException {
+		String runId = UUID.randomUUID().toString();
+		StopTimer timer = new StopTimer("Building trace");
+		timer.newPoint("Execution");
+		File dumpFile;
+		try {
+			boolean toDeleteDumpFile = false;
+			switch (reader) {
+			case FILE:
+				dumpFile = File.createTempFile("trace", ".exec");
+				dumpFile.deleteOnExit();
+				break;
+			default:
+				dumpFile = DatabasePreference.getDBFile();
+				break;
+			}
+			addAgentParam(AgentParams.OPT_TRACE_RECORDER, reader.name()); // why is reader name used for recorder option?
+			addAgentParam(AgentParams.OPT_RUN_ID, runId);
+			addAgentParam(AgentParams.OPT_DUMP_FILE, String.valueOf(dumpFile.getPath()));
+			super.startAndWaitUntilStop(getConfig()); // Trace recording
+			System.out.println("|");
+			timer.newPoint("Read output result");
+			this.runningInfo = reader.create(runId).read(precheckInfo, dumpFile.getPath());
+			updateTestResult(runningInfo.getProgramMsg());
+			if (toDeleteDumpFile) {
+				dumpFile.delete();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new SavRtException(e);
+		}
+		System.out.println(timer.getResultString());
+		return true;
+	}
 
 	public boolean run(Reader reader) throws SavException {
 		isPrecheckMode = false;

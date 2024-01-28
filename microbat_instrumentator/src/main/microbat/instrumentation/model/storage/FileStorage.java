@@ -16,7 +16,7 @@ public class FileStorage implements Storage {
 	}
 	
 	@Override
-	public void store(HashSet<Storable> objects) {
+	public void store(Iterable<Storable> objects) {
 		File file = new File(fileName);
 		System.out.println("Writing to file " + fileName);
 		try {

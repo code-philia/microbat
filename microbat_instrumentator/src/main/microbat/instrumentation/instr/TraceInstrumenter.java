@@ -70,7 +70,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 	private static final String TEMP_VAR_NAME = "$tempVar"; // local var
 	
 	private int tempVarIdx = 0;
-	private EntryPoint entryPoint;
+	protected EntryPoint entryPoint;
 	private Set<String> requireSplittingMethods = Collections.emptySet();
 	private UserFilters userFilters;
 	
@@ -175,7 +175,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		return false;
 	}
 
-	private boolean doesBytecodeExceedLimit(GeneratedMethods generatedMethods) {
+	protected boolean doesBytecodeExceedLimit(GeneratedMethods generatedMethods) {
 		boolean excessive = doesBytecodeExceedLimit(generatedMethods.getRootMethod());
 		for (MethodGen addedMethod : generatedMethods.getExtractedMethods()) {
 			excessive |= doesBytecodeExceedLimit(addedMethod);
@@ -183,7 +183,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		return excessive;
 	}
 
-	private GeneratedMethods runMethodInstrumentation(ClassGen classGen, ConstantPoolGen constPool, MethodGen methodGen, Method method,
+	protected GeneratedMethods runMethodInstrumentation(ClassGen classGen, ConstantPoolGen constPool, MethodGen methodGen, Method method,
 			boolean isAppClass, boolean isMainMethod, boolean isEntry) {
 		String methodFullName = MicrobatUtils.getMicrobatMethodFullName(classGen.getClassName(), method);
 		boolean changed = instrumentMethod(classGen, constPool, methodGen, method, isAppClass, isMainMethod, isEntry);
@@ -307,7 +307,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		return true;
 	}
 
-	private void injectCodeTracerExit(InstructionHandle exitInsHandle, InstructionList insnList, 
+	protected void injectCodeTracerExit(InstructionHandle exitInsHandle, InstructionList insnList, 
 			ConstantPoolGen constPool, LocalVariableGen tracerVar, int line, LocalVariableGen classNameVar, 
 			LocalVariableGen methodSigVar, boolean isMainMethod, boolean isEntry) {
 		InstructionList newInsns = new InstructionList();
@@ -330,7 +330,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		newInsns.dispose();
 	}
 
-	private void injectCodeTracerReturn(InstructionList insnList, ConstantPoolGen constPool, LocalVariableGen tracerVar,
+	protected void injectCodeTracerReturn(InstructionList insnList, ConstantPoolGen constPool, LocalVariableGen tracerVar,
 			InstructionHandle insnHandler, int line, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
 		InstructionList newInsns = new InstructionList();
 		ReturnInstruction insn = (ReturnInstruction) insnHandler.getInstruction();
@@ -378,7 +378,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		newInsns.dispose();
 	}
 
-	private void injectCodeTracerInvokeMethod(MethodGen methodGen, InstructionList insnList, ConstantPoolGen constPool,
+	protected void injectCodeTracerInvokeMethod(MethodGen methodGen, InstructionList insnList, ConstantPoolGen constPool,
 			InstructionFactory instructionFactory, LocalVariableGen tracerVar, InstructionHandle insnHandler,
 			int line, LocalVariableGen classNameVar, LocalVariableGen methodSigVar, boolean isAppClass) {
 		InvokeInstruction insn = (InvokeInstruction) insnHandler.getInstruction();
@@ -566,7 +566,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		newInsns.dispose();
 	}
 
-	private InstructionList getInjectCodeTracerRWriteField(ConstantPoolGen constPool, LocalVariableGen tracerVar,
+	protected InstructionList getInjectCodeTracerRWriteField(ConstantPoolGen constPool, LocalVariableGen tracerVar,
 			FieldInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
 		FieldInstruction insn = (FieldInstruction) info.getInstruction();
 		if (insn instanceof PUTFIELD) {
@@ -581,7 +581,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		return null;
 	}
 
-	private InstructionList getInjectCodePutField(ConstantPoolGen constPool, LocalVariableGen tracerVar,
+	protected InstructionList getInjectCodePutField(ConstantPoolGen constPool, LocalVariableGen tracerVar,
 			FieldInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
 		InstructionList newInsns = new InstructionList();
 		/*
@@ -662,7 +662,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 	 * @param methodSigVar 
 	 * @param classNameVar 
 	 */
-	private InstructionList getInjectCodePutStatic(ConstantPoolGen constPool, LocalVariableGen tracerVar,
+	protected InstructionList getInjectCodePutStatic(ConstantPoolGen constPool, LocalVariableGen tracerVar,
 			FieldInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
 		InstructionList newInsns = new InstructionList();
 		if (info.isNextToAconstNull()) {
@@ -708,7 +708,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		}
 	}
 
-	private InstructionList getInjectCodeGetField(ConstantPoolGen constPool, LocalVariableGen tracerVar,
+	protected InstructionList getInjectCodeGetField(ConstantPoolGen constPool, LocalVariableGen tracerVar,
 			FieldInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
 		InstructionList newInsns = new InstructionList();
 
@@ -757,7 +757,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		return newInsns;
 	}
 
-	private InstructionList getInjectCodeGetStatic(ConstantPoolGen constPool, LocalVariableGen tracerVar,
+	protected InstructionList getInjectCodeGetStatic(ConstantPoolGen constPool, LocalVariableGen tracerVar,
 			FieldInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
 		InstructionList newInsns = new InstructionList();
 		GETSTATIC insn = (GETSTATIC) info.getInstruction();
@@ -793,7 +793,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		return newInsns;
 	}
 
-	private InstructionList getInjectCodeTracerRWLocalVar(ConstantPoolGen constPool, LocalVariableGen tracerVar,
+	protected InstructionList getInjectCodeTracerRWLocalVar(ConstantPoolGen constPool, LocalVariableGen tracerVar,
 			LocalVarInstructionInfo insnInfo, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
 		LocalVariableInstruction insn = insnInfo.getInstruction();
 		// ignore reference to self
@@ -856,7 +856,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		return newInsns;
 	}
 	
-	private InstructionList getInjectCodeTracerIINC(ConstantPoolGen constPool, LocalVariableGen tracerVar,
+	protected InstructionList getInjectCodeTracerIINC(ConstantPoolGen constPool, LocalVariableGen tracerVar,
 			LocalVarInstructionInfo insnInfo, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
 		IINC insn = (IINC) insnInfo.getInstruction();
 		// ignore reference to self
@@ -904,7 +904,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		return newInsns;
 	}
 
-	private InstructionList getInjectCodeTracerRWriteArray(MethodGen methodGen, ConstantPoolGen constPool,
+	protected InstructionList getInjectCodeTracerRWriteArray(MethodGen methodGen, ConstantPoolGen constPool,
 			LocalVariableGen tracerVar, ArrayInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
 		InstructionHandle insnHandler = info.getInstructionHandler();
 		ArrayInstruction insn = info.getInstruction();

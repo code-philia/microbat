@@ -66,7 +66,7 @@ public abstract class Storable {
 				if (value instanceof Storable) {
 					fieldMap.put(f.getName(), ((Storable) value).getFromStore());
 				} else {
-					fieldMap.put(f.getName(), value.toString());
+					fieldMap.put(f.getName(), fromObject(value));
 				}
 			} catch (IllegalArgumentException | IllegalAccessException e) {
 				// TODO Auto-generated catch block

@@ -1,5 +1,6 @@
 package microbat.instrumentation.model.generator;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,6 +13,11 @@ public class ObjectIdGenerator implements IdGenerator<Object, ObjectId> {
 	
 	public ObjectIdGenerator() {
 	}
+	
+	public Collection<ObjectId> getObjects() {
+		return objectIdMap.values();
+	}
+	
 	@Override
 	public ObjectId createId(Object object) {
 		int hashCode = System.identityHashCode(object);

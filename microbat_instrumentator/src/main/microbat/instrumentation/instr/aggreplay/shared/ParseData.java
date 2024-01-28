@@ -31,6 +31,9 @@ public class ParseData {
 	}
 	
 	public <T> List<T> toList(Function<ParseData, T> function) {
+		if (this.listData == null) {
+			return Collections.emptyList();
+		}
 		return this.listData.stream().map(function).collect(Collectors.<T>toList());
 	}
 	

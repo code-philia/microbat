@@ -64,11 +64,11 @@ public class TraceAgent extends Agent {
 			trace.setThreadId(tracer.getThreadId());
 			trace.setThreadName(tracer.getThreadName());
 			trace.setMain(ExecutionTracer.getMainThreadStore().equals(tracer));
-
+			
 			constructTrace(trace);
 			traceList.add(trace);
 		}
-
+		
 //		timer.newPoint("Saving trace");
 		Recorder.create(agentParams).store(traceList);
 //		AgentLogger.debug(timer.getResultString());

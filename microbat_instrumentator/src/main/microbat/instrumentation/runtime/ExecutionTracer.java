@@ -655,6 +655,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public void _hitLine(int line, String className, String methodSignature, int numOfReadVars, int numOfWrittenVars, String bytecode) {
 		boolean isLocked = trackingDelegate.isUntrack();
 		trackingDelegate.untrack();
+		System.out.println("Hit line");
 		try {
 			boolean exclusive = GlobalFilterChecker.isExclusive(className, methodSignature);
 			if (exclusive) {
@@ -677,7 +678,6 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 //				shutdown();
 //				Agent._exitProgram("fail;Trace size exceeds expected_steps!");
 //			}
-
 			BreakPoint bkp = new BreakPoint(className, methodSignature, line);
 			long timestamp = System.currentTimeMillis();
 			TraceNode currentNode = new TraceNode(bkp, null, order, trace, numOfReadVars, numOfWrittenVars, timestamp, bytecode);

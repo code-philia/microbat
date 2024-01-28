@@ -45,7 +45,7 @@ public class BasicTransformer implements ClassFileTransformer {
 		try {
 			byte[] result = instrumenter.instrument(className, classfileBuffer);
 
-			if (className.equals("Test")) {
+			if (className.equals("Test$DumbThread")) {
 				File tocreate = new File("Output.class");
 				try {
 					FileOutputStream fw = new FileOutputStream(tocreate);

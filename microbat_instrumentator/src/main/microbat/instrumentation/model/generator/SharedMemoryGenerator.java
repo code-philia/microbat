@@ -45,6 +45,10 @@ public class SharedMemoryGenerator {
 	public boolean isSharedObject(Object object, String field) {
 		return ofField(object, field) != null;
 	}
+	
+	public boolean isSharedObject(ObjectId object) {
+		return this.objectIdRecorderMap.containsKey(object);
+	}
 
 	public SharedMemoryLocation ofField(Object object, String fieldName) {
 		ObjectId objectId = objectIdGenerator.getId(object);

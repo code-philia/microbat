@@ -20,6 +20,17 @@ public class Event extends Storable implements Parser<Event> {
 	});
 	private long threadId;
 	private int eventId;
+	
+	
+	/**
+	 * Needed to update thread Id which is obtained from
+	 * serialized data.
+	 * @param threadId
+	 */
+	public void updateThreadId(long threadId) {
+		this.threadId = threadId;
+	}
+	
 	// on write, the location written to
 	// on read, the location read from.
 	private SharedMemoryLocation relevantLocation;

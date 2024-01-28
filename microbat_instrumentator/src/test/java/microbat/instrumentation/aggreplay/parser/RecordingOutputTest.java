@@ -76,7 +76,8 @@ public class RecordingOutputTest {
 	}
 	
 	private void testRecordingOutputParsing(RecordingOutput data) throws IOException {
-		StringReader values = new StringReader(data.getFromStore());
+		String dump = data.getFromStore();
+		StringReader values = new StringReader(dump);
 		List<ParseData> result = new SharedDataParser().parse(values);
 		assertEquals(data, new RecordingOutput().parse(result.get(0)));
 	}

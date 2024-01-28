@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -75,6 +76,27 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 					
 				});
 		return this;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(objectsHashSet, readCountVector, rwAccessList, sharedMemoryLocations, threadIds);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		RecordingOutput other = (RecordingOutput) obj;
+		return Objects.equals(objectsHashSet, other.objectsHashSet)
+				&& Objects.equals(readCountVector, other.readCountVector)
+				&& Objects.equals(rwAccessList, other.rwAccessList)
+				&& Objects.equals(sharedMemoryLocations, other.sharedMemoryLocations)
+				&& Objects.equals(threadIds, other.threadIds);
 	}
 	
 }

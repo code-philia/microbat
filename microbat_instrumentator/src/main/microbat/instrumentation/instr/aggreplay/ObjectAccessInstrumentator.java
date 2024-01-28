@@ -77,6 +77,9 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 		final DUP dup = new DUP();
 		
 		for (Method method : classGen.getMethods()) {
+			if (method.isNative() || method.isAbstract() || method.getCode() == null) {
+				continue; // Only instrument methods with code in them!
+			}
 			MethodGen mGen = new MethodGen(method, className, constPool);
 			InstructionList iList =  mGen.getInstructionList();
 			for (InstructionHandle handle: iList) {
