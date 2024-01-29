@@ -29,6 +29,7 @@ public class PrecheckInfo {
 	private List<String> exceedingLimitMethods;
 	private String programMsg;
 	private List<String> loadedClasses;
+	private Set<String> libraryCalls;
 	
 	private PrecheckInfo() {
 		
@@ -47,7 +48,7 @@ public class PrecheckInfo {
 	@Override
 	public String toString() {
 		return "PrecheckInfo [threadNum=" + threadNum + ", stepTcounted_stepTotalotal=" + stepTotal + ", isOverLong=" + isOverLong
-				+ ", exceedingLimitMethods=" + exceedingLimitMethods + "]";
+				+ ", exceedingLimitMethods=" + exceedingLimitMethods + ", libraryCalls=" + libraryCalls + "]";
 	}
 
 	public static PrecheckInfo readFromFile(String filePath) {
@@ -87,6 +88,12 @@ public class PrecheckInfo {
 				loadedClasses.add(reader.readString());
 			}
 			infor.loadedClasses = loadedClasses;
+			int libraryCallsSize = reader.readVarInt();
+			Set<String> libraryCalls = new HashSet<>(libraryCallsSize);
+			for (int i = 0; i < libraryCallsSize; i++) {
+				libraryCalls.add(reader.readString());
+			}
+			infor.libraryCalls = libraryCalls;
 			return infor;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -140,6 +147,10 @@ public class PrecheckInfo {
 			outputWriter.writeVarInt(loadedClasses.size());
 			for (String loadedClass : loadedClasses) {
 				outputWriter.writeString(loadedClass);
+			}
+			outputWriter.writeVarInt(libraryCalls.size());
+			for (String libraryCall : libraryCalls) {
+				outputWriter.writeString(libraryCall);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -216,4 +227,11 @@ public class PrecheckInfo {
 		this.loadedClasses = loadedClasses;
 	}
 	
+	public Set<String> getLibraryCalls() {
+		return libraryCalls;
+	}
+	
+	public void setLibraryCalls(Set<String> libraryCalls) {
+		this.libraryCalls = libraryCalls;
+	}
 }

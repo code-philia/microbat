@@ -24,6 +24,7 @@ import org.apache.bcel.generic.Type;
 
 import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.AgentParams;
+import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.instr.TraceInstrumenter;
 import microbat.instrumentation.instr.instruction.info.LineInstructionInfo;
 import microbat.instrumentation.utils.MicrobatUtils;
@@ -31,6 +32,7 @@ import microbat.instrumentation.utils.MicrobatUtils;
 public class PrecheckInstrumenter extends TraceInstrumenter {
 	private static final String MEASUREMENT_VAR_NAME = "$traceMs";
 	private List<String> exceedLimitMethods = new ArrayList<>();
+	private static Set<String> libraryCalls = new HashSet<>();
 	
 	public PrecheckInstrumenter(AgentParams params) {
 		super(params);
@@ -76,8 +78,13 @@ public class PrecheckInstrumenter extends TraceInstrumenter {
 		}
 	}
 	
+	private String getMethodID(String className, String methodName, String signature) {
+		return className + ";" + methodName + ";" + signature;
+	}
+	
 	protected boolean instrumentMethod(ClassGen classGen, ConstantPoolGen constPool, MethodGen methodGen, Method method,
 			boolean isAppClass, boolean isMainMethod, boolean isEntry) {
+		libraryCalls.remove(getMethodID(methodGen.getClassName().replace("/", "."), methodGen.getMethod().getName(), methodGen.getSignature()));
 		InstructionList insnList = methodGen.getInstructionList();
 
 		Set<Integer> visitedLines = new HashSet<>();
@@ -110,6 +117,13 @@ public class PrecheckInstrumenter extends TraceInstrumenter {
 					InstructionList newInsns = getHitLineCode(constPool, tracerVar, lineInfo.getSourceLine(), classNameVar, methodSigVar);
 					appendInstruction(insnList, newInsns, insn);
 					newInsns.dispose();
+				}
+				if (insn.getInstruction() instanceof INVOKEVIRTUAL) {
+					INVOKEVIRTUAL instruction = (INVOKEVIRTUAL) insn.getInstruction();
+					String className = instruction.getClassName(constPool);
+					if (!GlobalFilterChecker.isAppClazz(className)) {
+						libraryCalls.add(getMethodID(className, instruction.getMethodName(constPool), instruction.getSignature(constPool)));
+					}
 				}
 			}
 			if (lineInfo.getSourceLine() < startLine) {
@@ -194,6 +208,10 @@ public class PrecheckInstrumenter extends TraceInstrumenter {
 	
 	public List<String> getExceedLimitMethods() {
 		return exceedLimitMethods;
+	}
+	
+	public Set<String> getLibraryCalls() {
+		return libraryCalls;
 	}
 	
 	private enum MeasurementMethods {

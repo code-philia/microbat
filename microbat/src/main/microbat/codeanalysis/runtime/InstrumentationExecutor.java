@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -136,7 +137,8 @@ public class InstrumentationExecutor {
 			PrecheckInfo info = agentRunner.getPrecheckInfo();
 			System.out.println(info);
 			PreCheckInformation precheckInfomation = new PreCheckInformation(info.getThreadNum(), info.getStepTotal(),
-					info.isOverLong(), new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), info.getLoadedClasses());
+					info.isOverLong(), new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), 
+					info.getLoadedClasses(), info.getLibraryCalls());
 			precheckInfomation.setPassTest(agentRunner.isTestSuccessful());
 //			precheckInfomation.setUndeterministic(firstPrecheckInfo.getStepTotal() != precheckInfomation.getStepTotal());
 			this.setPrecheckInfo(precheckInfomation);
@@ -176,7 +178,7 @@ public class InstrumentationExecutor {
 //			System.out.println(info);
 			System.out.println("isPassTest: " + agentRunner.isTestSuccessful());
 			PreCheckInformation result = new PreCheckInformation(info.getThreadNum(), info.getStepTotal(), info.isOverLong(),
-					new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), info.getLoadedClasses());
+					new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), info.getLoadedClasses(), info.getLibraryCalls());
 			result.setPassTest(agentRunner.isTestSuccessful());
 			result.setTimeout(agentRunner.isUnknownTestResult());
 			this.setPrecheckInfo(result);
@@ -184,7 +186,7 @@ public class InstrumentationExecutor {
 		} catch (SavException e1) {
 			e1.printStackTrace();
 		}
-		return new PreCheckInformation(-1, -1, false, new ArrayList<ClassLocation>(), new ArrayList<String>(), new ArrayList<String>());
+		return new PreCheckInformation(-1, -1, false, new ArrayList<ClassLocation>(), new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>());
 	}
 	
 	public RunningInfo execute(PreCheckInformation info) {
