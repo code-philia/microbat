@@ -54,6 +54,31 @@ public class TraceAgentRunner extends AgentVmRunner {
 		builder.appendIf("-XX:+UseG1GC", enableSettingHeapSize);
 		super.buildVmOption(builder, config);
 	}
+	 
+	public boolean sharedDetection() throws SavException {
+		addAgentParam(AgentParams.OPT_SHARED_DETECTION, true);
+		super.startAndWaitUntilStop(getConfig());
+		removeAgentParam(AgentParams.OPT_SHARED_DETECTION);
+		return true;
+	}
+	
+	/**
+	 * Method used for running the individual concurrent modes.
+	 * @param mode
+	 * @param concDumpFile The path to the conc dump
+	 * @param dumpFile The dump file
+	 * @throws SavException 
+	 */
+	public void concReplay(String mode, String concDumpFile, String dumpFile) throws SavException {
+		addAgentParam(mode, true);
+		addAgentParam(AgentParams.OPT_CONC_RECORD_DUMP, concDumpFile);
+		addAgentParam(AgentParams.OPT_DUMP_FILE, dumpFile);
+		super.startAndWaitUntilStop(getConfig());
+		removeAgentParam(mode);
+		removeAgentParam(AgentParams.OPT_DUMP_FILE);
+		removeAgentParam(AgentParams.OPT_CONC_RECORD_DUMP);
+	}
+	
 
 	public boolean precheck(String filePath) throws SavException {
 		isPrecheckMode = true;
@@ -89,41 +114,6 @@ public class TraceAgentRunner extends AgentVmRunner {
 		} finally {
 			addAgentParam(AgentParams.OPT_PRECHECK, "false");
 		}
-		return true;
-	}
-	
-	public boolean runAggrePlayConc(Reader reader) throws SavException {
-		String runId = UUID.randomUUID().toString();
-		StopTimer timer = new StopTimer("Building trace");
-		timer.newPoint("Execution");
-		File dumpFile;
-		try {
-			boolean toDeleteDumpFile = false;
-			switch (reader) {
-			case FILE:
-				dumpFile = File.createTempFile("trace", ".exec");
-				dumpFile.deleteOnExit();
-				break;
-			default:
-				dumpFile = DatabasePreference.getDBFile();
-				break;
-			}
-			addAgentParam(AgentParams.OPT_TRACE_RECORDER, reader.name()); // why is reader name used for recorder option?
-			addAgentParam(AgentParams.OPT_RUN_ID, runId);
-			addAgentParam(AgentParams.OPT_DUMP_FILE, String.valueOf(dumpFile.getPath()));
-			super.startAndWaitUntilStop(getConfig()); // Trace recording
-			System.out.println("|");
-			timer.newPoint("Read output result");
-			this.runningInfo = reader.create(runId).read(precheckInfo, dumpFile.getPath());
-			updateTestResult(runningInfo.getProgramMsg());
-			if (toDeleteDumpFile) {
-				dumpFile.delete();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new SavRtException(e);
-		}
-		System.out.println(timer.getResultString());
 		return true;
 	}
 

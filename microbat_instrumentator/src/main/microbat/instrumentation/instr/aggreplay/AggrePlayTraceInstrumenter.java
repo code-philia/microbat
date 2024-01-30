@@ -97,7 +97,7 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 				}
 				
 				boolean isEntry = false;
-				if(method.getName().equals("run")) {
+				if(method.getName().equals("run") && isThread(jc)) {
 					isEntry = true;
 				}
 				

@@ -58,8 +58,8 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	public void startup0(long vmStartupTime, long agentPreStartup) {
 		System.out.println("Started shared variable detection");
 		SystemClassTransformer.attachThreadId(getInstrumentation());
-		agent.timeoutThread.setDaemon(true);
-		agent.timeoutThread.start();
+//		agent.timeoutThread.setDaemon(true);
+//		agent.timeoutThread.start();
 	}
 
 	@Override

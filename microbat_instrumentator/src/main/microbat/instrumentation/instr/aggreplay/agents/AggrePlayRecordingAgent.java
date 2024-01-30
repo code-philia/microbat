@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentFactory;
+import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.instr.SystemClassTransformer;
@@ -42,6 +44,10 @@ import microbat.instrumentation.model.id.SharedMemoryLocation;
 import microbat.instrumentation.model.id.ThreadId;
 import microbat.instrumentation.model.storage.FileStorage;
 import microbat.instrumentation.model.storage.Storable;
+import microbat.instrumentation.runtime.ExecutionTracer;
+import microbat.instrumentation.runtime.IExecutionTracer;
+import microbat.model.trace.Trace;
+import microbat.sql.Recorder;
 
 public class AggrePlayRecordingAgent extends Agent {
 
@@ -196,7 +202,7 @@ public class AggrePlayRecordingAgent extends Agent {
 	public void startup0(long vmStartupTime, long agentPreStartup) {
 		AggrePlayRecordingAgent.attachAgent(this);
 		SystemClassTransformer.attachThreadId(getInstrumentation());
-		timeoutThread.start();
+//		timeoutThread.start();
 		SharedDataParser parser = new SharedDataParser();
 		String dumpFileStr = agentParams.getDumpFile();
 		if (dumpFileStr == null) dumpFileStr = "temp.txt";
@@ -244,6 +250,7 @@ public class AggrePlayRecordingAgent extends Agent {
 		values.add(output);
 		fileStorage.store(values);
 	}
+
 
 	@Override
 	public void startTest(String junitClass, String junitMethod) {

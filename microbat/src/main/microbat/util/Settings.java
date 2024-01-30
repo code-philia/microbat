@@ -120,5 +120,6 @@ public class Settings {
 	public static HashMap<String, ICompilationUnit> iCompilationUnitMap = new HashMap<>();
 	public static boolean enableLoopInference = true;
 	public static boolean supportConcurrentTrace;
+	public static boolean supportAggrePlayTrace;
 	
 }

@@ -33,6 +33,7 @@ import microbat.preference.ExecutionRangePreference;
 import microbat.preference.MicrobatPreference;
 import microbat.sql.DBSettings;
 import microbat.sql.DbService;
+import microbat.trace.FileTraceReader;
 import microbat.util.JavaUtil;
 import microbat.util.MinimumASTNodeFinder;
 import microbat.util.Settings;
@@ -162,6 +163,58 @@ public class InstrumentationExecutor {
 		}
 		
 		return null;
+	}
+	
+	public void runSharedVariable(String dumpFile, int stepLimit) {
+		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
+		agentRunner.getConfig().setPort(9000);
+		agentRunner.addAgentParam(AgentParams.OPT_DUMP_FILE, dumpFile);
+		agentRunner.addAgentParam(AgentParams.OPT_STEP_LIMIT, stepLimit);
+		agentRunner.addAgentParam(AgentParams.OPT_SHARED_DETECTION, true);
+		try {
+			agentRunner.sharedDetection();
+		} catch (SavException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		agentRunner.removeAgentParam(AgentParams.OPT_SHARED_DETECTION);
+	}
+	
+	/**
+	 * 
+	 * @param dumpFile
+	 * @param concDumpFile
+	 * @param stepLimit
+	 */
+	public void runRecordConc(String dumpFile, String concDumpFile, int stepLimit) {
+		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
+		agentRunner.getConfig().setPort(9000);
+		agentRunner.addAgentParam(AgentParams.OPT_STEP_LIMIT, stepLimit);
+		try {
+			agentRunner.concReplay(AgentParams.OPT_CONC_RECORD, concDumpFile, dumpFile);
+		} catch (SavException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+	public RunningInfo runReplayTracer(String concFile, String outputFile, int stepLimit) {
+		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
+		System.out.println("Debug " + agentRunner.getConfig().isDebug());
+		agentRunner.getConfig().setPort(9000);
+		agentRunner.addAgentParam(AgentParams.OPT_STEP_LIMIT, stepLimit);
+		agentRunner.addAgentParam(AgentParams.OPT_TRACE_RECORDER, "FILE");
+		try {
+			agentRunner.concReplay(AgentParams.OPT_CONC_REPLAY, concFile, outputFile);
+		} catch (SavException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// TODO: use data base preferences
+		FileTraceReader fileTraceReader = new FileTraceReader();
+		RunningInfo result = fileTraceReader.read(null, outputFile);
+		return result;
 	}
 	
 	public PreCheckInformation runPrecheck(String dumpFile, int stepLimit) {

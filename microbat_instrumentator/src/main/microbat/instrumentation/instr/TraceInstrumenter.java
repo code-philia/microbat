@@ -152,7 +152,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		return null;
 	}
 	
-	private boolean isThread(JavaClass jc) {
+	protected boolean isThread(JavaClass jc) {
 		try {
 			for(JavaClass interf: jc.getAllInterfaces()) {
 				if(interf.getClassName().equals("java.lang.Runnable")) {

@@ -7,9 +7,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.util.ArrayList;
 import java.util.List;
 
 import microbat.instrumentation.Agent;
+import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.TraceAgent;
@@ -26,6 +28,8 @@ import microbat.instrumentation.model.id.ReadWriteAccessList;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
 import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.instrumentation.runtime.IExecutionTracer;
+import microbat.model.trace.Trace;
+import microbat.sql.Recorder;
 
 public class AggrePlayReplayAgent extends TraceAgent {
 	
@@ -107,7 +111,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		System.out.println("Shutting down");
 		try {
 
-			super.shutdown();
+			shutdownInner();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -115,6 +119,39 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		System.out.println("Shutdown");
 	}
 
+	private void shutdownInner() {
+		ExecutionTracer.shutdown();
+		/* collect trace & store */
+		AgentLogger.debug("Building trace dependencies ...");
+//		timer.newPoint("Building trace dependencies");
+		// FIXME -mutithread LINYUN [3]
+		// LLT: only trace of main thread is recorded.
+		List<IExecutionTracer> tracers = ExecutionTracer.getAllThreadStore();
+
+		int size = tracers.size();
+		List<Trace> traceList = new ArrayList<>(size);
+		for (int i = 0; i < size; i++) {
+
+			ExecutionTracer tracer = (ExecutionTracer) tracers.get(i);
+
+			Trace trace = tracer.getTrace();
+			trace.setThreadId(tracer.getThreadId());
+			trace.setThreadName(tracer.getThreadName());
+			trace.setMain(ExecutionTracer.getMainThreadStore().equals(tracer));
+			
+			// TODO(Gab): Botch needed because tracer can be initialised 
+			// in thread id instrumenter
+			if (trace.getAppJavaClassPath() == null) {
+				trace.setAppJavaClassPath(ExecutionTracer.appJavaClassPath);
+			}
+			constructTrace(trace);
+			traceList.add(trace);
+		}
+		
+//		timer.newPoint("Saving trace");
+		Recorder.create(agentParams).store(traceList);
+//		AgentLogger.debug(timer.getResultString());
+	}
 	
 
 	@Override

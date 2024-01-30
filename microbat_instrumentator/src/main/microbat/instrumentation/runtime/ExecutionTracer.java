@@ -655,7 +655,6 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public void _hitLine(int line, String className, String methodSignature, int numOfReadVars, int numOfWrittenVars, String bytecode) {
 		boolean isLocked = trackingDelegate.isUntrack();
 		trackingDelegate.untrack();
-		System.out.println("Hit line");
 		try {
 			boolean exclusive = GlobalFilterChecker.isExclusive(className, methodSignature);
 			if (exclusive) {

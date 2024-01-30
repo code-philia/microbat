@@ -85,6 +85,7 @@ public class MicrobatPreference extends PreferencePage implements
 	public static final String RECORDING_OPTIMIZATION = "recording_optimization";
 	public static final String REQUIRE_METHOD_SPLITTING = "enableMethodSplitting";
 	public static final String SUPPORT_CONCURRENT_TRACE = "supportConcurrentTrace";
+	public static final String AGGREPLAY_CONCURRENT_RECORDING = "aggrePlayConcurrentRecording";
 	public static final String RUN_WITH_DEBUG_MODE = "runWithDebugMode";
 	
 	private Combo projectCombo;
@@ -96,6 +97,7 @@ public class MicrobatPreference extends PreferencePage implements
 	private Text variableLayerText;
 	private Button recordSnapshotButton;
 	private Button supportConcurrentTraceButton;
+	private Button supportAggrePlayRecordAndReplayButton;
 	private Button recordingOptimizationButton;
 	private Button advancedDetailInspectorButton;
 	private Button runTestButton;
@@ -188,6 +190,11 @@ public class MicrobatPreference extends PreferencePage implements
 		supportConcurrentTraceButton.setLayoutData(supportConcurrentTraceButtonData);
 		boolean supportConcurrentTraceSelected = this.defaultSupportConcurrentTrace.equals("true");
 		supportConcurrentTraceButton.setSelection(supportConcurrentTraceSelected);
+		
+		supportAggrePlayRecordAndReplayButton = new Button(settingGroup, SWT.CHECK);
+		supportAggrePlayRecordAndReplayButton.setText("Support aggre play trace gen");
+		supportAggrePlayRecordAndReplayButton.setLayoutData(supportConcurrentTraceButtonData);
+		supportAggrePlayRecordAndReplayButton.setSelection(supportConcurrentTraceSelected);
 		
 		recordSnapshotButton = new Button(settingGroup, SWT.CHECK);
 		recordSnapshotButton.setText("Record snapshot");
@@ -332,6 +339,7 @@ public class MicrobatPreference extends PreferencePage implements
 		Settings.isRunTest = this.runTestButton.getSelection();
 		Settings.applyLibraryOptimization = this.recordingOptimizationButton.getSelection();
 		Settings.supportConcurrentTrace = this.supportConcurrentTraceButton.getSelection();
+		Settings.supportAggrePlayTrace = this.supportAggrePlayRecordAndReplayButton.getSelection();
 		Settings.isRunWtihDebugMode = this.runWithDebugModeButton.getSelection();
 	}
 	

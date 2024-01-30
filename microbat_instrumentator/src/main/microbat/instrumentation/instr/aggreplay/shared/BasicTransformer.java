@@ -33,13 +33,12 @@ public class BasicTransformer implements ClassFileTransformer {
 			}
 		} 
 
-		// TODO: figure out why this skips test classes.
-//		if (protectionDomain != null) {
-//			String path = protectionDomain.getCodeSource().getLocation().getFile();
-//			if (!GlobalFilterChecker.isTransformable(className, path, false)) {
-//				return null;
-//			}
-//		}
+		if (protectionDomain != null) {
+			String path = protectionDomain.getCodeSource().getLocation().getFile();
+			if (!GlobalFilterChecker.isTransformable(className, path, false)) {
+				return null;
+			}
+		}
 
 		/* do instrumentation */
 		try {
