@@ -11,6 +11,7 @@ import org.apache.bcel.generic.ALOAD;
 import org.apache.bcel.generic.ASTORE;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
+import org.apache.bcel.generic.INVOKEINTERFACE;
 import org.apache.bcel.generic.INVOKESTATIC;
 import org.apache.bcel.generic.INVOKEVIRTUAL;
 import org.apache.bcel.generic.InstructionHandle;
@@ -79,7 +80,7 @@ public class PrecheckInstrumenter extends TraceInstrumenter {
 	}
 	
 	private String getMethodID(String className, String methodName, String signature) {
-		return className + ";" + methodName + ";" + signature;
+		return className + "#" + methodName + ";" + signature;
 	}
 	
 	protected boolean instrumentMethod(ClassGen classGen, ConstantPoolGen constPool, MethodGen methodGen, Method method,
@@ -118,9 +119,12 @@ public class PrecheckInstrumenter extends TraceInstrumenter {
 					appendInstruction(insnList, newInsns, insn);
 					newInsns.dispose();
 				}
-				if (insn.getInstruction() instanceof INVOKEVIRTUAL) {
-					INVOKEVIRTUAL instruction = (INVOKEVIRTUAL) insn.getInstruction();
+				if (insn.getInstruction() instanceof INVOKEVIRTUAL || insn.getInstruction() instanceof INVOKEINTERFACE || insn.getInstruction() instanceof INVOKESTATIC) {
+					InvokeInstruction instruction = (InvokeInstruction) insn.getInstruction();
 					String className = instruction.getClassName(constPool);
+					if (instruction.getMethodName(constPool) == "indexOf") {
+						System.out.println();
+					}
 					if (!GlobalFilterChecker.isAppClazz(className)) {
 						libraryCalls.add(getMethodID(className, instruction.getMethodName(constPool), instruction.getSignature(constPool)));
 					}
