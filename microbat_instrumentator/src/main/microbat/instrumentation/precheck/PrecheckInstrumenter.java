@@ -80,7 +80,7 @@ public class PrecheckInstrumenter extends TraceInstrumenter {
 	}
 	
 	private String getMethodID(String className, String methodName, String signature) {
-		return className + "#" + methodName + ";" + signature;
+		return className + "#" + methodName + signature;
 	}
 	
 	protected boolean instrumentMethod(ClassGen classGen, ConstantPoolGen constPool, MethodGen methodGen, Method method,
@@ -122,9 +122,6 @@ public class PrecheckInstrumenter extends TraceInstrumenter {
 				if (insn.getInstruction() instanceof INVOKEVIRTUAL || insn.getInstruction() instanceof INVOKEINTERFACE || insn.getInstruction() instanceof INVOKESTATIC) {
 					InvokeInstruction instruction = (InvokeInstruction) insn.getInstruction();
 					String className = instruction.getClassName(constPool);
-					if (instruction.getMethodName(constPool) == "indexOf") {
-						System.out.println();
-					}
 					if (!GlobalFilterChecker.isAppClazz(className)) {
 						libraryCalls.add(getMethodID(className, instruction.getMethodName(constPool), instruction.getSignature(constPool)));
 					}
@@ -180,7 +177,7 @@ public class PrecheckInstrumenter extends TraceInstrumenter {
 		/* store methodSignVar */
 		String sig = methodGen.getSignature();
 		String methodName = methodGen.getName();
-		String mSig = className + "#" + methodName + sig;
+		String mSig = getMethodID(className, methodName, sig);
 		newInsns.append(new PUSH(constPool, mSig));
 		newInsns.append(new ASTORE(methodSigVar.getIndex())); 
 		
