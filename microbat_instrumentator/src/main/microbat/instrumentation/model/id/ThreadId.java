@@ -39,8 +39,8 @@ public class ThreadId extends Storable {
 		
 	}
 	public ListNode rootListNode = null;
+	public long threadId;
 	private long idCounter = 0;
-	private long threadId;
 
 	public int internalHashCode = 100002301;
 	
@@ -55,9 +55,10 @@ public class ThreadId extends Storable {
 		precomputeHashCode();
 	}
 	
-	private ThreadId(int internalHashCode, String threadId) {
+	private ThreadId(int internalHashCode, String threadId, long threadValue) {
 		this.internalHashCode = internalHashCode;
 		this.rootListNode = fromString(threadId);
+		this.threadId = threadValue;
 	}
 	
 	public static ListNode fromString(String hashedId) {
@@ -70,8 +71,15 @@ public class ThreadId extends Storable {
 		return result;
 	}
 	
-	public static ThreadId createThread(int internalHashCode, String threadId) {
-		return new ThreadId(internalHashCode, threadId);
+	/**
+	 * Creates a thread with the provided thread
+	 * @param internalHashCode The generated hash code of the thread.
+	 * @param threadId The replicated id of the thread.
+	 * @param threadValue The id {@code long} of the thread. TODO(Gab): Not ideal to store in this class
+	 * @return
+	 */
+	public static ThreadId createThread(int internalHashCode, String threadId, long threadValue) {
+		return new ThreadId(internalHashCode, threadId, threadValue);
 	}
 	
 	private void precomputeHashCode() {

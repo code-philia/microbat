@@ -27,9 +27,58 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	 * The location this object is at.
 	 */
 	public MemoryLocation location;
+	
+
+	/**
+	 * The event write for this object.
+	 * Uses a map to prevent need for synchronisation
+	 */
+	public final Map<Long, LinkedList<Pair<Event, Event>>> threadExListMap = new HashMap<>();
+	
+	private final LinkedList<Pair<Event, Event>> wrList = new LinkedList<>();
+	
+	// write event list used during recording
 	private List<Event> writeEventList = new LinkedList<>();
-	// TODO: get this stack from the input
+	// TODO: get this stack from the input + put in a different class
+	// the bottom two are data used for replay
+	// Need to separate these two cause can get quite confusing -> ideally in a separate class
+	// W_var(e)
 	private Stack<Event> writeEventStack;
+	private List<Event> repWriteEvent;
+	private final Stack<Pair<Event, Event>> repWrStack = new Stack<>();
+	
+	public boolean checkLastWrite(Event e) {
+		return getRecordedLastWrite().equals(lastWrite);
+	}
+	
+	// TODO (Gab): make the recorded lastwrite not a map
+	private Event getRecordedLastWrite() {
+		return repWrStack.peek().first();
+	}
+	
+	private void popRecordedLastWrite() {
+		repWrStack.pop();
+	}
+	
+	
+
+	/**
+	 * Checks if the given event is the same as the event in the previous run
+	 * on the top of the stack
+	 * @param e
+	 * @return
+	 */
+	public boolean isSameAsPrevRunWrite(Event e) {
+		return writeEventStack.peek().equals(e);
+	}
+	
+	public void addWriteEvent(Event e) {
+		repWriteEvent.add(e);
+	}
+	
+	public void popEvent() {
+		writeEventStack.pop();
+	}
 	
 	public SharedMemoryLocation() {
 		this.location = null;
@@ -48,11 +97,6 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 		writeEventList.add(event);
 	}
 	
-	/**
-	 * The event write for this object.
-	 * Uses a map to prevent need for synchronisation
-	 */
-	private final Map<Long, LinkedList<Pair<Event, Event>>> threadExListMap = new HashMap<>();
 	
 	/**
 	 * The read count vector 
@@ -64,8 +108,17 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 		lastWrite = event;
 	}
 	
+	/**
+	 * Checks if the current shared mem location write
+	 * is the same as the previous
+	 * @return
+	 */
 	public synchronized boolean isSameAsLastWrite() {
 		return this.lastWrite.equals(writeEventStack.peek());
+	}
+	
+	public synchronized boolean isSameEvent(Event event) {
+		return this.writeEventStack.peek().equals(event);
 	}
 	
 	public synchronized Event getLastWrite() {
@@ -116,6 +169,7 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 				return Event.parseEvent(parseData);
 			}
 		});
+		// TODO(Gab): parse the ex list
 		return this;
 	}
 	

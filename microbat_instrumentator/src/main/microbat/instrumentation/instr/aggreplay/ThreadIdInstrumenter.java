@@ -23,7 +23,16 @@ import microbat.instrumentation.model.generator.ThreadIdGenerator;
  *
  */
 public class ThreadIdInstrumenter extends AbstractInstrumenter {
-
+	
+	// the class containing _onThreadStart (Ljava/lang/Thread;)V, IMPT!! should not be interface
+	private Class<?> instrumentedClass = getClass();
+	
+	public ThreadIdInstrumenter() {}
+	
+	public ThreadIdInstrumenter(Class<?> instrumentedClass) {
+		this.instrumentedClass = instrumentedClass;
+	}
+	
 	public static void _onThreadStart(Thread thread) {
 		ThreadIdGenerator.threadGenerator.createId(thread);
 	}
@@ -52,7 +61,7 @@ public class ThreadIdInstrumenter extends AbstractInstrumenter {
 		MethodGen mGen = new MethodGen(startMethod, cg.getClassName(), cg.getConstantPool());
 		InstructionList iList = mGen.getInstructionList();
 		ConstantPoolGen constantPoolGen = cg.getConstantPool();
-		String threadStartClass = getClass().getName().replace(".", "/");
+		String threadStartClass = instrumentedClass.getName().replace(".", "/");
 		ALOAD aload = new ALOAD(0);
 		INVOKESTATIC invokestatic = new INVOKESTATIC(constantPoolGen.addMethodref(
 				threadStartClass, "_onThreadStart", "(Ljava/lang/Thread;)V"));

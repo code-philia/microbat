@@ -17,7 +17,16 @@ import sav.common.core.Pair;
 
 public class ReadWriteAccessList extends Storable implements Parser<ReadWriteAccessList> {
 	private HashMap<Long, LinkedList<Node>> exList = new HashMap<>();
-	private static class Node extends Storable implements Parser<Node> {
+	
+	public Node top(long threadId) {
+		return exList.get(threadId).getFirst();
+	}
+	
+	public Map<Long, LinkedList<Node>> getList() {
+		return exList;
+	}
+	
+	public static class Node extends Storable implements Parser<Node> {
 		private Map<Long, Integer> rcMap;
 		private MemoryLocation memoryLocation;
 		private Event event;
@@ -30,6 +39,15 @@ public class ReadWriteAccessList extends Storable implements Parser<ReadWriteAcc
 		public Node() {
 			
 		}
+		
+		public Map<Long, Integer> getRcMap() {
+			return rcMap;
+		}
+		
+		public MemoryLocation getLocation() {
+			return memoryLocation;
+		}
+		
 		@Override
 		protected Map<String, String> store() {
 			Map<String, String> fields = new HashMap<>();

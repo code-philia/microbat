@@ -32,7 +32,8 @@ public class SharedDataParser {
 
 	public ThreadId createThreadId(ParseData data) {
 		int internalHashCode = Integer.parseInt(data.innerDataMap.get("internalHashCode").getValue());
-		return ThreadId.createThread(internalHashCode, data.innerDataMap.get("rootListNode").getValue());
+		return ThreadId.createThread(internalHashCode, data.innerDataMap.get("rootListNode").getValue(),
+				data.innerDataMap.get("threadId").getLongValue());
 	}
 	
 	private HashSet<String> parseSet(String setString) {

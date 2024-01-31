@@ -40,6 +40,13 @@ public class Event extends Storable implements Parser<Event> {
 		eventCounterLocal.set(eventId + 1);
 		this.relevantLocation = location;
 	}
+
+	public Event(SharedMemoryLocation location, final long threadId) {
+		this.threadId = threadId;
+		eventId = eventCounterLocal.get();
+		eventCounterLocal.set(eventId + 1);
+		this.relevantLocation = location;
+	}
 	
 	public SharedMemoryLocation getLocation() {
 		return relevantLocation;

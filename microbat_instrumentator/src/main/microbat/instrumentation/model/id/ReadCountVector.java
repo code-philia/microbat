@@ -10,6 +10,7 @@ import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.Parser;
 import microbat.instrumentation.instr.aggreplay.shared.parser.MemoryLocationParser;
 import microbat.instrumentation.instr.aggreplay.shared.parser.RCVectorParser;
+import microbat.instrumentation.model.ReadWriteAccessListReplay;
 import microbat.instrumentation.model.storage.Storable;
 import sav.common.core.Pair;
 
@@ -23,6 +24,10 @@ public class ReadCountVector extends Storable implements Parser<ReadCountVector>
 		return new RCVectorParser().parse(data);
 	}
 	
+	public Map<MemoryLocation, Map<Long, Integer>> getRCVector(long threadID) {
+		return rcVectorClockConcurrentHashMap.getOrDefault(threadID, new HashMap<MemoryLocation, Map<Long, Integer>>());
+	}
+ 	
 	private static Map<MemoryLocation, Map<Long, Integer>> parseMap(ParseData data) {
 		List<Pair<ParseData, ParseData>> objectMap = data.toPairList();
 		Map<Long, Integer> rcMap;

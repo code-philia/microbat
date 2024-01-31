@@ -24,12 +24,12 @@ import microbat.instrumentation.model.storage.Storable;
  *
  */
 public class RecordingOutput extends Storable implements Parser<RecordingOutput> {
-	public ReadCountVector readCountVector;
-	public ReadWriteAccessList rwAccessList;
+	public ReadCountVector readCountVector; // isn't needed
+	public ReadWriteAccessList rwAccessList; // WR_var(e)
 	// used to get the object acquisition
-	public List<ObjectId> objectsHashSet;
+	public List<ObjectId> objectsHashSet; // L_lock(e)
 	public List<ThreadId> threadIds;
-	public List<SharedMemoryLocation> sharedMemoryLocations;
+	public List<SharedMemoryLocation> sharedMemoryLocations; // W_var(e)
 	public RecordingOutput(ReadCountVector readCountVector, ReadWriteAccessList rwAccessList,
 			List<ThreadId> threadIds,
 			List<ObjectId> objectsHashSet, List<SharedMemoryLocation> sharedMemoryLocations) {
