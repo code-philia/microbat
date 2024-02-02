@@ -1,6 +1,6 @@
 package microbat.instrumentation.model.generator;
 
-import microbat.instrumentation.model.id.RecorderObjectId;
+import microbat.instrumentation.model.RecorderObjectId;
 
 public class ObjectIdParser implements IdGenerator<String, RecorderObjectId>{
 

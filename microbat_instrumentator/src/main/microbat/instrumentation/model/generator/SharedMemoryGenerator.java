@@ -1,11 +1,13 @@
 package microbat.instrumentation.model.generator;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang.NotImplementedException;
 
+import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.id.ObjectId;
-import microbat.instrumentation.model.id.RecorderObjectId;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
 
 /**
@@ -29,6 +31,10 @@ public class SharedMemoryGenerator {
 	 */
 	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
 	private Map<ObjectId, RecorderObjectId> objectIdRecorderMap;
+	
+	public Set<ObjectId> getSharedObjects() {
+		return objectIdRecorderMap.keySet();
+	}
 	
 	public SharedMemoryGenerator(ObjectIdGenerator objIdGenerator) {
 		this.objectIdGenerator = objIdGenerator;

@@ -37,6 +37,16 @@ public class ParseData {
 		return this.listData.stream().map(function).collect(Collectors.<T>toList());
 	}
 	
+	public <T, V> Map<T, V> toMap(Function<ParseData, T> keyGen, Function<ParseData, V> valueGen) {
+		Map<T, V> result = new HashMap<>();
+		for (Pair<ParseData, ParseData> dataPair : toPairList()) {
+			 T key = keyGen.apply(dataPair.first());
+			 V value = valueGen.apply(dataPair.second());
+			 result.put(key, value);
+		}
+		return result;
+	}
+	
 	public List<Pair<ParseData, ParseData>> toPairList() {
 		if (this.listData == null) {
 			return Collections.emptyList();

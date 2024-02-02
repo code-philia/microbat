@@ -9,8 +9,8 @@ import org.junit.Test;
 
 import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser;
+import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.id.ObjectId;
-import microbat.instrumentation.model.id.RecorderObjectId;
 
 public class ParserTest {
 

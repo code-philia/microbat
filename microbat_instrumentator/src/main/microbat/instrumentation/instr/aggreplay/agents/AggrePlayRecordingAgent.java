@@ -26,10 +26,13 @@ import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.instr.SystemClassTransformer;
 import microbat.instrumentation.instr.aggreplay.TimeoutThread;
+import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
 import microbat.instrumentation.instr.aggreplay.record.RecordingInstrumentor;
 import microbat.instrumentation.instr.aggreplay.shared.BasicTransformer;
+import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.RecordingOutput;
 import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser;
+import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.generator.IdGenerator;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.generator.SharedMemoryGenerator;
@@ -39,7 +42,6 @@ import microbat.instrumentation.model.id.MemoryLocation;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.ReadCountVector;
 import microbat.instrumentation.model.id.ReadWriteAccessList;
-import microbat.instrumentation.model.id.RecorderObjectId;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
 import microbat.instrumentation.model.id.ThreadId;
 import microbat.instrumentation.model.storage.FileStorage;
@@ -216,7 +218,9 @@ public class AggrePlayRecordingAgent extends Agent {
 		}
 		
 		try {
-			Map<ObjectId, RecorderObjectId> valueMap = parser.generateObjectIds(parser.parse(fileReader));
+			List<ParseData> data = parser.parse(fileReader);
+			SharedVariableOutput input = new SharedVariableOutput(data.get(0));
+			
 			sharedGenerator.setObjectIdRecorderMap(valueMap);
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -29,6 +29,7 @@ import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.RecordingOutput;
 import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser;
 import microbat.instrumentation.model.ReadWriteAccessListReplay;
+import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.generator.SharedMemoryGenerator;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.model.id.Event;
@@ -49,7 +50,8 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	/**
 	 * Current replay values
 	 */
-	private SharedMemoryGenerator sharedMemGenerator;
+	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
+	private SharedMemoryGenerator sharedMemGenerator = new SharedMemoryGenerator(objectIdGenerator);
 	private ClassFileTransformer transformer;
 	private static AggrePlayReplayAgent attachedAgent;
 	private ReadCountVector rcVector;
@@ -71,6 +73,14 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	private RecordingOutput recordingOutput;
 	private HashMap<ThreadId, Long> recordedThreadIdMap = new HashMap<>();
 	private ReadWriteAccessListReplay rwalGeneratedAccessListReplay;
+	
+	public static void _onObjectCreate(Object object) {
+		attachedAgent.onObjectCreate(object);
+	}
+	
+	private void onObjectCreate(Object object) {
+		objectIdGenerator.createId(object);
+	}
 	
 	public static void _onThreadStart(Thread thread) {
 		attachedAgent.onThreadStart(thread);
@@ -190,6 +200,10 @@ public class AggrePlayReplayAgent extends TraceAgent {
 			for (ThreadId threadId: recordingOutput.threadIds) {
 				recordedThreadIdMap.put(threadId, threadId.getId());
 			}
+			// create the object ids which are shared
+			
+			
+			
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

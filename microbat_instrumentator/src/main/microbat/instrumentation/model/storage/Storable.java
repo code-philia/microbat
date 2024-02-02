@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public abstract class Storable {
 	public static <T> String fromList(List<T> list) {
@@ -30,16 +32,23 @@ public abstract class Storable {
 		return fromList(values);
 	}
 	
+	public static <T> String fromSet(Set<T> set) {
+		return fromList(set.stream().collect(Collectors.toList()));
+	}
+	
 	@SuppressWarnings("unchecked")
 	public static String fromObject(Object object) {
 		if (object instanceof Storable) {
 			return ((Storable) object).getFromStore();
 		}
+		if (object instanceof Set) {
+			return fromSet((Set<Object>) object);
+		}
 		if (object instanceof List) {
-			return fromList((List) object);
+			return fromList((List<Object>) object);
 		}
 		if (object instanceof Map) {
-			return fromMap((Map) object);
+			return fromMap((Map<Object, Object>) object);
 		}
 		return object.toString();
 	}

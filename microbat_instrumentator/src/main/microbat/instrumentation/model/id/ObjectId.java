@@ -11,6 +11,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import microbat.instrumentation.instr.aggreplay.shared.ParseData;
+import microbat.instrumentation.instr.aggreplay.shared.Parser;
+import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.model.storage.Storable;
 import microbat.instrumentation.model.storage.Storage;
@@ -20,10 +23,11 @@ import microbat.instrumentation.model.storage.Storage;
  * @author Gabau
  *
  */
-public class ObjectId extends Storable {
+public class ObjectId extends Storable implements Parser<ObjectId> {
 	public ThreadId threadId;
 	public long objectCounter;
 	private LinkedList<Event> lockAcquisitionEvents = new LinkedList<>();
+	
 	
 	public void lockAcquire() {
 		lockAcquisitionEvents.add(new Event(null));
@@ -35,7 +39,6 @@ public class ObjectId extends Storable {
 			return 0L;
 		}
 	});
-	private Map<String, Set<Long>> fieldAccessMap = new HashMap<>();
 	
 	public ObjectId() {
 		this(true);
@@ -58,48 +61,19 @@ public class ObjectId extends Storable {
 		}
 	}
 	
-	private void assertHashSet(String field) {
-		if (!fieldAccessMap.containsKey(field)) {
-			synchronized (fieldAccessMap) {
-				if (!fieldAccessMap.containsKey(field)) {
-					fieldAccessMap.put(field, new HashSet<Long>());
-				}
-			}
-		}
-	}
-	
+
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
 		return getFromStore();
 	}
 
-	public void addAccess(long threadId, String field) {
-		assertHashSet(field);
-		Set<Long> hSet = fieldAccessMap.get(field);
-		synchronized (hSet) {
-			hSet.add(threadId);
-		}
-	}
-	
-	public Collection<String> getMultiThreadFields() {
-		LinkedList<String> fieldsAccessedLinkedList = new LinkedList<>();
-		for (String fieldString : fieldAccessMap.keySet()) {
-			
-			if (fieldAccessMap.get(fieldString).size() > 1) {
-				fieldsAccessedLinkedList.add(fieldString);
-			}
-		}
-		return fieldsAccessedLinkedList;
-	}
-	
+
+
 	public Map<String, String> store() {
 		HashMap<String, String> fieldMap = new HashMap<String, String>();
 		Field[] fields = getClass().getFields();
 		for (Field f : fields) {
-			if (f.getName().equals("fieldAccessMap")) {
-				continue;
-			}
 			try {
 				Object value = f.get(this);
 				fieldMap.put(f.getName(), fromObject(value));
@@ -108,16 +82,7 @@ public class ObjectId extends Storable {
 				e.printStackTrace();
 			}
 		}
-		Collection<String> concAccessedFieldSet = getMultiThreadFields();
-		StringBuilder fieldStringBuilder = new StringBuilder();
-		for (String fieldname : concAccessedFieldSet) {
-			fieldStringBuilder.append(fieldname);
-			fieldStringBuilder.append(Storage.STORE_DELIM_STRING);
-		}
-		fieldMap.put("fieldAccessMap", fieldStringBuilder.toString());
-		
 		return fieldMap;
-		
 	}
 
 	@Override
@@ -135,6 +100,13 @@ public class ObjectId extends Storable {
 			return false;
 		ObjectId other = (ObjectId) obj;
 		return objectCounter == other.objectCounter && threadId.equals(other.threadId);
+	}
+
+	@Override
+	public ObjectId parse(ParseData data) {
+		this.threadId = SharedDataParser.createThreadId(data.getField("threadId"));
+		this.objectCounter = data.getField("objectCounter").getLongValue();
+		return this;
 	}
 	
 	

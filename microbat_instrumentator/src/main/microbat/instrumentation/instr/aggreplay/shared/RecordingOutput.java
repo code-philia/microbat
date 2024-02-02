@@ -9,6 +9,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import microbat.instrumentation.model.RecorderObjectId;
+import microbat.instrumentation.model.ReplayObjectId;
+import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.ReadCountVector;
 import microbat.instrumentation.model.id.ReadWriteAccessList;
@@ -36,6 +39,7 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 		super();
 		this.readCountVector = readCountVector;
 		this.rwAccessList = rwAccessList;
+		// TODO(Gab): filter out the objects that aren't used.
 		this.objectsHashSet = objectsHashSet;
 		this.sharedMemoryLocations = sharedMemoryLocations;
 		this.threadIds = threadIds;
@@ -43,6 +47,15 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 	
 	public RecordingOutput() {
 		
+	}
+	
+	// TODO(Gab): Grab this from the shared memory locations 
+	public List<ReplayObjectId> getReplaySharedMemoryObjects() {
+		HashSet<ObjectId> objectIds = new HashSet<>();
+		for (SharedMemoryLocation location : sharedMemoryLocations) {
+			
+		}
+		return null;
 	}
 	
 	public static List<ThreadId> parseThreadIds(ParseData parseData) {
@@ -66,6 +79,7 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 				return new ObjectIdParser().parse(parseData);
 			}
 		});
+		
 		this.sharedMemoryLocations = 
 				parseData.toList(new Function<ParseData, SharedMemoryLocation>() {
 

@@ -11,9 +11,12 @@ import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.instr.SystemClassTransformer;
 import microbat.instrumentation.instr.aggreplay.TimeoutThread;
+import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
 import microbat.instrumentation.instr.aggreplay.shared.BasicTransformer;
+import microbat.instrumentation.model.SharedVariableObjectId;
 import microbat.instrumentation.model.generator.IdGenerator;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
+import microbat.instrumentation.model.generator.SharedVariableObjectGenerator;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.model.id.ThreadId;
 import microbat.instrumentation.model.id.Event;
@@ -29,7 +32,7 @@ import microbat.instrumentation.model.storage.Storable;
 public class AggrePlaySharedVariableAgent extends Agent {
 	
 	private ClassFileTransformer transformer = new BasicTransformer();
-	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
+	private SharedVariableObjectGenerator shObjectIdGenerator = new SharedVariableObjectGenerator();
 	private static AggrePlaySharedVariableAgent agent = new AggrePlaySharedVariableAgent();
 	private TimeoutThread timeoutThread = new TimeoutThread();
 	private AgentParams agentParams = null;
@@ -44,12 +47,12 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	 * @param object
 	 */
 	public static void _onObjectCreation(Object object) {
-		agent.objectIdGenerator.createId(object);
+		agent.shObjectIdGenerator.createId(object);
 	}
 	
 	
 	public static void _onObjectAccess(Object object, String field) {
-		agent.objectIdGenerator.getId(object).addAccess(Thread.currentThread().getId(), field);
+		agent.shObjectIdGenerator.getId(object).addAccess(Thread.currentThread().getId(), field);
 	}
 	
 
@@ -74,8 +77,9 @@ public class AggrePlaySharedVariableAgent extends Agent {
 		FileStorage fileStorage = new FileStorage(agentParams.getDumpFile());
 		
 		HashSet<Storable> toStoreHashSet = new HashSet<>();
+		SharedVariableOutput output = new SharedVariableOutput(shObjectIdGenerator);
+		toStoreHashSet.add(output);
 		toStoreHashSet.add(ThreadIdGenerator.threadGenerator);
-		toStoreHashSet.addAll(agent.objectIdGenerator.generateToStoreHashSet());
 		fileStorage.store(toStoreHashSet);
 		
 	}

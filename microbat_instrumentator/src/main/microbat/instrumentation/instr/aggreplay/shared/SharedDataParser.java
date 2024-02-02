@@ -13,8 +13,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.id.ObjectId;
-import microbat.instrumentation.model.id.RecorderObjectId;
 import microbat.instrumentation.model.id.ThreadId;
 import microbat.instrumentation.model.storage.Storable;
 import microbat.instrumentation.model.storage.Storage;
@@ -30,7 +30,7 @@ public class SharedDataParser {
 
 
 
-	public ThreadId createThreadId(ParseData data) {
+	public static ThreadId createThreadId(ParseData data) {
 		int internalHashCode = Integer.parseInt(data.innerDataMap.get("internalHashCode").getValue());
 		return ThreadId.createThread(internalHashCode, data.innerDataMap.get("rootListNode").getValue(),
 				data.innerDataMap.get("threadId").getLongValue());

@@ -1,12 +1,17 @@
-package microbat.instrumentation.model.id;
+package microbat.instrumentation.model;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import microbat.instrumentation.instr.aggreplay.ThreadIdInstrumenter;
+import microbat.instrumentation.model.id.Event;
+import microbat.instrumentation.model.id.ObjectFieldMemoryLocation;
+import microbat.instrumentation.model.id.ObjectId;
+import microbat.instrumentation.model.id.SharedMemoryLocation;
 
 /**
  * Class used for keeping track of the shared memory locations during record and replay.
@@ -20,11 +25,15 @@ public class RecorderObjectId {
 	private final ObjectId objectId;
 	// the memory locations of the shared fields.
 	private ConcurrentHashMap<String, SharedMemoryLocation> fieldMemoryLocations = new ConcurrentHashMap<>();
-	
+	private LinkedList<Event> lockAcquisitionList = new LinkedList<>();
 	public RecorderObjectId(ObjectId objectId) {
 		this.objectId = objectId;
 	}
 	
+	
+	public void acquireLock(Event event) {
+		lockAcquisitionList.add(event);
+	}
 	
 	public void updateSharedFieldSet(Collection<String> fieldSet) {
 		for (String fieldName : fieldSet) {

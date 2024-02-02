@@ -2,8 +2,8 @@ package microbat.instrumentation.instr.aggreplay.shared;
 
 import java.util.HashSet;
 
+import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.id.ObjectId;
-import microbat.instrumentation.model.id.RecorderObjectId;
 import microbat.instrumentation.model.id.ThreadId;
 
 public class ObjectIdParser implements Parser<ObjectId> {

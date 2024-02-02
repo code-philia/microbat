@@ -9,9 +9,19 @@ import microbat.instrumentation.model.storage.Storable;
 
 public class ObjectIdGenerator implements IdGenerator<Object, ObjectId> {
 	private ConcurrentHashMap<Integer, ObjectId> objectIdMap = new ConcurrentHashMap<>();
-	
+	// indicates whether this generator needs to store the map
+	private final boolean storeMap;
 	
 	public ObjectIdGenerator() {
+		this.storeMap = true;
+	}
+	
+	/**
+	 * Indicates whether this object id generator should use the object map
+	 * @param storeMap
+	 */
+	public ObjectIdGenerator(boolean storeMap) {
+		this.storeMap = storeMap;
 	}
 	
 	public Collection<ObjectId> getObjects() {
@@ -21,29 +31,22 @@ public class ObjectIdGenerator implements IdGenerator<Object, ObjectId> {
 	@Override
 	public ObjectId createId(Object object) {
 		int hashCode = System.identityHashCode(object);
-		if (objectIdMap.containsKey(hashCode)) {
+		if (storeMap && objectIdMap.containsKey(hashCode)) {
 			return objectIdMap.get(object);
 		}
+		
 		ObjectId objectId =  new ObjectId();
-		objectIdMap.put(hashCode,objectId);
+		if (storeMap) objectIdMap.put(hashCode,objectId);
 		return objectId;
 	}
 
+	/**
+	 * Only works if 
+	 */
 	@Override
 	public ObjectId getId(Object object) {
 		int hashCode = System.identityHashCode(object);
 		return objectIdMap.get(hashCode);
-	}
-	
-	public HashSet<Storable> generateToStoreHashSet() {
-		HashSet<Storable> valueHashSet = new HashSet<>();
-		for (ObjectId kId : objectIdMap.values()) {
-			if (kId.getMultiThreadFields().size() == 0) {
-				continue;
-			}
-			valueHashSet.add(kId);
-		}
-		return valueHashSet;
 	}
 
 }
