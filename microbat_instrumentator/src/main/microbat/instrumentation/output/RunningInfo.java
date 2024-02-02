@@ -178,6 +178,10 @@ public class RunningInfo {
 		this.traceList = traceList;
 	}
 	
+	public Set<String> getLibraryCalls() {
+		return this.libraryCalls;
+	}
+	
 	public void setLibraryCalls(Set<String> libraryCalls) {
 		this.libraryCalls = libraryCalls;
 	}
