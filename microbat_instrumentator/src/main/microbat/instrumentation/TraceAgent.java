@@ -3,11 +3,12 @@ package microbat.instrumentation;
 import java.lang.instrument.Instrumentation;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import javax.swing.tree.VariableHeightLayoutCache;
 
@@ -21,6 +22,7 @@ import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.sql.Recorder;
+import microbat.sql.TraceRecorder;
 import sav.strategies.dto.AppJavaClassPath;
 
 public class TraceAgent extends Agent {
@@ -63,6 +65,7 @@ public class TraceAgent extends Agent {
 
 		int size = tracers.size();
 		List<Trace> traceList = new ArrayList<>(size);
+		Set<String> libraryCalls = new HashSet<>();
 		for (int i = 0; i < size; i++) {
 
 			ExecutionTracer tracer = (ExecutionTracer) tracers.get(i);
@@ -78,10 +81,12 @@ public class TraceAgent extends Agent {
 			changeRedefinedVarID(trace);
 			matchArrayElementName(trace);
 			traceList.add(trace);
+			libraryCalls.addAll(tracer.getLibraryCalls());
 		}
 
 //		timer.newPoint("Saving trace");
-		Recorder.create(agentParams).store(traceList);
+		TraceRecorder recorder = Recorder.create(agentParams);
+		recorder.store(traceList, libraryCalls);
 //		AgentLogger.debug(timer.getResultString());
 	}
 

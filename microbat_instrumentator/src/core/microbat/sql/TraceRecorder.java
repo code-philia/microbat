@@ -4,6 +4,7 @@
 package microbat.sql;
 
 import java.util.List;
+import java.util.Set;
 
 import org.apache.bcel.generic.InstructionHandle;
 
@@ -21,5 +22,6 @@ import microbat.model.trace.Trace;
  */
 public interface TraceRecorder {
 	void store(List<Trace> trace);
+	void store(List<Trace> trace, Set<String> libraryCalls);
 	void serialize(HashMap<Integer, SerializableLineInfo> instructionTable);
 }

@@ -67,6 +67,8 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	 * indicate whether the execution of the thread should be recorded 
 	 */
 	private TrackingDelegate trackingDelegate;
+	
+	private Set<String> libraryCalls = new HashSet<>();
 
 	public static void setExpectedSteps(int expectedSteps) {
 		if (expectedSteps != AgentConstants.UNSPECIFIED_INT_VALUE) {
@@ -445,6 +447,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				latestNode.setInvokingDetail(invokeDetail);
 			}
 			invokeDetail.initRelevantVars(invokeObj, params, paramTypeSignsCode);
+			libraryCalls.add(methodSig);
 		}
 	}
 
@@ -1415,6 +1418,8 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public String getThreadName() {
 		return this.trace.getThreadName();
 	}
-
-
+	
+	public Set<String> getLibraryCalls() {
+		return libraryCalls;
+	}
 }

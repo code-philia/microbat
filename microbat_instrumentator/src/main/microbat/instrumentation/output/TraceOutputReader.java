@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import microbat.instrumentation.instr.instruction.info.SerializableLineInfo;
 import microbat.model.BreakPoint;
@@ -56,6 +58,15 @@ public class TraceOutputReader extends OutputReader {
 		}
 		
 		return traceList;
+	}
+	
+	public Set<String> readLibraryCalls() throws IOException {
+		Set<String> libraryCalls = new HashSet<>();
+		int libCallsCount = readVarInt();
+		for (int i = 0; i < libCallsCount; i++) {
+			libraryCalls.add(readString());
+		}
+		return libraryCalls;
 	}
 
 	private List<String> readFilterInfo() throws IOException {

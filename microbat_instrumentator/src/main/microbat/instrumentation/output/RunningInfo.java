@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import microbat.instrumentation.instr.instruction.info.SerializableLineInfo;
 import microbat.model.trace.Trace;
@@ -28,6 +29,7 @@ public class RunningInfo {
 	private String programMsg;
 	private int expectedSteps;
 	private int collectedSteps;
+	private Set<String> libraryCalls;
 	
 	public RunningInfo(String programMsg, List<Trace> traceList, int expectedSteps, int collectedSteps) {
 		this.programMsg = programMsg;
@@ -62,7 +64,10 @@ public class RunningInfo {
 				programMsg = header; // for compatible reason with old version. TO BE REMOVED.
 			}
 			List<Trace> traceList = reader.readTrace();
-			return new RunningInfo(programMsg, traceList, expectedSteps, collectedSteps);
+			Set<String> libraryCalls = reader.readLibraryCalls();
+			RunningInfo runningInfo = new RunningInfo(programMsg, traceList, expectedSteps, collectedSteps);
+			runningInfo.setLibraryCalls(libraryCalls);
+			return runningInfo;
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new SavRtException(e);
@@ -119,6 +124,7 @@ public class RunningInfo {
 			outputWriter.writeInt(expectedSteps);
 			outputWriter.writeInt(collectedSteps);
 			outputWriter.writeTrace(traceList);
+			outputWriter.writeLibraryCalls(libraryCalls);
 		} finally {
 			bufferedStream.close();
 			if (outputWriter != null) {
@@ -170,5 +176,9 @@ public class RunningInfo {
 
 	public void setTraceList(List<Trace> traceList) {
 		this.traceList = traceList;
+	}
+	
+	public void setLibraryCalls(Set<String> libraryCalls) {
+		this.libraryCalls = libraryCalls;
 	}
 }

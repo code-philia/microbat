@@ -62,6 +62,13 @@ public class TraceOutputWriter extends OutputWriter {
 		writeStepVariableRelation(trace);
 	}
 	
+	public void writeLibraryCalls(Set<String> libraryCalls) throws IOException {
+		writeVarInt(libraryCalls.size());
+		for (String method : libraryCalls) {
+			writeString(method);
+		}
+	}
+	
 	private void writeFilterInfo(List<String> libClasses, boolean isInclusive) throws IOException {
 		if (libClasses.size() > 300 && (traceExecFolder != null)) {
 			writeBoolean(true); // write file
