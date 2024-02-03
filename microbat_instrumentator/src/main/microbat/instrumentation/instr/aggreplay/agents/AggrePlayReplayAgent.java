@@ -101,7 +101,10 @@ public class AggrePlayReplayAgent extends TraceAgent {
 
 	
 	public static AggrePlayReplayAgent getAttached(CommandLine cmd) {
-		attachedAgent = new AggrePlayReplayAgent(cmd);
+		if (attachedAgent == null) {
+			attachedAgent = new AggrePlayReplayAgent(cmd);
+		}
+		attachedAgent.agentParams = AgentParams.initFrom(cmd);
 		return attachedAgent;
 	}
 	
@@ -195,13 +198,13 @@ public class AggrePlayReplayAgent extends TraceAgent {
 			this.rwal = output.rwAccessList;
 			this.recordingOutput = output;
 			// 
-			rwalGeneratedAccessListReplay = new ReadWriteAccessListReplay(rwal);
+			this.rwalGeneratedAccessListReplay = new ReadWriteAccessListReplay(rwal);
 			// thread id map -> mapping from replicable thread id to previous thread id
 			for (ThreadId threadId: recordingOutput.threadIds) {
-				recordedThreadIdMap.put(threadId, threadId.getId());
+				this.recordedThreadIdMap.put(threadId, threadId.getId());
 			}
 			// create the object ids which are shared
-			sharedMemGenerator.updateSharedVariables(output.getSharedVariables());
+			this.sharedMemGenerator.updateSharedVariables(output.getSharedVariables());
 			
 			
 		} catch (FileNotFoundException e) {
