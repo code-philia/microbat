@@ -12,6 +12,9 @@ public enum AggrePlayMethods {
 	ACQUIRE_LOCK("_acquireLock", "()V"),
 	ON_LOCK_ACQUIRE("_onLockAcquire", "(Ljava/lang/Object)V"),
 	RELEASE_LOCK("_releaseLock", "()V"),
+	/**
+	 * After NEW instruction, before object initialisation
+	 */
 	ON_NEW_OBJECT("_onNewObject", "(Ljava/lang/Object;)V"),
 	BEFORE_OBJECT_READ("_onObjectRead", "(Ljava/lang/Object;Ljava/lang/String;)V"),
 	AFTER_OBJECT_READ("_afterObjectRead", "()V"),

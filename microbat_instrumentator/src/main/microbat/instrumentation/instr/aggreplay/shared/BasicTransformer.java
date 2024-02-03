@@ -9,8 +9,9 @@ import java.security.ProtectionDomain;
 
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.instr.AbstractInstrumenter;
+import microbat.instrumentation.instr.AbstractTransformer;
 
-public class BasicTransformer implements ClassFileTransformer {
+public class BasicTransformer extends AbstractTransformer implements ClassFileTransformer {
 	private AbstractInstrumenter instrumenter = new SharedObjectAccessInstrumentator();
 	
 	public BasicTransformer() {
@@ -22,29 +23,29 @@ public class BasicTransformer implements ClassFileTransformer {
 	}
 
 	@Override
-	public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
-			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+	public byte[] doTransform(ClassLoader loader, String classFName, Class<?> classBeingRedefined,
+			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException  {
 		// TODO Auto-generated method stub
 		/* bootstrap classes */
 
 		if ((loader == null) || (protectionDomain == null)) {
-			if (!GlobalFilterChecker.isTransformable(className, null, true)) {
+			if (!GlobalFilterChecker.isTransformable(classFName, null, true)) {
 				return null;
 			}
 		} 
 
 		if (protectionDomain != null) {
 			String path = protectionDomain.getCodeSource().getLocation().getFile();
-			if (!GlobalFilterChecker.isTransformable(className, path, false)) {
+			if (!GlobalFilterChecker.isTransformable(classFName, path, false)) {
 				return null;
 			}
 		}
 
 		/* do instrumentation */
 		try {
-			byte[] result = instrumenter.instrument(className, classfileBuffer);
+			byte[] result = instrumenter.instrument(classFName, classfileBuffer);
 
-			if (className.equals("Test$DumbThread")) {
+			if (classFName.equals("Test$DumbThread")) {
 				File tocreate = new File("Output.class");
 				try {
 					FileOutputStream fw = new FileOutputStream(tocreate);

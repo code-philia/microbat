@@ -24,6 +24,7 @@ import microbat.instrumentation.AgentFactory;
 import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.CommandLine;
+import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.instr.SystemClassTransformer;
 import microbat.instrumentation.instr.aggreplay.TimeoutThread;
 import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
@@ -50,6 +51,7 @@ import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.instrumentation.runtime.IExecutionTracer;
 import microbat.model.trace.Trace;
 import microbat.sql.Recorder;
+import sav.strategies.dto.AppJavaClassPath;
 
 public class AggrePlayRecordingAgent extends Agent {
 
@@ -205,6 +207,9 @@ public class AggrePlayRecordingAgent extends Agent {
 	
 	@Override
 	public void startup0(long vmStartupTime, long agentPreStartup) {
+		AppJavaClassPath appPath = agentParams.initAppClassPath();
+		GlobalFilterChecker.setup(appPath, agentParams.getIncludesExpression(), agentParams.getExcludesExpression());
+		
 		AggrePlayRecordingAgent.attachAgent(this);
 		SystemClassTransformer.attachThreadId(getInstrumentation());
 //		timeoutThread.start();
@@ -241,7 +246,7 @@ public class AggrePlayRecordingAgent extends Agent {
 	}
 	
 	private List<SharedMemoryLocation> getSharedMemoryLocations() {
-		return null;
+		return sharedGenerator.getAllLocations();
 	}
 
 	@Override

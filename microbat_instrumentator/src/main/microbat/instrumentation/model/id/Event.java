@@ -85,7 +85,7 @@ public class Event extends Storable implements Parser<Event> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(eventId, relevantLocation, threadId);
+		return Objects.hash(eventId, threadId);
 	}
 
 	@Override
@@ -97,7 +97,7 @@ public class Event extends Storable implements Parser<Event> {
 		if (getClass() != obj.getClass())
 			return false;
 		Event other = (Event) obj;
-		return eventId == other.eventId && Objects.equals(relevantLocation, other.relevantLocation)
+		return eventId == other.eventId
 				&& threadId == other.threadId;
 	}
 	

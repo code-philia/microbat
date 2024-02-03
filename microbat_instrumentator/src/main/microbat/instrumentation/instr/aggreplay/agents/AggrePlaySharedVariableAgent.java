@@ -9,6 +9,7 @@ import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.CommandLine;
+import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.instr.SystemClassTransformer;
 import microbat.instrumentation.instr.aggreplay.TimeoutThread;
 import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
@@ -23,6 +24,7 @@ import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.storage.FileStorage;
 import microbat.instrumentation.model.storage.Storable;
+import sav.strategies.dto.AppJavaClassPath;
 
 /**
  * Dynamically determines whether a memory location is shared or not
@@ -64,6 +66,9 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	@Override
 	public void startup0(long vmStartupTime, long agentPreStartup) {
 		System.out.println("Started shared variable detection");
+
+		AppJavaClassPath appPath = agentParams.initAppClassPath();
+		GlobalFilterChecker.setup(appPath, agentParams.getIncludesExpression(), agentParams.getExcludesExpression());
 		SystemClassTransformer.attachThreadId(getInstrumentation());
 	}
 

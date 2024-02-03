@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import microbat.instrumentation.model.SharedVariableObjectId;
 import microbat.instrumentation.model.id.ObjectId;
@@ -23,7 +25,12 @@ public class SharedVariableObjectGenerator implements IdGenerator<Object, Shared
 	}
 	
 	public Collection<SharedVariableObjectId> getSharedVariables() {
-		return sharedVariableMap.values();
+		return sharedVariableMap.values().stream().filter(new Predicate<SharedVariableObjectId>() {
+			@Override
+			public boolean test(SharedVariableObjectId value) {
+				return value.getMultiThreadFields().size() > 0;
+			}
+		}).collect(Collectors.<SharedVariableObjectId>toList());
 	}
 
 	@Override

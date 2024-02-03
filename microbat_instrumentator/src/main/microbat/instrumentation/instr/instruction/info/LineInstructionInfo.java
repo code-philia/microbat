@@ -3,6 +3,7 @@ package microbat.instrumentation.instr.instruction.info;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -43,6 +44,7 @@ public class LineInstructionInfo {
 	protected List<RWInstructionInfo> rwInsructionInfo;
 	protected List<InstructionHandle> invokeInsns;
 	protected List<InstructionHandle> returnInsns;
+	protected List<InstructionHandle> newInsns;
 	private List<InstructionHandle> exitInsns; 
 	private boolean hasExceptionTarget;
 	
@@ -62,6 +64,7 @@ public class LineInstructionInfo {
 		rwInsructionInfo = extractRWInstructions(locId, isAppClass);
 		invokeInsns = extractInvokeInstructions(lineInsns);
 		returnInsns = extractReturnInstructions(lineInsns);
+		newInsns = extractNewInstructions(lineInsns);
 		exitInsns = extractExitInsns(cfg, lineInsns);
 		for (InstructionHandle insn : lineInsns) {
 			if (exceptionTargets.remove(insn)) {
@@ -209,6 +212,10 @@ public class LineInstructionInfo {
 		return invokeInsns;
 	}
 	
+	public List<InstructionHandle> getNewInstructions() {
+		return newInsns;
+	}
+	
 	public static List<InstructionHandle> findCorrespondingInstructions(InstructionList list, LineNumberTable lineTable,
 			int lineNumber) {
 		List<InstructionHandle> correspondingInstructions = new ArrayList<>();
@@ -236,6 +243,17 @@ public class LineInstructionInfo {
 //			}
 		}
 		return invokeInsns;
+	}
+	
+	protected List<InstructionHandle> extractNewInstructions(List<InstructionHandle> lineInsns) {
+		List<InstructionHandle> newInsns = new LinkedList<>();
+		for (InstructionHandle insnHandle : lineInsns) {
+			Instruction insn = insnHandle.getInstruction();
+			if (insn.getOpcode() == Const.NEW) {
+				newInsns.add(insnHandle);
+			}
+		}
+		return newInsns;
 	}
 	
 	protected List<InstructionHandle> extractReturnInstructions(List<InstructionHandle> lineInsns) {

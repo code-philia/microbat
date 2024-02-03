@@ -316,6 +316,14 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 			for (InstructionHandle exitInsHandle : lineInfo.getExitInsns()) {
 				injectCodeTracerExit(exitInsHandle, insnList, constPool, tracerVar, line, classNameVar, methodSigVar, isMainMethod, isEntry);
 			}
+			
+			/**
+			 * Instrument new instructions
+			 */
+			for (InstructionHandle newInsnHandle: lineInfo.getNewInstructions()) {
+				injectOnNewInstructions(insnList, newInsnHandle, constPool);
+			}
+			
 
 			lineInfo.dispose();
 		}
@@ -324,7 +332,14 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 		return true;	
 	}
 
-	
+	protected void injectOnNewInstructions(InstructionList instructionList, 
+			InstructionHandle instructionHandle,
+			ConstantPoolGen cpg) {
+		InstructionList toAppend = new InstructionList();
+		toAppend.append(new DUP());
+		toAppend.append(AggrePlayMethods.ON_NEW_OBJECT.toInvokeStatic(cpg, instrumentationClass));
+		appendInstruction(instructionList, toAppend, instructionHandle);
+	}
 	
 
 }

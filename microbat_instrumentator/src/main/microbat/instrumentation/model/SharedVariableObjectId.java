@@ -67,6 +67,8 @@ public class SharedVariableObjectId extends Storable implements Parser<SharedVar
 	public void addAccess(long threadId, String field) {
 		assertHashSet(field);
 		Set<Long> hSet = fieldAccessMap.get(field);
+		// no need to address this field again
+		if (hSet.size() == 2) return;
 		synchronized (hSet) {
 			hSet.add(threadId);
 			// only do this on the second access

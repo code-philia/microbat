@@ -2,6 +2,7 @@ package microbat.instrumentation.model.generator;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,6 +39,14 @@ public class SharedMemoryGenerator {
 	
 	public Set<ObjectId> getSharedObjects() {
 		return objectIdRecorderMap.keySet();
+	}
+	
+	public List<SharedMemoryLocation> getAllLocations() {
+		List<SharedMemoryLocation> result = new LinkedList<>();
+		for (RecorderObjectId recObjectId : objectIdRecorderMap.values()) {
+			result.addAll(recObjectId.getFieldLocations());
+		}
+		return result;
 	}
 	
 	public SharedMemoryGenerator(ObjectIdGenerator objIdGenerator) {

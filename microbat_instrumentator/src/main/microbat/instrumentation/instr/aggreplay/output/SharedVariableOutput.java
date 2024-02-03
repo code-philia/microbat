@@ -29,7 +29,8 @@ import microbat.instrumentation.model.storage.Storable;
 public class SharedVariableOutput extends Storable implements Parser<SharedVariableOutput> {
 	public Set<SharedVariableObjectId> sharedObjects;
 	public SharedVariableOutput(SharedVariableObjectGenerator objectGen) {
-		sharedObjects = objectGen.getSharedVariables().stream().collect(Collectors.<SharedVariableObjectId>toSet());
+		sharedObjects = objectGen.getSharedVariables()
+				.stream().collect(Collectors.<SharedVariableObjectId>toSet());
 	}
 	public SharedVariableOutput(ParseData data) {
 		parse(data);
@@ -41,6 +42,7 @@ public class SharedVariableOutput extends Storable implements Parser<SharedVaria
 		for (SharedVariableObjectId svoId: sharedObjects) {
 			RecorderObjectId fromSharedVar = new RecorderObjectId(svoId.getObjectId());
 			fromSharedVar.updateSharedFieldSet(svoId.getFieldAccessList());
+			result.put(fromSharedVar.getObjectId(), fromSharedVar);
 		}
 		return result;
 		

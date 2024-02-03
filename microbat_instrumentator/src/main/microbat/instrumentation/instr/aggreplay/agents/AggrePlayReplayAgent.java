@@ -74,7 +74,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	private HashMap<ThreadId, Long> recordedThreadIdMap = new HashMap<>();
 	private ReadWriteAccessListReplay rwalGeneratedAccessListReplay;
 	
-	public static void _onObjectCreate(Object object) {
+	public static void _onNewObject(Object object) {
 		attachedAgent.onObjectCreate(object);
 	}
 	

@@ -34,6 +34,14 @@ public class RecorderObjectId extends Storable {
 		this.objectId = objectId;
 	}
 	
+	/**
+	 * Get the set of shared memory locations that represents this object's fields.
+	 * @return
+	 */
+	public Collection<SharedMemoryLocation> getFieldLocations() {
+		return fieldMemoryLocations.values();
+	}
+	
 	public List<Event> getLockAcquisition() {
 		return this.lockAcquisitionList;
 	}
