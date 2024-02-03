@@ -1,5 +1,6 @@
 package microbat.instrumentation.instr.aggreplay.output;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 
 import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.Parser;
+import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.SharedVariableObjectId;
 import microbat.instrumentation.model.generator.SharedVariableObjectGenerator;
 import microbat.instrumentation.model.id.ObjectId;
@@ -35,6 +37,10 @@ public class SharedVariableOutput extends Storable implements Parser<SharedVaria
 	
 	public Map<ObjectId, RecorderObjectId> getObjects() {
 		Map<ObjectId, RecorderObjectId> result = new HashMap<>();
+		for (SharedVariableObjectId svoId: sharedObjects) {
+			RecorderObjectId fromSharedVar = new RecorderObjectId(svoId.getObjectId());
+			fromSharedVar.updateSharedFieldSet(svoId.getFieldAccessList());
+		}
 		return result;
 		
 	}

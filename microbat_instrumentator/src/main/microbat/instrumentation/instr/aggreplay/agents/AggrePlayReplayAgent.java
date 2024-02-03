@@ -201,7 +201,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 				recordedThreadIdMap.put(threadId, threadId.getId());
 			}
 			// create the object ids which are shared
-			
+			sharedMemGenerator.updateSharedVariables(output.getSharedVariables());
 			
 			
 		} catch (FileNotFoundException e) {

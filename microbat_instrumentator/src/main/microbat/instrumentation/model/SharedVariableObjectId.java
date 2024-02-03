@@ -28,6 +28,14 @@ public class SharedVariableObjectId extends Storable implements Parser<SharedVar
 		
 	}
 	
+	public List<String> getFieldAccessList() {
+		return this.fieldAccessList;
+	}
+	
+	public ObjectId getObjectId() {
+		return this.objectId;
+	}
+	
 	@Override
 	public SharedVariableObjectId parse(ParseData data) {
 		this.objectId = new ObjectId(false);

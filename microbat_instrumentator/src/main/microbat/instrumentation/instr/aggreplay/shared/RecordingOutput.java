@@ -5,13 +5,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
 import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.ReplayObjectId;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
+import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.ReadCountVector;
 import microbat.instrumentation.model.id.ReadWriteAccessList;
@@ -27,36 +30,38 @@ import microbat.instrumentation.model.storage.Storable;
  *
  */
 public class RecordingOutput extends Storable implements Parser<RecordingOutput> {
-	public ReadCountVector readCountVector; // isn't needed
 	public ReadWriteAccessList rwAccessList; // WR_var(e)
 	// used to get the object acquisition
-	public List<ObjectId> objectsHashSet; // L_lock(e)
 	public List<ThreadId> threadIds;
 	public List<SharedMemoryLocation> sharedMemoryLocations; // W_var(e)
-	public RecordingOutput(ReadCountVector readCountVector, ReadWriteAccessList rwAccessList,
+	public Map<ObjectId, List<Event>> lockAcquisitionMap;
+	public SharedVariableOutput sharedVariableOutput;
+	public RecordingOutput(ReadWriteAccessList rwAccessList,
 			List<ThreadId> threadIds,
-			List<ObjectId> objectsHashSet, List<SharedMemoryLocation> sharedMemoryLocations) {
+			List<SharedMemoryLocation> sharedMemoryLocations,
+			Map<ObjectId, List<Event>> lockAcquisitionMap,
+			SharedVariableOutput sharedVariableOutput) {
 		super();
-		this.readCountVector = readCountVector;
 		this.rwAccessList = rwAccessList;
 		// TODO(Gab): filter out the objects that aren't used.
-		this.objectsHashSet = objectsHashSet;
 		this.sharedMemoryLocations = sharedMemoryLocations;
 		this.threadIds = threadIds;
+		this.lockAcquisitionMap = lockAcquisitionMap;
+		this.sharedVariableOutput = sharedVariableOutput;
 	}
 	
 	public RecordingOutput() {
 		
 	}
 	
-	// TODO(Gab): Grab this from the shared memory locations 
-	public List<ReplayObjectId> getReplaySharedMemoryObjects() {
-		HashSet<ObjectId> objectIds = new HashSet<>();
-		for (SharedMemoryLocation location : sharedMemoryLocations) {
-			
-		}
-		return null;
+	public SharedVariableOutput getSharedVariables() {	
+		return sharedVariableOutput;
 	}
+	public Map<ObjectId, List<Event>> getLockAcquisitionMap() {
+		return lockAcquisitionMap;
+	}
+	
+	
 	
 	public static List<ThreadId> parseThreadIds(ParseData parseData) {
 		List<ParseData> values = parseData.toList();
@@ -71,17 +76,30 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 	// TODO: 
 	public RecordingOutput parse(ParseData parseData) {
 		rwAccessList = new ReadWriteAccessList().parse(parseData.getField("rwAccessList"));
-		readCountVector = new ReadCountVector().parse(parseData.getField("readCountVector"));
 		threadIds = parseThreadIds(parseData.getField("threadIds"));
-		objectsHashSet = parseData.toList(new Function<ParseData, ObjectId>() {
+		this.lockAcquisitionMap = parseData.getField("lockAcquisitionMap")
+				.toMap(new Function<ParseData, ObjectId>() {
 			@Override
-			public ObjectId apply(ParseData parseData) {
-				return new ObjectIdParser().parse(parseData);
+			public ObjectId apply(ParseData data) {
+				ObjectId objectId = new ObjectId(false);
+				objectId.parse(data);
+				return objectId;
+			}
+		}, new Function<ParseData, List<Event>>() {
+			@Override
+			public List<Event> apply(ParseData data) {
+				return data.toList(new Function<ParseData, Event>() {
+					@Override
+					public Event apply(ParseData parseData) {
+						Event result = Event.parseEvent(parseData);
+						return result;
+					}
+				});
 			}
 		});
 		
 		this.sharedMemoryLocations = 
-				parseData.toList(new Function<ParseData, SharedMemoryLocation>() {
+				parseData.getField("sharedMemoryLocations").toList(new Function<ParseData, SharedMemoryLocation>() {
 
 					@Override
 					public SharedMemoryLocation apply(ParseData t) {
@@ -89,12 +107,14 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 					}
 					
 				});
+		this.sharedVariableOutput = 
+				new SharedVariableOutput(parseData.getField("sharedVariableOutput"));
 		return this;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(objectsHashSet, readCountVector, rwAccessList, sharedMemoryLocations, threadIds);
+		return Objects.hash(this.lockAcquisitionMap, rwAccessList, sharedMemoryLocations, threadIds);
 	}
 
 	@Override
@@ -106,8 +126,7 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 		if (getClass() != obj.getClass())
 			return false;
 		RecordingOutput other = (RecordingOutput) obj;
-		return Objects.equals(objectsHashSet, other.objectsHashSet)
-				&& Objects.equals(readCountVector, other.readCountVector)
+		return Objects.equals(this.lockAcquisitionMap, other.lockAcquisitionMap)
 				&& Objects.equals(rwAccessList, other.rwAccessList)
 				&& Objects.equals(sharedMemoryLocations, other.sharedMemoryLocations)
 				&& Objects.equals(threadIds, other.threadIds);

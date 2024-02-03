@@ -1,8 +1,11 @@
 package microbat.instrumentation.model;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,14 +15,15 @@ import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectFieldMemoryLocation;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
+import microbat.instrumentation.model.storage.Storable;
 
 /**
  * Class used for keeping track of the shared memory locations during record and replay.
- * Serves a different purpose compared to ObjectId
+ * Serves a different purpose compared to ObjectId.
  * @author Gabau
  *
  */
-public class RecorderObjectId {
+public class RecorderObjectId extends Storable {
 
 	//  the fields of this object that are shared.
 	private final ObjectId objectId;
@@ -30,7 +34,19 @@ public class RecorderObjectId {
 		this.objectId = objectId;
 	}
 	
+	public List<Event> getLockAcquisition() {
+		return this.lockAcquisitionList;
+	}
 	
+	@Override
+	protected Map<String, String> store() {
+		Map<String, String> result = new HashMap<>();
+		result.put("fieldMemoryLocations", fromObject(fieldMemoryLocations));
+		result.put("lockAcquisitionList", fromObject(lockAcquisitionList));
+		result.put("objectId", fromObject(objectId));
+		return result;
+	}
+
 	public void acquireLock(Event event) {
 		lockAcquisitionList.add(event);
 	}

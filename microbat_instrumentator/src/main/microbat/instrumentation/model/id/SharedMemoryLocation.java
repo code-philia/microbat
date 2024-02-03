@@ -34,7 +34,6 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	 * Uses a map to prevent need for synchronisation
 	 */
 	public final Map<Long, LinkedList<Pair<Event, Event>>> threadExListMap = new HashMap<>();
-	
 	private final LinkedList<Pair<Event, Event>> wrList = new LinkedList<>();
 	
 	// write event list used during recording

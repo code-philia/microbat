@@ -10,7 +10,7 @@ import org.apache.bcel.generic.INVOKESTATIC;
  */
 public enum AggrePlayMethods {
 	ACQUIRE_LOCK("_acquireLock", "()V"),
-	ON_LOCK_ACQUIRE("_onLock_Acquire", "(Ljava/lang/Object)V"),
+	ON_LOCK_ACQUIRE("_onLockAcquire", "(Ljava/lang/Object)V"),
 	RELEASE_LOCK("_releaseLock", "()V"),
 	ON_NEW_OBJECT("_onNewObject", "(Ljava/lang/Object;)V"),
 	BEFORE_OBJECT_READ("_onObjectRead", "(Ljava/lang/Object;Ljava/lang/String;)V"),

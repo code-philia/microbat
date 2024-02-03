@@ -10,10 +10,14 @@ import java.util.List;
 
 import org.junit.Test;
 
+import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
 import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.RecordingOutput;
 import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser;
 import microbat.instrumentation.instr.aggreplay.shared.parser.MemoryLocationParser;
+import microbat.instrumentation.model.generator.ObjectIdGenerator;
+import microbat.instrumentation.model.generator.SharedMemoryGenerator;
+import microbat.instrumentation.model.generator.SharedVariableObjectGenerator;
 import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.MemoryLocation;
 import microbat.instrumentation.model.id.ObjectFieldMemoryLocation;
@@ -66,11 +70,12 @@ public class RecordingOutputTest {
 		toTest.add(b);
 		
 		
-		RecordingOutput output = new RecordingOutput(new ReadCountVector(), 
+		RecordingOutput output = new RecordingOutput( 
 				new ReadWriteAccessList(), 
 				toTest, 
-				Collections.<ObjectId>emptyList(), 
-				Collections.<SharedMemoryLocation>emptyList());
+				Collections.<SharedMemoryLocation>emptyList(), 
+				Collections.<ObjectId, List<Event>>emptyMap(),
+				new SharedVariableOutput(new SharedVariableObjectGenerator()));
 		testRecordingOutputParsing(output);
 		
 	}

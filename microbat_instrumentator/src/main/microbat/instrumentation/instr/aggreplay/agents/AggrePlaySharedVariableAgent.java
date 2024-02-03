@@ -34,12 +34,16 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	private ClassFileTransformer transformer = new BasicTransformer();
 	private SharedVariableObjectGenerator shObjectIdGenerator = new SharedVariableObjectGenerator();
 	private static AggrePlaySharedVariableAgent agent = new AggrePlaySharedVariableAgent();
-	private TimeoutThread timeoutThread = new TimeoutThread();
 	private AgentParams agentParams = null;
 	
 	public static AggrePlaySharedVariableAgent getAgent(CommandLine cmd) {
 		agent.agentParams = AgentParams.initFrom(cmd);
 		return agent;
+	}
+	
+	// TODO(Gab): mark lock objects as shared
+	public static void _onLockAcquire(Object object) {
+
 	}
 	
 	/**
@@ -61,8 +65,6 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	public void startup0(long vmStartupTime, long agentPreStartup) {
 		System.out.println("Started shared variable detection");
 		SystemClassTransformer.attachThreadId(getInstrumentation());
-//		agent.timeoutThread.setDaemon(true);
-//		agent.timeoutThread.start();
 	}
 
 	@Override
@@ -83,7 +85,7 @@ public class AggrePlaySharedVariableAgent extends Agent {
 		fileStorage.store(toStoreHashSet);
 		
 	}
-
+	
 	@Override
 	public void startTest(String junitClass, String junitMethod) {
 		// TODO Auto-generated method stub

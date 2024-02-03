@@ -120,10 +120,12 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 		return classGen.getJavaClass().getBytes();
 	}
 	
-	protected void instrumentMonitorEnter(ConstantPoolGen constPool,
-			InstructionList instructionList,
+	protected void instrumentMonitorEnter(ConstantPoolGen constPool, InstructionList instructionList,
 			InstructionHandle handle) {
-		
+		InstructionList beforeInstructionList = new InstructionList();
+		InstructionList afterInstructionList = new InstructionList();
+		beforeInstructionList.append(new DUP());
+		afterInstructionList.append(createInvokeStatic(constPool, agentClass, AggrePlayMethods.ON_LOCK_ACQUIRE));
 	}
 
 	protected void instrumentPutField(ConstantPoolGen constPool, final INVOKESTATIC onObjectWriteInvoke, InstructionList iList,

@@ -1,12 +1,16 @@
 package microbat.instrumentation.model.generator;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.NotImplementedException;
 
+import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
 import microbat.instrumentation.model.RecorderObjectId;
+import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
 
@@ -40,12 +44,30 @@ public class SharedMemoryGenerator {
 		this.objectIdGenerator = objIdGenerator;
 	}
 	
-	public void setObjectIdRecorderMap(Map<ObjectId, RecorderObjectId> map) {
+	public void updateSharedVariables(SharedVariableOutput sharedVar) {
+		setObjectIdRecorderMap(sharedVar.getObjects());
+	}
+	
+	private void setObjectIdRecorderMap(Map<ObjectId, RecorderObjectId> map) {
 		this.objectIdRecorderMap = map;
 	}
 	
 	public void init() {
 		
+	}
+	
+	public RecorderObjectId ofObject(Object object) {
+		ObjectId objectId = objectIdGenerator.getId(object);
+		RecorderObjectId result = null;
+		synchronized (this.objectIdRecorderMap) {
+			if (!this.objectIdRecorderMap.containsKey(objectId)) {
+				result = new RecorderObjectId(objectId);
+				this.objectIdRecorderMap.put(objectId, result);
+			} else {
+				result = this.objectIdRecorderMap.get(objectId);
+			}
+		}
+		return result;
 	}
 	
 	public boolean isSharedObject(Object object, String field) {
@@ -61,6 +83,14 @@ public class SharedMemoryGenerator {
 		RecorderObjectId value = objectIdRecorderMap.get(objectId);
 		if (value == null) return null;
 		return value.getField(fieldName);
+	}
+	
+	public Map<ObjectId, List<Event>> getLockAcquisitionMap() {
+		Map<ObjectId, List<Event>> resultList = new HashMap<>();
+		for (RecorderObjectId objectId : this.objectIdRecorderMap.values()) {
+			resultList.put(objectId.getObjectId(), objectId.getLockAcquisition());
+		}
+		return resultList;
 	}
 	
 	public SharedMemoryLocation ofStaticField(String className, String fieldName) {

@@ -57,10 +57,13 @@ public class AggrePlayRecordingAgent extends Agent {
 	private HashSet<MemoryLocation> sharedMemoryLocations = new HashSet<>();
 	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
 	private SharedMemoryGenerator sharedGenerator = new SharedMemoryGenerator(objectIdGenerator);
-	private TimeoutThread timeoutThread = new TimeoutThread();
 	private ReadCountVector rcVector = new ReadCountVector();
 	private ReadWriteAccessList rwal = new ReadWriteAccessList();
 	private ClassFileTransformer transformer = new BasicTransformer(new RecordingInstrumentor());
+	/**
+	 * This is passed into the next agent
+	 */
+	private SharedVariableOutput sharedVariableOutput;
 
 	public static final Semaphore LOCK_OBJECT = new Semaphore(1);
 	private AgentParams agentParams;
@@ -107,8 +110,8 @@ public class AggrePlayRecordingAgent extends Agent {
 	// TODO: to call after monitorenter
 	// use locking objects -> we keep track of the lock per object
 	public static void _onLockAcquire(Object lockObject) {
-		ObjectId lockObjectOther = attachedAgent.objectIdGenerator.getId(lockObject);
-		lockObjectOther.lockAcquire();
+		RecorderObjectId recorderObjectId = attachedAgent.sharedGenerator.ofObject(lockObject);
+		recorderObjectId.acquireLock(new Event(null));
 	}
 	
 	
@@ -219,9 +222,8 @@ public class AggrePlayRecordingAgent extends Agent {
 		
 		try {
 			List<ParseData> data = parser.parse(fileReader);
-			SharedVariableOutput input = new SharedVariableOutput(data.get(0));
-			
-			sharedGenerator.setObjectIdRecorderMap(valueMap);
+			sharedVariableOutput = new SharedVariableOutput(data.get(0));
+			sharedGenerator.updateSharedVariables(sharedVariableOutput);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -249,7 +251,10 @@ public class AggrePlayRecordingAgent extends Agent {
 		List<ThreadId> threadIds = ThreadIdGenerator.threadGenerator.getThreadIds();
 		List<ObjectId> objectIds = getObjectIds();
 		List<SharedMemoryLocation> sharedMemoryLocations = getSharedMemoryLocations();
-		RecordingOutput output = new RecordingOutput(rcVector, rwal, threadIds, objectIds, sharedMemoryLocations);
+		RecordingOutput output = new RecordingOutput(rwal, threadIds, 
+				sharedMemoryLocations,
+				this.sharedGenerator.getLockAcquisitionMap(),
+				this.sharedVariableOutput);
 		List<Storable> values = new LinkedList<>();
 		values.add(output);
 		fileStorage.store(values);
