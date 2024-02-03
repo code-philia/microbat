@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 
 import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
 import microbat.instrumentation.model.RecorderObjectId;
-import microbat.instrumentation.model.ReplayObjectId;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectId;
