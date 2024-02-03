@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -17,8 +18,8 @@ import microbat.instrumentation.model.storage.Storage;
 
 public class SharedVariableObjectId extends Storable implements Parser<SharedVariableObjectId> {
 	private ObjectId objectId;
-	private Map<String, Set<Long>> fieldAccessMap;
-	private List<String> fieldAccessList;
+	private Map<String, Set<Long>> fieldAccessMap = new HashMap<>();
+	private List<String> fieldAccessList = new LinkedList<>();
 	
 	public SharedVariableObjectId(ObjectId objectId) {
 		this.objectId = objectId;
@@ -36,6 +37,9 @@ public class SharedVariableObjectId extends Storable implements Parser<SharedVar
 		return this.objectId;
 	}
 	
+	/**
+	 * The stored data only includes the field access list, no need for the map.
+	 */
 	@Override
 	public SharedVariableObjectId parse(ParseData data) {
 		this.objectId = new ObjectId(false);
@@ -65,29 +69,44 @@ public class SharedVariableObjectId extends Storable implements Parser<SharedVar
 		Set<Long> hSet = fieldAccessMap.get(field);
 		synchronized (hSet) {
 			hSet.add(threadId);
+			// only do this on the second access
+			if (hSet.size() == 2) {
+				fieldAccessList.add(field);
+			}
 		}
 	}
 	
 	public List<String> getMultiThreadFields() {
-		LinkedList<String> fieldsAccessedLinkedList = new LinkedList<>();
-		for (String fieldString : fieldAccessMap.keySet()) {
-			
-			if (fieldAccessMap.get(fieldString).size() > 1) {
-				fieldsAccessedLinkedList.add(fieldString);
-			}
-		}
-		return fieldsAccessedLinkedList;
+		return fieldAccessList;
 	}
 
 
 	@Override
 	protected Map<String, String> store() {
 		Map<String, String> fieldMap = new HashMap<>();
-		fieldMap.put("fieldAccessMap", Storable.fromList(getMultiThreadFields()));
+		fieldMap.put("fieldAccessList", Storable.fromList(getMultiThreadFields()));
 		fieldMap.put("objectId", fromObject(objectId));
 		return fieldMap;
 	}
-	
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(fieldAccessList, objectId);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SharedVariableObjectId other = (SharedVariableObjectId) obj;
+		return Objects.equals(fieldAccessList, other.fieldAccessList) && Objects.equals(objectId, other.objectId);
+	}
+
+
 	
 	
 }

@@ -3,6 +3,7 @@ package microbat.instrumentation.instr.aggreplay.output;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -59,5 +60,22 @@ public class SharedVariableOutput extends Storable implements Parser<SharedVaria
 		return this;
 		
 	}
+	@Override
+	public int hashCode() {
+		return Objects.hash(sharedObjects);
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SharedVariableOutput other = (SharedVariableOutput) obj;
+		return Objects.equals(sharedObjects, other.sharedObjects);
+	}
 
+	
+	
 }

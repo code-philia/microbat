@@ -81,7 +81,6 @@ public class AggrePlaySharedVariableAgent extends Agent {
 		HashSet<Storable> toStoreHashSet = new HashSet<>();
 		SharedVariableOutput output = new SharedVariableOutput(shObjectIdGenerator);
 		toStoreHashSet.add(output);
-		toStoreHashSet.add(ThreadIdGenerator.threadGenerator);
 		fileStorage.store(toStoreHashSet);
 		
 	}
