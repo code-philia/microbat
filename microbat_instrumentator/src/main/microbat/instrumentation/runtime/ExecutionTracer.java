@@ -1,5 +1,6 @@
 package microbat.instrumentation.runtime;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -24,6 +25,7 @@ import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.filter.GlobalFilterChecker;
+import microbat.instrumentation.utils.LoadClassUtils;
 import microbat.model.BreakPoint;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
@@ -447,7 +449,19 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				latestNode.setInvokingDetail(invokeDetail);
 			}
 			invokeDetail.initRelevantVars(invokeObj, params, paramTypeSignsCode);
-			libraryCalls.add(methodSig);
+//			libraryCalls.add(methodSig);
+
+			try {
+				String className = methodSig.split("#")[0];
+				Set<String> methodSignatures = new HashSet<String>();
+				methodSignatures.add(methodSig);
+				Map<String, Set<String>> relevantMethods = LoadClassUtils.getRelevantMethods(className, methodSignatures);
+				for (String key : relevantMethods.keySet()) {
+					libraryCalls.addAll(relevantMethods.get(key));
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
