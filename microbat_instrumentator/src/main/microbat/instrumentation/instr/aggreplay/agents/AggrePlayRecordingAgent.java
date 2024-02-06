@@ -127,6 +127,7 @@ public class AggrePlayRecordingAgent extends Agent {
 	 * @return
 	 */
 	private boolean isShared(Object object, String fieldName) {
+		if (object == null) return false;
 		return sharedGenerator.isSharedObject(object, fieldName);
 	}
 	
@@ -158,10 +159,8 @@ public class AggrePlayRecordingAgent extends Agent {
 
 	private static void onWrite(SharedMemoryLocation smLocation) {
 		Event writeEvent = new Event(smLocation);
-		synchronized (attachedAgent) {
-			attachedAgent.updateReadVectors(writeEvent);
-			smLocation.write(writeEvent);
-		}
+		attachedAgent.updateReadVectors(writeEvent);
+		smLocation.write(writeEvent);
 	}
 	
 
@@ -183,7 +182,9 @@ public class AggrePlayRecordingAgent extends Agent {
 		Event readEvent = new Event(smLocation);
 		attachedAgent.lr.set(readEvent);
 		rcVector.increment(Thread.currentThread().getId(), smLocation.getLocation());
+		_acquireLock();
 		Event lastWrite = smLocation.getLastWrite();
+		_releaseLock();
 		attachedAgent.lw.set(lastWrite);
 		attachedAgent.wasShared = true;
 	}
@@ -196,7 +197,7 @@ public class AggrePlayRecordingAgent extends Agent {
 		if (!attachedAgent.wasShared) return;
 		Event lw = attachedAgent.lw.get();
 		Event lr = attachedAgent.lr.get();
-		lr.getLocation().appendExList(lw, lr);;
+		lr.getLocation().appendExList(lw, lr);
 	}
 	
 	private void updateReadVectors(Event event) {

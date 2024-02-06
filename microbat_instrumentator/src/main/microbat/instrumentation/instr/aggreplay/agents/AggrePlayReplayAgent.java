@@ -133,8 +133,9 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		// consider a better alternative
 		Event readEvent = new Event(sharedMemLocation, previousThreadId);
 		lastEventLocal.set(readEvent);
-		while (!sharedMemLocation.isSameAsLastWrite()) {
+		if (!sharedMemLocation.isSameAsLastWrite(readEvent)) {
 			Thread.yield();
+			lastEventLocal.set(null);
 		}
 	}
 	public static void _onObjectRead(Object object, String field) {
@@ -153,10 +154,14 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		long p_tid = getPreviousThreadId();
 		SharedMemoryLocation shm = sharedMemGenerator.ofField(object, field);
 		Event writeEvent = new Event(shm, getPreviousThreadId());
-		rcVector.updateReadVectors(shm.getLocation(), p_tid);
+		synchronized (rcVector) {
+			rcVector.updateReadVectors(shm.getLocation(), p_tid);
+		}
 		
-		while (!shm.isSameAsPrevRunWrite(writeEvent) || !checkReads(p_tid)) {
+		if (!shm.isSameAsPrevRunWrite(writeEvent) || !checkReads(p_tid)) {
 			Thread.yield();
+			lastEventLocal.set(null);
+			return;
 		}
 		lastEventLocal.set(writeEvent);
 		
@@ -167,7 +172,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	}
 	
 	public boolean checkReads(long threadId) {
-		return rwalGeneratedAccessListReplay.checkRead(rcVector, threadId, threadIdMap);
+		return rwalGeneratedAccessListReplay.checkRead(rcVector, threadId);
 	}
 	
 	private void afterObjectWrite() {
@@ -185,12 +190,12 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	
 	private void afterObjectRead() {
 		if (lastEventLocal.get() == null) return;
-		long t = Thread.currentThread().getId();
+		long t = getPreviousThreadId();
 		SharedMemoryLocation mLocation = lastEventLocal.get().getLocation();
 		// TODO(Gab): can this run in parallel?
 		synchronized (mLocation) {
 			rcVector.increment(t, lastEventLocal.get().getLocation().getLocation());	
-			mLocation.popRecordedLastWR();;
+			mLocation.popRecordedLastWR();
 		}
 	}
 	

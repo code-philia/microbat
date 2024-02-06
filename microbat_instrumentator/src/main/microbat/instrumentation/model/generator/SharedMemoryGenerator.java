@@ -81,6 +81,7 @@ public class SharedMemoryGenerator {
 	}
 	
 	public boolean isSharedObject(Object object, String field) {
+		if (object == null) return false;
 		return ofField(object, field) != null;
 	}
 	

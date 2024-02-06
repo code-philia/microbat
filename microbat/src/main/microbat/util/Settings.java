@@ -7,6 +7,8 @@ import java.util.Stack;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
+import com.google.common.base.Optional;
+
 import microbat.Activator;
 import microbat.handler.CheckingState;
 import microbat.model.UserInterestedVariables;
@@ -18,6 +20,12 @@ public class Settings {
 	public static String projectName;
 	public static String launchClass;
 	public static String testMethod;
+	
+	/**
+	 * Used to indicate the dump file used for record and replay.
+	 * If the dump file is not provided, a temp file is used.
+	 */
+	public static Optional<String> concurrentDumpFile = Optional.absent();
 	
 	public static boolean isRecordSnapshot;
 	public static boolean isApplyAdvancedInspector;

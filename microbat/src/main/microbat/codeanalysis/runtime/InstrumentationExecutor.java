@@ -211,10 +211,13 @@ public class InstrumentationExecutor {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// TODO: use data base preferences
 		FileTraceReader fileTraceReader = new FileTraceReader();
 		RunningInfo result = fileTraceReader.read(null, outputFile);
 		return result;
+	}
+	
+	public void interrupt() {
+		agentRunner.stopRunning();
 	}
 	
 	public PreCheckInformation runPrecheck(String dumpFile, int stepLimit) {

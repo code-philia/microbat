@@ -3,8 +3,10 @@ package microbat.instrumentation.model;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -45,17 +47,16 @@ public class ReadWriteAccessListReplay {
 	 * @param threadIdMap The thread id map from current thread id to previous
 	 * @return
 	 */
-	public boolean checkRead(ReadCountVector currentVector,
-			long threadId,
-			Map<Long, Long> threadIdMap) {
+	public synchronized boolean checkRead(ReadCountVector currentVector,
+			long threadId) {
 		
 		Map<MemoryLocation, Map<Long, Integer>> threadMap = currentVector.getRCVector(threadId);
 		for (Map.Entry<MemoryLocation, Map<Long, Integer>> entry : threadMap.entrySet()) {
-			Map<Long, Integer> reference = entry.getValue();
-			Map<Long, Integer> current = generatedMap.getOrDefault(threadId, 
+			Map<Long, Integer> currentRc = entry.getValue();
+			Map<Long, Integer> referenceMap = generatedMap.getOrDefault(threadId, 
 					Collections.<MemoryLocation, Map<Long, Integer>>emptyMap())
 					.getOrDefault(entry.getValue(), new HashMap<Long, Integer>());
-			if (!compareMaps(reference, current, threadIdMap)) {
+			if (!compareMaps(currentRc, referenceMap)) {
 				return false;
 			}
 		}
@@ -63,20 +64,24 @@ public class ReadWriteAccessListReplay {
 		return true;
 	}
 	
+	
 	/**
 	 * Checks that none of the current RC vectors is less than the reference RC vector
 	 * 
-	 * @param reference The referfence RC vector
+	 * @param reference The reference RC vector
 	 * @param current The current RC vector
 	 * @param threadIdMap The mapping from current thread id's to previous id's
 	 * @return
 	 */
-	private boolean compareMaps(Map<Long, Integer> reference, 
-			Map<Long, Integer> current, 
-			Map<Long, Long> threadIdMap) {
+	private boolean compareMaps(Map<Long, Integer> current, 
+			Map<Long, Integer> reference) {
+		// all the threads in reference must be in current,
+		// the vice versa may not be true.
+		if (!current.keySet().containsAll(reference.keySet())) {
+			return false;
+		}
 		for (Map.Entry<Long, Integer> entry : current.entrySet()) {
-			long previousThreadId = threadIdMap.get(entry.getKey());
-			if (entry.getValue() < reference.get(previousThreadId)) {
+			if (entry.getValue() < reference.getOrDefault(entry.getKey(), 0)) {
 				return false;
 			}
 		}

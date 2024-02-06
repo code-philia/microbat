@@ -42,6 +42,10 @@ public class TraceAgentRunner extends AgentVmRunner {
 	
 	private List<Trace> traces;
 
+	public void stopRunning() {
+		super.stop();
+	}
+	
 	public TraceAgentRunner(String agentJar, VMConfiguration vmConfig) {
 		super(agentJar, AgentConstants.AGENT_OPTION_SEPARATOR, AgentConstants.AGENT_PARAMS_SEPARATOR);
 		this.setConfig(vmConfig);
