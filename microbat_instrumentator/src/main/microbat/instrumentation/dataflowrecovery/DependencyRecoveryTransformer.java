@@ -4,14 +4,17 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 
+import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.instr.AbstractTransformer;
+import microbat.instrumentation.instr.TraceTransformer;
 
 /**
  * @author hongshuwang
  */
-public class DependencyRecoveryTransformer extends AbstractTransformer implements ClassFileTransformer {
+public class DependencyRecoveryTransformer extends TraceTransformer {
 
-	public DependencyRecoveryTransformer() {
+	public DependencyRecoveryTransformer(AgentParams agentParams) {
+		super(agentParams);
 	}
 
 	@Override

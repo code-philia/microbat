@@ -26,7 +26,7 @@ import microbat.sql.TraceRecorder;
 import sav.strategies.dto.AppJavaClassPath;
 
 public class TraceAgent extends Agent {
-	private AgentParams agentParams;
+	protected AgentParams agentParams;
 //	private StopTimer timer;
 
 	public TraceAgent(CommandLine cmd) {
