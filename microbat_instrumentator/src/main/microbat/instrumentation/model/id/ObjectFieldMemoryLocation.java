@@ -15,6 +15,10 @@ public class ObjectFieldMemoryLocation extends MemoryLocation {
 		this.objectId = objectId;
 	}
 
+	public final String getField() {
+		return this.fieldName;
+	}
+	
 	@Override
 	public ObjectId getObjectId() {
 		return this.objectId;

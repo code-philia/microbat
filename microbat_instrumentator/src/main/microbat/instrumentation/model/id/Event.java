@@ -34,6 +34,7 @@ public class Event extends Storable implements Parser<Event> {
 	// on write, the location written to
 	// on read, the location read from.
 	private SharedMemoryLocation relevantLocation;
+	
 	public Event(SharedMemoryLocation location) {
 		threadId = Thread.currentThread().getId();
 		eventId = eventCounterLocal.get();
@@ -67,19 +68,19 @@ public class Event extends Storable implements Parser<Event> {
 	@Override
 	protected Map<String, String> store() {
 		Map<String, String> result = new HashMap<>();
-		ThreadId threadId = ThreadIdGenerator.threadGenerator.getId(this.threadId);
 		result.put("threadId", fromObject(this.threadId));
 		result.put("eventId", eventId + "");
-		result.put("relevantLocation", fromObject(this.relevantLocation));
+		// removed -> won't be stored as can lead to recursive problems
+		// solution -> the role of populating the relevant location falls
+		// to the parent shared memory location object.
+		// result.put("relevantLocation", fromObject(this.relevantLocation));
 		return result;
-		
 	}
 
 	@Override
 	public Event parse(ParseData data) {
 		this.threadId = data.getField("threadId").getLongValue();
 		this.eventId = data.getField("eventId").getIntValue();
-		
 		return this;
 	}
 

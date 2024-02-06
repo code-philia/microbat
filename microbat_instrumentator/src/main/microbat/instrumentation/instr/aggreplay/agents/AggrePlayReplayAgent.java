@@ -54,7 +54,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	private SharedMemoryGenerator sharedMemGenerator = new SharedMemoryGenerator(objectIdGenerator);
 	private ClassFileTransformer transformer;
 	private static AggrePlayReplayAgent attachedAgent;
-	private ReadCountVector rcVector;
+	private ReadCountVector rcVector = new ReadCountVector();
 	// null if the last event not was shared
 	ThreadLocal<Event> lastEventLocal = ThreadLocal.withInitial(new Supplier<Event>() {
 		@Override
@@ -87,8 +87,8 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	}
 	
 	private void onThreadStart(Thread thread) {
-		ThreadIdGenerator.threadGenerator.createId(thread);
-		ThreadId tId = ThreadIdGenerator.threadGenerator.getId(thread);
+		threadIdGenerator.createId(thread);
+		ThreadId tId = threadIdGenerator.getId(thread);
 		threadIdMap.put(thread.getId(), recordedThreadIdMap.get(tId));
 	}
 	
@@ -113,7 +113,12 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	 * @return
 	 */
 	private long getPreviousThreadId() {
-		return threadIdMap.get(Thread.currentThread().getId());
+		Long previousThreadID = threadIdMap.get(Thread.currentThread().getId());
+		if (previousThreadID == null) {
+			// this is the root thread.
+			return recordedThreadIdMap.get(threadIdGenerator.getRoot());
+		}
+		return previousThreadID;
 	}
 	
 	private void onObjectRead(Object object, String field) {
@@ -145,10 +150,14 @@ public class AggrePlayReplayAgent extends TraceAgent {
 			lastEventLocal.set(null);
 			return;
 		}
+		long p_tid = getPreviousThreadId();
 		SharedMemoryLocation shm = sharedMemGenerator.ofField(object, field);
 		Event writeEvent = new Event(shm, getPreviousThreadId());
-		rcVector.updateReadVectors(shm.getLocation(), Thread.currentThread().getId());
-		while (shm.isSameAsPrevRunWrite(writeEvent) && checkReads(Thread.currentThread().getId()));
+		rcVector.updateReadVectors(shm.getLocation(), p_tid);
+		
+		while (!shm.isSameAsPrevRunWrite(writeEvent) || !checkReads(p_tid)) {
+			Thread.yield();
+		}
 		lastEventLocal.set(writeEvent);
 		
 	}
@@ -166,7 +175,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 			return;
 		}
 		SharedMemoryLocation mlcation = lastEventLocal.get().getLocation();
-		mlcation.addWriteEvent(lastEventLocal.get());
+		mlcation.addRepWriteEvent(lastEventLocal.get());
 		mlcation.popEvent();
 		
 	}
@@ -181,13 +190,13 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		// TODO(Gab): can this run in parallel?
 		synchronized (mLocation) {
 			rcVector.increment(t, lastEventLocal.get().getLocation().getLocation());	
-			mLocation.popEvent();
+			mLocation.popRecordedLastWR();;
 		}
 	}
 	
 	@Override
 	public void startup0(long vmStartupTime, long agentPreStartup) {
-		SystemClassTransformer.attachThreadId(getInstrumentation());
+		SystemClassTransformer.attachThreadId(getInstrumentation(), this.getClass());
 		File concDumpFile = new File(agentParams.getConcDumpFile());
 		try {
 			FileReader concReader = new FileReader(concDumpFile);
@@ -197,16 +206,11 @@ public class AggrePlayReplayAgent extends TraceAgent {
 			RecordingOutput output = input.parse(result.get(0));
 			this.rwal = output.rwAccessList;
 			this.recordingOutput = output;
-			// 
 			this.rwalGeneratedAccessListReplay = new ReadWriteAccessListReplay(rwal);
-			// thread id map -> mapping from replicable thread id to previous thread id
 			for (ThreadId threadId: recordingOutput.threadIds) {
 				this.recordedThreadIdMap.put(threadId, threadId.getId());
 			}
-			// create the object ids which are shared
-			this.sharedMemGenerator.updateSharedVariables(output.getSharedVariables());
-			
-			
+			this.sharedMemGenerator.init(this.recordingOutput);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

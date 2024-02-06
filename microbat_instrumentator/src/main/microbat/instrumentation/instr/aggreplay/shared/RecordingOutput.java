@@ -1,5 +1,6 @@
 package microbat.instrumentation.instr.aggreplay.shared;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,8 +13,10 @@ import java.util.stream.Collectors;
 
 import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
 import microbat.instrumentation.model.RecorderObjectId;
+import microbat.instrumentation.model.SharedMemGeneratorInitialiser;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.id.Event;
+import microbat.instrumentation.model.id.ObjectFieldMemoryLocation;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.ReadCountVector;
 import microbat.instrumentation.model.id.ReadWriteAccessList;
@@ -28,7 +31,7 @@ import microbat.instrumentation.model.storage.Storable;
  * @author Gabau
  *
  */
-public class RecordingOutput extends Storable implements Parser<RecordingOutput> {
+public class RecordingOutput extends Storable implements Parser<RecordingOutput>, SharedMemGeneratorInitialiser {
 	public ReadWriteAccessList rwAccessList; // WR_var(e)
 	// used to get the object acquisition
 	public List<ThreadId> threadIds;
@@ -60,6 +63,24 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 		return lockAcquisitionMap;
 	}
 	
+	// used for shared mem locations
+	@Override
+	public Map<ObjectId, RecorderObjectId> getObjects() {
+		Map<ObjectId, RecorderObjectId> result = new HashMap<>();
+		for (SharedMemoryLocation shMemoryLocation : this.sharedMemoryLocations) {
+			if (shMemoryLocation.isSharedObjectMem()) {
+				ObjectId objectId = shMemoryLocation.getLocation().getObjectId();
+				if (!result.containsKey(objectId)) {
+					result.put(objectId, new RecorderObjectId(objectId));
+				}
+				RecorderObjectId toObtainRObjectId = result.get(objectId);
+				ObjectFieldMemoryLocation ofml = (ObjectFieldMemoryLocation) shMemoryLocation.getLocation();
+				toObtainRObjectId.setField(ofml.getField(), shMemoryLocation);
+			}
+		}
+		
+		return result;
+	}
 	
 	
 	public static List<ThreadId> parseThreadIds(ParseData parseData) {

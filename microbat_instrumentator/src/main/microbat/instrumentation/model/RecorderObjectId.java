@@ -34,6 +34,10 @@ public class RecorderObjectId extends Storable {
 		this.objectId = objectId;
 	}
 	
+	public void setField(String field, SharedMemoryLocation sml) {
+		this.fieldMemoryLocations.put(field, sml);
+	}
+	
 	/**
 	 * Get the set of shared memory locations that represents this object's fields.
 	 * @return

@@ -107,6 +107,7 @@ public class ReadWriteAccessList extends Storable implements Parser<ReadWriteAcc
 				node.parse(nodeData);
 				nodes.add(node);
 			}
+			this.exList.put(value, nodes);
 		}
 		return this;
 	}

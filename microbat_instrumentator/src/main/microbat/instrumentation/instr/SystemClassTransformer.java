@@ -28,6 +28,10 @@ public class SystemClassTransformer {
 		transform(inst, Thread.class, new ThreadIdInstrumenter());
 	}
 	
+	public static void attachThreadId(Instrumentation inst, Class<?> clazz) {
+		transform(inst, Thread.class, new ThreadIdInstrumenter(clazz));
+	}
+	
 	public static void transform(Instrumentation inst, final Class<?> clazz, final AbstractInstrumenter instrumenter) {
 		final String clazzFName = clazz.getName().replace(".", "/");
 		ClassFileTransformer transformer = new AbstractTransformer() {

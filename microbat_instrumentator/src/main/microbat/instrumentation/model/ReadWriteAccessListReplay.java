@@ -1,10 +1,13 @@
 package microbat.instrumentation.model;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Stack;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import microbat.instrumentation.model.id.MemoryLocation;
 import microbat.instrumentation.model.id.ReadCountVector;
@@ -49,7 +52,8 @@ public class ReadWriteAccessListReplay {
 		Map<MemoryLocation, Map<Long, Integer>> threadMap = currentVector.getRCVector(threadId);
 		for (Map.Entry<MemoryLocation, Map<Long, Integer>> entry : threadMap.entrySet()) {
 			Map<Long, Integer> reference = entry.getValue();
-			Map<Long, Integer> current = generatedMap.get(threadId)
+			Map<Long, Integer> current = generatedMap.getOrDefault(threadId, 
+					Collections.<MemoryLocation, Map<Long, Integer>>emptyMap())
 					.getOrDefault(entry.getValue(), new HashMap<Long, Integer>());
 			if (!compareMaps(reference, current, threadIdMap)) {
 				return false;

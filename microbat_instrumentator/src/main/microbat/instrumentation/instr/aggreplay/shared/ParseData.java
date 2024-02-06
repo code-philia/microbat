@@ -37,6 +37,25 @@ public class ParseData {
 		return this.listData.stream().map(function).collect(Collectors.<T>toList());
 	}
 	
+	public <T, V> Pair<T, V> toPair(Function<ParseData, T> keyGen, Function<ParseData, V> valueGen) {
+		T firstValue = null;
+		V secondValue = null;
+		int counter = 0;
+		for (ParseData data : this.listData) {
+			if (counter == 2) {
+				break;
+			}
+			if (counter == 0) {
+				firstValue = keyGen.apply(data);
+			} else {
+				secondValue = valueGen.apply(data);
+			}
+			counter++;
+		}
+		return Pair.of(firstValue, secondValue);
+		
+	}
+	
 	public <T, V> Map<T, V> toMap(Function<ParseData, T> keyGen, Function<ParseData, V> valueGen) {
 		Map<T, V> result = new HashMap<>();
 		for (Pair<ParseData, ParseData> dataPair : toPairList()) {

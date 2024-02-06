@@ -12,25 +12,49 @@ import microbat.instrumentation.model.storage.Storable;
 
 public class ThreadIdGenerator extends Storable implements IdGenerator<Thread, ThreadId> {
 	private ConcurrentHashMap<Long, ThreadId> idMap = new ConcurrentHashMap<>();
-	private ThreadId rootId = new ThreadId(Thread.currentThread().getId());
+	private ThreadId rootId = null;
 	public static final ThreadIdGenerator threadGenerator = new ThreadIdGenerator();
+	
+	public ThreadId getRoot() {
+		if (rootId == null) {
+			createRootId();
+		}
+		return rootId;
+	}
+	
 	public ThreadIdGenerator() {
-		idMap.put(Thread.currentThread().getId(), rootId);
+		
 	}
 	
 	public List<ThreadId> getThreadIds() {
 		return idMap.values().stream().collect(Collectors.<ThreadId>toList());
 	}
 	
+	private synchronized void createRootId() {
+		if (this.rootId != null) return;
+		this.rootId = new ThreadId(Thread.currentThread().getId());
+		idMap.put(Thread.currentThread().getId(), rootId);
+	}
+	
+
 	@Override
 	public ThreadId createId(Thread thread) { 
 		if (idMap.containsKey(thread.getId())) {
 			return idMap.get(thread.getId());
 		}
+		// Only create root when creating child thread.
 		ThreadId currentId = idMap.get(Thread.currentThread().getId());
-		if (currentId == null) {
+		if (currentId == null && rootId == null) {
+			createRootId();
 			currentId = rootId;
 		}
+		if (currentId == null) {
+			// when the current thread is outside of the application context
+			// handle via rootId -> TODO(Gab): return null instead, no reason to keep track
+			// of the shutdown thread.
+			currentId = rootId;
+		}
+		
 		ThreadId valueId = currentId.createChildWithThread(thread.getId());
 		idMap.put(thread.getId(), valueId);
 		return valueId;
@@ -42,6 +66,12 @@ public class ThreadIdGenerator extends Storable implements IdGenerator<Thread, T
 	}
 
 	public ThreadId getId(long threadId) {
+		if (idMap.get(threadId) == null) {
+			if (rootId == null) {
+				createRootId();
+			}
+			return rootId;
+		}
 		return idMap.get(threadId);
 	}
 	

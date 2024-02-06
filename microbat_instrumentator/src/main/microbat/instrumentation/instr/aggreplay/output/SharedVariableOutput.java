@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.Parser;
 import microbat.instrumentation.model.RecorderObjectId;
+import microbat.instrumentation.model.SharedMemGeneratorInitialiser;
 import microbat.instrumentation.model.SharedVariableObjectId;
 import microbat.instrumentation.model.generator.SharedVariableObjectGenerator;
 import microbat.instrumentation.model.id.ObjectId;
@@ -26,7 +27,7 @@ import microbat.instrumentation.model.storage.Storable;
  * @author Gabau
  *
  */
-public class SharedVariableOutput extends Storable implements Parser<SharedVariableOutput> {
+public class SharedVariableOutput extends Storable implements Parser<SharedVariableOutput>, SharedMemGeneratorInitialiser {
 	public Set<SharedVariableObjectId> sharedObjects;
 	public SharedVariableOutput(SharedVariableObjectGenerator objectGen) {
 		sharedObjects = objectGen.getSharedVariables()

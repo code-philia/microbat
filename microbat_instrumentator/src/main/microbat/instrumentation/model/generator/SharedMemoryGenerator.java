@@ -11,6 +11,7 @@ import org.apache.commons.lang.NotImplementedException;
 
 import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
 import microbat.instrumentation.model.RecorderObjectId;
+import microbat.instrumentation.model.SharedMemGeneratorInitialiser;
 import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
@@ -53,7 +54,7 @@ public class SharedMemoryGenerator {
 		this.objectIdGenerator = objIdGenerator;
 	}
 	
-	public void updateSharedVariables(SharedVariableOutput sharedVar) {
+	public void init(SharedMemGeneratorInitialiser sharedVar) {
 		setObjectIdRecorderMap(sharedVar.getObjects());
 	}
 	

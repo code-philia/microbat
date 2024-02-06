@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import sav.common.core.Pair;
+
 public abstract class Storable {
 	public static <T> String fromList(List<T> list) {
 		StringBuilder values = new StringBuilder();
@@ -32,6 +34,13 @@ public abstract class Storable {
 		return fromList(values);
 	}
 	
+	public static <T, V> String fromPair(Pair<T, V> pair) {
+		LinkedList<Object> objectList = new LinkedList<>();
+		objectList.add(pair.first());
+		objectList.add(pair.second());
+		return fromList(objectList);
+	}
+	
 	public static <T> String fromSet(Set<T> set) {
 		return fromList(set.stream().collect(Collectors.toList()));
 	}
@@ -49,6 +58,9 @@ public abstract class Storable {
 		}
 		if (object instanceof Map) {
 			return fromMap((Map<Object, Object>) object);
+		}
+		if (object instanceof Pair) {
+			return fromPair((Pair<Object, Object>) object);
 		}
 		return object.toString();
 	}

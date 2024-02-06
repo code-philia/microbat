@@ -19,6 +19,7 @@ import org.apache.bcel.generic.LDC;
 import org.apache.bcel.generic.LocalVariableGen;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.PUTFIELD;
+import org.apache.bcel.generic.SWAP;
 import org.apache.bcel.generic.TargetLostException;
 import org.apache.bcel.generic.Type;
 
@@ -150,8 +151,14 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 	@Override
 	protected InstructionList getInjectCodePutField(ConstantPoolGen constPool, LocalVariableGen tracerVar,
 			FieldInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
-		// TODO Auto-generated method stub
-		return super.getInjectCodePutField(constPool, tracerVar, info, classNameVar, methodSigVar);
+		InstructionList result = new InstructionList();
+		result.append(new SWAP()); // val, obj
+		result.append(new DUP()); // val, obj, obj
+		result.append(new LDC(constPool.addString(info.getFieldName()))); // v, o, o, s
+		result.append(AggrePlayMethods.BEFORE_OBJECT_WRITE.toInvokeStatic(constPool, instrumentationClass)); // v, o
+		result.append(new SWAP()); // o, v
+		result.append(super.getInjectCodePutField(constPool, tracerVar, info, classNameVar, methodSigVar));
+		return result;
 	}
 
 	@Override
@@ -159,7 +166,6 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 			FieldInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
 		InstructionList beforeGetFieldInstructionList = new InstructionList();
 		InstructionList afterGetFieldInstructionList = new InstructionList();
-		FieldInstruction instruction = (FieldInstruction) info.getInstruction();
 		// obj
 		beforeGetFieldInstructionList.append(new DUP());
 		// obj, obj
@@ -175,13 +181,9 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 	}
 	
 	
+	
 
-	@Override
-	protected void injectCodeTracerExit(InstructionHandle exitInsHandle, InstructionList insnList,
-			ConstantPoolGen constPool, LocalVariableGen tracerVar, int line, LocalVariableGen classNameVar,
-			LocalVariableGen methodSigVar, boolean isMainMethod, boolean isEntry) {
-		return;
-	}
+	
 
 	private InstructionList afterPutField(PUTFIELD putfield, ConstantPoolGen cpg) {
 		InstructionList result = new InstructionList();

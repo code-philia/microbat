@@ -158,8 +158,10 @@ public class AggrePlayRecordingAgent extends Agent {
 
 	private static void onWrite(SharedMemoryLocation smLocation) {
 		Event writeEvent = new Event(smLocation);
-		attachedAgent.updateReadVectors(writeEvent);
-		smLocation.write(writeEvent);
+		synchronized (attachedAgent) {
+			attachedAgent.updateReadVectors(writeEvent);
+			smLocation.write(writeEvent);
+		}
 	}
 	
 
@@ -228,7 +230,7 @@ public class AggrePlayRecordingAgent extends Agent {
 		try {
 			List<ParseData> data = parser.parse(fileReader);
 			sharedVariableOutput = new SharedVariableOutput(data.get(0));
-			sharedGenerator.updateSharedVariables(sharedVariableOutput);
+			sharedGenerator.init(sharedVariableOutput);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
