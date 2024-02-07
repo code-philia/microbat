@@ -70,7 +70,8 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	 */
 	private TrackingDelegate trackingDelegate;
 	
-	private Set<String> libraryCalls = new HashSet<>();
+	public static boolean isRecordingLibCalls = false;
+	private Map<String, Set<String>> libraryCalls = new HashMap<>();
 
 	public static void setExpectedSteps(int expectedSteps) {
 		if (expectedSteps != AgentConstants.UNSPECIFIED_INT_VALUE) {
@@ -449,19 +450,28 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				latestNode.setInvokingDetail(invokeDetail);
 			}
 			invokeDetail.initRelevantVars(invokeObj, params, paramTypeSignsCode);
-//			libraryCalls.add(methodSig);
-
-			try {
-				String className = methodSig.split("#")[0];
-				Set<String> methodSignatures = new HashSet<String>();
-				methodSignatures.add(methodSig);
-				Map<String, Set<String>> relevantMethods = LoadClassUtils.getRelevantMethods(className, methodSignatures);
-				for (String key : relevantMethods.keySet()) {
-					libraryCalls.addAll(relevantMethods.get(key));
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
+			
+			if (isRecordingLibCalls) {
+				recordLibraryCalls(methodSig);
 			}
+			
+		}
+	}
+	
+	private void recordLibraryCalls(String methodSig) {
+		try {
+			String className = methodSig.split("#")[0];
+			Set<String> methodSignatures = new HashSet<String>();
+			methodSignatures.add(methodSig);
+			Map<String, Set<String>> relevantMethods = LoadClassUtils.getRelevantMethods(className, methodSignatures);
+			for (String key : relevantMethods.keySet()) {
+				if (!libraryCalls.containsKey(key)) {
+					libraryCalls.put(key, new HashSet<String>());
+				}
+				libraryCalls.get(key).addAll(relevantMethods.get(key));
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -1433,7 +1443,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		return this.trace.getThreadName();
 	}
 	
-	public Set<String> getLibraryCalls() {
+	public Map<String, Set<String>> getLibraryCalls() {
 		return libraryCalls;
 	}
 }

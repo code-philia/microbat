@@ -20,6 +20,7 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import microbat.agent.TraceAgentRunner;
 import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.AgentParams.LogType;
+import microbat.instrumentation.dataflowrecovery.DependencyRecoveryInfo;
 import microbat.instrumentation.filter.CodeRangeEntry;
 import microbat.instrumentation.output.RunningInfo;
 import microbat.instrumentation.precheck.PrecheckInfo;
@@ -156,6 +157,8 @@ public class InstrumentationExecutor {
 //			agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
 //			agentRunner.getConfig().setPort(8000);
 			
+			DependencyRecoveryInfo dataFlowInfo = collectLibraryCalls(precheckInfomation);
+			
 			RunningInfo rInfo = execute(precheckInfomation);
 			return rInfo;
 		} catch (SavException e1) {
@@ -217,6 +220,18 @@ public class InstrumentationExecutor {
 			e1.printStackTrace();
 		}
 
+		return null;
+	}
+	
+	public DependencyRecoveryInfo collectLibraryCalls(PreCheckInformation info) {
+		try {
+			agentRunner.addAgentParam(AgentParams.OPT_EXPECTED_STEP, info.getStepNum());
+			agentRunner.recoverDependency(null);
+			return agentRunner.getDependencyRecoveryInfo();
+		} catch (SavException e1) {
+			e1.printStackTrace();
+		}
+		
 		return null;
 	}
 	

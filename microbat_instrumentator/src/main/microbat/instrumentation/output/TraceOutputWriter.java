@@ -62,10 +62,20 @@ public class TraceOutputWriter extends OutputWriter {
 		writeStepVariableRelation(trace);
 	}
 	
-	public void writeLibraryCalls(Set<String> libraryCalls) throws IOException {
-		writeVarInt(libraryCalls.size());
-		for (String method : libraryCalls) {
-			writeString(method);
+	public void writeLibraryCalls(Map<String, Set<String>> libraryCalls) throws IOException {
+		/* calculate number of rows */
+		int size = 0;
+		for (String key : libraryCalls.keySet()) {
+			size++;
+			size += libraryCalls.get(key).size();
+		}
+		writeVarInt(size);
+		
+		for (String className  : libraryCalls.keySet()) {
+			writeString("#" + className);
+			for (String method : libraryCalls.get(className)) {
+				writeString(method);
+			}
 		}
 	}
 	

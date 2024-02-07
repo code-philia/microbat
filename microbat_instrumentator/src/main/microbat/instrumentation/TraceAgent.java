@@ -65,7 +65,6 @@ public class TraceAgent extends Agent {
 
 		int size = tracers.size();
 		List<Trace> traceList = new ArrayList<>(size);
-		Set<String> libraryCalls = new HashSet<>();
 		for (int i = 0; i < size; i++) {
 
 			ExecutionTracer tracer = (ExecutionTracer) tracers.get(i);
@@ -81,12 +80,11 @@ public class TraceAgent extends Agent {
 			changeRedefinedVarID(trace);
 			matchArrayElementName(trace);
 			traceList.add(trace);
-			libraryCalls.addAll(tracer.getLibraryCalls());
 		}
 
 //		timer.newPoint("Saving trace");
 		TraceRecorder recorder = Recorder.create(agentParams);
-		recorder.store(traceList, libraryCalls);
+		recorder.store(traceList);
 //		AgentLogger.debug(timer.getResultString());
 	}
 

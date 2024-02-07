@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentParams;
+import microbat.instrumentation.dataflowrecovery.DependencyRecoveryInfo;
 import microbat.instrumentation.output.RunningInfo;
 import microbat.instrumentation.output.TraceOutputReader;
 import microbat.instrumentation.precheck.PrecheckInfo;
@@ -33,6 +34,8 @@ public class TraceAgentRunner extends AgentVmRunner {
 	private boolean isPrecheckMode = false;
 	private PrecheckInfo precheckInfo;
 
+	private DependencyRecoveryInfo dependencyRecoveryInfo;
+	
 	private RunningInfo runningInfo;
 	private boolean isTestSuccessful = false;
 	private boolean unknownTestResult;
@@ -88,6 +91,47 @@ public class TraceAgentRunner extends AgentVmRunner {
 			throw new SavRtException(e);
 		} finally {
 			addAgentParam(AgentParams.OPT_PRECHECK, "false");
+		}
+		return true;
+	}
+	
+	public boolean recoverDependency(String filePath) throws SavException {
+		isPrecheckMode = false;
+		try {
+			String runId = UUID.randomUUID().toString();
+			StopTimer timer = new StopTimer("Recording library calls");
+			timer.newPoint("Execution");
+			
+			File dumpFile;
+			boolean toDeleteDumpFile = false;
+			if (filePath == null) {
+				dumpFile = File.createTempFile("traceLibCalls", ".info");
+				toDeleteDumpFile = true;
+			} else {
+				dumpFile = FileUtils.getFileCreateIfNotExist(filePath);
+			}
+			
+			String dumpFilePath = dumpFile.getPath();
+			System.out.println("Dependency Recovery dumpfile: " + dumpFilePath);
+			addAgentParam(AgentParams.OPT_DUMP_FILE, String.valueOf(dumpFilePath));
+			addAgentParam(AgentParams.OPT_DEPENDENCY_RECOVERY, "true");
+			addAgentParam(AgentParams.OPT_RUN_ID, runId);
+			super.startAndWaitUntilStop(getConfig()); // Library calls recording
+			
+			System.out.println(timer.getResultString());
+			
+			/* collect result */
+			dependencyRecoveryInfo = DependencyRecoveryInfo.readFromFile(dumpFilePath);
+			
+			if (toDeleteDumpFile) {
+				dumpFile.delete();
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new SavRtException(e);
+		} finally {
+			addAgentParam(AgentParams.OPT_DEPENDENCY_RECOVERY, "false");
 		}
 		return true;
 	}
@@ -308,6 +352,10 @@ public class TraceAgentRunner extends AgentVmRunner {
 			throw new UnsupportedOperationException("TraceAgent has not been run in precheck mode!");
 		}
 		return precheckInfo;
+	}
+	
+	public DependencyRecoveryInfo getDependencyRecoveryInfo() {
+		return dependencyRecoveryInfo;
 	}
 
 	public void setVmConfig(VMConfiguration config) {

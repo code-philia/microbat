@@ -5,6 +5,7 @@ import java.lang.instrument.Instrumentation;
 import microbat.instrumentation.AgentParams.LogType;
 import microbat.instrumentation.cfgcoverage.CoverageAgent;
 import microbat.instrumentation.cfgcoverage.CoverageAgentParams;
+import microbat.instrumentation.dataflowrecovery.DependencyRecoveryAgent;
 import microbat.instrumentation.precheck.PrecheckAgent;
 
 /**
@@ -26,6 +27,9 @@ public class AgentFactory {
 			agent.setInstrumentation(inst);
 		} else if (cmd.getBoolean(AgentParams.OPT_PRECHECK, false)) {
 			agent = new PrecheckAgent(cmd, inst);
+			agent.setInstrumentation(inst);
+		} else if (cmd.getBoolean(AgentParams.OPT_DEPENDENCY_RECOVERY, false)) {
+			agent = new DependencyRecoveryAgent(cmd);
 			agent.setInstrumentation(inst);
 		} else {
 			agent = new TraceAgent(cmd);

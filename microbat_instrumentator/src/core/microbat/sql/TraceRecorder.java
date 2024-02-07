@@ -22,6 +22,5 @@ import microbat.model.trace.Trace;
  */
 public interface TraceRecorder {
 	void store(List<Trace> trace);
-	void store(List<Trace> trace, Set<String> libraryCalls);
 	void serialize(HashMap<Integer, SerializableLineInfo> instructionTable);
 }

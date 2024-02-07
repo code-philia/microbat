@@ -53,24 +53,6 @@ public class FileRecorder implements TraceRecorder {
 	}
 	
 	@Override
-	public void store(List<Trace> traceList, Set<String> libraryCalls) {
-		
-//		Trace trace = traceList.get(0);
-		
-		int collectedSteps = traceList.get(0).getExecutionList().size();
-		int expectedSteps = agentParams.getExpectedSteps();
-		RunningInfo result = new RunningInfo(Agent.getProgramMsg(), traceList, collectedSteps, expectedSteps);
-		result.setLibraryCalls(libraryCalls);
-		try {
-			result.saveToFile(agentParams.getDumpFile(), false);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		AgentLogger.debug(result.toString());
-		
-	}
-	
-	@Override
 	public void serialize(HashMap<Integer, SerializableLineInfo> instructionTable) {
 		try {
 			FileOutputStream fos = new FileOutputStream("C:\\Users\\Siang\\AppData\\Local\\Temp\\serialize.tmp");
