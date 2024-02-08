@@ -142,7 +142,8 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	 * @return
 	 */
 	public boolean isSameAsLastWrite(Event readEvent) {
-		return this.lastWrite.equals(repWrStack.peek().first());
+		return this.lastWrite.equals(repWrStack.peek().first())
+				&& repWrStack.peek().second().equals(readEvent);
 	}
 	
 	public boolean isSameEvent(Event event) {

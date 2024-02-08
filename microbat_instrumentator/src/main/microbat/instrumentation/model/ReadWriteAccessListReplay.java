@@ -55,7 +55,7 @@ public class ReadWriteAccessListReplay {
 			Map<Long, Integer> currentRc = entry.getValue();
 			Map<Long, Integer> referenceMap = generatedMap.getOrDefault(threadId, 
 					Collections.<MemoryLocation, Map<Long, Integer>>emptyMap())
-					.getOrDefault(entry.getValue(), new HashMap<Long, Integer>());
+					.getOrDefault(entry.getKey(), new HashMap<Long, Integer>());
 			if (!compareMaps(currentRc, referenceMap)) {
 				return false;
 			}

@@ -151,6 +151,7 @@ public class AggrePlayRecordingAgent extends Agent {
 	 */
 	public static void _onObjectWrite(Object object, String field) {
 		if (!attachedAgent.isShared(object, field)) {
+			attachedAgent.wasShared = false;
 			return;
 		}
 		SharedMemoryLocation smLocation = attachedAgent.sharedGenerator.ofField(object, field);
@@ -184,7 +185,6 @@ public class AggrePlayRecordingAgent extends Agent {
 		rcVector.increment(Thread.currentThread().getId(), smLocation.getLocation());
 		_acquireLock();
 		Event lastWrite = smLocation.getLastWrite();
-		_releaseLock();
 		attachedAgent.lw.set(lastWrite);
 		attachedAgent.wasShared = true;
 	}
@@ -195,6 +195,7 @@ public class AggrePlayRecordingAgent extends Agent {
 	 */
 	public static void _afterObjectRead() {
 		if (!attachedAgent.wasShared) return;
+		_releaseLock();
 		Event lw = attachedAgent.lw.get();
 		Event lr = attachedAgent.lr.get();
 		lr.getLocation().appendExList(lw, lr);
