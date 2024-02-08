@@ -13,9 +13,6 @@ import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
-import org.apache.bcel.generic.INVOKEINTERFACE;
-import org.apache.bcel.generic.INVOKESTATIC;
-import org.apache.bcel.generic.INVOKEVIRTUAL;
 import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.InvokeInstruction;
@@ -26,7 +23,7 @@ public class LoadClassUtils {
 
 	public LoadClassUtils() {}
 	
-	public static Map<String, Set<String>> getRelevantMethods(String className, Set<String> methodSignatures) throws IOException {
+	public static Map<String, Set<String>> getRelevantMethods(String className, String methodSignature) throws IOException {
 		/*
 		 * load the class
 		 */
@@ -34,7 +31,6 @@ public class LoadClassUtils {
 		if (classGen == null) {
 			return new HashMap<>();
 		}
-		ConstantPoolGen constPool = classGen.getConstantPool();
 		
 		/* 
 		 * get all relevant methods
@@ -43,11 +39,9 @@ public class LoadClassUtils {
 		
 		for (Method method : classGen.getJavaClass().getMethods()) {
 			String methodSig = MicrobatUtils.getMicrobatMethodFullName(className, method);
-			if (methodSignatures.contains(methodSig)) {
-				if (method.isNative() || method.isAbstract() || method.getCode() == null) {
-					continue; // Only instrument methods with code in them!
-				}
+			if (methodSignature.equals(methodSig)) {
 				queue.add(methodSig);
+				break;
 			}
 		}
 		
@@ -65,10 +59,6 @@ public class LoadClassUtils {
 		
 		ClassParser cp = new ClassParser(new java.io.ByteArrayInputStream(bytecode), classFName);
 		JavaClass jc = cp.parse();
-		if (!jc.isClass()) {
-			// could be an interface
-			return null;
-		}
 		return new ClassGen(jc);
 	}
 	
@@ -108,19 +98,22 @@ public class LoadClassUtils {
 					continue;
 				}
 				
+				if (relevantMethods.get(clsName).contains(methodFullName)) {
+					continue;
+				} else {
+					// mark as expanded
+					relevantMethods.get(clsName).add(methodFullName);
+				}
+				
 				if (method.isNative() || method.isAbstract() || method.getCode() == null) {
 					continue; // Only instrument methods with code in them!
 				}
-				
-				// mark as expanded
-				relevantMethods.get(clsName).add(methodFullName);
 				
 				String classFName = clsName.replace('.', '/');
 				MethodGen methodGen = new MethodGen(method, classFName, constPoolGen);
 				InstructionList insnList = methodGen.getInstructionList();
 				for (Instruction i : insnList.getInstructions()) {
-					if (i instanceof INVOKEVIRTUAL || i instanceof INVOKEINTERFACE 
-							|| i instanceof INVOKESTATIC) {
+					if (i instanceof InvokeInstruction) {
 						InvokeInstruction instruction = (InvokeInstruction) i;
 						String invokedClassName = instruction.getClassName(constPoolGen);
 						String invokedMethod = MicrobatUtils.getMicrobatMethodFullName(

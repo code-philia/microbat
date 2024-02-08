@@ -26,6 +26,7 @@ import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.utils.LoadClassUtils;
+import microbat.instrumentation.utils.MicrobatUtils;
 import microbat.model.BreakPoint;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
@@ -461,14 +462,14 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	private void recordLibraryCalls(String methodSig) {
 		try {
 			String className = methodSig.split("#")[0];
-			Set<String> methodSignatures = new HashSet<String>();
-			methodSignatures.add(methodSig);
-			Map<String, Set<String>> relevantMethods = LoadClassUtils.getRelevantMethods(className, methodSignatures);
+			String methodSignature = className + "#" + methodSig.split("#")[1].replace(";", ":");
+			Map<String, Set<String>> relevantMethods = LoadClassUtils.getRelevantMethods(className, methodSignature);
 			for (String key : relevantMethods.keySet()) {
-				if (!libraryCalls.containsKey(key)) {
+				Set<String> methods = relevantMethods.get(key);
+				if (!libraryCalls.containsKey(key) && !methods.isEmpty()) {
 					libraryCalls.put(key, new HashSet<String>());
 				}
-				libraryCalls.get(key).addAll(relevantMethods.get(key));
+				libraryCalls.get(key).addAll(methods);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
