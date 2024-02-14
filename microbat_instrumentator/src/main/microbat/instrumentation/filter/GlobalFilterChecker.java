@@ -2,10 +2,13 @@ package microbat.instrumentation.filter;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import microbat.instrumentation.dataflowrecovery.DependencyRecoveryInfo;
 import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.model.trace.Trace;
 import sav.common.core.utils.StringUtils;
@@ -23,6 +26,8 @@ public class GlobalFilterChecker {
 	
 	private List<String> includedLibraryClasses = new ArrayList<>();
 	private List<String> excludedLibraryClasses = new ArrayList<>();
+	
+	private Map<String, Set<String>> includedLibraryMethods = new HashMap<>();
 	
 	public static GlobalFilterChecker getInstance() {
 		return checker;
@@ -170,6 +175,12 @@ public class GlobalFilterChecker {
 
 	public static void setup(AppJavaClassPath appPath, String includesExpression, String exludesExpression) {
 		checker.startup(appPath, includesExpression, exludesExpression);
+	}
+	
+	public static void setup(AppJavaClassPath appPath, String includesExpression, String excludesExpression, String libraryCallsFilePath) {
+		checker.startup(appPath, includesExpression, excludesExpression);
+		DependencyRecoveryInfo info = DependencyRecoveryInfo.readFromFile(libraryCallsFilePath);
+		checker.includedLibraryMethods = info.libraryCalls;
 	}
 
 	public static void addFilterInfo(Trace trace) {

@@ -30,6 +30,7 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_LAUNCH_CLASS = "launch_class";
 	public static final String OPT_JAVA_HOME = "java_home";
 	public static final String OPT_DUMP_FILE = "dump_file_path";
+	public static final String OPT_LIB_CALLS_FILE = "lib_calls_file_path";
 	public static final String OPT_TCP_PORT = "tcp_port";
 	public static final String OPT_INCLUDES = "includes";
 	public static final String OPT_EXCLUDES = "excludes";
@@ -52,6 +53,7 @@ public class AgentParams extends CommonParams {
 	private String launchClass;
 	private int tcpPort = -1;
 	private String dumpFile;
+	private String libCallsFile;
 	private int variableLayer;
 	/* format: java.lang.*;java.util.ArrayList;java.util.*\;java.util.Arrays*        */
 	private String includesExpression;
@@ -88,6 +90,7 @@ public class AgentParams extends CommonParams {
 		
 		tcpPort = cmd.getInt(OPT_TCP_PORT, -1);
 		dumpFile = cmd.getString(OPT_DUMP_FILE);
+		libCallsFile = cmd.getString(OPT_LIB_CALLS_FILE);
 		includesExpression = getFilterExpression(cmd, OPT_INCLUDES_FILE, OPT_INCLUDES);
 		excludesExpression = getFilterExpression(cmd, OPT_EXCLUDES_FILE, OPT_EXCLUDES);
 		variableLayer = cmd.getInt(OPT_VARIABLE_LAYER, 2);
@@ -158,6 +161,10 @@ public class AgentParams extends CommonParams {
 
 	public String getDumpFile() {
 		return dumpFile;
+	}
+	
+	public String getLibCallsFile() {
+		return libCallsFile;
 	}
 
 	public String getExcludesExpression() {

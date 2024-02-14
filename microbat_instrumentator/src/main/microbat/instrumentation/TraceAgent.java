@@ -38,7 +38,8 @@ public class TraceAgent extends Agent {
 //		timer.newPoint("Execution");
 		/* init filter */
 		AppJavaClassPath appPath = agentParams.initAppClassPath();
-		GlobalFilterChecker.setup(appPath, agentParams.getIncludesExpression(), agentParams.getExcludesExpression());
+		String libCallsPath = agentParams.getLibCallsFile();
+		GlobalFilterChecker.setup(appPath, agentParams.getIncludesExpression(), agentParams.getExcludesExpression(), libCallsPath);
 		ExecutionTracer.appJavaClassPath = appPath;
 		ExecutionTracer.variableLayer = agentParams.getVariableLayer();
 		ExecutionTracer.setStepLimit(agentParams.getStepLimit());

@@ -157,7 +157,7 @@ public class InstrumentationExecutor {
 //			agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
 //			agentRunner.getConfig().setPort(8000);
 			
-			DependencyRecoveryInfo dataFlowInfo = collectLibraryCalls(precheckInfomation);
+			collectLibraryCalls(precheckInfomation);
 			
 			RunningInfo rInfo = execute(precheckInfomation);
 			return rInfo;
@@ -223,16 +223,13 @@ public class InstrumentationExecutor {
 		return null;
 	}
 	
-	public DependencyRecoveryInfo collectLibraryCalls(PreCheckInformation info) {
+	public void collectLibraryCalls(PreCheckInformation info) {
 		try {
 			agentRunner.addAgentParam(AgentParams.OPT_EXPECTED_STEP, info.getStepNum());
 			agentRunner.recoverDependency(null);
-			return agentRunner.getDependencyRecoveryInfo();
 		} catch (SavException e1) {
 			e1.printStackTrace();
 		}
-		
-		return null;
 	}
 	
 //	public List<Trace> execute01 (PreCheckInformation info) {

@@ -103,10 +103,9 @@ public class TraceAgentRunner extends AgentVmRunner {
 			timer.newPoint("Execution");
 			
 			File dumpFile;
-			boolean toDeleteDumpFile = false;
+
 			if (filePath == null) {
 				dumpFile = File.createTempFile("traceLibCalls", ".info");
-				toDeleteDumpFile = true;
 			} else {
 				dumpFile = FileUtils.getFileCreateIfNotExist(filePath);
 			}
@@ -117,15 +116,12 @@ public class TraceAgentRunner extends AgentVmRunner {
 			addAgentParam(AgentParams.OPT_DEPENDENCY_RECOVERY, "true");
 			addAgentParam(AgentParams.OPT_RUN_ID, runId);
 			super.startAndWaitUntilStop(getConfig()); // Library calls recording
+			addAgentParam(AgentParams.OPT_LIB_CALLS_FILE, String.valueOf(dumpFile.getPath()));
 			
 			System.out.println(timer.getResultString());
 			
-			/* collect result */
-			dependencyRecoveryInfo = DependencyRecoveryInfo.readFromFile(dumpFilePath);
-			
-			if (toDeleteDumpFile) {
-				dumpFile.delete();
-			}
+//			/* collect result */
+//			dependencyRecoveryInfo = DependencyRecoveryInfo.readFromFile(dumpFilePath);
 			
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -142,6 +138,7 @@ public class TraceAgentRunner extends AgentVmRunner {
 		StopTimer timer = new StopTimer("Building trace");
 		timer.newPoint("Execution");
 		File dumpFile;
+		File libCallsFile;
 		try {
 			boolean toDeleteDumpFile = false;
 			switch (reader) {
@@ -163,6 +160,10 @@ public class TraceAgentRunner extends AgentVmRunner {
 			updateTestResult(runningInfo.getProgramMsg());
 			if (toDeleteDumpFile) {
 				dumpFile.delete();
+			}
+			libCallsFile = new File(AgentParams.OPT_LIB_CALLS_FILE);
+			if (libCallsFile != null) {
+				libCallsFile.delete();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
