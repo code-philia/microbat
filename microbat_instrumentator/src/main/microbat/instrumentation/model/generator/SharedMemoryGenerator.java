@@ -42,6 +42,7 @@ public class SharedMemoryGenerator {
 		return objectIdRecorderMap.keySet();
 	}
 	
+	
 	public List<SharedMemoryLocation> getAllLocations() {
 		List<SharedMemoryLocation> result = new LinkedList<>();
 		for (RecorderObjectId recObjectId : objectIdRecorderMap.values()) {
@@ -106,6 +107,14 @@ public class SharedMemoryGenerator {
 	
 	public SharedMemoryLocation ofStaticField(String className, String fieldName) {
 		throw new NotImplementedException();
+	}
+	
+	public boolean isSharedStaticField(String className, String fieldName) {
+		return false;
+	}
+	
+	public boolean isSharedArray(Object array, int access) {
+		return false;
 	}
 	
 	public SharedMemoryLocation ofArray(Object array, int index) {

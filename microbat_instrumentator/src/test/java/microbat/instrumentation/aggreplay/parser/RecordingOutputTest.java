@@ -74,8 +74,7 @@ public class RecordingOutputTest {
 				new ReadWriteAccessList(), 
 				toTest, 
 				Collections.<SharedMemoryLocation>emptyList(), 
-				Collections.<ObjectId, List<Event>>emptyMap(),
-				new SharedVariableOutput(new SharedVariableObjectGenerator()));
+				Collections.<ObjectId, List<Event>>emptyMap());
 		testRecordingOutputParsing(output);
 		
 	}

@@ -155,12 +155,12 @@ public class AggrePlayRecordingAgent extends Agent {
 			return;
 		}
 		SharedMemoryLocation smLocation = attachedAgent.sharedGenerator.ofField(object, field);
-		onWrite(smLocation);
+		attachedAgent.onWrite(smLocation);
 	}
 
-	private static void onWrite(SharedMemoryLocation smLocation) {
+	protected void onWrite(SharedMemoryLocation smLocation) {
 		Event writeEvent = new Event(smLocation);
-		attachedAgent.updateReadVectors(writeEvent);
+		this.updateReadVectors(writeEvent);
 		smLocation.write(writeEvent);
 	}
 	
@@ -179,7 +179,7 @@ public class AggrePlayRecordingAgent extends Agent {
 		attachedAgent.onRead(smLocation);
 	}
 	
-	private void onRead(SharedMemoryLocation smLocation) {
+	protected void onRead(SharedMemoryLocation smLocation) {
 		Event readEvent = new Event(smLocation);
 		attachedAgent.lr.set(readEvent);
 		rcVector.increment(Thread.currentThread().getId(), smLocation.getLocation());
@@ -262,8 +262,7 @@ public class AggrePlayRecordingAgent extends Agent {
 		List<SharedMemoryLocation> sharedMemoryLocations = getSharedMemoryLocations();
 		RecordingOutput output = new RecordingOutput(rwal, threadIds, 
 				sharedMemoryLocations,
-				this.sharedGenerator.getLockAcquisitionMap(),
-				this.sharedVariableOutput);
+				this.sharedGenerator.getLockAcquisitionMap());
 		List<Storable> values = new LinkedList<>();
 		values.add(output);
 		fileStorage.store(values);

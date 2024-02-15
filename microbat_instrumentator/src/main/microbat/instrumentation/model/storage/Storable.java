@@ -47,6 +47,9 @@ public abstract class Storable {
 	
 	@SuppressWarnings("unchecked")
 	public static String fromObject(Object object) {
+		if (object == null) {
+			return "null";
+		}
 		if (object instanceof Storable) {
 			return ((Storable) object).getFromStore();
 		}

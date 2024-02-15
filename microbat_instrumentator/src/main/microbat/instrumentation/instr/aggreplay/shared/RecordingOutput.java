@@ -37,27 +37,20 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 	public List<ThreadId> threadIds;
 	public List<SharedMemoryLocation> sharedMemoryLocations; // W_var(e)
 	public Map<ObjectId, List<Event>> lockAcquisitionMap;
-	public SharedVariableOutput sharedVariableOutput;
 	public RecordingOutput(ReadWriteAccessList rwAccessList,
 			List<ThreadId> threadIds,
 			List<SharedMemoryLocation> sharedMemoryLocations,
-			Map<ObjectId, List<Event>> lockAcquisitionMap,
-			SharedVariableOutput sharedVariableOutput) {
+			Map<ObjectId, List<Event>> lockAcquisitionMap) {
 		super();
 		this.rwAccessList = rwAccessList;
 		// TODO(Gab): filter out the objects that aren't used.
 		this.sharedMemoryLocations = sharedMemoryLocations;
 		this.threadIds = threadIds;
 		this.lockAcquisitionMap = lockAcquisitionMap;
-		this.sharedVariableOutput = sharedVariableOutput;
 	}
 	
 	public RecordingOutput() {
 		
-	}
-	
-	public SharedVariableOutput getSharedVariables() {	
-		return sharedVariableOutput;
 	}
 	public Map<ObjectId, List<Event>> getLockAcquisitionMap() {
 		return lockAcquisitionMap;
@@ -75,6 +68,7 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 				}
 				RecorderObjectId toObtainRObjectId = result.get(objectId);
 				ObjectFieldMemoryLocation ofml = (ObjectFieldMemoryLocation) shMemoryLocation.getLocation();
+				shMemoryLocation.generateWRMap();
 				toObtainRObjectId.setField(ofml.getField(), shMemoryLocation);
 			}
 		}
@@ -127,8 +121,6 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 					}
 					
 				});
-		this.sharedVariableOutput = 
-				new SharedVariableOutput(parseData.getField("sharedVariableOutput"));
 		return this;
 	}
 

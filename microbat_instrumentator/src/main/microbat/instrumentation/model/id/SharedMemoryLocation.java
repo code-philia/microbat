@@ -1,6 +1,7 @@
 package microbat.instrumentation.model.id;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -44,9 +45,12 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	// the bottom two are data used for replay
 	// Need to separate these two cause can get quite confusing -> ideally in a separate class
 	// W_var(e)
+	// stack of write events, top is the earliest write
 	private Stack<Event> writeEventStack;
 	private List<Event> repWriteEvent = new LinkedList<>();
+	// stack of lw -> read event
 	private Stack<Pair<Event, Event>> repWrStack = new Stack<>();
+	private Map<Event, HashSet<Event>> repWrMapSetMap = new HashMap<>();
 	
 	
 	protected Stack<Pair<Event, Event>> generateWriteEventStack(LinkedList<Pair<Event, Event>> writeEventList) {
@@ -58,6 +62,25 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 			}
 		});
 		return result;
+	}
+	
+	public boolean canWrite(Event e) {
+		if (lastWrite == null) {
+			return this.writeEventStack.peek().equals(e);
+		}
+		return this.writeEventStack.peek().equals(e) && 
+				this.repWrMapSetMap.get(lastWrite).isEmpty();
+	}
+	
+	public boolean canRead(Event event) {
+		if (lastWrite == null) {
+			return false;
+		}
+		return this.repWrMapSetMap.get(lastWrite).contains(event);
+	}
+	
+	public void read(Event event) {
+		this.repWrMapSetMap.get(lastWrite).remove(event);
 	}
 	
 	@Override
@@ -91,7 +114,6 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	public boolean isSharedObjectMem() {
 		return this.location instanceof ObjectFieldMemoryLocation;
 	}
-	
 	
 
 	/**
@@ -183,6 +205,25 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	@Override
 	public int hashCode() {
 		return Objects.hash(location, threadExListMap, writeEventList);
+	}
+	
+	/**
+	 * Generates the mapping from write event to read events
+	 */
+	public void generateWRMap() {
+		
+		for (Event writeEvent : writeEventList) {
+			if (!this.repWrMapSetMap.containsKey(writeEvent)) {
+				this.repWrMapSetMap.put(writeEvent, new HashSet<Event>());
+			}
+		}
+		for (Pair<Event, Event> events: wrList) {
+//			if (!this.repWrMapSetMap.containsKey(events.first())) {
+//				this.repWrMapSetMap.put(events.first(), new HashSet<Event>());
+//			}
+			this.repWrMapSetMap.get(events.first()).add(events.second());
+		}
+		
 	}
 
 	@Override
