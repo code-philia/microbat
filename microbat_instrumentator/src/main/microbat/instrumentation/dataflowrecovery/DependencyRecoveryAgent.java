@@ -79,8 +79,7 @@ public class DependencyRecoveryAgent extends TraceAgent {
 	@Override
 	public void retransformBootstrapClasses(Instrumentation instrumentation, Class<?>[] retransformableClasses)
 			throws Exception {
-		// TODO Auto-generated method stub
-		
+		// do nothing
 	}
 	
 	private void mergeMaps(Map<String, Set<String>> des, Map<String, Set<String>> src) {

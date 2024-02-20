@@ -34,6 +34,7 @@ public class Trace {
 	private AppJavaClassPath appJavaClassPath;
 	private List<String> includedLibraryClasses;
 	private List<String> excludedLibraryClasses;
+	private Map<String, Set<String>> includedLibraryMethods;
 	private long threadId;
 	private boolean isMain;
 	private String threadName;
@@ -420,6 +421,23 @@ public class Trace {
 
 	public void setExcludedLibraryClasses(List<String> excludedLibraryClasses) {
 		this.excludedLibraryClasses = excludedLibraryClasses;
+	}
+	
+	public Map<String, Set<String>> getIncludedLibraryMethods() {
+		return includedLibraryMethods;
+	}
+	
+	public void setIncludedLibraryMethods(Map<String, Set<String>> includedLibraryMethods) {
+		this.includedLibraryMethods = includedLibraryMethods;
+	}
+	
+	public boolean isAnIncludedLibraryMethod(String methodSignature) {
+		String className = methodSignature.split("#")[0];
+		if (this.includedLibraryMethods.containsKey(className)) {
+			String methodSig = methodSignature.split("%")[0];
+			return this.includedLibraryMethods.get(className).contains(methodSig);
+		}
+		return false;
 	}
 
 	public String getThreadName() {

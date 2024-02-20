@@ -15,5 +15,30 @@ public class DependencyRecoveryTransformer extends TraceTransformer {
 	public DependencyRecoveryTransformer(AgentParams agentParams) {
 		super.instrumenter = new DependencyRecoveryInstrumenter(agentParams);
 	}
+	
+	@Override
+	protected byte[] doTransform(ClassLoader loader, String classFName, Class<?> classBeingRedefined,
+			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+		/* bootstrap classes */
+		if ((loader == null) || (protectionDomain == null)) {
+			if (!GlobalFilterChecker.isTransformable(classFName, null, true)) {
+				return null;
+			}
+		} 
+		if (protectionDomain != null) {
+			String path = protectionDomain.getCodeSource().getLocation().getFile();
+			if (!GlobalFilterChecker.isTransformable(classFName, path, false)) {
+				return null;
+			}
+		}
+		
+		/* do instrumentation */
+		try {
+			return instrumenter.instrument(classFName, classfileBuffer);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
 }

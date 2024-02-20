@@ -84,6 +84,10 @@ public class GlobalFilterChecker {
 	}
 
 	public boolean checkTransformable(String classFName, String path, boolean isBootstrap) {
+		boolean isLibCall = hasIncludedLibraryMethod(getClassName(classFName));
+		if (isLibCall) {
+			return true;
+		}
 		if (!JdkFilter.filter(getClassName(classFName))) {
 			logIncludeExtLib(classFName, true, false);
 			return false;
@@ -172,6 +176,23 @@ public class GlobalFilterChecker {
 	public static boolean isAppClazz(String className) {
 		return checker.checkAppClass(className.replace(".", "/"));
 	}
+	
+	public static boolean hasIncludedLibraryMethod(String className) {
+		return checker.includedLibraryMethods.containsKey(className);
+	}
+	
+	public static Set<String> getClassesWithIncludedMethods() {
+		return checker.includedLibraryMethods.keySet();
+	}
+	
+	public static Set<String> getIncludedMethodsOfClass(String className) {
+		return checker.includedLibraryMethods.get(className);
+	}
+	
+	public static boolean isIncludedLibraryMethod(String className, String methodSignature) {
+		return GlobalFilterChecker.hasIncludedLibraryMethod(className) 
+				&& GlobalFilterChecker.getIncludedMethodsOfClass(className).contains(methodSignature);
+	}
 
 	public static void setup(AppJavaClassPath appPath, String includesExpression, String exludesExpression) {
 		checker.startup(appPath, includesExpression, exludesExpression);
@@ -188,6 +209,7 @@ public class GlobalFilterChecker {
 			GlobalFilterChecker filterChecker = (GlobalFilterChecker) checker;
 			trace.setExcludedLibraryClasses(filterChecker.excludedLibraryClasses);
 			trace.setIncludedLibraryClasses(filterChecker.includedLibraryClasses);
+			trace.setIncludedLibraryMethods(filterChecker.includedLibraryMethods);
 		}
 	}
 	

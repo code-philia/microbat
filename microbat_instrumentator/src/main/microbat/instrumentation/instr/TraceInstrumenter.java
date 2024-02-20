@@ -1,6 +1,5 @@
 package microbat.instrumentation.instr;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -67,7 +66,6 @@ import microbat.instrumentation.instr.instruction.info.SerializableLineInfo;
 import microbat.instrumentation.runtime.IExecutionTracer;
 import microbat.instrumentation.runtime.TraceUtils;
 import microbat.instrumentation.utils.MicrobatUtils;
-import microbat.model.BreakPoint;
 
 public class TraceInstrumenter extends AbstractInstrumenter {
 	protected static final String TRACER_VAR_NAME = "$tracer"; // local var
@@ -94,6 +92,15 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 
 	@Override
 	protected byte[] instrument(String classFName, String className, JavaClass jc) {
+		return instrument(classFName, className, jc, false, null);
+	}
+	
+	@Override
+	protected byte[] instrument(String classFName, String className, JavaClass jc, Set<String> methods) {
+		return instrument(classFName, className, jc, true, methods);
+	}
+	
+	private byte[] instrument(String classFName, String className, JavaClass jc, boolean hasLibraryMethods, Set<String> methods) {
 		ClassGen classGen = new ClassGen(jc);
 		ConstantPoolGen constPool = classGen.getConstantPool();
 		JavaClass newJC = null;
@@ -103,6 +110,12 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 			return null;
 		}
 		for (Method method : jc.getMethods()) {
+			if (hasLibraryMethods) {
+				String methodSignature = MicrobatUtils.getMicrobatMethodFullName(className, method);
+				if (!methods.contains(methodSignature)) {
+					continue;
+				}
+			}
 			if (method.isNative() || method.isAbstract() || method.getCode() == null) {
 				continue; // Only instrument methods with code in them!
 			}

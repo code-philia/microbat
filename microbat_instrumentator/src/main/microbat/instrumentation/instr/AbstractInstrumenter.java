@@ -1,5 +1,7 @@
 package microbat.instrumentation.instr;
 
+import java.util.Set;
+
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.JavaClass;
@@ -47,11 +49,28 @@ public abstract class AbstractInstrumenter {
 		return instrument(classFName, className, jc);
 	}
 	
+	public byte[] instrument(String classFName, byte[] classfileBuffer, Set<String> methods) throws Exception {
+		String className = classFName.replace("/", ".");
+		ClassParser cp = new ClassParser(new java.io.ByteArrayInputStream(classfileBuffer), classFName);
+		JavaClass jc = cp.parse();
+		// First, make sure we have to instrument this class:
+		if (!jc.isClass()) {
+			// could be an interface
+			return null;
+		}
+		
+		return instrument(classFName, className, jc, methods);
+	}
+	
 	protected abstract boolean instrumentMethod(ClassGen classGen, ConstantPoolGen constPool, MethodGen methodGen, Method method,
 			boolean isAppClass, boolean isMainMethod, boolean isEntry);
 	
 	
 	protected abstract byte[] instrument(String classFName, String className, JavaClass jc);
+	
+	protected byte[] instrument(String classFName, String className, JavaClass jc, Set<String> methods) {
+		return instrument(classFName, className, jc);
+	}
 
 	protected LocalVariableGen createLocalVariable(String varName, MethodGen methodGen, ConstantPoolGen constPool) {
 		InstructionList list = methodGen.getInstructionList();

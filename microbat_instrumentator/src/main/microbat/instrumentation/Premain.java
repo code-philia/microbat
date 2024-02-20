@@ -8,8 +8,10 @@ import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.JarFile;
 
+import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.instr.TestRunnerTranformer;
 import microbat.instrumentation.utils.CollectionUtils;
 import microbat.instrumentation.utils.FileUtils;
@@ -33,7 +35,7 @@ public class Premain {
 		CommandLine cmd = CommandLine.parse(agentArgs);
 		AgentFactory.cmd = cmd;
 		
-		Class<?>[] retransformableClasses = getRetransformableClasses(inst);
+//		Class<?>[] retransformableClasses = getRetransformableClasses(inst);
 		
 		debug("start instrumentation...");
 		agentPreStartup = System.currentTimeMillis() - agentPreStartup;
@@ -43,6 +45,8 @@ public class Premain {
 		agent.startup(vmStartupTime, agentPreStartup);
 		inst.addTransformer(agent.getTransformer(), true);
 		inst.addTransformer(new TestRunnerTranformer());
+		
+		Class<?>[] retransformableClasses = getRetransformableClasses(inst);
 		agent.retransformClasses(retransformableClasses);
 		
 		debug("after retransform");
@@ -144,9 +148,11 @@ public class Premain {
 		debug("Collect retransformable classes....");
 		List<Class<?>> candidates = new ArrayList<Class<?>>();
 		Class<?>[] classes = inst.getAllLoadedClasses();
+		Set<String> libraryClasses = GlobalFilterChecker.getClassesWithIncludedMethods();
+
 		for (Class<?> c : classes) {
 			if (inst.isModifiableClass(c) && inst.isRetransformClassesSupported()
-					&& !ClassLoader.class.equals(c)) {
+					&& !ClassLoader.class.equals(c) && libraryClasses.contains(c.getName())) {
 				candidates.add(c);
 			}
 		}

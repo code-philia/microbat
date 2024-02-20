@@ -20,15 +20,42 @@ import org.apache.bcel.generic.MethodGen;
 import org.apache.commons.io.IOUtils;
 
 public class LoadClassUtils {
-
+	private final static String[] SKIPPED_CLASSES = new String[] { "java.lang.Throwable", "org.junit.Assert" };
+	private static Set<String> skippedClasses;
+	
 	public LoadClassUtils() {}
+	
+	private static void setUpSkippedClasses() {
+		if (skippedClasses != null && !skippedClasses.isEmpty()) {
+			return;
+		}
+		skippedClasses = new HashSet<>();
+		for (String className : SKIPPED_CLASSES) {
+			skippedClasses.add(className);
+		}
+	}
+	
+	private static boolean isSkipped(String className) throws IOException {
+		if (skippedClasses == null) {
+			setUpSkippedClasses();
+		}
+		ClassGen classGen = loadClass(className);
+		while (!className.equals("java.lang.Object")) {
+			if (skippedClasses.contains(className)) {
+				return true;
+			}
+			classGen = loadClass(classGen.getSuperclassName());
+			className = classGen.getClassName();
+		}
+		return false;
+	}
 	
 	public static Map<String, Set<String>> getRelevantMethods(String className, String methodSignature) throws IOException {
 		/*
 		 * load the class
 		 */
 		ClassGen classGen = loadClass(className);
-		if (classGen == null) {
+		if (classGen == null || isSkipped(className)) {
 			return new HashMap<>();
 		}
 		
@@ -89,7 +116,7 @@ public class LoadClassUtils {
 			}
 			
 			ClassGen clsGen = loadClass(clsName);
-			if (clsGen == null) {
+			if (clsGen == null || isSkipped(clsName)) {
 				continue;
 			}
 			ConstantPoolGen constPoolGen = clsGen.getConstantPool();
@@ -98,15 +125,15 @@ public class LoadClassUtils {
 					continue;
 				}
 				
+				if (method.isNative() || method.isAbstract() || method.getCode() == null) {
+					continue; // Only instrument methods with code in them!
+				}
+				
 				if (relevantMethods.get(clsName).contains(methodFullName)) {
 					continue;
 				} else {
 					// mark as expanded
 					relevantMethods.get(clsName).add(methodFullName);
-				}
-				
-				if (method.isNative() || method.isAbstract() || method.getCode() == null) {
-					continue; // Only instrument methods with code in them!
 				}
 				
 				String classFName = clsName.replace('.', '/');
