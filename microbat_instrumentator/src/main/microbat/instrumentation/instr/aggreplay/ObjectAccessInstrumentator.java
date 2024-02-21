@@ -2,18 +2,22 @@ package microbat.instrumentation.instr.aggreplay;
 
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
+import org.apache.bcel.generic.ArrayInstruction;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.DUP;
 import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.GETFIELD;
+import org.apache.bcel.generic.GETSTATIC;
 import org.apache.bcel.generic.INVOKESTATIC;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.LDC;
 import org.apache.bcel.generic.MONITORENTER;
 import org.apache.bcel.generic.MethodGen;
+import org.apache.bcel.generic.NEWARRAY;
 import org.apache.bcel.generic.PUTFIELD;
+import org.apache.bcel.generic.PUTSTATIC;
 import org.apache.bcel.generic.SWAP;
 
 import javassist.bytecode.Opcode;
@@ -109,6 +113,24 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 					instrumentMonitorEnter(constPool, iList, handle);
 					continue;
 				}
+				if (handle.getInstruction() instanceof ArrayInstruction) {
+					instrumentArrayAccess(constPool, iList, handle);
+					continue;
+				}
+				if (handle.getInstruction().getOpcode() == Opcode.GETSTATIC) {
+					instrumentGetStaticInstruction(constPool, iList, handle);
+					continue;
+				}
+				if (handle.getInstruction().getOpcode() == Opcode.PUTSTATIC) {
+					instrumentPutStatic(constPool, iList, handle);
+					continue;
+				}
+				if (handle.getInstruction().getOpcode() == Opcode.MULTIANEWARRAY
+						|| handle.getInstruction().getOpcode() == Opcode.NEWARRAY) {
+					instrumentNewArray(constPool, iList, handle);
+					continue;
+				}
+				
 				
 			}
 			
@@ -120,12 +142,56 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 		return classGen.getJavaClass().getBytes();
 	}
 	
+	/**
+	 * Instruments NEWARRAY or MULTIANEWARRAY
+	 * @param cpg
+	 * @param il
+	 * @param il
+	 */
+	protected void instrumentNewArray(ConstantPoolGen cpg, InstructionList il, InstructionHandle ih) { 
+		InstructionList toAppend = new InstructionList();
+		toAppend.append(new DUP()); // arrayRef, arrayRef
+		toAppend.append(AggrePlayMethods.ON_NEW_ARRAY.toInvokeStatic(cpg, agentClass));
+		appendInstruction(il, toAppend, ih);
+	}
+	
+	
+	protected void instrumentPutStatic(ConstantPoolGen cpg, InstructionList il, InstructionHandle ih) {
+		InstructionList beforeInstructionList = new InstructionList();
+		InstructionList afterInstructionList = new InstructionList();
+		
+		PUTSTATIC ps = (PUTSTATIC) ih.getInstruction();
+		
+		// ldc class + field
+		beforeInstructionList.append(new LDC(cpg.addString(ps.getReferenceType(cpg).getSignature())));
+		beforeInstructionList.append(new LDC(cpg.addString(ps.getFieldName(cpg))));
+		beforeInstructionList.append(AggrePlayMethods.BEFORE_STATIC_WRITE.toInvokeStatic(cpg, agentClass));
+		insertInsnHandler(il, beforeInstructionList, ih);
+	}
+	
+	protected void instrumentGetStaticInstruction(ConstantPoolGen cpg, InstructionList il, InstructionHandle ih) {
+		InstructionList beforeInstructionList = new InstructionList();
+		GETFIELD ps = (GETFIELD) ih.getInstruction();
+		// ldc class + field
+		beforeInstructionList.append(new LDC(cpg.addString(ps.getReferenceType(cpg).getSignature())));
+		beforeInstructionList.append(new LDC(cpg.addString(ps.getFieldName(cpg))));
+		beforeInstructionList.append(AggrePlayMethods.BEFORE_STATIC_READ.toInvokeStatic(cpg, agentClass));
+		insertInsnHandler(beforeInstructionList, il, ih);
+	}
+	
+	protected void instrumentArrayAccess(ConstantPoolGen cpg, 
+			InstructionList instructionList, InstructionHandle ih) {
+		
+	}
+	
 	protected void instrumentMonitorEnter(ConstantPoolGen constPool, InstructionList instructionList,
 			InstructionHandle handle) {
 		InstructionList beforeInstructionList = new InstructionList();
 		InstructionList afterInstructionList = new InstructionList();
 		beforeInstructionList.append(new DUP());
 		afterInstructionList.append(createInvokeStatic(constPool, agentClass, AggrePlayMethods.ON_LOCK_ACQUIRE));
+		insertInsnHandler(instructionList, beforeInstructionList, handle);
+		appendInstruction(instructionList, afterInstructionList, handle);
 	}
 
 	protected void instrumentPutField(ConstantPoolGen constPool, final INVOKESTATIC onObjectWriteInvoke, InstructionList iList,

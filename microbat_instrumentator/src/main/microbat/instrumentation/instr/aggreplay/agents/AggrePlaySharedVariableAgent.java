@@ -2,6 +2,7 @@ package microbat.instrumentation.instr.aggreplay.agents;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -17,6 +18,7 @@ import microbat.instrumentation.instr.aggreplay.shared.BasicTransformer;
 import microbat.instrumentation.model.SharedVariableObjectId;
 import microbat.instrumentation.model.generator.IdGenerator;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
+import microbat.instrumentation.model.generator.SharedVariableArrayRef;
 import microbat.instrumentation.model.generator.SharedVariableObjectGenerator;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.model.id.ThreadId;
@@ -24,6 +26,7 @@ import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.storage.FileStorage;
 import microbat.instrumentation.model.storage.Storable;
+import sav.common.core.Pair;
 import sav.strategies.dto.AppJavaClassPath;
 
 /**
@@ -35,6 +38,7 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	
 	private ClassFileTransformer transformer = new BasicTransformer();
 	private SharedVariableObjectGenerator shObjectIdGenerator = new SharedVariableObjectGenerator();
+	private HashMap<Pair<String, String>, HashSet<Long>> staticVarCounter = new HashMap<>();
 	private static AggrePlaySharedVariableAgent agent = new AggrePlaySharedVariableAgent();
 	private AgentParams agentParams = null;
 	
@@ -43,9 +47,22 @@ public class AggrePlaySharedVariableAgent extends Agent {
 		return agent;
 	}
 	
-	// TODO(Gab): mark lock objects as shared
-	public static void _onLockAcquire(Object object) {
+	// TODO(Gab)
+	public static void _onNewArray(Object arrayRef) {
+		agent.shObjectIdGenerator.createArrayId(arrayRef);
+	}
 
+	public static void _onLockAcquire(Object object) {
+	
+	}
+	
+	public static void _onArrayAccess(Object arrayRef, int index) {
+		agent.onArrayAccess(arrayRef, index);
+	}
+	
+	private void onArrayAccess(Object arrayRef, int index) {
+		SharedVariableArrayRef arrayVal = shObjectIdGenerator.getArrayId(arrayRef);
+		arrayVal.addAccess(index, Thread.currentThread().getId());
 	}
 	
 	/**
@@ -59,6 +76,25 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	
 	public static void _onObjectAccess(Object object, String field) {
 		agent.shObjectIdGenerator.getId(object).addAccess(Thread.currentThread().getId(), field);
+	}
+	
+	public static void _onStaticAccess(String className, String fieldName) {
+		agent.onStaticAccess(className, fieldName);
+	}
+	
+	private void onStaticAccess(String className, String fieldName) {
+		Pair<String, String> staticPair = Pair.of(className, fieldName);
+		HashSet<Long> values = this.staticVarCounter.get(staticPair);
+		if (values == null) {
+			synchronized (this.staticVarCounter) {
+				if (!this.staticVarCounter.containsKey(staticPair)) {
+					this.staticVarCounter.put(staticPair, new HashSet<Long>());
+				}
+			}
+		}
+		synchronized (values) {
+			values.add(Thread.currentThread().getId());
+		}
 	}
 	
 

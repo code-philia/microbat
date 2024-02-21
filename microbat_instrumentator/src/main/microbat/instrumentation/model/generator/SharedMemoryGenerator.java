@@ -15,6 +15,7 @@ import microbat.instrumentation.model.SharedMemGeneratorInitialiser;
 import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
+import microbat.instrumentation.model.id.StaticFieldLocation;
 
 /**
  * Used to generate shared memory id's
@@ -37,6 +38,8 @@ public class SharedMemoryGenerator {
 	 */
 	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
 	private Map<ObjectId, RecorderObjectId> objectIdRecorderMap;
+	private Map<StaticFieldLocation, SharedMemoryLocation> staticMemLocationsMap;
+	
 	
 	public Set<ObjectId> getSharedObjects() {
 		return objectIdRecorderMap.keySet();
@@ -57,14 +60,15 @@ public class SharedMemoryGenerator {
 	
 	public void init(SharedMemGeneratorInitialiser sharedVar) {
 		setObjectIdRecorderMap(sharedVar.getObjects());
+		setStaticFields(sharedVar.getStaticFields());
+	}
+	
+	private void setStaticFields(Set<StaticFieldLocation> sfl) {
+		sfl.forEach(field -> this.staticMemLocationsMap.put(field, new SharedMemoryLocation(field)));
 	}
 	
 	private void setObjectIdRecorderMap(Map<ObjectId, RecorderObjectId> map) {
 		this.objectIdRecorderMap = map;
-	}
-	
-	public void init() {
-		
 	}
 	
 	public RecorderObjectId ofObject(Object object) {

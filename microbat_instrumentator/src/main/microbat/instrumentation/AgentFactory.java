@@ -8,6 +8,7 @@ import microbat.instrumentation.cfgcoverage.CoverageAgentParams;
 import microbat.instrumentation.instr.aggreplay.agents.AggrePlayRecordingAgent;
 import microbat.instrumentation.instr.aggreplay.agents.AggrePlayReplayAgent;
 import microbat.instrumentation.instr.aggreplay.agents.AggrePlaySharedVariableAgent;
+import microbat.instrumentation.instr.aggreplay.agents.RNRRecordingAgent;
 import microbat.instrumentation.precheck.PrecheckAgent;
 
 /**
@@ -34,7 +35,7 @@ public class AgentFactory {
 			agent = AggrePlaySharedVariableAgent.getAgent(cmd);
 			agent.setInstrumentation(inst);
 		} else if (cmd.getBoolean(AgentParams.OPT_CONC_RECORD, false)) {
-			agent = AggrePlayRecordingAgent.getAttached(cmd);
+			agent = RNRRecordingAgent.getAttached(cmd);
 			agent.setInstrumentation(inst);
 		} else if (cmd.getBoolean(AgentParams.OPT_CONC_REPLAY, false)) { 
 			agent = AggrePlayReplayAgent.getAttached(cmd);

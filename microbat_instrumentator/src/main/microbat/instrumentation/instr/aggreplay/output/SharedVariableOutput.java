@@ -14,8 +14,10 @@ import microbat.instrumentation.instr.aggreplay.shared.Parser;
 import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.SharedMemGeneratorInitialiser;
 import microbat.instrumentation.model.SharedVariableObjectId;
+import microbat.instrumentation.model.generator.SharedVariableArrayRef;
 import microbat.instrumentation.model.generator.SharedVariableObjectGenerator;
 import microbat.instrumentation.model.id.ObjectId;
+import microbat.instrumentation.model.id.StaticFieldLocation;
 import microbat.instrumentation.model.storage.Storable;
 
 /**
@@ -29,9 +31,13 @@ import microbat.instrumentation.model.storage.Storable;
  */
 public class SharedVariableOutput extends Storable implements Parser<SharedVariableOutput>, SharedMemGeneratorInitialiser {
 	public Set<SharedVariableObjectId> sharedObjects;
+	public Set<SharedVariableArrayRef> sharedArrays;
+	public Set<StaticFieldLocation> sharedStaticFields;
 	public SharedVariableOutput(SharedVariableObjectGenerator objectGen) {
 		sharedObjects = objectGen.getSharedVariables()
 				.stream().collect(Collectors.<SharedVariableObjectId>toSet());
+		sharedArrays = objectGen.getSharedArrays();
+		sharedStaticFields = objectGen.getSharedStaticFields();
 	}
 	public SharedVariableOutput(ParseData data) {
 		parse(data);
@@ -60,8 +66,16 @@ public class SharedVariableOutput extends Storable implements Parser<SharedVaria
 			}
 		});
 		this.sharedObjects = objectIds.stream().collect(Collectors.<SharedVariableObjectId>toSet());
+		this.sharedArrays = data.getField("sharedArrays").toList()
+				.stream()
+				.map(v -> new SharedVariableArrayRef(null).parse(v))
+				.collect(Collectors.toSet());
+		this.sharedStaticFields = data.getField("sharedStaticFields")
+				.toList()
+				.stream()
+				.map(v -> new StaticFieldLocation(data))
+				.collect(Collectors.toSet());
 		return this;
-		
 	}
 	@Override
 	public int hashCode() {
@@ -77,6 +91,14 @@ public class SharedVariableOutput extends Storable implements Parser<SharedVaria
 			return false;
 		SharedVariableOutput other = (SharedVariableOutput) obj;
 		return Objects.equals(sharedObjects, other.sharedObjects);
+	}
+	@Override
+	public Set<SharedVariableArrayRef> getArrayRefs() {
+		return this.sharedArrays;
+	}
+	@Override
+	public Set<StaticFieldLocation> getStaticFields() {
+		return this.sharedStaticFields;
 	}
 
 	

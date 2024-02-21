@@ -45,6 +45,17 @@ public abstract class RNRRecordingAgent extends Agent {
 		}
 	});
 	protected AgentParams agentParams;
+	
+	public static RNRRecordingAgent getAttached(CommandLine cml) {
+		if (recordingAgent != null) {
+			recordingAgent.agentParams = AgentParams.initFrom(cml);
+			return recordingAgent;
+		}
+		recordingAgent = new AggrePlayRecordingRWAgent(cml);
+		return recordingAgent;
+	}
+	
+	
 	protected RNRRecordingAgent(CommandLine cml) {
 		this.agentParams = AgentParams.initFrom(cml);
 	}
@@ -102,6 +113,7 @@ public abstract class RNRRecordingAgent extends Agent {
 	public static void _onLockAcquire(Object object) {
 		recordingAgent.onLockAcquire(object);
 	}
+	
 	
 	protected abstract void onRead(SharedMemoryLocation sml);
 	

@@ -20,4 +20,24 @@ public class SharedObjectAccessInstrumentator extends ObjectAccessInstrumentator
 	public static void _onObjectRead(Object object, String field) {
 		AggrePlaySharedVariableAgent._onObjectAccess(object, field);
 	}
+	
+	public static void _onStaticRead(String className, String fieldName) {
+		AggrePlaySharedVariableAgent._onStaticAccess(className, fieldName);
+	}
+	
+	public static void _onStaticWrite(String className, String fieldName) {
+		AggrePlaySharedVariableAgent._onStaticAccess(className, fieldName);
+	}
+	
+	public static void _onArrayRead(Object arrayRef, int index) {
+		AggrePlaySharedVariableAgent._onArrayAccess(arrayRef, index);
+	}
+	
+	public static void _onArrayWrite(Object arrayRef, int index) {
+		AggrePlaySharedVariableAgent._onArrayAccess(arrayRef, index);
+	}
+	
+	public static void _onNewArray(Object arrayRef) {
+		AggrePlaySharedVariableAgent._onNewArray(arrayRef);
+	}
 }

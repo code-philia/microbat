@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -15,12 +16,14 @@ import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
 import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.SharedMemGeneratorInitialiser;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
+import microbat.instrumentation.model.generator.SharedVariableArrayRef;
 import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectFieldMemoryLocation;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.ReadCountVector;
 import microbat.instrumentation.model.id.ReadWriteAccessList;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
+import microbat.instrumentation.model.id.StaticFieldLocation;
 import microbat.instrumentation.model.id.ThreadId;
 import microbat.instrumentation.model.storage.Storable;
 
@@ -142,6 +145,18 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 				&& Objects.equals(rwAccessList, other.rwAccessList)
 				&& Objects.equals(sharedMemoryLocations, other.sharedMemoryLocations)
 				&& Objects.equals(threadIds, other.threadIds);
+	}
+
+	@Override
+	public Set<SharedVariableArrayRef> getArrayRefs() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Set<StaticFieldLocation> getStaticFields() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }
