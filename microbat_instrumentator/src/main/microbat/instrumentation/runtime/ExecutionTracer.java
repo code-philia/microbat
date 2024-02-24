@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +24,8 @@ import microbat.codeanalysis.bytecode.MethodFinderBySignature;
 import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentLogger;
+import microbat.instrumentation.benchmark.DependencyRules;
+import microbat.instrumentation.benchmark.DependencyRules.Type;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.model.BreakPoint;
 import microbat.model.trace.Trace;
@@ -405,11 +408,21 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		trackingDelegate.untrack();
 		try {
 			hitLine(line, residingClassName, residingMethodSignature);
+			
 			TraceNode latestNode = trace.getLatestNode();
+			
 			if (latestNode != null) {
 				latestNode.addInvokingMethod(methodSig);
 				initInvokingDetail(invokeObj, invokeTypeSign, methodSig, params, paramTypeSignsCode, residingClassName,
 						latestNode);
+				
+				Type t = DependencyRules.getType(methodSig);
+				if (t == Type.IS_WRITTER) {
+					Collection<VarValue> readVars = latestNode.getReadVariables();
+					addRWriteValue(latestNode, readVars.iterator().next(), true);
+				} else if (t == Type.IS_GETTER) {
+					// already in read variables
+				}
 
 				if (methodSig.contains("clone()")) {
 
