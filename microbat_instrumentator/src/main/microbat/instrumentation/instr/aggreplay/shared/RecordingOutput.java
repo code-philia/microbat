@@ -18,6 +18,7 @@ import microbat.instrumentation.model.SharedMemGeneratorInitialiser;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.generator.SharedVariableArrayRef;
 import microbat.instrumentation.model.id.Event;
+import microbat.instrumentation.model.id.MemoryLocation;
 import microbat.instrumentation.model.id.ObjectFieldMemoryLocation;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.ReadCountVector;
@@ -149,14 +150,20 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 
 	@Override
 	public Set<SharedVariableArrayRef> getArrayRefs() {
-		// TODO Auto-generated method stub
-		return null;
+		Set<SharedVariableArrayRef> locations = new HashSet<>();
+		// TODO(Gab): Populate this
+		return locations;
 	}
 
 	@Override
 	public Set<StaticFieldLocation> getStaticFields() {
-		// TODO Auto-generated method stub
-		return null;
+		Set<StaticFieldLocation> locations = new HashSet<>();
+		for (SharedMemoryLocation sml: this.sharedMemoryLocations) {
+			if (sml.getLocation() instanceof StaticFieldLocation) {
+				locations.add((StaticFieldLocation) sml.getLocation());
+			}
+		}
+		return locations;
 	}
 	
 }

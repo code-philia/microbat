@@ -86,7 +86,8 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 			}
 			MethodGen mGen = new MethodGen(method, className, constPool);
 			InstructionList iList =  mGen.getInstructionList();
-			for (InstructionHandle handle: iList) {
+			InstructionHandle[] ihs = iList.getInstructionHandles();
+			for (InstructionHandle handle: ihs) {
 				InstructionList newList = new InstructionList();
 				if (handle.getInstruction().getOpcode() == Opcode.NEW) {
 					newList.append(dup);
@@ -130,8 +131,6 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 					instrumentNewArray(constPool, iList, handle);
 					continue;
 				}
-				
-				
 			}
 			
 			mGen.setMaxLocals();
@@ -171,12 +170,12 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 	
 	protected void instrumentGetStaticInstruction(ConstantPoolGen cpg, InstructionList il, InstructionHandle ih) {
 		InstructionList beforeInstructionList = new InstructionList();
-		GETFIELD ps = (GETFIELD) ih.getInstruction();
+		GETSTATIC ps = (GETSTATIC) ih.getInstruction();
 		// ldc class + field
 		beforeInstructionList.append(new LDC(cpg.addString(ps.getReferenceType(cpg).getSignature())));
 		beforeInstructionList.append(new LDC(cpg.addString(ps.getFieldName(cpg))));
 		beforeInstructionList.append(AggrePlayMethods.BEFORE_STATIC_READ.toInvokeStatic(cpg, agentClass));
-		insertInsnHandler(beforeInstructionList, il, ih);
+		insertInsnHandler(il, beforeInstructionList, ih);
 	}
 	
 	protected void instrumentArrayAccess(ConstantPoolGen cpg, 

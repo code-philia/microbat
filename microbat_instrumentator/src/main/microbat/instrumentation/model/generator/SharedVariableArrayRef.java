@@ -28,6 +28,14 @@ public class SharedVariableArrayRef extends Storable implements Parser<SharedVar
 		}).map(v -> v.getKey()).collect(Collectors.<Integer>toSet());
 	}
 	
+	public ObjectId getObjectId() {
+		return this.objectId;
+	}
+	
+	public HashSet<Integer> getSharedIndexes() {
+		return sharedIndexSet;
+	}
+	
 	@Override
 	protected Map<String, String> store() {
 		Map<String, String> result = new HashMap<>();

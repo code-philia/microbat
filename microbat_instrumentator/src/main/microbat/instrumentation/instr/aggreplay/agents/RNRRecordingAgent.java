@@ -72,9 +72,13 @@ public abstract class RNRRecordingAgent extends Agent {
 		recordingAgent.onObjectWrite(object, field);
 	}
 	
+	
 	public static void _afterObjectWrite() {
 		recordingAgent._afterObjectWriteInner();
 	}
+	
+	
+	
 	
 	private void _afterObjectWriteInner() {
 		if (this.lastEvent.get() == null) {

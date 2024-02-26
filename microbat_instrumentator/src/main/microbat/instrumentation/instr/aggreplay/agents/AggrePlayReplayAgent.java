@@ -144,12 +144,64 @@ public class AggrePlayReplayAgent extends TraceAgent {
 			lastEventLocal.set(null);
 		}
 	}
+	public static void _onStaticRead(String className, String fieldName) {
+		attachedAgent.onStaticRead(className, fieldName);
+	}
+	
+	public static void _onStaticWrite(String className, String fieldName) {
+		attachedAgent.onStaticWrite(className, fieldName);
+	}
+	
+	public static void _onArrayRead(Object arrayRef, int index) {
+		attachedAgent.onArrayRead(arrayRef, index);
+	}
+	
+	public static void _onArrayWrite(Object arrayRef, int index) {
+		attachedAgent.onArrayWrite(arrayRef, index);
+	}
+	
 	public static void _onObjectRead(Object object, String field) {
 		attachedAgent.onObjectRead(object, field);
 	}
 	
 	public static void _onObjectWrite(Object object, String field) {
 		attachedAgent.onObjectWrite(object, field);
+	}
+	
+	protected void onStaticWrite(String className, String fieldName) {
+		if (!sharedMemGenerator.isSharedStaticField(className, fieldName)) {
+			lastEventLocal.set(null);
+			return;
+		}
+		SharedMemoryLocation sml = sharedMemGenerator.ofStaticField(className, fieldName);
+		this.onWrite(getPreviousThreadId(), sml);
+	}
+	
+	protected void onStaticRead(String className, String fieldName) {
+		if (!sharedMemGenerator.isSharedStaticField(className, fieldName)) {
+			lastEventLocal.set(null);
+			return;
+		}
+		SharedMemoryLocation sml = sharedMemGenerator.ofStaticField(className, fieldName);
+		this.onRead(getPreviousThreadId(), sml);
+	}
+	
+	protected void onArrayWrite(Object arrayRef, int index) {
+		if (!sharedMemGenerator.isSharedArray(arrayRef, index)) {
+			lastEventLocal.set(null);
+			return;
+		}
+		SharedMemoryLocation sml = sharedMemGenerator.ofArray(arrayRef, index);
+		this.onWrite(getPreviousThreadId(), sml);
+	}
+	
+	protected void onArrayRead(Object arrayRef, int index) {
+		if (!sharedMemGenerator.isSharedArray(arrayRef, index)) {
+			lastEventLocal.set(null);
+			return;
+		}
+		SharedMemoryLocation sml = sharedMemGenerator.ofArray(arrayRef, index);
+		this.onRead(getPreviousThreadId(), sml);
 	}
 	
 	private void onObjectWrite(Object object, String field) {

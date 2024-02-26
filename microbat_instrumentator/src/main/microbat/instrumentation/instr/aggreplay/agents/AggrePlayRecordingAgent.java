@@ -131,9 +131,48 @@ public class AggrePlayRecordingAgent extends Agent {
 		return sharedGenerator.isSharedObject(object, fieldName);
 	}
 	
+	public static void _onStaticRead(String className, String fieldName) {
+		attachedAgent.beforeStaticRead(className, fieldName);
+	}
+	
+	public static void _onStaticWrite(String className, String fieldName) {
+		attachedAgent.onStaticWrite(className, fieldName);
+	}
+	
+	public static void _onArrayWrite(Object arrayRef, int index) {
+		attachedAgent.onArrayWrite(arrayRef, index);
+	}
+	
+	private void onArrayWrite(Object arrayRef, int index) {
+		if (!this.sharedGenerator.isSharedArray(arrayRef, index)) {
+			wasShared = false;
+			return;
+		}
+		SharedMemoryLocation shm = this.sharedGenerator.ofArray(arrayRef, index);
+		this.onWrite(shm);
+	}
+	
+	private void onStaticWrite(String className, String fieldName) {
+		if (!this.isSharedStatic(className, fieldName)) {
+			wasShared = false;
+			return;
+		}
+		SharedMemoryLocation shm = this.sharedGenerator.ofStaticField(className, fieldName);
+		this.onWrite(shm);
+	}
+	
+	private void beforeStaticRead(String className, String fieldName) {
+		if (!this.isSharedStatic(className, fieldName)) {
+			wasShared = false;
+			return;
+		}
+		SharedMemoryLocation shm = this.sharedGenerator.ofStaticField(className, fieldName);
+		this.onRead(shm);
+	}
+	
 	private boolean isSharedStatic(String className, String fieldName) {
 		SharedMemoryLocation location = this.sharedGenerator.ofStaticField(className, fieldName);
-		return sharedMemoryLocations.contains(location);
+		return sharedMemoryLocations.contains(location.getLocation());
 	}
 	
 	/**
@@ -159,6 +198,7 @@ public class AggrePlayRecordingAgent extends Agent {
 	}
 
 	protected void onWrite(SharedMemoryLocation smLocation) {
+		wasShared = true;
 		Event writeEvent = new Event(smLocation);
 		this.updateReadVectors(writeEvent);
 		smLocation.write(writeEvent);

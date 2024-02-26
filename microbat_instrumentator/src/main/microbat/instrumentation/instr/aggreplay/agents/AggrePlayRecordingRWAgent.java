@@ -2,6 +2,7 @@ package microbat.instrumentation.instr.aggreplay.agents;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,7 @@ import microbat.instrumentation.model.id.SharedMemoryLocation;
 public class AggrePlayRecordingRWAgent extends RNRRecordingAgent {
 	
 	private Semaphore smp = new Semaphore(1);
-	private Map<ObjectId, List<Event>> lockAcquisitionListMap;
+	private Map<ObjectId, List<Event>> lockAcquisitionListMap = new HashMap<>();
 
 
 	
@@ -114,13 +115,14 @@ public class AggrePlayRecordingRWAgent extends RNRRecordingAgent {
 	@Override
 	protected void onRead(SharedMemoryLocation sml) {
 		Event readEvent = new Event(sml);
+		lastEvent.set(readEvent);
 		acquireLock();
 		sml.appendExList(sml.getLastWrite(), readEvent);
-		
 	}
 	@Override
 	protected void onWrite(SharedMemoryLocation sml) {
 		Event writeEvent = new Event(sml);
+		lastEvent.set(writeEvent);
 		acquireLock();
 		sml.setLastWrite(writeEvent);
 	}

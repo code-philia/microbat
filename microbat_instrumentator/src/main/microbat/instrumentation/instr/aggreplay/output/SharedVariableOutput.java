@@ -73,7 +73,7 @@ public class SharedVariableOutput extends Storable implements Parser<SharedVaria
 		this.sharedStaticFields = data.getField("sharedStaticFields")
 				.toList()
 				.stream()
-				.map(v -> new StaticFieldLocation(data))
+				.map(v -> new StaticFieldLocation(v))
 				.collect(Collectors.toSet());
 		return this;
 	}

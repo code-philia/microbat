@@ -21,7 +21,7 @@ public class SharedVariableObjectGenerator implements IdGenerator<Object, Shared
 	private ObjectIdGenerator arrayIdGenerator = new ObjectIdGenerator(false);
 	private ConcurrentHashMap<Integer, SharedVariableObjectId> sharedVariableMap = new ConcurrentHashMap<>();
 	private ConcurrentHashMap<Integer, SharedVariableArrayRef> arrayRefMap = new ConcurrentHashMap<>();
-	private ConcurrentHashMap<StaticFieldLocation, HashSet<Long>> staticFieldMap;
+	private ConcurrentHashMap<StaticFieldLocation, HashSet<Long>> staticFieldMap = new ConcurrentHashMap<>();
 	
 	@Override
 	public SharedVariableObjectId createId(Object object) {
@@ -68,6 +68,18 @@ public class SharedVariableObjectGenerator implements IdGenerator<Object, Shared
 	
 	public SharedVariableArrayRef getArrayId(Object arrayId) {
 		return arrayRefMap.get(arrayId);
+	}
+	
+	public void addAccessStaticField(StaticFieldLocation sfl, long threadId) {
+		if (!this.staticFieldMap.containsKey(sfl)) {
+			synchronized (staticFieldMap) {
+				if (!this.staticFieldMap.containsKey(sfl)) staticFieldMap.put(sfl, new HashSet<>());
+			}
+		}
+		HashSet<Long> values = staticFieldMap.get(sfl);
+		synchronized (values) {
+			values.add(threadId);
+		}
 	}
 	
 	public Collection<SharedVariableObjectId> getSharedVariables() {

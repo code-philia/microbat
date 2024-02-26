@@ -21,8 +21,9 @@ public enum AggrePlayMethods {
 	AFTER_OBJECT_WRITE("_afterObjectWrite", "()V"),
 	BEFORE_OBJECT_WRITE("_onObjectWrite", "(Ljava/lang/Object;Ljava/lang/String;)V"),
 	BEFORE_ARRAY_WRITE("_onArrayWrite", "(Ljava/lang/Object;I;)V"),
+	BEFORE_ARRAY_READ("_onArrayRead", "(Ljava/lang/Object;I;)V"),
 	ON_NEW_ARRAY("_onNewArray", "(Ljava/lang/Object;)V"),
-	BEFORE_STATIC_READ("_beforeStaticRead", "(Ljava/lang/String;Ljava/lang/String;)V"),
+	BEFORE_STATIC_READ("_onStaticRead", "(Ljava/lang/String;Ljava/lang/String;)V"),
 	BEFORE_STATIC_WRITE("_onStaticWrite", "(Ljava/lang/String;Ljava/lang/String;)V");
 	
 	public final String methodName;

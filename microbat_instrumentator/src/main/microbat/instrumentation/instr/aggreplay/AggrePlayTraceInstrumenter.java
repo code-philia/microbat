@@ -9,6 +9,7 @@ import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.DUP;
 import org.apache.bcel.generic.FieldInstruction;
+import org.apache.bcel.generic.GETSTATIC;
 import org.apache.bcel.generic.IINC;
 import org.apache.bcel.generic.INVOKESTATIC;
 import org.apache.bcel.generic.Instruction;
@@ -19,6 +20,7 @@ import org.apache.bcel.generic.LDC;
 import org.apache.bcel.generic.LocalVariableGen;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.PUTFIELD;
+import org.apache.bcel.generic.PUTSTATIC;
 import org.apache.bcel.generic.SWAP;
 import org.apache.bcel.generic.TargetLostException;
 import org.apache.bcel.generic.Type;
@@ -185,7 +187,7 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 
 	
 
-	private InstructionList afterPutField(PUTFIELD putfield, ConstantPoolGen cpg) {
+	private InstructionList afterWrite(ConstantPoolGen cpg) {
 		InstructionList result = new InstructionList();
 		INVOKESTATIC afterPutFieldInvokestatic = 
 				AggrePlayMethods.AFTER_OBJECT_WRITE.toInvokeStatic(cpg, instrumentationClass);
@@ -199,11 +201,10 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 		// only need to deal with putfield and putstatic
 		Instruction instruction = info.getInstruction();
 		if (instruction.getOpcode() == Const.PUTFIELD) {
-			return afterPutField((PUTFIELD) instruction, cpg);
+			return afterWrite(cpg);
 		} 
 		if (instruction.getOpcode() == Const.PUTSTATIC) {
-			// TODO:
-			return null;
+			return afterWrite(cpg);
 		}
 		return null;
 	}
@@ -332,6 +333,42 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 		injectCodeInitTracer(methodGen, constPool, startLine, endLine, isAppClass, classNameVar,
 				methodSigVar, isMainMethod, tracerVar);
 		return true;	
+	}
+
+	
+	
+	@Override
+	protected InstructionList getInjectCodePutStatic(ConstantPoolGen constPool, LocalVariableGen tracerVar,
+			FieldInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
+		InstructionList before = new InstructionList();
+		PUTSTATIC insPutstatic = (PUTSTATIC) info.getInstruction();
+		String classNameString = insPutstatic.getReferenceType(constPool).getSignature();
+		
+		before.append(new LDC(constPool.addString(classNameString)));
+		before.append(new LDC(constPool.addString(info.getFieldName())));
+		before.append(AggrePlayMethods.BEFORE_STATIC_WRITE.toInvokeStatic(constPool, instrumentationClass));
+		InstructionList inBetween = super.getInjectCodePutStatic(constPool, tracerVar, info, classNameVar, methodSigVar);
+		before.append(inBetween);
+		
+		return before;
+	}
+
+	@Override
+	protected InstructionList getInjectCodeGetStatic(ConstantPoolGen constPool, LocalVariableGen tracerVar,
+			FieldInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
+		InstructionList before = new InstructionList();
+		GETSTATIC insPutstatic = (GETSTATIC) info.getInstruction();
+		String classNameString = insPutstatic.getReferenceType(constPool).getSignature();
+
+		before.append(new LDC(constPool.addString(classNameString)));
+		before.append(new LDC(constPool.addString(info.getFieldName())));
+		before.append(AggrePlayMethods.BEFORE_STATIC_READ.toInvokeStatic(constPool, instrumentationClass));
+		
+		
+		InstructionList tracerCode = super.getInjectCodeGetStatic(constPool, tracerVar, info, classNameVar, methodSigVar);
+		before.append(tracerCode);
+		before.append(AggrePlayMethods.AFTER_OBJECT_READ.toInvokeStatic(constPool, instrumentationClass));
+		return before;
 	}
 
 	protected void injectOnNewInstructions(InstructionList instructionList, 

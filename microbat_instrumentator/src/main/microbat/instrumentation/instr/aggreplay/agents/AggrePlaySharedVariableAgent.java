@@ -24,6 +24,7 @@ import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.model.id.ThreadId;
 import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectId;
+import microbat.instrumentation.model.id.StaticFieldLocation;
 import microbat.instrumentation.model.storage.FileStorage;
 import microbat.instrumentation.model.storage.Storable;
 import sav.common.core.Pair;
@@ -38,7 +39,6 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	
 	private ClassFileTransformer transformer = new BasicTransformer();
 	private SharedVariableObjectGenerator shObjectIdGenerator = new SharedVariableObjectGenerator();
-	private HashMap<Pair<String, String>, HashSet<Long>> staticVarCounter = new HashMap<>();
 	private static AggrePlaySharedVariableAgent agent = new AggrePlaySharedVariableAgent();
 	private AgentParams agentParams = null;
 	
@@ -83,18 +83,8 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	}
 	
 	private void onStaticAccess(String className, String fieldName) {
-		Pair<String, String> staticPair = Pair.of(className, fieldName);
-		HashSet<Long> values = this.staticVarCounter.get(staticPair);
-		if (values == null) {
-			synchronized (this.staticVarCounter) {
-				if (!this.staticVarCounter.containsKey(staticPair)) {
-					this.staticVarCounter.put(staticPair, new HashSet<Long>());
-				}
-			}
-		}
-		synchronized (values) {
-			values.add(Thread.currentThread().getId());
-		}
+		this.shObjectIdGenerator.addAccessStaticField(new StaticFieldLocation(className, fieldName), 
+				Thread.currentThread().getId());
 	}
 	
 

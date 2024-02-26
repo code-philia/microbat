@@ -37,8 +37,11 @@ public class SharedMemoryGenerator {
 	 * 
 	 */
 	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
-	private Map<ObjectId, RecorderObjectId> objectIdRecorderMap;
-	private Map<StaticFieldLocation, SharedMemoryLocation> staticMemLocationsMap;
+	private Map<Integer, ObjectId> arrayObjectIdMap = new HashMap<>();
+	
+	private Map<ObjectId, RecorderObjectId> objectIdRecorderMap = new HashMap<>();
+	private Map<ObjectId, Map<Integer, SharedMemoryLocation>> arrayMemLocationsMap = new HashMap<>();
+	private Map<StaticFieldLocation, SharedMemoryLocation> staticMemLocationsMap = new HashMap<>();
 	
 	
 	public Set<ObjectId> getSharedObjects() {
@@ -51,6 +54,11 @@ public class SharedMemoryGenerator {
 		for (RecorderObjectId recObjectId : objectIdRecorderMap.values()) {
 			result.addAll(recObjectId.getFieldLocations());
 		}
+		
+		result.addAll(staticMemLocationsMap.values());
+		for (Map<Integer, SharedMemoryLocation> location : arrayMemLocationsMap.values()) {
+			result.addAll(location.values());
+		}
 		return result;
 	}
 	
@@ -61,7 +69,21 @@ public class SharedMemoryGenerator {
 	public void init(SharedMemGeneratorInitialiser sharedVar) {
 		setObjectIdRecorderMap(sharedVar.getObjects());
 		setStaticFields(sharedVar.getStaticFields());
+		setArrayIndexes(sharedVar);
 	}
+	
+	private void setArrayIndexes(SharedMemGeneratorInitialiser sharedMGI) {
+		Set<SharedVariableArrayRef> res = sharedMGI.getArrayRefs();
+		arrayMemLocationsMap = new HashMap<>();
+		res.forEach(field -> {
+			HashMap<Integer, SharedMemoryLocation> shmMap = new HashMap<>();
+			field.getSharedIndexes()
+				.forEach(index -> shmMap.put(index, 
+						new SharedMemoryLocation(new ArrayIndexMemLocation(field.getObjectId(), index))));
+			arrayMemLocationsMap.put(field.getObjectId(), shmMap);
+		});
+	}
+	
 	
 	private void setStaticFields(Set<StaticFieldLocation> sfl) {
 		sfl.forEach(field -> this.staticMemLocationsMap.put(field, new SharedMemoryLocation(field)));
@@ -110,18 +132,26 @@ public class SharedMemoryGenerator {
 	}
 	
 	public SharedMemoryLocation ofStaticField(String className, String fieldName) {
-		throw new NotImplementedException();
+		return staticMemLocationsMap.get(new StaticFieldLocation(className, fieldName));
 	}
 	
 	public boolean isSharedStaticField(String className, String fieldName) {
-		return false;
+		return staticMemLocationsMap.containsKey(new StaticFieldLocation(className, fieldName));
 	}
 	
 	public boolean isSharedArray(Object array, int access) {
-		return false;
+		return ofArray(array, access) != null;
 	}
 	
+	
 	public SharedMemoryLocation ofArray(Object array, int index) {
-		throw new NotImplementedException();
+		if (!arrayObjectIdMap.containsKey(System.identityHashCode(array))) {
+			return null;
+		}
+		ObjectId oId = arrayObjectIdMap.get(System.identityHashCode(array));
+		if (!arrayMemLocationsMap.containsKey(oId)) {
+			return null;
+		}
+		return arrayMemLocationsMap.get(oId).get(index);
 	}
 }
