@@ -50,6 +50,7 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	private List<Event> repWriteEvent = new LinkedList<>();
 	// stack of lw -> read event
 	private Stack<Pair<Event, Event>> repWrStack = new Stack<>();
+	// mapping from write event to set of reads for that write
 	private Map<Event, HashSet<Event>> repWrMapSetMap = new HashMap<>();
 	
 	

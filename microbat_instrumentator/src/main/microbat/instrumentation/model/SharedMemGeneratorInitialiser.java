@@ -5,6 +5,7 @@ import java.util.Set;
 
 import microbat.instrumentation.model.generator.SharedVariableArrayRef;
 import microbat.instrumentation.model.id.ObjectId;
+import microbat.instrumentation.model.id.SharedMemoryLocation;
 import microbat.instrumentation.model.id.StaticFieldLocation;
 
 /**
@@ -21,7 +22,7 @@ public interface SharedMemGeneratorInitialiser {
 	 */
 	public Map<ObjectId, RecorderObjectId> getObjects();
 	
-	public Set<SharedVariableArrayRef> getArrayRefs();
+	public Set<SharedMemoryLocation> getArrayRefs();
 	
-	public Set<StaticFieldLocation> getStaticFields();
+	public Set<SharedMemoryLocation> getStaticFields();
 }

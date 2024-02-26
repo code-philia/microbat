@@ -73,20 +73,22 @@ public class SharedMemoryGenerator {
 	}
 	
 	private void setArrayIndexes(SharedMemGeneratorInitialiser sharedMGI) {
-		Set<SharedVariableArrayRef> res = sharedMGI.getArrayRefs();
+		Set<SharedMemoryLocation> res = sharedMGI.getArrayRefs();
 		arrayMemLocationsMap = new HashMap<>();
 		res.forEach(field -> {
-			HashMap<Integer, SharedMemoryLocation> shmMap = new HashMap<>();
-			field.getSharedIndexes()
-				.forEach(index -> shmMap.put(index, 
-						new SharedMemoryLocation(new ArrayIndexMemLocation(field.getObjectId(), index))));
-			arrayMemLocationsMap.put(field.getObjectId(), shmMap);
+			Map<Integer, SharedMemoryLocation> shmMap = null;
+			ArrayIndexMemLocation iml = (ArrayIndexMemLocation) field.getLocation();
+			if (!arrayMemLocationsMap.containsKey(iml.getIndex())) {
+				arrayMemLocationsMap.put(iml.getObjectId(), new HashMap<Integer, SharedMemoryLocation>());
+			}
+			shmMap = arrayMemLocationsMap.get(iml.getIndex());
+			shmMap.put(iml.getIndex(), field);
 		});
 	}
 	
 	
-	private void setStaticFields(Set<StaticFieldLocation> sfl) {
-		sfl.forEach(field -> this.staticMemLocationsMap.put(field, new SharedMemoryLocation(field)));
+	private void setStaticFields(Set<SharedMemoryLocation> sfl) {
+		sfl.forEach(field -> this.staticMemLocationsMap.put((StaticFieldLocation) field.getLocation(), field));
 	}
 	
 	private void setObjectIdRecorderMap(Map<ObjectId, RecorderObjectId> map) {

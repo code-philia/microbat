@@ -14,9 +14,11 @@ import microbat.instrumentation.instr.aggreplay.shared.Parser;
 import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.SharedMemGeneratorInitialiser;
 import microbat.instrumentation.model.SharedVariableObjectId;
+import microbat.instrumentation.model.generator.ArrayIndexMemLocation;
 import microbat.instrumentation.model.generator.SharedVariableArrayRef;
 import microbat.instrumentation.model.generator.SharedVariableObjectGenerator;
 import microbat.instrumentation.model.id.ObjectId;
+import microbat.instrumentation.model.id.SharedMemoryLocation;
 import microbat.instrumentation.model.id.StaticFieldLocation;
 import microbat.instrumentation.model.storage.Storable;
 
@@ -93,12 +95,16 @@ public class SharedVariableOutput extends Storable implements Parser<SharedVaria
 		return Objects.equals(sharedObjects, other.sharedObjects);
 	}
 	@Override
-	public Set<SharedVariableArrayRef> getArrayRefs() {
-		return this.sharedArrays;
+	public Set<SharedMemoryLocation> getArrayRefs() {
+		return this.sharedArrays.stream()
+				.<ArrayIndexMemLocation>flatMap(v -> v.getSharedMemLocations().stream())
+				.map(v -> new SharedMemoryLocation(v))
+				.collect(Collectors.toSet());
 	}
 	@Override
-	public Set<StaticFieldLocation> getStaticFields() {
-		return this.sharedStaticFields;
+	public Set<SharedMemoryLocation> getStaticFields() {
+		return this.sharedStaticFields.stream()
+				.map(v -> new SharedMemoryLocation(v)).collect(Collectors.toSet());
 	}
 
 	

@@ -16,6 +16,10 @@ public class ArrayIndexMemLocation extends MemoryLocation {
 		this.index = index;
 	}
 	
+	public int getIndex() {
+		return index;
+	}
+	
 	public ArrayIndexMemLocation(ParseData parseData) {
 		this.objectId = new ObjectId(false).parse(parseData.getField("objectId"));
 		this.index = parseData.getField("index").getIntValue();

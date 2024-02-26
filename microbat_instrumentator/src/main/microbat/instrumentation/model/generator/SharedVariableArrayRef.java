@@ -32,6 +32,11 @@ public class SharedVariableArrayRef extends Storable implements Parser<SharedVar
 		return this.objectId;
 	}
 	
+	public Set<ArrayIndexMemLocation> getSharedMemLocations() {
+		return sharedIndexes()
+				.stream().map(v -> new ArrayIndexMemLocation(objectId, v)).collect(Collectors.toSet());
+	}
+	
 	public HashSet<Integer> getSharedIndexes() {
 		return sharedIndexSet;
 	}

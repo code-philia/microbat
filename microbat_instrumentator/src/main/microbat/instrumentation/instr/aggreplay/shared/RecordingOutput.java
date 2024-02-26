@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
 import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.SharedMemGeneratorInitialiser;
+import microbat.instrumentation.model.generator.ArrayIndexMemLocation;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.generator.SharedVariableArrayRef;
 import microbat.instrumentation.model.id.Event;
@@ -72,7 +73,6 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 				}
 				RecorderObjectId toObtainRObjectId = result.get(objectId);
 				ObjectFieldMemoryLocation ofml = (ObjectFieldMemoryLocation) shMemoryLocation.getLocation();
-				shMemoryLocation.generateWRMap();
 				toObtainRObjectId.setField(ofml.getField(), shMemoryLocation);
 			}
 		}
@@ -125,6 +125,10 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 					}
 					
 				});
+	
+		for (SharedMemoryLocation sml : this.sharedMemoryLocations) {
+			sml.generateWRMap();
+		}
 		return this;
 	}
 
@@ -149,18 +153,18 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 	}
 
 	@Override
-	public Set<SharedVariableArrayRef> getArrayRefs() {
-		Set<SharedVariableArrayRef> locations = new HashSet<>();
-		// TODO(Gab): Populate this
-		return locations;
+	public Set<SharedMemoryLocation> getArrayRefs() {
+		return this.sharedMemoryLocations
+				.stream()
+				.filter((v) -> v.getLocation() instanceof ArrayIndexMemLocation).collect(Collectors.toSet());
 	}
 
 	@Override
-	public Set<StaticFieldLocation> getStaticFields() {
-		Set<StaticFieldLocation> locations = new HashSet<>();
+	public Set<SharedMemoryLocation> getStaticFields() {
+		Set<SharedMemoryLocation> locations = new HashSet<>();
 		for (SharedMemoryLocation sml: this.sharedMemoryLocations) {
 			if (sml.getLocation() instanceof StaticFieldLocation) {
-				locations.add((StaticFieldLocation) sml.getLocation());
+				locations.add(sml);
 			}
 		}
 		return locations;

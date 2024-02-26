@@ -124,7 +124,7 @@ public class AggrePlayRecordingRWAgent extends RNRRecordingAgent {
 		Event writeEvent = new Event(sml);
 		lastEvent.set(writeEvent);
 		acquireLock();
-		sml.setLastWrite(writeEvent);
+		sml.write(writeEvent);
 	}
 
 	@Override
