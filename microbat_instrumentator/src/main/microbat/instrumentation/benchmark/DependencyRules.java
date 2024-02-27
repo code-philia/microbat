@@ -37,7 +37,7 @@ public class DependencyRules {
 				"java.util.ArrayList",
 				
 				"java.util.Map",
-				// hashmap
+				"java.util.HashMap",
 				
 				"java.util.Set",
 				// hashset
@@ -115,11 +115,23 @@ public class DependencyRules {
 						"sort(Ljava/util/Comparator;)V",
 						"trimToSize()V"),
 				// map
-				Arrays.asList("clear()Z",
-						"forEach(Ljava/util/function/BiConsumer;)Z",
+				Arrays.asList("clear()V",
+						"forEach(Ljava/util/function/BiConsumer;)V",
 						"merge(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;",
 						"put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-						"putAll(Ljava/util/Map;)Z",
+						"putAll(Ljava/util/Map;)V",
+						"putIfAbsent(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+						"remove(Ljava/lang/Object;)Ljava/lang/Object;",
+						"remove(Ljava/lang/Object;Ljava/lang/Object;)Z",
+						"replace(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+						"replace(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z",
+						"replaceAll(Ljava/util/function/BiFunction;)V"),
+				// hashmap
+				Arrays.asList("clear()V",
+						"forEach(Ljava/util/function/BiConsumer;)V",
+						"merge(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;",
+						"put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+						"putAll(Ljava/util/Map;)V",
 						"putIfAbsent(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
 						"remove(Ljava/lang/Object;)Ljava/lang/Object;",
 						"remove(Ljava/lang/Object;Ljava/lang/Object;)Z",
