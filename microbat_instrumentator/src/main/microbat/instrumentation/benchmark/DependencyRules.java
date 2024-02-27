@@ -33,13 +33,27 @@ public class DependencyRules {
 	public static void setUp() {
 		String[] classNames = new String[] {
 				"java.util.List",
+				"java.util.LinkedList",
+				
 				"java.util.Map",
+				
 				"java.util.Set",
+				
 				"java.util.Collection",
+				
 				"java.lang.StringBuffer",
+				
 				"java.io.Writer",
 				"java.io.StringWriter",
-				"java.io.PrintWriter"
+				"java.io.PrintWriter",
+				
+				"java.util.Iterator",
+				"java.lang.Iterable",
+				"java.util.ListIterator"
+				//Queue
+				//StringBuilder
+				//RealMatrix
+				//Paint
 				};
 		
 		List<List<String>> writterMethods = Arrays.asList(
@@ -56,6 +70,30 @@ public class DependencyRules {
 						"retainAll(Ljava/util/Collection;)Z",
 						"set(ILjava/lang/Object;)Ljava/lang/Object;",
 						"sort(Ljava/util/Comparator;)V;"),
+				// linkedlist
+				Arrays.asList("add(Ljava/lang/Object;)Z",
+						"add(ILjava/lang/Object;)V",
+						"addAll(Ljava/util/Collection;)Z",
+						"addAll(ILjava/util/Collection;)Z",
+						"addFirst(Ljava/lang/Object;)V",
+						"addLast(Ljava/lang/Object;)V",
+						"clear()V",
+						"offer(Ljava/lang/Object;)Z",
+						"offerFirst(Ljava/lang/Object;)Z",
+						"offerLast(Ljava/lang/Object;)Z",
+						"poll()Ljava/lang/Object;",
+						"pollFirst()Ljava/lang/Object;",
+						"pollLast()Ljava/lang/Object;",
+						"pop()Ljava/lang/Object;",
+						"push(Ljava/lang/Object;)Ljava/lang/Object;",
+						"remove()Ljava/lang/Object;",
+						"remove(I)Ljava/lang/Object;",
+						"remove(Ljava/lang/Object;)Z",
+						"removeFirst()Ljava/lang/Object;",
+						"removeFirstOccurrence(Ljava/lang/Object;)Z",
+						"removeLast()Ljava/lang/Object;",
+						"removeLastOccurrence(Ljava/lang/Object;)Z",
+						"set(ILjava/lang/Object;)Ljava/lang/Object;"),
 				// map
 				Arrays.asList("clear()Z",
 						"forEach(Ljava/util/function/BiConsumer;)Z",
@@ -150,7 +188,16 @@ public class DependencyRules {
 						"write([CII)V;",
 						"write(I)V;",
 						"write(Ljava/lang/String;)V;",
-						"write(Ljava/lang/String;II)V;")
+						"write(Ljava/lang/String;II)V;"),
+				// iterator
+				Arrays.asList("forEachRemaining(Ljava/util/function/Consumer;)Z",
+						"remove()V"),
+				// iterable
+				Arrays.asList("forEach(Ljava/util/function/Consumer;)Z"),
+				// listiterator
+				Arrays.asList("add(Ljava/lang/Object;)V",
+						"remove()V",
+						"set(Ljava/lang/Object;)V")
 				);
 		
 //		List<List<String>> getterMethods = Arrays.asList(
