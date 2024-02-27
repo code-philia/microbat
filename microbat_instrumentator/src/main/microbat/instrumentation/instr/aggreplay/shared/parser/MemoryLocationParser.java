@@ -27,7 +27,7 @@ public class MemoryLocationParser implements Parser<MemoryLocation> {
 			return ofmParser.parse(data);
 		}
 		if (data.isClass(ArrayIndexMemLocation.class)) {
-			
+			return new ArrayIndexMemLocation(data);
 		}
 		
 		if (data.isClass(StaticFieldLocation.class)) {

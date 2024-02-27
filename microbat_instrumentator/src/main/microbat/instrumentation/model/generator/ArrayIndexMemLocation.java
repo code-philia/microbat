@@ -20,6 +20,13 @@ public class ArrayIndexMemLocation extends MemoryLocation {
 		return index;
 	}
 	
+	
+	
+	@Override
+	public ObjectId getObjectId() {
+		return this.objectId;
+	}
+
 	public ArrayIndexMemLocation(ParseData parseData) {
 		this.objectId = new ObjectId(false).parse(parseData.getField("objectId"));
 		this.index = parseData.getField("index").getIntValue();

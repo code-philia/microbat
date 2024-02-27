@@ -64,6 +64,14 @@ public abstract class RNRRecordingAgent extends Agent {
 		recordingAgent.onObjectCreate(object);
 	}
 	
+	public static void _onNewArray(Object obj) {
+		recordingAgent.onNewArray(obj);
+	}
+	
+	private void onNewArray(Object obj) {
+		sharedGenerator.newArray(obj);
+	}
+	
 	public static void _onObjectRead(Object object, String field) {
 		recordingAgent.onObjectRead(object, field);
 	}

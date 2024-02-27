@@ -8,6 +8,10 @@ import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.DUP;
+import org.apache.bcel.generic.DUP2;
+import org.apache.bcel.generic.DUP2_X1;
+import org.apache.bcel.generic.DUP2_X2;
+import org.apache.bcel.generic.DUP_X2;
 import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.GETSTATIC;
 import org.apache.bcel.generic.IINC;
@@ -19,6 +23,8 @@ import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.LDC;
 import org.apache.bcel.generic.LocalVariableGen;
 import org.apache.bcel.generic.MethodGen;
+import org.apache.bcel.generic.POP;
+import org.apache.bcel.generic.POP2;
 import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.PUTSTATIC;
 import org.apache.bcel.generic.SWAP;
@@ -274,6 +280,7 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 				} else if (rwInsnInfo instanceof ArrayInstructionInfo) {
 					newInsns = getInjectCodeTracerRWriteArray(methodGen, constPool, tracerVar,
 							(ArrayInstructionInfo) rwInsnInfo, classNameVar, methodSigVar);
+					appendInsnsInstructionList = appendInstructionListRWArray((ArrayInstructionInfo) rwInsnInfo, constPool);
 				} else if (rwInsnInfo instanceof LocalVarInstructionInfo) {
 					if (rwInsnInfo.getInstruction() instanceof IINC) {
 						newInsns = getInjectCodeTracerIINC(constPool, tracerVar,
@@ -327,6 +334,13 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 				injectOnNewInstructions(insnList, newInsnHandle, constPool);
 			}
 			
+			/**
+			 * Instrument new array instructions
+			 */
+			for (InstructionHandle newArrayInsnHandle: lineInfo.getNewArrayInstructions()) {
+				injectOnNewArrayInsns(insnList, newArrayInsnHandle, constPool);
+			}
+			
 
 			lineInfo.dispose();
 		}
@@ -336,7 +350,58 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 	}
 
 	
+	private void injectOnNewArrayInsns(InstructionList instructionList, InstructionHandle ih, ConstantPoolGen cpg) {
+		InstructionList toAppend = new InstructionList();
+		toAppend.append(new DUP());
+		toAppend.append(AggrePlayMethods.ON_NEW_ARRAY.toInvokeStatic(cpg, instrumentationClass));
+		appendInstruction(instructionList, toAppend, ih);
+	}
 	
+	/**
+	 * 
+	 * @param info
+	 * @return
+	 */
+	private InstructionList appendInstructionListRWArray(ArrayInstructionInfo info, ConstantPoolGen cpg) {
+
+		InstructionList result = new InstructionList();
+		if (info.isStoreInstruction()) {
+			result.append(AggrePlayMethods.AFTER_OBJECT_WRITE.toInvokeStatic(cpg, instrumentationClass));
+		}
+		return result;
+	}
+	
+	@Override
+	protected InstructionList getInjectCodeTracerRWriteArray(MethodGen methodGen, ConstantPoolGen constPool,
+			LocalVariableGen tracerVar, ArrayInstructionInfo info, LocalVariableGen classNameVar,
+			LocalVariableGen methodSigVar) {
+		InstructionList before = new InstructionList();
+		if (info.isStoreInstruction()) {
+			// a, i, d -> a, i, d, a, i
+			if (info.isComputationalType2()) {
+				before.append(new DUP2_X2()); // d a i d
+				before.append(new POP2()); // d a i
+				before.append(new DUP2_X2());// a i d a i
+			} else {
+				// a i d - d a i d
+				before.append(new DUP_X2());
+				before.append(new POP());
+				before.append(new DUP2_X1());
+			}
+			before.append(AggrePlayMethods.BEFORE_ARRAY_WRITE.toInvokeStatic(constPool, instrumentationClass));
+		} else {
+			before.append(new DUP2());
+			before.append(AggrePlayMethods.BEFORE_ARRAY_READ.toInvokeStatic(constPool, instrumentationClass));
+		}
+		InstructionList intermediate = super.getInjectCodeTracerRWriteArray(methodGen, constPool, tracerVar, info, classNameVar, methodSigVar);
+		
+		before.append(intermediate);
+		if (!info.isStoreInstruction()) {
+			before.append(AggrePlayMethods.AFTER_OBJECT_READ.toInvokeStatic(constPool, instrumentationClass));
+		}
+		return before;
+	}
+
 	@Override
 	protected InstructionList getInjectCodePutStatic(ConstantPoolGen constPool, LocalVariableGen tracerVar,
 			FieldInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {

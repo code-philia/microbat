@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.LineNumberTable;
@@ -45,6 +46,7 @@ public class LineInstructionInfo {
 	protected List<InstructionHandle> invokeInsns;
 	protected List<InstructionHandle> returnInsns;
 	protected List<InstructionHandle> newInsns;
+	protected List<InstructionHandle> newArrayInsns;
 	private List<InstructionHandle> exitInsns; 
 	private boolean hasExceptionTarget;
 	
@@ -66,11 +68,25 @@ public class LineInstructionInfo {
 		returnInsns = extractReturnInstructions(lineInsns);
 		newInsns = extractNewInstructions(lineInsns);
 		exitInsns = extractExitInsns(cfg, lineInsns);
+		newArrayInsns = extractNewArrayInstruction(lineInsns);
 		for (InstructionHandle insn : lineInsns) {
 			if (exceptionTargets.remove(insn)) {
 				hasExceptionTarget = true;
 			}
 		}
+	}
+	
+	private boolean isNewArrayInsn(InstructionHandle insnHandle) {
+		int opcode = insnHandle.getInstruction().getOpcode();
+		return opcode == Const.ANEWARRAY
+				|| opcode == Const.MULTIANEWARRAY
+				||  opcode == Const.NEWARRAY;
+	}
+	
+	private List<InstructionHandle> extractNewArrayInstruction(List<InstructionHandle> insns) {
+		return insns.stream()
+				.filter(v -> isNewArrayInsn(v))
+				.collect(Collectors.toList());
 	}
 	
 	public List<InstructionHandle> getInstructionsOnLine(){
@@ -214,6 +230,10 @@ public class LineInstructionInfo {
 	
 	public List<InstructionHandle> getNewInstructions() {
 		return newInsns;
+	}
+	
+	public List<InstructionHandle> getNewArrayInstructions() {
+		return newArrayInsns;
 	}
 	
 	public static List<InstructionHandle> findCorrespondingInstructions(InstructionList list, LineNumberTable lineTable,

@@ -67,7 +67,7 @@ public class SharedVariableObjectGenerator implements IdGenerator<Object, Shared
 	}
 	
 	public SharedVariableArrayRef getArrayId(Object arrayId) {
-		return arrayRefMap.get(arrayId);
+		return arrayRefMap.get(System.identityHashCode(arrayId));
 	}
 	
 	public void addAccessStaticField(StaticFieldLocation sfl, long threadId) {

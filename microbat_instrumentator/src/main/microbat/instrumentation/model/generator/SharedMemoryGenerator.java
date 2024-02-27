@@ -78,10 +78,10 @@ public class SharedMemoryGenerator {
 		res.forEach(field -> {
 			Map<Integer, SharedMemoryLocation> shmMap = null;
 			ArrayIndexMemLocation iml = (ArrayIndexMemLocation) field.getLocation();
-			if (!arrayMemLocationsMap.containsKey(iml.getIndex())) {
+			if (!arrayMemLocationsMap.containsKey(iml.getObjectId())) {
 				arrayMemLocationsMap.put(iml.getObjectId(), new HashMap<Integer, SharedMemoryLocation>());
 			}
-			shmMap = arrayMemLocationsMap.get(iml.getIndex());
+			shmMap = arrayMemLocationsMap.get(iml.getObjectId());
 			shmMap.put(iml.getIndex(), field);
 		});
 	}
@@ -145,6 +145,9 @@ public class SharedMemoryGenerator {
 		return ofArray(array, access) != null;
 	}
 	
+	public void newArray(Object obj) {
+		this.arrayObjectIdMap.put(System.identityHashCode(obj), new ObjectId());
+	}
 	
 	public SharedMemoryLocation ofArray(Object array, int index) {
 		if (!arrayObjectIdMap.containsKey(System.identityHashCode(array))) {

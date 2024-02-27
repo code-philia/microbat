@@ -56,12 +56,26 @@ public class RecordingInstrumentor extends ObjectAccessInstrumentator {
 		appendInstruction(il, afterInstructionList, ih);
 	}
 
+
+	
+	
+
 	@Override
-	protected void instrumentArrayAccess(ConstantPoolGen cpg, InstructionList instructionList, InstructionHandle ih) {
-		super.instrumentArrayAccess(cpg, instructionList, ih);
-//		InstructionList afterInstructionList = new InstructionList();
-//		afterInstructionList.append(AggrePlayMethods.AFTER_OBJECT_READ.toInvokeStatic(cpg, agentClass));
-//		appendInstruction(instructionList, afterInstructionList, ih);
+	protected void instrumentArrayRead(ConstantPoolGen cpg, InstructionList il, InstructionHandle ih) {
+		// TODO Auto-generated method stub
+		super.instrumentArrayRead(cpg, il, ih);
+		InstructionList toAppend = new InstructionList();
+		toAppend.append(AggrePlayMethods.AFTER_OBJECT_READ.toInvokeStatic(cpg, agentClass));
+		appendInstruction(il, toAppend, ih);
+	}
+
+	@Override
+	protected void instrumentArrayWrite(ConstantPoolGen cpg, InstructionList il, InstructionHandle ih) {
+		// TODO Auto-generated method stub
+		super.instrumentArrayWrite(cpg, il, ih);
+		InstructionList toAppend = new InstructionList();
+		toAppend.append(AggrePlayMethods.AFTER_OBJECT_WRITE.toInvokeStatic(cpg, agentClass));
+		appendInstruction(il, toAppend, ih);
 	}
 
 	@Override

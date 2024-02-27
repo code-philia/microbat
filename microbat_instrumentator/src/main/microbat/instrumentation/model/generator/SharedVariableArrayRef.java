@@ -20,6 +20,9 @@ public class SharedVariableArrayRef extends Storable implements Parser<SharedVar
 	public HashMap<Integer, HashSet<Long>> indexAccessMap = new HashMap<>();
 	private HashSet<Integer> sharedIndexSet = new HashSet<>();
 	protected Set<Integer> sharedIndexes() { 
+		if (sharedIndexSet.size() > 0) {
+			return sharedIndexSet;
+		}
 		return indexAccessMap.entrySet().stream().filter(new Predicate<Entry<Integer, HashSet<Long>>>() {
 			@Override
 			public boolean test(Entry<Integer, HashSet<Long>> v) {
@@ -33,7 +36,7 @@ public class SharedVariableArrayRef extends Storable implements Parser<SharedVar
 	}
 	
 	public Set<ArrayIndexMemLocation> getSharedMemLocations() {
-		return sharedIndexes()
+		return this.sharedIndexSet
 				.stream().map(v -> new ArrayIndexMemLocation(objectId, v)).collect(Collectors.toSet());
 	}
 	

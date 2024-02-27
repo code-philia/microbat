@@ -1,24 +1,33 @@
 package microbat.instrumentation.instr.aggreplay;
 
+import org.apache.bcel.Const;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.ArrayInstruction;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.DUP;
+import org.apache.bcel.generic.DUP2;
+import org.apache.bcel.generic.DUP2_X1;
+import org.apache.bcel.generic.DUP2_X2;
+import org.apache.bcel.generic.DUP_X2;
 import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.GETFIELD;
 import org.apache.bcel.generic.GETSTATIC;
 import org.apache.bcel.generic.INVOKESTATIC;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
+import org.apache.bcel.generic.LASTORE;
 import org.apache.bcel.generic.LDC;
 import org.apache.bcel.generic.MONITORENTER;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.NEWARRAY;
+import org.apache.bcel.generic.POP;
+import org.apache.bcel.generic.POP2;
 import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.PUTSTATIC;
 import org.apache.bcel.generic.SWAP;
+import org.apache.bcel.generic.Type;
 
 import javassist.bytecode.Opcode;
 import microbat.instrumentation.instr.AbstractInstrumenter;
@@ -180,8 +189,52 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 	
 	protected void instrumentArrayAccess(ConstantPoolGen cpg, 
 			InstructionList instructionList, InstructionHandle ih) {
-		
+		switch (ih.getInstruction().getOpcode()) {
+		case Const.AALOAD:
+		case Const.BALOAD:
+		case Const.CALOAD:
+		case Const.DALOAD:
+		case Const.FALOAD:
+		case Const.IALOAD:
+		case Const.LALOAD:
+		case Const.SALOAD:
+			instrumentArrayRead(cpg, instructionList, ih);
+			break;
+		// deal with store
+		default:
+			instrumentArrayWrite(cpg, instructionList, ih);
+			break;
+		}
 	}
+	
+	protected void instrumentArrayRead(ConstantPoolGen cpg, 
+			InstructionList il, InstructionHandle ih) {
+		InstructionList befInstructionList = new InstructionList();
+		befInstructionList.append(new DUP2());
+		befInstructionList.append(AggrePlayMethods.BEFORE_ARRAY_READ.toInvokeStatic(cpg, agentClass));
+		insertInsnHandler(il, befInstructionList, ih);
+	}
+
+	protected void instrumentArrayWrite(ConstantPoolGen cpg, 
+			InstructionList il, InstructionHandle ih) {
+
+		InstructionList befInstructionList = new InstructionList();
+		boolean c2 = (ih.getInstruction().getOpcode() == Const.LASTORE
+				|| ih.getInstruction().getOpcode() == Const.DASTORE);
+		if (c2) {
+			// arra, index, value1, value2
+			befInstructionList.append(new DUP2_X2());
+			befInstructionList.append(new POP2());
+			befInstructionList.append(new DUP2_X2());
+		} else {
+			befInstructionList.append(new DUP_X2());
+			befInstructionList.append(new POP());
+			befInstructionList.append(new DUP2_X1());
+		}
+		befInstructionList.append(AggrePlayMethods.BEFORE_ARRAY_WRITE.toInvokeStatic(cpg, agentClass));
+		insertInsnHandler(il, befInstructionList, ih);
+	}
+	
 	
 	protected void instrumentMonitorEnter(ConstantPoolGen constPool, InstructionList instructionList,
 			InstructionHandle handle) {
@@ -197,8 +250,20 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 			InstructionHandle handle, PUTFIELD putField) {
 		InstructionList newList = new InstructionList();
 		int fieldRef = addFieldName(constPool, putField);
-		newList.append(new SWAP());
-		newList.append(new DUP()); // object, object
+		Type fieldType = putField.getType(constPool);
+		if (fieldType.equals(Type.LONG)
+				|| fieldType.equals(Type.DOUBLE)) {
+			// a, i, d
+			newList.append(new DUP2_X2());
+			// d, a, i, d
+			newList.append(new POP());
+			// d, a, i
+			newList.append(new DUP2_X2());
+			// a, i, d, a, i
+		} else {
+			newList.append(new SWAP());
+			newList.append(new DUP()); // object, object
+		}
 		
 		newList.append(new LDC(fieldRef)); // object, object, fieldName
 		newList.append(onObjectWriteInvoke); // object

@@ -152,6 +152,14 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		attachedAgent.onStaticWrite(className, fieldName);
 	}
 	
+	public static void _onNewArray(Object object) {
+		attachedAgent.onNewArray(object);
+	}
+	
+	protected void onNewArray(Object object) {
+		this.sharedMemGenerator.newArray(object);
+	}
+	
 	public static void _onArrayRead(Object arrayRef, int index) {
 		attachedAgent.onArrayRead(arrayRef, index);
 	}
