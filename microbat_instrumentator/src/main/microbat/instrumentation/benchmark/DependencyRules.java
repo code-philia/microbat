@@ -34,10 +34,13 @@ public class DependencyRules {
 		String[] classNames = new String[] {
 				"java.util.List",
 				"java.util.LinkedList",
+				"java.util.ArrayList",
 				
 				"java.util.Map",
+				// hashmap
 				
 				"java.util.Set",
+				// hashset
 				
 				"java.util.Collection",
 				
@@ -52,8 +55,7 @@ public class DependencyRules {
 				"java.util.ListIterator",
 				
 				"java.util.Queue"
-				//RealMatrix
-				//Paint
+				
 				};
 		
 		List<List<String>> writterMethods = Arrays.asList(
@@ -94,6 +96,24 @@ public class DependencyRules {
 						"removeLast()Ljava/lang/Object;",
 						"removeLastOccurrence(Ljava/lang/Object;)Z",
 						"set(ILjava/lang/Object;)Ljava/lang/Object;"),
+				// arraylist
+				Arrays.asList("add(Ljava/lang/Object;)Z",
+						"add(ILjava/lang/Object;)V",
+						"addAll(Ljava/util/Collection;)Z",
+						"addAll(ILjava/util/Collection;)Z",
+						"clear()V",
+						"ensureCapacity(I)V;",
+						"forEach(Ljava/util/function/Consumer;)V",
+						"remove(Ljava/lang/Object;)Z",
+						"remove(I)Ljava/lang/Object;",
+						"removeAll(Ljava/util/Collection;)Z",
+						"removeIf(Ljava/util/function/Predicate;)Z",
+						"removeRange(II)V",
+						"replaceAll(Ljava/util/function/UnaryOperator;)V",
+						"retainAll(Ljava/util/Collection;)Z",
+						"set(ILjava/lang/Object;)Ljava/lang/Object;",
+						"sort(Ljava/util/Comparator;)V",
+						"trimToSize()V"),
 				// map
 				Arrays.asList("clear()Z",
 						"forEach(Ljava/util/function/BiConsumer;)Z",
