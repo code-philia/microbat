@@ -37,7 +37,9 @@ public class DependencyRules {
 				"java.util.Set",
 				"java.util.Collection",
 				"java.lang.StringBuffer",
-				"java.io.StringWriter"
+				"java.io.Writer",
+				"java.io.StringWriter",
+				"java.io.PrintWriter"
 				};
 		
 		List<List<String>> writterMethods = Arrays.asList(
@@ -66,12 +68,33 @@ public class DependencyRules {
 						"removeAll(Ljava/util/Collection;)Z",
 						"retainAll(Ljava/util/Collection;)Z"),
 				// stringbuffer
-				Arrays.asList("append(Ljava/lang/String;)Ljava/lang/StringBuffer;",
-						"append(Ljava/lang/Object;)Ljava/lang/StringBuffer;"),
+				Arrays.asList("append(Z)Ljava/lang/StringBuffer;",
+						"append(C)Ljava/lang/StringBuffer;",
+						"append([C)Ljava/lang/StringBuffer;",
+						"append(D)Ljava/lang/StringBuffer;",
+						"append(F)Ljava/lang/StringBuffer;",
+						"append(I)Ljava/lang/StringBuffer;",
+						"append(J)Ljava/lang/StringBuffer;",
+						"append(Ljava/lang/Object;)Ljava/lang/StringBuffer;",
+						"append(Ljava/lang/String;)Ljava/lang/StringBuffer;"),
+				// writer
+				Arrays.asList("write([C)V",
+						"write([CII)V",
+						"write(I)V",
+						"write(Ljava/lang/String;)V",
+						"write(Ljava/lang/String;II)V",
+						"append(C)Ljava/io/Writer;",
+						"append(Ljava/lang/CharSequence;)Ljava/io/Writer;",
+						"append(Ljava/lang/CharSequence;II)Ljava/io/Writer;"),
 				// stringwriter
 				Arrays.asList("append(C)Ljava/io/StringWriter;",
 						"append(Ljava/lang/CharSequence;)Ljava/io/StringWriter;",
-						"append(Ljava/lang/CharSequence;II)Ljava/io/StringWriter;")
+						"append(Ljava/lang/CharSequence;II)Ljava/io/StringWriter;",
+						"append(Ljava/lang/String;)Ljava/io/StringWriter;"),
+				// printwriter
+				Arrays.asList("append(C)Ljava/io/PrintWriter;",
+						"append(Ljava/lang/CharSequence;)Ljava/io/PrintWriter;",
+						"append(Ljava/lang/CharSequence;II)Ljava/io/PrintWriter;")
 				);
 		
 //		List<List<String>> getterMethods = Arrays.asList(
