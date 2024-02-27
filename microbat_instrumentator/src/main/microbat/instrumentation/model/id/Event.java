@@ -20,7 +20,9 @@ public class Event extends Storable implements Parser<Event> {
 	});
 	private long threadId;
 	private int eventId;
-	
+	// on write, the location written to
+	// on read, the location read from.
+	private SharedMemoryLocation relevantLocation;
 	
 	/**
 	 * Needed to update thread Id which is obtained from
@@ -31,9 +33,13 @@ public class Event extends Storable implements Parser<Event> {
 		this.threadId = threadId;
 	}
 	
-	// on write, the location written to
-	// on read, the location read from.
-	private SharedMemoryLocation relevantLocation;
+	public static Event getFirstEvent(SharedMemoryLocation sml) {
+		Event result = new Event();
+		result.eventId = -1;
+		result.threadId = -1;
+		result.relevantLocation = sml;
+		return result;
+	}
 	
 	public Event(SharedMemoryLocation location) {
 		threadId = Thread.currentThread().getId();

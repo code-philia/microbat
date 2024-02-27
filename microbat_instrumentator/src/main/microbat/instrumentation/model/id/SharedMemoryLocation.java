@@ -1,11 +1,13 @@
 package microbat.instrumentation.model.id;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.Stack;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -24,7 +26,7 @@ import sav.common.core.Pair;
  *
  */
 public class SharedMemoryLocation extends Storable implements Parser<SharedMemoryLocation> {
-	private Event lastWrite;
+	private Event lastWrite = Event.getFirstEvent(this);
 	/**
 	 * The location this object is at.
 	 */
@@ -51,7 +53,7 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	// stack of lw -> read event
 	private Stack<Pair<Event, Event>> repWrStack = new Stack<>();
 	// mapping from write event to set of reads for that write
-	private Map<Event, HashSet<Event>> repWrMapSetMap = new HashMap<>();
+	private Map<Event, Set<Event>> repWrMapSetMap = new HashMap<>();
 	
 	
 	protected Stack<Pair<Event, Event>> generateWriteEventStack(LinkedList<Pair<Event, Event>> writeEventList) {
@@ -66,22 +68,16 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	}
 	
 	public boolean canWrite(Event e) {
-		if (lastWrite == null) {
-			return this.writeEventStack.peek().equals(e);
-		}
 		return this.writeEventStack.peek().equals(e) && 
-				this.repWrMapSetMap.get(lastWrite).isEmpty();
+				this.repWrMapSetMap.getOrDefault(lastWrite, Collections.emptySet()).isEmpty();
 	}
 	
 	public boolean canRead(Event event) {
-		if (lastWrite == null) {
-			return false;
-		}
-		return this.repWrMapSetMap.get(lastWrite).contains(event);
+		return this.repWrMapSetMap.getOrDefault(lastWrite, Collections.emptySet()).contains(event);
 	}
 	
 	public void read(Event event) {
-		this.repWrMapSetMap.get(lastWrite).remove(event);
+		this.repWrMapSetMap.getOrDefault(lastWrite, Collections.emptySet()).remove(event);
 	}
 	
 	@Override
@@ -219,9 +215,9 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 			}
 		}
 		for (Pair<Event, Event> events: wrList) {
-//			if (!this.repWrMapSetMap.containsKey(events.first())) {
-//				this.repWrMapSetMap.put(events.first(), new HashSet<Event>());
-//			}
+			if (!this.repWrMapSetMap.containsKey(events.first())) {
+				this.repWrMapSetMap.put(events.first(), new HashSet<Event>());
+			}
 			this.repWrMapSetMap.get(events.first()).add(events.second());
 		}
 		
@@ -242,7 +238,6 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 
 	@Override
 	public SharedMemoryLocation parse(ParseData data) {
-		this.lastWrite = null;
 		this.location = new MemoryLocationParser().parse(data.getField("location"));
 		this.writeEventList = data.getField("writeEventList").toList(new Function<ParseData, Event>() {
 			@Override
