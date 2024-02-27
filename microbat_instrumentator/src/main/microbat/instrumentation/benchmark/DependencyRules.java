@@ -42,16 +42,16 @@ public class DependencyRules {
 				"java.util.Collection",
 				
 				"java.lang.StringBuffer",
-				
 				"java.io.Writer",
 				"java.io.StringWriter",
 				"java.io.PrintWriter",
+				"java.lang.StringBuilder",
 				
 				"java.util.Iterator",
 				"java.lang.Iterable",
-				"java.util.ListIterator"
-				//Queue
-				//StringBuilder
+				"java.util.ListIterator",
+				
+				"java.util.Queue"
 				//RealMatrix
 				//Paint
 				};
@@ -189,6 +189,41 @@ public class DependencyRules {
 						"write(I)V;",
 						"write(Ljava/lang/String;)V;",
 						"write(Ljava/lang/String;II)V;"),
+				// stringbuilder
+				Arrays.asList("append(Z)Ljava/lang/StringBuilder;",
+						"append(C)Ljava/lang/StringBuilder;",
+						"append([C)Ljava/lang/StringBuilder;",
+						"append([CII)Ljava/lang/StringBuilder;",
+						"append(Ljava/lang/CharSequence;)Ljava/lang/StringBuilder;",
+						"append(Ljava/lang/CharSequence;II)Ljava/lang/StringBuilder;",
+						"append(D)Ljava/lang/StringBuilder;",
+						"append(F)Ljava/lang/StringBuilder;",
+						"append(I)Ljava/lang/StringBuilder;",
+						"append(J)Ljava/lang/StringBuilder;",
+						"append(Ljava/lang/Object;)Ljava/lang/StringBuilder;",
+						"append(Ljava/lang/String;)Ljava/lang/StringBuilder;",
+						"append(Ljava/lang/StringBuffer;)Ljava/lang/StringBuilder;",
+						"delete(II)Ljava/lang/StringBuilder;",
+						"deleteCharAt(I)Ljava/lang/StringBuilder;",
+						"replace(IILjava/lang/Object;)Ljava/lang/StringBuilder;",
+						"appendCodePoint(I)Ljava/lang/StringBuilder;",
+						"ensureCapacity(I)Z;",
+						"reverse()Ljava/lang/StringBuilder;",
+						"setCharAt(IC)V;",
+						"setLength(I)V;",
+						"trimToSize()V;",
+						"insert(IZ)Ljava/lang/StringBuilder;",
+						"insert(IC)Ljava/lang/StringBuilder;",
+						"insert(I[C)Ljava/lang/StringBuilder;",
+						"insert(I[CII)Ljava/lang/StringBuilder;",
+						"insert(ILjava/lang/CharSequence;)Ljava/lang/StringBuilder;",
+						"insert(ILjava/lang/CharSequence;II)Ljava/lang/StringBuilder;",
+						"insert(ID)Ljava/lang/StringBuilder;",
+						"insert(IF)Ljava/lang/StringBuilder;",
+						"insert(II)Ljava/lang/StringBuilder;",
+						"insert(IJ)Ljava/lang/StringBuilder;",
+						"insert(ILjava/lang/Object;)Ljava/lang/StringBuilder;",
+						"insert(ILjava/lang/String;)Ljava/lang/StringBuilder;"),
 				// iterator
 				Arrays.asList("forEachRemaining(Ljava/util/function/Consumer;)Z",
 						"remove()V"),
@@ -197,7 +232,12 @@ public class DependencyRules {
 				// listiterator
 				Arrays.asList("add(Ljava/lang/Object;)V",
 						"remove()V",
-						"set(Ljava/lang/Object;)V")
+						"set(Ljava/lang/Object;)V"),
+				//queue
+				Arrays.asList("add(Ljava/lang/Object;)Z",
+						"offer(Ljava/lang/Object;)Z",
+						"poll()Ljava/lang/Object;",
+						"remove()Ljava/lang/Object;")
 				);
 		
 //		List<List<String>> getterMethods = Arrays.asList(
