@@ -40,7 +40,7 @@ public class DependencyRules {
 				"java.util.HashMap",
 				
 				"java.util.Set",
-				// hashset
+				"java.util.HashSet",
 				
 				"java.util.Collection",
 				
@@ -145,6 +145,10 @@ public class DependencyRules {
 						"remove(Ljava/lang/Object;)Z",
 						"removeAll(Ljava/util/Collection;)Z",
 						"retainAll(Ljava/util/Collection;)Z"),
+				// hashset
+				Arrays.asList("add(Ljava/lang/Object;)Z",
+						"clear()V",
+						"remove(Ljava/lang/Object;)Z"),
 				// collection
 				Arrays.asList("add(Ljava/lang/Object;)Z",
 						"addAll(Ljava/util/Collection;)Z",
