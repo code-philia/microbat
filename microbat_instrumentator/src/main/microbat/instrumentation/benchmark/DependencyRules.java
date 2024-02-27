@@ -36,49 +36,66 @@ public class DependencyRules {
 				"java.util.Map",
 				"java.util.Set",
 				"java.util.Collection",
-				"java.lang.Appendable",
-				"java.lang.CharSequence"
+				"java.lang.StringBuffer",
+				"java.io.StringWriter"
 				};
 		
 		List<List<String>> writterMethods = Arrays.asList(
 				// list
-				Arrays.asList("add(Ljava/lang/Object;)Z", "add(ILjava/lang/Object;)V"),
+				Arrays.asList("add(Ljava/lang/Object;)Z", 
+						"add(ILjava/lang/Object;)V",
+						"addAll(Ljava/util/Collection;)Z",
+						"addAll(ILjava/util/Collection;)Z",
+						"set(ILjava/lang/Object;)Ljava/lang/Object;"),
 				// map
-				Arrays.asList("put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;"),
+				Arrays.asList("put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+						"putAll(Ljava/util/Map;)V",
+						"replace(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+						"replaceAll(Ljava/util/function/BiFunction;)V",
+						"compute(Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;"),
 				// set
-				Arrays.asList("add(Ljava/lang/Object;)Z"),
+				Arrays.asList("add(Ljava/lang/Object;)Z",
+						"addAll(Ljava/util/Collection;)Z",
+						"remove(Ljava/lang/Object;)Z",
+						"removeAll(Ljava/util/Collection;)Z",
+						"retainAll(Ljava/util/Collection;)Z"),
 				// collection
-				Arrays.asList("add(Ljava/lang/Object;)Z"),
-				// appendable
-				Arrays.asList("append(Ljava/lang/CharSequence;)Ljava/lang/Appendable;", 
-						"append(Ljava/lang/CharSequence;II)Ljava/lang/Appendable;", 
-						"append(C)Ljava/lang/Appendable;"),
-				// charsequence
-				Arrays.asList("")
+				Arrays.asList("add(Ljava/lang/Object;)Z",
+						"addAll(Ljava/util/Collection;)Z",
+						"remove(Ljava/lang/Object;)Z",
+						"removeAll(Ljava/util/Collection;)Z",
+						"retainAll(Ljava/util/Collection;)Z"),
+				// stringbuffer
+				Arrays.asList("append(Ljava/lang/String;)Ljava/lang/StringBuffer;",
+						"append(Ljava/lang/Object;)Ljava/lang/StringBuffer;"),
+				// stringwriter
+				Arrays.asList("append(C)Ljava/io/StringWriter;",
+						"append(Ljava/lang/CharSequence;)Ljava/io/StringWriter;",
+						"append(Ljava/lang/CharSequence;II)Ljava/io/StringWriter;")
 				);
 		
-		List<List<String>> getterMethods = Arrays.asList(
-				// list
-				Arrays.asList("get(I)Ljava/lang/Object;"),
-				// map
-				Arrays.asList("get(Ljava/lang/Object;)Ljava/lang/Object;"),
-				// set
-				Arrays.asList(""),
-				// collection
-				Arrays.asList(""),
-				// appendable
-				Arrays.asList(""),
-				// charsequence
-				Arrays.asList("charAt(I)C", 
-						"subSequence(II)Ljava/lang/CharSequence;", 
-						"toString()Ljava/lang/String;")
-				);
+//		List<List<String>> getterMethods = Arrays.asList(
+//				// list
+//				Arrays.asList("get(I)Ljava/lang/Object;"),
+//				// map
+//				Arrays.asList("get(Ljava/lang/Object;)Ljava/lang/Object;"),
+//				// set
+//				Arrays.asList(""),
+//				// collection
+//				Arrays.asList(""),
+//				// appendable
+//				Arrays.asList(""),
+//				// charsequence
+//				Arrays.asList("charAt(I)C", 
+//						"subSequence(II)Ljava/lang/CharSequence;", 
+//						"toString()Ljava/lang/String;")
+//				);
 		
 		for (int i = 0; i < classNames.length; i++) {
 			String key = classNames[i];
 			classes.add(key);
 			writters.put(key, new HashSet<String>(writterMethods.get(i)));
-			getters.put(key, new HashSet<String>(getterMethods.get(i)));
+//			getters.put(key, new HashSet<String>(getterMethods.get(i)));
 		}
 	}
 	
@@ -114,9 +131,9 @@ public class DependencyRules {
 				if (writters.get(clazz).contains(methodSignature)) {
 					return Type.IS_WRITTER;
 				}
-				if (getters.get(clazz).contains(methodSignature)) {
-					return Type.IS_GETTER;
-				}
+//				if (getters.get(clazz).contains(methodSignature)) {
+//					return Type.IS_GETTER;
+//				}
 			}
 		}
 		return Type.NONE;
