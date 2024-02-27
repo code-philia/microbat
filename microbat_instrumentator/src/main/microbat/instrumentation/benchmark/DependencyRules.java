@@ -1,11 +1,20 @@
 package microbat.instrumentation.benchmark;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
+
+import org.apache.bcel.classfile.ClassParser;
+import org.apache.bcel.classfile.JavaClass;
+import org.apache.bcel.generic.ClassGen;
+import org.apache.commons.io.IOUtils;
 
 public class DependencyRules {
 	
@@ -73,7 +82,7 @@ public class DependencyRules {
 		}
 	}
 	
-	public static Type getType(String method) {
+	public static Type getType(String method) throws IOException {
 		if (classes.isEmpty()) {
 			setUp();
 		}
@@ -81,15 +90,62 @@ public class DependencyRules {
 		String[] methodInfo = method.split("#");
 		String className = methodInfo[0];
 		String methodSignature = methodInfo[1];
-		if (classes.contains(className)) {
-			if (writters.get(className).contains(methodSignature)) {
-				return Type.IS_WRITTER;
-			}
-			if (getters.get(className).contains(methodSignature)) {
-				return Type.IS_GETTER;
+		
+		/*
+		 * load the class
+		 */
+		ClassGen classGen = loadClass(className);
+		if (classGen == null) {
+			return Type.NONE;
+		}
+		
+		/*
+		 * get all relevant classes
+		 */
+		ArrayList<String> relevantClasses = new ArrayList<>();
+		relevantClasses.add(className);
+		for (String interfaceName : classGen.getInterfaceNames()) {
+			relevantClasses.add(interfaceName);
+		}
+		relevantClasses.add(classGen.getSuperclassName());
+		
+		for (String clazz : relevantClasses) {
+			if (classes.contains(clazz)) {
+				if (writters.get(clazz).contains(methodSignature)) {
+					return Type.IS_WRITTER;
+				}
+				if (getters.get(clazz).contains(methodSignature)) {
+					return Type.IS_GETTER;
+				}
 			}
 		}
 		return Type.NONE;
+	}
+	
+	private static String getFileName(String classFName) {
+		return classFName + ".class";
+	}
+	
+	private static ClassGen loadClass(String className) throws IOException {
+		String classFName = className.replace('.', '/');
+		String fileName = getFileName(classFName);
+		byte[] bytecode = loadByteCode(fileName);
+		
+		ClassParser cp = new ClassParser(new java.io.ByteArrayInputStream(bytecode), classFName);
+		JavaClass jc = cp.parse();
+		return new ClassGen(jc);
+	}
+	
+	private static byte[] loadByteCode(String fileName) throws IOException {
+		InputStream inputStream = ClassLoader
+        		.getSystemClassLoader()
+        		.getResourceAsStream(fileName);
+		if (inputStream != null) {
+			byte[] bytecode = IOUtils.toByteArray(inputStream);
+            inputStream.close();
+            return bytecode;
+        }
+		return null;
 	}
 
 }
