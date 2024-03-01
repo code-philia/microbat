@@ -145,6 +145,13 @@ public class SharedMemoryGenerator {
 		return ofArray(array, access) != null;
 	}
 	
+	public void assertArray(Object obj) {
+		if (this.arrayObjectIdMap.containsKey(System.identityHashCode(obj))) {
+			return;
+		}
+		newArray(obj);
+	}
+	
 	public void newArray(Object obj) {
 		this.arrayObjectIdMap.put(System.identityHashCode(obj), new ObjectId());
 	}

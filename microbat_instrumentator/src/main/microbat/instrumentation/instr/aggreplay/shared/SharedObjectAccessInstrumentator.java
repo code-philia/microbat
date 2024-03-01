@@ -40,4 +40,8 @@ public class SharedObjectAccessInstrumentator extends ObjectAccessInstrumentator
 	public static void _onNewArray(Object arrayRef) {
 		AggrePlaySharedVariableAgent._onNewArray(arrayRef);
 	}
+	
+	public static void _onLockAcquire(Object object) {
+		AggrePlaySharedVariableAgent._onLockAcquire(object);
+	}
 }

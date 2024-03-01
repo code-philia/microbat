@@ -17,6 +17,7 @@ import org.apache.bcel.generic.GETSTATIC;
 import org.apache.bcel.generic.INVOKESTATIC;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
+import org.apache.bcel.generic.InvokeInstruction;
 import org.apache.bcel.generic.LASTORE;
 import org.apache.bcel.generic.LDC;
 import org.apache.bcel.generic.MONITORENTER;
@@ -136,8 +137,14 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 					continue;
 				}
 				if (handle.getInstruction().getOpcode() == Opcode.MULTIANEWARRAY
-						|| handle.getInstruction().getOpcode() == Opcode.NEWARRAY) {
+						|| handle.getInstruction().getOpcode() == Opcode.NEWARRAY
+						|| handle.getInstruction().getOpcode() == Opcode.ANEWARRAY) {
 					instrumentNewArray(constPool, iList, handle);
+					continue;
+				}
+				
+				if (handle.getInstruction() instanceof InvokeInstruction) {
+					instrumentMethodReturn(constPool, iList, handle);
 					continue;
 				}
 			}
@@ -148,6 +155,20 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 		}
 	
 		return classGen.getJavaClass().getBytes();
+	}
+	
+	protected void instrumentMethodReturn(ConstantPoolGen cpg, InstructionList il, InstructionHandle ih) {
+		InstructionList toAppend = new InstructionList();
+		String signature = ((InvokeInstruction) ih.getInstruction()).getReturnType(cpg).getSignature();
+		if (signature.startsWith("L")) {
+			toAppend.append(new DUP());
+			toAppend.append(AggrePlayMethods.ASSERT_OBJECT_EXISTS.toInvokeStatic(cpg, agentClass));
+			appendInstruction(il, toAppend, ih);
+		} else if (signature.startsWith("[")) {
+			toAppend.append(new DUP());
+			toAppend.append(AggrePlayMethods.ASSERT_ARRAY_EXISTS.toInvokeStatic(cpg, agentClass));
+			appendInstruction(il, toAppend, ih);
+		}
 	}
 	
 	/**
@@ -253,21 +274,22 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 		Type fieldType = putField.getType(constPool);
 		if (fieldType.equals(Type.LONG)
 				|| fieldType.equals(Type.DOUBLE)) {
-			// a, i, d
-			newList.append(new DUP2_X2());
-			// d, a, i, d
-			newList.append(new POP());
-			// d, a, i
-			newList.append(new DUP2_X2());
-			// a, i, d, a, i
+			newList.append(new DUP2_X1());
+			newList.append(new POP2());
+			newList.append(new DUP());
 		} else {
 			newList.append(new SWAP());
-			newList.append(new DUP()); // object, object
+			newList.append(new DUP()); // value, object, object
 		}
 		
 		newList.append(new LDC(fieldRef)); // object, object, fieldName
 		newList.append(onObjectWriteInvoke); // object
-		newList.append(new SWAP());
+		if (fieldType.equals(Type.LONG) || fieldType.equals(Type.DOUBLE)) {
+			newList.append(new DUP_X2());
+			newList.append(new POP());
+		} else {
+			newList.append(new SWAP());
+		}
 		insertInsnHandler(iList, newList, handle);
 		newList.dispose();
 	}

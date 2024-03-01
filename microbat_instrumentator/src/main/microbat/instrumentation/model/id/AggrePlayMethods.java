@@ -10,7 +10,7 @@ import org.apache.bcel.generic.INVOKESTATIC;
  */
 public enum AggrePlayMethods {
 	ACQUIRE_LOCK("_acquireLock", "()V"),
-	ON_LOCK_ACQUIRE("_onLockAcquire", "(Ljava/lang/Object)V"),
+	ON_LOCK_ACQUIRE("_onLockAcquire", "(Ljava/lang/Object;)V"),
 	RELEASE_LOCK("_releaseLock", "()V"),
 	/**
 	 * After NEW instruction, before object initialisation
@@ -23,8 +23,11 @@ public enum AggrePlayMethods {
 	BEFORE_ARRAY_WRITE("_onArrayWrite", "(Ljava/lang/Object;I)V"),
 	BEFORE_ARRAY_READ("_onArrayRead", "(Ljava/lang/Object;I)V"),
 	ON_NEW_ARRAY("_onNewArray", "(Ljava/lang/Object;)V"),
+	AFTER_LOCK_ACQUIRE("_afterLockAcquire", "()V"),
 	BEFORE_STATIC_READ("_onStaticRead", "(Ljava/lang/String;Ljava/lang/String;)V"),
-	BEFORE_STATIC_WRITE("_onStaticWrite", "(Ljava/lang/String;Ljava/lang/String;)V");
+	BEFORE_STATIC_WRITE("_onStaticWrite", "(Ljava/lang/String;Ljava/lang/String;)V"),
+	ASSERT_OBJECT_EXISTS("_assertObjectExists", "(Ljava/lang/Object;)V"),
+	ASSERT_ARRAY_EXISTS("_assertArrayExists", "(Ljava/lang/Object;)V");
 	
 	public final String methodName;
 	public final String methodSig;

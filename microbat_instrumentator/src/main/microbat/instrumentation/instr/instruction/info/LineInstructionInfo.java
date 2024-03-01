@@ -47,11 +47,28 @@ public class LineInstructionInfo {
 	protected List<InstructionHandle> returnInsns;
 	protected List<InstructionHandle> newInsns;
 	protected List<InstructionHandle> newArrayInsns;
+	protected List<InstructionHandle> monitorEnterInsnsHandles;
+	protected List<InstructionHandle> monitorExitInsnsHandles;
 	private List<InstructionHandle> exitInsns; 
 	private boolean hasExceptionTarget;
 	
 	public LineInstructionInfo() {
 		// 
+	}
+	
+	private void initialiseMonitorInstructions(List<InstructionHandle> lineInsns) {
+		this.monitorEnterInsnsHandles = new LinkedList<>();
+		this.monitorExitInsnsHandles = new LinkedList<>();
+		for (InstructionHandle handle : lineInsns) {
+			if (handle.getInstruction().getOpcode() == Const.MONITORENTER) {
+				monitorEnterInsnsHandles.add(handle);
+			}
+			if (handle.getInstruction().getOpcode() == Const.MONITOREXIT) {
+				monitorExitInsnsHandles.add(handle);
+			}
+		}
+		
+		
 	}
 	
 	public LineInstructionInfo(String locId, ConstantPoolGen constPool, Method method, MethodGen methodGen, Set<InstructionHandle> exceptionTargets, LineNumberGen lineGen, CFG cfg,
@@ -69,6 +86,7 @@ public class LineInstructionInfo {
 		newInsns = extractNewInstructions(lineInsns);
 		exitInsns = extractExitInsns(cfg, lineInsns);
 		newArrayInsns = extractNewArrayInstruction(lineInsns);
+		initialiseMonitorInstructions(lineInsns);
 		for (InstructionHandle insn : lineInsns) {
 			if (exceptionTargets.remove(insn)) {
 				hasExceptionTarget = true;
@@ -104,6 +122,14 @@ public class LineInstructionInfo {
 			}
 		}
 		return list;
+	}
+	
+	public List<InstructionHandle> getMonitorEnterInstructionHandles() {
+		return this.monitorEnterInsnsHandles;
+	}
+	
+	public List<InstructionHandle> getMonitorExitInstructionHandles() {
+		return this.monitorExitInsnsHandles;
 	}
 
 	public List<RWInstructionInfo> getRWInstructions() {

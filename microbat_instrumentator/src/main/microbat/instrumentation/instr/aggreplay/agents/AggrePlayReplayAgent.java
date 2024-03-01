@@ -7,10 +7,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
+import java.security.KeyStore.Entry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 import java.util.function.Supplier;
 
 import microbat.instrumentation.Agent;
@@ -29,10 +32,12 @@ import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.RecordingOutput;
 import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser;
 import microbat.instrumentation.model.ReadWriteAccessListReplay;
+import microbat.instrumentation.model.SharedMemGeneratorInitialiser;
 import microbat.instrumentation.model.generator.ObjectIdGenerator;
 import microbat.instrumentation.model.generator.SharedMemoryGenerator;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.model.id.Event;
+import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.ReadCountVector;
 import microbat.instrumentation.model.id.ReadWriteAccessList;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
@@ -62,6 +67,9 @@ public class AggrePlayReplayAgent extends TraceAgent {
 			return null;
 		}
 	});
+	
+	ThreadLocal<Stack<Event>> lastObjStackLocal = ThreadLocal.withInitial(() -> null);
+	
 	// maps from recording thread to replay
 	private HashMap<Long, Long> threadIdMap = new HashMap<>();
 	private ThreadIdGenerator threadIdGenerator = new ThreadIdGenerator();
@@ -72,7 +80,23 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	private ReadWriteAccessList rwal;
 	protected RecordingOutput recordingOutput;
 	private HashMap<ThreadId, Long> recordedThreadIdMap = new HashMap<>();
+	private Map<ObjectId, Stack<Event>> lockAcquisitionMap;
 	private ReadWriteAccessListReplay rwalGeneratedAccessListReplay;
+	
+	public static void _assertObjectExists(Object obj) {
+		if (attachedAgent.objectIdGenerator.getId(obj) != null) {
+			return;
+		}
+		_onNewObject(obj);
+	}
+	
+	public static void _assertArrayExists(Object object) {
+		attachedAgent.assertArrayExists(object);
+	}
+	
+	protected void assertArrayExists(Object object) {
+		sharedMemGenerator.assertArray(object);
+	}
 	
 	public static void _onNewObject(Object object) {
 		attachedAgent.onObjectCreate(object);
@@ -84,6 +108,29 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	
 	public static void _onThreadStart(Thread thread) {
 		attachedAgent.onThreadStart(thread);
+	}
+	
+	
+	public static void _onLockAcquire(Object object) {
+		attachedAgent.onLockAcquire(object);
+	}
+	
+	protected void onLockAcquire(Object obj) {
+		ObjectId oid = this.objectIdGenerator.getId(obj);
+		Stack<Event> eventStack = this.lockAcquisitionMap.get(oid);
+		Event currEvent = new Event(null);
+		while (!currEvent.equals(eventStack.peek())) {
+			Thread.yield();
+		}
+		lastObjStackLocal.set(eventStack);
+	}
+	
+	public static void _afterLockAcquire() {
+		attachedAgent.afterLockAcquire();
+	}
+	
+	protected void afterLockAcquire() {
+		lastObjStackLocal.get().pop();
 	}
 	
 	private void onThreadStart(Thread thread) {
@@ -131,7 +178,6 @@ public class AggrePlayReplayAgent extends TraceAgent {
 
 		long previousThreadId = getPreviousThreadId();
 		SharedMemoryLocation sharedMemLocation = attachedAgent.sharedMemGenerator.ofField(object, field);
-		// TODO(Gab): all events are recorded using the previous thread id
 		// consider a better alternative
 		onRead(previousThreadId, sharedMemLocation);
 	}
@@ -273,6 +319,17 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		}
 	}
 	
+	private void initialiseLockAcquisitionMap(Map<ObjectId, List<Event>> lockAcquisitionMap) {
+		HashMap<ObjectId, Stack<Event>> result = new HashMap<>();
+		for (Map.Entry<ObjectId, List<Event>> entry : lockAcquisitionMap.entrySet()) {
+			Stack<Event> toAddEvents = new Stack<>();
+			LinkedList<Event> eLLinkedList = new LinkedList<>(entry.getValue());
+			eLLinkedList.descendingIterator().forEachRemaining(v -> toAddEvents.push(v));
+			result.put(entry.getKey(), toAddEvents);
+		}
+		this.lockAcquisitionMap = result;
+	}
+	
 	@Override
 	public void startup0(long vmStartupTime, long agentPreStartup) {
 		SystemClassTransformer.attachThreadId(getInstrumentation(), this.getClass());
@@ -286,6 +343,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 			this.rwal = output.rwAccessList;
 			this.recordingOutput = output;
 			this.rwalGeneratedAccessListReplay = new ReadWriteAccessListReplay(rwal);
+			initialiseLockAcquisitionMap(output.lockAcquisitionMap);
 			for (ThreadId threadId: recordingOutput.threadIds) {
 				this.recordedThreadIdMap.put(threadId, threadId.getId());
 			}

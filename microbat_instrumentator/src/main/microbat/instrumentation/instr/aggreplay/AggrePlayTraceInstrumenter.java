@@ -20,6 +20,7 @@ import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
+import org.apache.bcel.generic.InvokeInstruction;
 import org.apache.bcel.generic.LDC;
 import org.apache.bcel.generic.LocalVariableGen;
 import org.apache.bcel.generic.MethodGen;
@@ -160,11 +161,26 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 	protected InstructionList getInjectCodePutField(ConstantPoolGen constPool, LocalVariableGen tracerVar,
 			FieldInstructionInfo info, LocalVariableGen classNameVar, LocalVariableGen methodSigVar) {
 		InstructionList result = new InstructionList();
-		result.append(new SWAP()); // val, obj
-		result.append(new DUP()); // val, obj, obj
+		if (info.isComputationalType2()) {
+			// o, d -> d, o, o
+			result.append(new DUP2_X1());
+			result.append(new POP2());
+			result.append(new DUP());
+		} else {
+			result.append(new SWAP()); // val, obj
+			result.append(new DUP()); // val, obj, obj
+		}
+		
+		
 		result.append(new LDC(constPool.addString(info.getFieldName()))); // v, o, o, s
 		result.append(AggrePlayMethods.BEFORE_OBJECT_WRITE.toInvokeStatic(constPool, instrumentationClass)); // v, o
-		result.append(new SWAP()); // o, v
+		
+		if (info.isComputationalType2()) {
+			result.append(new DUP_X2());
+			result.append(new POP());
+		} else {
+			result.append(new SWAP());
+		}
 		result.append(super.getInjectCodePutField(constPool, tracerVar, info, classNameVar, methodSigVar));
 		return result;
 	}
@@ -341,6 +357,14 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 				injectOnNewArrayInsns(insnList, newArrayInsnHandle, constPool);
 			}
 			
+			for (InstructionHandle ih : lineInfo.getMonitorEnterInstructionHandles()) {
+				injectMonitorEnterInstruction(insnList, ih, constPool);
+			}
+			
+			for (InstructionHandle ih : lineInfo.getMonitorExitInstructionHandles()) {
+				injectMonitorExitInstruction(insnList, ih, constPool);
+			}
+			
 
 			lineInfo.dispose();
 		}
@@ -349,6 +373,19 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 		return true;	
 	}
 
+	protected void injectMonitorEnterInstruction(InstructionList il, InstructionHandle ih, ConstantPoolGen cpg) {
+		InstructionList beforeMonitorEnter = new InstructionList();
+		beforeMonitorEnter.append(new DUP());
+		beforeMonitorEnter.append(AggrePlayMethods.ON_LOCK_ACQUIRE.toInvokeStatic(cpg, instrumentationClass));
+		insertInsnHandler(il, beforeMonitorEnter, ih);
+		InstructionList afterMonitorEnterInstructionList = new InstructionList();
+		afterMonitorEnterInstructionList.append(AggrePlayMethods.AFTER_LOCK_ACQUIRE.toInvokeStatic(cpg, instrumentationClass));
+		appendInstruction(il, afterMonitorEnterInstructionList, ih);
+	}
+	
+	private void injectMonitorExitInstruction(InstructionList il, InstructionHandle ih, ConstantPoolGen cp) {
+		
+	}
 	
 	private void injectOnNewArrayInsns(InstructionList instructionList, InstructionHandle ih, ConstantPoolGen cpg) {
 		InstructionList toAppend = new InstructionList();
@@ -357,6 +394,30 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 		appendInstruction(instructionList, toAppend, ih);
 	}
 	
+	
+	
+	@Override
+	protected void injectCodeTracerInvokeMethod(MethodGen methodGen, InstructionList insnList,
+			ConstantPoolGen constPool, InstructionFactory instructionFactory, LocalVariableGen tracerVar,
+			InstructionHandle insnHandler, int line, LocalVariableGen classNameVar, LocalVariableGen methodSigVar,
+			boolean isAppClass) {
+		// TODO Auto-generated method stub
+		super.injectCodeTracerInvokeMethod(methodGen, insnList, constPool, instructionFactory, tracerVar, insnHandler, line,
+				classNameVar, methodSigVar, isAppClass);
+		InstructionList toAppend = new InstructionList();
+		InvokeInstruction invokeInstruction = (InvokeInstruction) insnHandler.getInstruction();
+		String signature = invokeInstruction.getSignature(constPool);
+		if (signature.startsWith("L")) {
+			toAppend.append(new DUP());
+			toAppend.append(AggrePlayMethods.ASSERT_OBJECT_EXISTS.toInvokeStatic(constPool, instrumentationClass));
+			appendInstruction(insnList, toAppend, insnHandler);
+		} else if (signature.startsWith("[")) {
+			toAppend.append(new DUP());
+			toAppend.append(AggrePlayMethods.ASSERT_ARRAY_EXISTS.toInvokeStatic(constPool, instrumentationClass));
+			appendInstruction(insnList, toAppend, insnHandler);
+		}
+	}
+
 	/**
 	 * 
 	 * @param info
@@ -409,6 +470,12 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 		PUTSTATIC insPutstatic = (PUTSTATIC) info.getInstruction();
 		String classNameString = insPutstatic.getReferenceType(constPool).getSignature();
 		
+		before.append(new GETSTATIC(insPutstatic.getIndex()));
+		if (info.isComputationalType2()) {
+			before.append(new POP2());
+		} else {
+			before.append(new POP());
+		}
 		before.append(new LDC(constPool.addString(classNameString)));
 		before.append(new LDC(constPool.addString(info.getFieldName())));
 		before.append(AggrePlayMethods.BEFORE_STATIC_WRITE.toInvokeStatic(constPool, instrumentationClass));
@@ -425,6 +492,13 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 		GETSTATIC insPutstatic = (GETSTATIC) info.getInstruction();
 		String classNameString = insPutstatic.getReferenceType(constPool).getSignature();
 
+		before.append(insPutstatic);
+		if (info.isComputationalType2()) {
+			before.append(new POP2());
+		} else {
+			before.append(new POP());
+		}
+		
 		before.append(new LDC(constPool.addString(classNameString)));
 		before.append(new LDC(constPool.addString(info.getFieldName())));
 		before.append(AggrePlayMethods.BEFORE_STATIC_READ.toInvokeStatic(constPool, instrumentationClass));

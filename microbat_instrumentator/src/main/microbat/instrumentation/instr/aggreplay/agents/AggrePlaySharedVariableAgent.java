@@ -42,6 +42,7 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	private static AggrePlaySharedVariableAgent agent = new AggrePlaySharedVariableAgent();
 	private AgentParams agentParams = null;
 	
+	
 	public static AggrePlaySharedVariableAgent getAgent(CommandLine cmd) {
 		agent.agentParams = AgentParams.initFrom(cmd);
 		return agent;
@@ -53,7 +54,7 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	}
 
 	public static void _onLockAcquire(Object object) {
-	
+		
 	}
 	
 	public static void _onArrayAccess(Object arrayRef, int index) {
@@ -63,6 +64,14 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	private void onArrayAccess(Object arrayRef, int index) {
 		SharedVariableArrayRef arrayVal = shObjectIdGenerator.getArrayId(arrayRef);
 		arrayVal.addAccess(index, Thread.currentThread().getId());
+	}
+	
+	public static void _assertObjectExists(Object object) {
+		agent.shObjectIdGenerator.assertId(object);
+	}
+	
+	public static void _assertArrayExists(Object object) {
+		agent.shObjectIdGenerator.assertArrayId(object);
 	}
 	
 	/**
@@ -100,7 +109,6 @@ public class AggrePlaySharedVariableAgent extends Agent {
 
 	@Override
 	public void shutdown() throws Exception {
-		// TODO Auto-generated method stub
 		write();
 		AgentLogger.debug("Ended program");
 	}	

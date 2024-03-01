@@ -45,8 +45,8 @@ public class BasicTransformer extends AbstractTransformer implements ClassFileTr
 		try {
 			byte[] result = instrumenter.instrument(classFName, classfileBuffer);
 
-			if (classFName.equals("Test$DumbThread")) {
-				File tocreate = new File("Output.class");
+			if (classFName.equals("benchmark/account/Main")) {
+				File tocreate = new File("K:\\OutputMain.class");
 				try {
 					FileOutputStream fw = new FileOutputStream(tocreate);
 					fw.write(result);

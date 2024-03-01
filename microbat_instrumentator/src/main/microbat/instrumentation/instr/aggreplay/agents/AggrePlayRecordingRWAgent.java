@@ -39,7 +39,6 @@ public class AggrePlayRecordingRWAgent extends RNRRecordingAgent {
 	
 	protected AggrePlayRecordingRWAgent(CommandLine cml) {
 		super(cml);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
@@ -99,7 +98,8 @@ public class AggrePlayRecordingRWAgent extends RNRRecordingAgent {
 		return false;
 	}
 	
-	private void acquireLock() {
+	@Override
+	public void acquireLock() {
 		try {
 			smp.acquire();
 		} catch (InterruptedException e) {
@@ -108,7 +108,8 @@ public class AggrePlayRecordingRWAgent extends RNRRecordingAgent {
 		}
 	}
 	
-	private void releaseLock() {
+	@Override
+	public void releaseLock() {
 		smp.release();
 	}
 	

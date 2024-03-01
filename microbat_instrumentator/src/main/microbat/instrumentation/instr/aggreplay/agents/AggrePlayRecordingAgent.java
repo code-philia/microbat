@@ -296,9 +296,7 @@ public class AggrePlayRecordingAgent extends Agent {
 	@Override
 	public void shutdown() throws Exception {
 		FileStorage fileStorage = new FileStorage(this.agentParams.getConcDumpFile());
-		HashSet<Storable> toStore = new HashSet<>();
 		List<ThreadId> threadIds = ThreadIdGenerator.threadGenerator.getThreadIds();
-		List<ObjectId> objectIds = getObjectIds();
 		List<SharedMemoryLocation> sharedMemoryLocations = getSharedMemoryLocations();
 		RecordingOutput output = new RecordingOutput(rwal, threadIds, 
 				sharedMemoryLocations,

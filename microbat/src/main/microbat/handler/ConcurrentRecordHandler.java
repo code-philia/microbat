@@ -35,6 +35,47 @@ import sav.strategies.dto.AppJavaClassPath;
  *
  */
 public class ConcurrentRecordHandler extends AbstractHandler {
+	
+
+	/**
+	 * Used to check if the job is canceled
+	 * @author Gabau
+	 *
+	 */
+	private static class CancelThread extends Thread {
+		public boolean stopped = false;
+		IProgressMonitor monitor;
+		InstrumentationExecutor executor;
+		public CancelThread(IProgressMonitor monitor,
+				InstrumentationExecutor executor) {
+			this.setName("Cancel thread");
+			this.monitor = monitor;
+			this.executor = executor;
+			this.setDaemon(true);
+		}
+		
+		@Override
+		public void run() {
+			while (!stopped) {
+				if (monitor.isCanceled()) {
+					executor.interrupt();
+					stopped = true;
+					break;
+				}
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		public void stopMonitoring() {
+			this.stopped = true;
+		}
+		
+	}
 	protected String generateTraceDir(AppJavaClassPath appPath) {
 		String traceFolder;
 		if (appPath.getOptionalTestClass() != null) {
@@ -103,8 +144,11 @@ public class ConcurrentRecordHandler extends AbstractHandler {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				CancelThread ctThread = new CancelThread(monitor, executor);
+				ctThread.start();
 				executor.runSharedVariable(fileName, Settings.stepLimit);
 				executor.runRecordConc(fileName, concFileNameString, Settings.stepLimit);
+				ctThread.stopMonitoring();
 				return Status.OK_STATUS;
 			}
 		};

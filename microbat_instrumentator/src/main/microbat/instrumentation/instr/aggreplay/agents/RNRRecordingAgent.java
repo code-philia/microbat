@@ -46,6 +46,34 @@ public abstract class RNRRecordingAgent extends Agent {
 	});
 	protected AgentParams agentParams;
 	
+	protected void assertObjectExists(Object object) {
+		if (objectIdGenerator.getId(object) != null) {
+			return;
+		}
+		objectIdGenerator.createId(object);
+	}
+	
+	public static void _assertObjectExists(Object object) {
+		recordingAgent.assertObjectExists(object);
+	}
+	
+	public static void _assertArrayExists(Object object) {
+		recordingAgent.assertArrayExists(object);
+	}
+	
+	protected void assertArrayExists(Object object) {
+		sharedGenerator.assertArray(object);
+	}
+	
+	
+	public static void _acquireLock() {
+		recordingAgent.acquireLock();
+	}
+	
+	public static void _releaseLock() {
+		recordingAgent.releaseLock();
+	}
+	
 	public static RNRRecordingAgent getAttached(CommandLine cml) {
 		if (recordingAgent != null) {
 			recordingAgent.agentParams = AgentParams.initFrom(cml);
@@ -130,6 +158,9 @@ public abstract class RNRRecordingAgent extends Agent {
 	protected abstract void onRead(SharedMemoryLocation sml);
 	
 	protected abstract void onWrite(SharedMemoryLocation sml);
+	
+	protected abstract void acquireLock();
+	protected abstract void releaseLock();
 	
 	/**
 	 * After object creation
