@@ -14,6 +14,7 @@ public class DependencyRecoveryTransformer extends TraceTransformer {
 
 	public DependencyRecoveryTransformer(AgentParams agentParams) {
 		super.instrumenter = new DependencyRecoveryInstrumenter(agentParams);
+		super.instrumenter.setIsInstrumentingLibrary(false);
 	}
 	
 	@Override

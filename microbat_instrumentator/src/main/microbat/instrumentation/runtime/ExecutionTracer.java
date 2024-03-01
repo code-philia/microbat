@@ -1378,6 +1378,11 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public static boolean isShutdown() {
 		return state == TracingState.SHUTDOWN;
 	}
+	
+	public static boolean _shouldExecuteInjectedCode() {
+		// execute injected code if is not shutdown
+		return state == TracingState.RECORDING;
+	}
 
 	public Trace getTrace() {
 		return trace;

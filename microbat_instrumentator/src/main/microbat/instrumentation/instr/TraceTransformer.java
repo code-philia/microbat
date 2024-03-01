@@ -41,8 +41,10 @@ public class TraceTransformer extends AbstractTransformer implements ClassFileTr
 		try {
 			String className = classFName.replace('/', '.');
 			if (GlobalFilterChecker.hasIncludedLibraryMethod(className)) {
+				instrumenter.setIsInstrumentingLibrary(true);
 				return instrumenter.instrument(classFName, classfileBuffer, GlobalFilterChecker.getIncludedMethodsOfClass(className));
 			} else {
+				instrumenter.setIsInstrumentingLibrary(false);
 				return instrumenter.instrument(classFName, classfileBuffer);
 			}
 		} catch (Exception e) {

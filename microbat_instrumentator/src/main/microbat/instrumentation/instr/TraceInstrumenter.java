@@ -16,6 +16,7 @@ import org.apache.bcel.generic.ASTORE;
 import org.apache.bcel.generic.ArrayInstruction;
 import org.apache.bcel.generic.ArrayType;
 import org.apache.bcel.generic.BasicType;
+import org.apache.bcel.generic.BranchHandle;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.DUP;
@@ -27,7 +28,11 @@ import org.apache.bcel.generic.DUP_X2;
 import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.GETFIELD;
 import org.apache.bcel.generic.GETSTATIC;
+import org.apache.bcel.generic.GOTO;
+import org.apache.bcel.generic.IFEQ;
+import org.apache.bcel.generic.IFNE;
 import org.apache.bcel.generic.IINC;
+import org.apache.bcel.generic.ILOAD;
 import org.apache.bcel.generic.INVOKEINTERFACE;
 import org.apache.bcel.generic.INVOKESPECIAL;
 import org.apache.bcel.generic.INVOKESTATIC;
@@ -36,9 +41,12 @@ import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.InvokeInstruction;
+import org.apache.bcel.generic.ISTORE;
+import org.apache.bcel.generic.LDC;
 import org.apache.bcel.generic.LocalVariableGen;
 import org.apache.bcel.generic.LocalVariableInstruction;
 import org.apache.bcel.generic.MethodGen;
+import org.apache.bcel.generic.NOP;
 import org.apache.bcel.generic.POP;
 import org.apache.bcel.generic.POP2;
 import org.apache.bcel.generic.PUSH;
@@ -70,6 +78,7 @@ import microbat.instrumentation.utils.MicrobatUtils;
 public class TraceInstrumenter extends AbstractInstrumenter {
 	protected static final String TRACER_VAR_NAME = "$tracer"; // local var
 	private static final String TEMP_VAR_NAME = "$tempVar"; // local var
+	private static final String EXECUTION_STATUS = "$shouldExecute"; // local var
 	
 	protected int tempVarIdx = 0;
 	private EntryPoint entryPoint;
@@ -77,6 +86,8 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 	protected UserFilters userFilters;
 
 	private HashMap<Integer, SerializableLineInfo> instructionTable;
+	
+	private boolean isInstrumentingLibrary = false;
 	
 	TraceInstrumenter() {
 	}
@@ -92,15 +103,11 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 
 	@Override
 	protected byte[] instrument(String classFName, String className, JavaClass jc) {
-		return instrument(classFName, className, jc, false, null);
+		return instrument(classFName, className, jc, null);
 	}
 	
 	@Override
 	protected byte[] instrument(String classFName, String className, JavaClass jc, Set<String> methods) {
-		return instrument(classFName, className, jc, true, methods);
-	}
-	
-	private byte[] instrument(String classFName, String className, JavaClass jc, boolean hasLibraryMethods, Set<String> methods) {
 		ClassGen classGen = new ClassGen(jc);
 		ConstantPoolGen constPool = classGen.getConstantPool();
 		JavaClass newJC = null;
@@ -110,7 +117,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 			return null;
 		}
 		for (Method method : jc.getMethods()) {
-			if (hasLibraryMethods) {
+			if (isInstrumentingLibrary) {
 				String methodSignature = MicrobatUtils.getMicrobatMethodFullName(className, method);
 				if (!methods.contains(methodSignature)) {
 					continue;
@@ -229,6 +236,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		}
 		tempVarIdx = 0;
 		InstructionList insnList = methodGen.getInstructionList();
+		InstructionList listCopy = insnList.copy();
 		InstructionHandle startInsn = insnList.getStart();
 		if (startInsn == null) {
 			// empty method
@@ -328,7 +336,67 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		}
 		injectCodeInitTracer(methodGen, constPool, startLine, endLine, isAppClass, classNameVar,
 				methodSigVar, isMainMethod, tracerVar);
+		
+		if (isInstrumentingLibrary) {
+			/* inject execution status and add branch based on status */
+			InstructionHandle start = insnList.getStart();
+			int executionStatusIndex = injectCodeExecutionStatus(insnList, constPool, methodGen);
+			InstructionList injectedInsns = injectCodeForNormalExecution(listCopy, executionStatusIndex);
+			insnList.insert(start, injectedInsns);
+			injectedInsns.dispose();
+		}
 		return true;
+	}
+	
+	/**
+	 * Inject a boolean to record whether the injected instructions should be executed.
+	 */
+	private int injectCodeExecutionStatus(InstructionList insnList, ConstantPoolGen constPool, MethodGen methodGen) {
+		InstructionList newInsns = new InstructionList();
+		// add a variable
+		methodGen.addLocalVariable(TraceInstrumenter.EXECUTION_STATUS, Type.BOOLEAN, null, null);
+		int varIndex = methodGen.getMaxLocals() - 1;
+		
+		// invoke _shouldExecuteInjectedCode()
+		TracerMethods method = TracerMethods.SHOULD_EXECUTE;
+		int methodRef = constPool.addMethodref(method.getDeclareClass(), method.getMethodName(),
+				method.getMethodSign());
+		newInsns.append(new INVOKESTATIC(methodRef));
+		// store the value
+		newInsns.append(new ISTORE(varIndex));
+		
+		insnList.insert(newInsns);
+		newInsns.dispose();
+		
+		return varIndex;
+	}
+	
+	/**
+	 * Use original code if shouldn't execute injected code
+	 */
+	private InstructionList injectCodeForNormalExecution(InstructionList listCopy, int executionStatusIndex) {
+		InstructionList newInsns = new InstructionList();
+		
+		// load execution status
+		newInsns.append(new ILOAD(executionStatusIndex));
+		
+		// if $shouldExecute != 0, i.e. should execute, target to the injected instructions
+		BranchHandle ifHandle = newInsns.append(new IFNE(null));
+		
+		// duplicate original code
+		try {
+			listCopy.delete(listCopy.getStart());
+			listCopy.delete(listCopy.getStart());
+		} catch (TargetLostException e) {
+			e.printStackTrace();
+		}
+		newInsns.append(listCopy);
+		
+		InstructionHandle target = newInsns.append(new NOP());
+		ifHandle.setTarget(target);
+		
+		listCopy.dispose();
+		return newInsns;
 	}
 
 	private void injectCodeTracerExit(InstructionHandle exitInsHandle, InstructionList insnList, 
@@ -1077,6 +1145,10 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 
 	public HashMap<Integer, SerializableLineInfo> getInstructionTable() {
 		return this.instructionTable;
+	}
+	
+	public void setIsInstrumentingLibrary(boolean isInstrumentingLibrary) {
+		this.isInstrumentingLibrary = isInstrumentingLibrary;
 	}
 	
 }
