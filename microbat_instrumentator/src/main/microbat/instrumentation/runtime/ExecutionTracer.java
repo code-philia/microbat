@@ -73,6 +73,8 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	
 	public static boolean isRecordingLibCalls = false;
 	private Map<String, Set<String>> libraryCalls = new HashMap<>();
+	
+	private static boolean shouldExecuteInjectedCode = true;
 
 	public static void setExpectedSteps(int expectedSteps) {
 		if (expectedSteps != AgentConstants.UNSPECIFIED_INT_VALUE) {
@@ -396,6 +398,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	}
 
 	public void exitMethod(int line, String className, String methodSignature) {
+		if (methodCallStack.isEmpty()) {
+			shouldExecuteInjectedCode = false;
+		}
 		trackingDelegate.untrack();
 		boolean exclusive = GlobalFilterChecker.isExclusive(className, methodSignature);
 		if (!exclusive) {
@@ -1362,6 +1367,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	private static TracingState state = TracingState.INIT;
 
 	public static void shutdown() {
+		shouldExecuteInjectedCode = false;
 		state = TracingState.SHUTDOWN;
 	}
 
@@ -1381,7 +1387,10 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	
 	public static boolean _shouldExecuteInjectedCode() {
 		// execute injected code if is not shutdown
-		return state == TracingState.RECORDING;
+		if (shouldExecuteInjectedCode) {
+			System.out.println();
+		}
+		return shouldExecuteInjectedCode;
 	}
 
 	public Trace getTrace() {

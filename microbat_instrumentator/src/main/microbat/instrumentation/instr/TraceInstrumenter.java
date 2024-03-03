@@ -384,12 +384,6 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		BranchHandle ifHandle = newInsns.append(new IFNE(null));
 		
 		// duplicate original code
-		try {
-			listCopy.delete(listCopy.getStart());
-			listCopy.delete(listCopy.getStart());
-		} catch (TargetLostException e) {
-			e.printStackTrace();
-		}
 		newInsns.append(listCopy);
 		
 		InstructionHandle target = newInsns.append(new NOP());
