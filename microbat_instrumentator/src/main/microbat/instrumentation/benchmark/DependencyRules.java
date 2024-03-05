@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Set;
 
 import org.apache.bcel.classfile.ClassParser;
@@ -20,11 +19,10 @@ public class DependencyRules {
 	
 	static public Set<String> classes = new HashSet<>();
 	static public Map<String, Set<String>> writters = new HashMap<>();
-	static public Map<String, Set<String>> getters = new HashMap<>();
 	
 	static public enum Type {
 		NONE,
-		IS_WRITTER,
+		IS_SETTER,
 		IS_GETTER
 	}
 
@@ -55,7 +53,6 @@ public class DependencyRules {
 				"java.util.ListIterator",
 				
 				"java.util.Queue"
-				
 				};
 		
 		List<List<String>> writterMethods = Arrays.asList(
@@ -280,69 +277,73 @@ public class DependencyRules {
 						"remove()Ljava/lang/Object;")
 				);
 		
-//		List<List<String>> getterMethods = Arrays.asList(
-//				// list
-//				Arrays.asList("get(I)Ljava/lang/Object;"),
-//				// map
-//				Arrays.asList("get(Ljava/lang/Object;)Ljava/lang/Object;"),
-//				// set
-//				Arrays.asList(""),
-//				// collection
-//				Arrays.asList(""),
-//				// appendable
-//				Arrays.asList(""),
-//				// charsequence
-//				Arrays.asList("charAt(I)C", 
-//						"subSequence(II)Ljava/lang/CharSequence;", 
-//						"toString()Ljava/lang/String;")
-//				);
-		
 		for (int i = 0; i < classNames.length; i++) {
 			String key = classNames[i];
 			classes.add(key);
 			writters.put(key, new HashSet<String>(writterMethods.get(i)));
-//			getters.put(key, new HashSet<String>(getterMethods.get(i)));
 		}
 	}
 	
-	public static Type getType(String method) throws IOException {
+	private static ArrayList<String> getRelevantClasses(String method) throws IOException {
 		if (classes.isEmpty()) {
 			setUp();
 		}
 		
 		String[] methodInfo = method.split("#");
 		String className = methodInfo[0];
-		String methodSignature = methodInfo[1];
+		
+		ArrayList<String> relevantClasses = new ArrayList<>();
 		
 		/*
 		 * load the class
 		 */
 		ClassGen classGen = loadClass(className);
 		if (classGen == null) {
-			return Type.NONE;
+			return relevantClasses;
 		}
 		
 		/*
 		 * get all relevant classes
 		 */
-		ArrayList<String> relevantClasses = new ArrayList<>();
 		relevantClasses.add(className);
 		for (String interfaceName : classGen.getInterfaceNames()) {
 			relevantClasses.add(interfaceName);
 		}
 		relevantClasses.add(classGen.getSuperclassName());
 		
+		return relevantClasses;
+	}
+
+	public static Type getType(String method) throws IOException {
+		String[] methodInfo = method.split("#");
+		String methodSignature = methodInfo[1];
+		
+		ArrayList<String> relevantClasses = getRelevantClasses(method);
+		
 		for (String clazz : relevantClasses) {
 			if (classes.contains(clazz)) {
 				if (writters.get(clazz).contains(methodSignature)) {
-					return Type.IS_WRITTER;
+					return Type.IS_SETTER;
 				}
-//				if (getters.get(clazz).contains(methodSignature)) {
-//					return Type.IS_GETTER;
-//				}
 			}
 		}
 		return Type.NONE;
+	}
+	
+	public static String getRuntimeType(String method) throws IOException {
+		String[] methodInfo = method.split("#");
+		String methodSignature = methodInfo[1];
+		
+		ArrayList<String> relevantClasses = getRelevantClasses(method);
+		
+		for (String clazz : relevantClasses) {
+			if (classes.contains(clazz)) {
+				if (writters.get(clazz).contains(methodSignature)) {
+					return clazz;
+				}
+			}
+		}
+		return "";
 	}
 	
 	private static String getFileName(String classFName) {

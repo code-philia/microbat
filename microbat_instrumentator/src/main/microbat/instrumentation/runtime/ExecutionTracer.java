@@ -416,12 +416,18 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				initInvokingDetail(invokeObj, invokeTypeSign, methodSig, params, paramTypeSignsCode, residingClassName,
 						latestNode);
 				
+				// if a method is setter, add modified variable in written variables
 				Type t = DependencyRules.getType(methodSig);
-				if (t == Type.IS_WRITTER) {
+				if (t == Type.IS_SETTER) {
 					Collection<VarValue> readVars = latestNode.getReadVariables();
-					addRWriteValue(latestNode, readVars.iterator().next(), true);
-				} else if (t == Type.IS_GETTER) {
-					// already in read variables
+					String runtimeType = DependencyRules.getRuntimeType(methodSig);
+					for (VarValue variable : readVars) {
+						// not invoking object, assume to be written
+						String variableType = variable.getType();
+						if (!variableType.equals(runtimeType)) {
+							addRWriteValue(latestNode, variable, true);
+						}
+					}
 				}
 
 				if (methodSig.contains("clone()")) {
