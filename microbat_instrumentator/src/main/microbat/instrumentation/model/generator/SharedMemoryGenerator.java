@@ -61,6 +61,13 @@ public class SharedMemoryGenerator {
 		}
 		return result;
 	}
+
+	public ObjectId ofObjectOrArray(Object object) {
+		ObjectId result = objectIdGenerator.getId(object);
+		if (result == null) return arrayObjectIdMap.get(System.identityHashCode(object));
+		return result;
+		
+	}
 	
 	public SharedMemoryGenerator(ObjectIdGenerator objIdGenerator) {
 		this.objectIdGenerator = objIdGenerator;

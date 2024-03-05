@@ -118,8 +118,8 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	protected void onLockAcquire(Object obj) {
 		ObjectId oid = this.objectIdGenerator.getId(obj);
 		Stack<Event> eventStack = this.lockAcquisitionMap.get(oid);
-		Event currEvent = new Event(null);
-		while (!currEvent.equals(eventStack.peek())) {
+		Event currEvent = new Event(null, getPreviousThreadId());
+		if (eventStack == null || !currEvent.equals(eventStack.peek())) {
 			Thread.yield();
 		}
 		lastObjStackLocal.set(eventStack);
@@ -149,8 +149,8 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	
 	public static AggrePlayReplayAgent getAttached(CommandLine cmd) {
 		if (attachedAgent == null) {
-//			attachedAgent = new AggrePlayReplayAgent(cmd);
-			attachedAgent = new AggrePlayRWReplayAgent(cmd);
+			attachedAgent = new AggrePlayReplayAgent(cmd);
+//			attachedAgent = new AggrePlayRWReplayAgent(cmd);
 		}
 		attachedAgent.agentParams = AgentParams.initFrom(cmd);
 		return attachedAgent;

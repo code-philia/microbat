@@ -79,7 +79,7 @@ public abstract class RNRRecordingAgent extends Agent {
 			recordingAgent.agentParams = AgentParams.initFrom(cml);
 			return recordingAgent;
 		}
-		recordingAgent = new AggrePlayRecordingRWAgent(cml);
+		recordingAgent = new LaxRecordingAgent(cml);
 		return recordingAgent;
 	}
 	

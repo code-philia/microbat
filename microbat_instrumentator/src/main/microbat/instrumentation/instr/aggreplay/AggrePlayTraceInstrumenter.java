@@ -378,13 +378,12 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 		beforeMonitorEnter.append(new DUP());
 		beforeMonitorEnter.append(AggrePlayMethods.ON_LOCK_ACQUIRE.toInvokeStatic(cpg, instrumentationClass));
 		insertInsnHandler(il, beforeMonitorEnter, ih);
-		InstructionList afterMonitorEnterInstructionList = new InstructionList();
-		afterMonitorEnterInstructionList.append(AggrePlayMethods.AFTER_LOCK_ACQUIRE.toInvokeStatic(cpg, instrumentationClass));
-		appendInstruction(il, afterMonitorEnterInstructionList, ih);
 	}
 	
 	private void injectMonitorExitInstruction(InstructionList il, InstructionHandle ih, ConstantPoolGen cp) {
-		
+		InstructionList afterMonitorExitInstructionList = new InstructionList();
+		afterMonitorExitInstructionList.append(AggrePlayMethods.AFTER_LOCK_ACQUIRE.toInvokeStatic(cp, instrumentationClass));
+		appendInstruction(il, afterMonitorExitInstructionList, ih);
 	}
 	
 	private void injectOnNewArrayInsns(InstructionList instructionList, InstructionHandle ih, ConstantPoolGen cpg) {
