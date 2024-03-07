@@ -156,7 +156,7 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 	public Set<SharedMemoryLocation> getArrayRefs() {
 		return this.sharedMemoryLocations
 				.stream()
-				.filter((v) -> v.getLocation() instanceof ArrayIndexMemLocation).collect(Collectors.toSet());
+				.filter((v) -> v.getLocation() instanceof ArrayIndexMemLocation).collect(Collectors.<SharedMemoryLocation>toSet());
 	}
 
 	@Override
