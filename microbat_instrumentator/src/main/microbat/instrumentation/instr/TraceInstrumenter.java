@@ -338,6 +338,10 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 			// assume each pair contains 2 instructions
 			InstructionHandle[] pair = constantWrappingIterator.next();
 			InstructionHandle wrapConstHandle = pair[1];
+			InvokeInstruction invokeInstruction = (InvokeInstruction) wrapConstHandle.getInstruction();
+			if (!invokeInstruction.getMethodName(constPool).equals("valueOf")) {
+				continue;
+			}
 			
 			// Stack: ..., wrappedObject
 			InstructionList newInsns = new InstructionList();
