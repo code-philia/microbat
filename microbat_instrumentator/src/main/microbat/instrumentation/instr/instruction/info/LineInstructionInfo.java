@@ -12,7 +12,6 @@ import org.apache.bcel.classfile.LocalVariable;
 import org.apache.bcel.classfile.LocalVariableTable;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.ArrayInstruction;
-import org.apache.bcel.generic.BranchInstruction;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.CodeExceptionGen;
 import org.apache.bcel.generic.ConstantPoolGen;
@@ -168,8 +167,10 @@ public class LineInstructionInfo{
 					continue;
 				} else {
 					LocalVarInstructionInfo info = new LocalVarInstructionInfo(insnHandler, line, localVar.getName(), localVar.getSignature());
-					info.setIsStore(existIn(((LocalVariableInstruction) insn).getCanonicalTag(), Const.FSTORE, Const.IINC, Const.DSTORE, Const.ASTORE,
-							Const.ISTORE, Const.LSTORE));
+					boolean isStoreInstruction = existIn(localVarInsn.getCanonicalTag(), Const.FSTORE, Const.IINC, Const.DSTORE, Const.ASTORE,
+							Const.ISTORE, Const.LSTORE);
+					boolean isInsertedVar = localVarTable.getLocalVariable(localVarInsn.getIndex()).getName().startsWith("#");
+					info.setIsStore(isStoreInstruction && !isInsertedVar);
 					Type type = localVarInsn.getType(constPool);
 					info.setVarStackSize(type.getSize());
 					

@@ -331,7 +331,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		ArrayList<InstructionHandle> positionsToUpdate = null;
 		
 		InstructionFinder instructionFinder = new InstructionFinder(insnList);
-		String constantWrappingPattern = "(DCONST|FCONST|ICONST|LCONST) INVOKESTATIC";
+		String constantWrappingPattern = "(DCONST|LDC2_W|FCONST|ICONST|BIPUSH|LCONST) INVOKESTATIC";
 		Iterator<InstructionHandle[]> iterator = instructionFinder.search(constantWrappingPattern);
 		while (iterator.hasNext()) {
 			// assume each pair contains 2 instructions
@@ -345,10 +345,13 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 			
 			// Stack: ..., wrappedObject
 			InstructionList newInsns = new InstructionList();
-			newInsns.append(new DUP()); // Stack: ..., wrappedObject, wrappedObject
+			/* Note: 
+			 * Java doesn't allow variable name to start with #, 
+			 * a special character is an indication of a temp var. */
 			LocalVariableGen tempVar = methodGen.addLocalVariable(
-					"temp_" + String.valueOf(nameGenerator.nextInt()), Type.OBJECT, null, null);
-			newInsns.append(new ASTORE(tempVar.getIndex())); // Stack: ..., wrappedObject
+					"#temp_" + String.valueOf(nameGenerator.nextInt()), Type.OBJECT, null, null);
+			newInsns.append(new ASTORE(tempVar.getIndex())); // Stack: ...
+			newInsns.append(new ALOAD(tempVar.getIndex())); // Stack: ..., wrappedObject
 			
 			insnList.append(wrapConstHandle, newInsns);
 			newInsns.dispose();
