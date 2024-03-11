@@ -331,13 +331,13 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		boolean injectedCode = false;
 		
 		InstructionFinder instructionFinder = new InstructionFinder(insnList);
-		String constantWrappingPattern = "(DCONST|LDC2_W|FCONST|ICONST|BIPUSH|LCONST) INVOKESTATIC";
-		Iterator<InstructionHandle[]> iterator = instructionFinder.search(constantWrappingPattern);
-		while (iterator.hasNext()) {
+		/* primitive constants wrapped into composite types */
+		String constantWrappingPattern = "(DCONST|FCONST|ICONST|LCONST|LDC2_W|LDC_W|LDC|BIPUSH) INVOKESTATIC";
+		Iterator<InstructionHandle[]> constantWrappingIterator = instructionFinder.search(constantWrappingPattern);
+		while (constantWrappingIterator.hasNext()) {
 			// assume each pair contains 2 instructions
-			InstructionHandle[] pair = iterator.next();
+			InstructionHandle[] pair = constantWrappingIterator.next();
 			InstructionHandle wrapConstHandle = pair[1];
-			InstructionHandle nextLineHandle = wrapConstHandle.getNext().getNext();
 			
 			// Stack: ..., wrappedObject
 			InstructionList newInsns = new InstructionList();
@@ -349,13 +349,36 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 			newInsns.append(new ASTORE(tempVar.getIndex())); // Stack: ...
 			newInsns.append(new ALOAD(tempVar.getIndex())); // Stack: ..., wrappedObject
 			
-			
 			insertInsnHandler(insnList, newInsns, wrapConstHandle.getNext());
-//			insnList.append(wrapConstHandle, newInsns);
 			newInsns.dispose();
 			
 			injectedCode = true;
 		}
+		
+		/* composite types defined without constructors */
+		String altInitializePattern = "LDC INVOKEVIRTUAL";
+		Iterator<InstructionHandle[]> altInitializeIterator = instructionFinder.search(altInitializePattern);
+		while (altInitializeIterator.hasNext()) {
+			// assume each pair contains 2 instructions
+			InstructionHandle[] pair = altInitializeIterator.next();
+			InstructionHandle initializeHandle = pair[0];
+			
+			// Stack: ..., initializedObj
+			InstructionList newInsns = new InstructionList();
+			/* Note: 
+			 * Java doesn't allow variable name to start with #, 
+			 * a special character is an indication of a temp var. */
+			LocalVariableGen tempVar = methodGen.addLocalVariable(
+					"#temp_" + String.valueOf(nameGenerator.nextInt()), Type.OBJECT, null, null);
+			newInsns.append(new ASTORE(tempVar.getIndex())); // Stack: ...
+			newInsns.append(new ALOAD(tempVar.getIndex())); // Stack: ..., initializedObj
+			
+			insertInsnHandler(insnList, newInsns, initializeHandle.getNext());
+			newInsns.dispose();
+			
+			injectedCode = true;
+		}
+		
 		return injectedCode;
 	}
 
