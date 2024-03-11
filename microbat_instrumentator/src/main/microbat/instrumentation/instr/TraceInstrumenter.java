@@ -331,7 +331,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		ArrayList<InstructionHandle> positionsToUpdate = null;
 		
 		InstructionFinder instructionFinder = new InstructionFinder(insnList);
-		String constantWrappingPattern = "ICONST INVOKESTATIC";
+		String constantWrappingPattern = "(DCONST|FCONST|ICONST|LCONST) INVOKESTATIC";
 		Iterator<InstructionHandle[]> iterator = instructionFinder.search(constantWrappingPattern);
 		while (iterator.hasNext()) {
 			// assume each pair contains 2 instructions
