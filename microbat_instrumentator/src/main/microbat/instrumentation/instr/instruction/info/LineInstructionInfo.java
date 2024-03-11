@@ -169,8 +169,14 @@ public class LineInstructionInfo{
 					LocalVarInstructionInfo info = new LocalVarInstructionInfo(insnHandler, line, localVar.getName(), localVar.getSignature());
 					boolean isStoreInstruction = existIn(localVarInsn.getCanonicalTag(), Const.FSTORE, Const.IINC, Const.DSTORE, Const.ASTORE,
 							Const.ISTORE, Const.LSTORE);
-					boolean isInsertedVar = localVarTable.getLocalVariable(localVarInsn.getIndex()).getName().startsWith("#");
-					info.setIsStore(isStoreInstruction && !isInsertedVar);
+					if (isStoreInstruction) {
+						LocalVariable localVariable = localVarTable.getLocalVariable(localVarInsn.getIndex());
+						if (localVariable == null || localVariable.getName().startsWith("#")) {
+							continue;
+						}
+					}
+					
+					info.setIsStore(isStoreInstruction);
 					Type type = localVarInsn.getType(constPool);
 					info.setVarStackSize(type.getSize());
 					

@@ -224,12 +224,12 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 			return false;
 		}
 		
-		ArrayList<InstructionHandle> positionsToUpdate = injectCodeTempVars(insnList, constPool, methodGen);
+		boolean injectedCode = injectCodeTempVars(insnList, constPool, methodGen);
 		
 		/* fill up missing variables in localVariableTable */
 		LocalVariableSupporter.fillUpVariableTable(methodGen, method, constPool);
 		/* update method */
-		if (positionsToUpdate != null) {
+		if (injectedCode) {
 			method = methodGen.getMethod();
 		}
 		List<LineInstructionInfo> lineInsnInfos = LineInstructionInfo.buildLineInstructionInfos(classGen, constPool,
@@ -326,9 +326,9 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		return true;
 	}
 	
-	private ArrayList<InstructionHandle> injectCodeTempVars(InstructionList insnList, ConstantPoolGen constPool, MethodGen methodGen) {
+	private boolean injectCodeTempVars(InstructionList insnList, ConstantPoolGen constPool, MethodGen methodGen) {
 		Random nameGenerator = new Random(0);
-		ArrayList<InstructionHandle> positionsToUpdate = null;
+		boolean injectedCode = false;
 		
 		InstructionFinder instructionFinder = new InstructionFinder(insnList);
 		String constantWrappingPattern = "(DCONST|LDC2_W|FCONST|ICONST|BIPUSH|LCONST) INVOKESTATIC";
@@ -338,10 +338,6 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 			InstructionHandle[] pair = iterator.next();
 			InstructionHandle wrapConstHandle = pair[1];
 			InstructionHandle nextLineHandle = wrapConstHandle.getNext().getNext();
-			if (positionsToUpdate == null) {
-				positionsToUpdate = new ArrayList<>();
-			}
-			positionsToUpdate.add(nextLineHandle);
 			
 			// Stack: ..., wrappedObject
 			InstructionList newInsns = new InstructionList();
@@ -353,10 +349,14 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 			newInsns.append(new ASTORE(tempVar.getIndex())); // Stack: ...
 			newInsns.append(new ALOAD(tempVar.getIndex())); // Stack: ..., wrappedObject
 			
-			insnList.append(wrapConstHandle, newInsns);
+			
+			insertInsnHandler(insnList, newInsns, wrapConstHandle.getNext());
+//			insnList.append(wrapConstHandle, newInsns);
 			newInsns.dispose();
+			
+			injectedCode = true;
 		}
-		return positionsToUpdate;
+		return injectedCode;
 	}
 
 	private void injectCodeTracerExit(InstructionHandle exitInsHandle, InstructionList insnList, 
