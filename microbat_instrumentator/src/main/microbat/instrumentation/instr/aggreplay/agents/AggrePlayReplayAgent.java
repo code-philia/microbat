@@ -332,7 +332,6 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	
 	@Override
 	public void startup0(long vmStartupTime, long agentPreStartup) {
-		SystemClassTransformer.attachThreadId(getInstrumentation(), this.getClass());
 		File concDumpFile = new File(agentParams.getConcDumpFile());
 		try {
 			FileReader concReader = new FileReader(concDumpFile);
@@ -387,15 +386,15 @@ public class AggrePlayReplayAgent extends TraceAgent {
 
 		int size = tracers.size();
 		List<Trace> traceList = new ArrayList<>(size);
-		for (int i = 0; i < size; i++) {
-
-			ExecutionTracer tracer = (ExecutionTracer) tracers.get(i);
+		for (IExecutionTracer tracerInner: tracers) {
+			
+			ExecutionTracer tracer = (ExecutionTracer) tracerInner;
 
 			Trace trace = tracer.getTrace();
 			trace.setThreadId(tracer.getThreadId());
 			trace.setThreadName(tracer.getThreadName());
 			trace.setMain(ExecutionTracer.getMainThreadStore().equals(tracer));
-			
+			trace.setInnerThreadId(threadIdGenerator.getId(trace.getThreadId()));
 			// TODO(Gab): Botch needed because tracer can be initialised 
 			// in thread id instrumenter
 			if (trace.getAppJavaClassPath() == null) {

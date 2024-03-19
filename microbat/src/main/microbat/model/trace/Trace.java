@@ -12,6 +12,7 @@ import org.eclipse.jdt.core.dom.CatchClause;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
 import microbat.codeanalysis.ast.LocalVariableScopes;
+import microbat.instrumentation.model.id.ThreadId;
 import microbat.model.AttributionVar;
 import microbat.model.BreakPoint;
 import microbat.model.Scope;
@@ -36,6 +37,20 @@ public class Trace {
 	private boolean isMain;
 	private String threadName;
 	private String id;
+	private ThreadId innerThreadId;
+	
+	/**
+	 * Getter for inner thread id. Representation of a
+	 * thread id using parent counter.
+	 * @return
+	 */
+	public ThreadId getInnerThreadId() {
+		return innerThreadId;
+	}
+	
+	public void setInnerThreadId(ThreadId threadId) {
+		this.innerThreadId = threadId;
+	}
 	
 	/**
 	 * This variable is to trace whether the variables in different lines are the same

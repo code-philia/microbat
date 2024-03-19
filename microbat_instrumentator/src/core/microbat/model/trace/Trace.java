@@ -16,6 +16,7 @@ import microbat.codeanalysis.bytecode.CFG;
 import microbat.codeanalysis.bytecode.CFGConstructor;
 import microbat.codeanalysis.bytecode.CFGNode;
 import microbat.codeanalysis.bytecode.MethodFinderByLine;
+import microbat.instrumentation.model.id.ThreadId;
 import microbat.model.BreakPoint;
 import microbat.model.ClassLocation;
 import microbat.model.ControlScope;
@@ -38,7 +39,16 @@ public class Trace {
 	private long threadId;
 	private boolean isMain;
 	private String threadName;
-
+	private ThreadId innerThreadId;
+	
+	public ThreadId getInnerThreadId() {
+		return innerThreadId;
+	}
+	
+	public void setInnerThreadId(ThreadId threadId) {
+		this.innerThreadId = threadId;
+	}
+	
 	/**
 	 * This variable is to trace whether the variables in different lines are the same
 	 * local variable.

@@ -165,6 +165,27 @@ public class InstrumentationExecutor {
 		return null;
 	}
 	
+	public RunningInfo runCounter() throws StepLimitException {
+		try {
+			agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
+			agentRunner.getConfig().setPort(9000);
+			
+			System.out.println("precheck..");
+			agentRunner.precheck(null);
+			PrecheckInfo info = agentRunner.getPrecheckInfo();
+			System.out.println(info);
+			PreCheckInformation precheckInfomation = new PreCheckInformation(info.getThreadNum(), info.getStepTotal(),
+					info.isOverLong(), new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), info.getLoadedClasses());
+			precheckInfomation.setPassTest(agentRunner.isTestSuccessful());
+			this.setPrecheckInfo(precheckInfomation);
+		} catch (SavException e1) {
+			e1.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	
 	public void runSharedVariable(String dumpFile, int stepLimit) {
 		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
 		agentRunner.getConfig().setPort(9000);

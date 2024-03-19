@@ -7,7 +7,9 @@ import java.util.List;
 import microbat.instrumentation.filter.CodeRangeUserFilter;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.filter.OverLongMethodFilter;
+import microbat.instrumentation.instr.SystemClassTransformer;
 import microbat.instrumentation.instr.TraceTransformer;
+import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.instrumentation.runtime.IExecutionTracer;
 import microbat.model.trace.Trace;
@@ -18,13 +20,19 @@ import sav.strategies.dto.AppJavaClassPath;
 
 public class TraceAgent extends Agent {
 	private AgentParams agentParams;
+	protected static ThreadIdGenerator threadIdGenerator = new ThreadIdGenerator();
 //	private StopTimer timer;
 
 	public TraceAgent(CommandLine cmd) {
 		this.agentParams = AgentParams.initFrom(cmd);
 	}
+	
+	public static void _onThreadStart(Thread thread) {
+		threadIdGenerator.createId(thread);
+	}
 
 	public void startup0(long vmStartupTime, long agentPreStartup) {
+		SystemClassTransformer.attachThreadId(getInstrumentation(), this.getClass());
 //		timer = new StopTimer("Trace Construction");
 //		timer.newPoint("Execution");
 		/* init filter */
@@ -63,6 +71,7 @@ public class TraceAgent extends Agent {
 
 			Trace trace = tracer.getTrace();
 			trace.setThreadId(tracer.getThreadId());
+			trace.setInnerThreadId(threadIdGenerator.getId(tracer.getThreadId()));
 			trace.setThreadName(tracer.getThreadName());
 			trace.setMain(ExecutionTracer.getMainThreadStore().equals(tracer));
 			

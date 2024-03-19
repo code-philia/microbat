@@ -60,6 +60,16 @@ public class TraceOutputWriter extends OutputWriter {
 		Map<String, Integer> locIdIdxMap = writeLocations(trace);
 		writeSteps(trace.getExecutionList(), locIdIdxMap);
 		writeStepVariableRelation(trace);
+		writeTraceThreadId(trace);
+	}
+	
+	private void writeTraceThreadId(Trace trace) throws IOException {
+		if (trace.getInnerThreadId() == null) {
+			writeString(null);
+			return;
+		}
+		writeString(trace.getInnerThreadId().getFromStore());
+		
 	}
 	
 	private void writeFilterInfo(List<String> libClasses, boolean isInclusive) throws IOException {

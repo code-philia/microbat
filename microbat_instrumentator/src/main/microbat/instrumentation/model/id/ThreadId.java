@@ -6,6 +6,13 @@ import microbat.instrumentation.model.storage.Storable;
 
 public class ThreadId extends Storable {
 	
+
+	public ListNode rootListNode = null;
+	public long threadId;
+	private long idCounter = 0;
+
+	public int internalHashCode = 100002301;
+	
 	private static class ListNode extends Storable {
 		long value;
 		ListNode parent;
@@ -38,11 +45,6 @@ public class ThreadId extends Storable {
 		
 		
 	}
-	public ListNode rootListNode = null;
-	public long threadId;
-	private long idCounter = 0;
-
-	public int internalHashCode = 100002301;
 	
 	public ThreadId(long threadId) {
 		rootListNode = new ListNode(0, null);

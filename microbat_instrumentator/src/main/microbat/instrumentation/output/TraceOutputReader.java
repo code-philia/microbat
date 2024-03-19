@@ -2,9 +2,13 @@ package microbat.instrumentation.output;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import microbat.instrumentation.instr.aggreplay.shared.ParseData;
+import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser;
+import microbat.instrumentation.model.id.ThreadId;
 import microbat.model.BreakPoint;
 import microbat.model.ClassLocation;
 import microbat.model.ControlScope;
@@ -47,11 +51,22 @@ public class TraceOutputReader extends OutputReader {
 			List<BreakPoint> locationList = readLocations();
 			trace.setExecutionList(readSteps(trace, locationList));
 			readStepVariableRelation(trace);
-			
+			ThreadId threadId = readTraceInnerThreadId();
+			trace.setInnerThreadId(threadId);
 			traceList.add(trace);
 		}
 		
 		return traceList;
+	}
+	
+	private ThreadId readTraceInnerThreadId() throws IOException {
+		String threadIDString = readString();
+		if (threadIDString.length() == 0) return null;
+		StringReader threadIdReader = new StringReader(threadIDString);
+		SharedDataParser parser = new SharedDataParser();
+		ParseData data = parser.parse(threadIdReader).get(0);
+		ThreadId resulThreadId = parser.createThreadId(data);
+		return resulThreadId;
 	}
 
 	private List<String> readFilterInfo() throws IOException {
