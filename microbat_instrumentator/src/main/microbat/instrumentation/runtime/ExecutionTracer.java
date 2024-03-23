@@ -30,6 +30,7 @@ import microbat.instrumentation.benchmark.MethodInfo;
 import microbat.instrumentation.benchmark.MethodInfo.Action;
 import microbat.instrumentation.benchmark.MethodInfo.Index;
 import microbat.instrumentation.benchmark.MethodInfo.Type;
+import microbat.instrumentation.benchmark.QueryRequestGenerator;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.model.BreakPoint;
 import microbat.model.trace.Trace;
@@ -419,6 +420,8 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				latestNode.addInvokingMethod(methodSig);
 				initInvokingDetail(invokeObj, invokeTypeSign, methodSig, params, paramTypeSignsCode, residingClassName,
 						latestNode);
+				
+				String request = QueryRequestGenerator.getQueryRequest(methodSig);
 				
 				// used in _afterInvoke
 				latestNode.setParameters(params);

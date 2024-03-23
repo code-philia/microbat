@@ -222,7 +222,7 @@ public class DependencyRules {
 				Arrays.asList("", ""), // linkedlist
 				Arrays.asList("elementData", "size"), // arraylist
 				Arrays.asList("table", "size"), // hashmap
-				Arrays.asList("map.table", ""), // hashset
+				Arrays.asList("map.table", "map.size"), // hashset
 				Arrays.asList("queue", "size")// queue
 				);
 		
