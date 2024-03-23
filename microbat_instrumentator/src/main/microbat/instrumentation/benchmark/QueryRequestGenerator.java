@@ -25,7 +25,13 @@ public class QueryRequestGenerator {
 		
 		String decompiledCode = getDecompiledCode(clazz, methodName, arguments);
 		
-		return decompiledCode;
+		StringBuilder stringBuilder = new StringBuilder("\"");
+		stringBuilder.append(decompiledCode);
+		stringBuilder.append("\" with signature \"");
+		stringBuilder.append(methodSig);
+		stringBuilder.append("\":");
+		
+		return stringBuilder.toString();
 	}
 
 	private static ClassGen loadClass(String className) throws IOException {
