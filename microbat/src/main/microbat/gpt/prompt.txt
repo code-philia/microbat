@@ -1,0 +1,7 @@
+Now, please modify the original format to the following: <get/set/add/remove><index><length>. Where <get/set/add/remove> is used to determine if the sentence is to get a value, change a variable value, add a variable value, or remove a variable value. When determined as <get>, there's no need for <index> or <length> afterward; when determined as <set>, it requires <index> afterward; when determined as <add> or <remove>, it requires following <index>, and changes in <length>.
+For example:
+list.add('Apple') with signature "java.util.List#add(Ljava/lang/Object;)V":<add><the end><length++>,
+list.add(0, 'Apple') with signature "java.util.List#add(ILjava/lang/Object;)V":<add><index 0><length++>,
+list.set(1, 'Banana') with signature "java.util.List#set(ILjava/lang/Object;)Ljava/lang/Object;":<set><index 1>,
+list.get(2) with signature "java.util.List#get(I)Ljava/lang/Object;":<get>,
+list.remove(0) with signature "java.util.List#remove(I)Ljava/lang/Object;":<remove><index 0><length-->,
