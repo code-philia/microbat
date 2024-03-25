@@ -1,0 +1,1 @@
+list.clear() with signature "java.util.List#clear()V":|<remove><the end><length = 0>
