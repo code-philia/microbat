@@ -5,7 +5,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,6 +29,7 @@ import microbat.instrumentation.benchmark.MethodInfo;
 import microbat.instrumentation.benchmark.MethodInfo.Action;
 import microbat.instrumentation.benchmark.MethodInfo.Index;
 import microbat.instrumentation.benchmark.MethodInfo.Type;
+import microbat.instrumentation.benchmark.Querier;
 import microbat.instrumentation.benchmark.QueryRequestGenerator;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.model.BreakPoint;
@@ -421,7 +421,11 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				initInvokingDetail(invokeObj, invokeTypeSign, methodSig, params, paramTypeSignsCode, residingClassName,
 						latestNode);
 				
-				String request = QueryRequestGenerator.getQueryRequest(methodSig);
+				if (!methodSig.contains("<init>")) {
+ 					String request = QueryRequestGenerator.getQueryRequest(methodSig);
+					Querier gptQuerier = new Querier();
+					String result = gptQuerier.getDependency(request);
+				}
 				
 				// used in _afterInvoke
 				latestNode.setParameters(params);

@@ -1,0 +1,3 @@
+"arraylist.add(object)" with signature "java.util.ArrayList#add(Ljava/lang/Object;)Z":|<add><elementData><end>
+"arraylist.add(int,object)" with signature "java.util.ArrayList#add(ILjava/lang/Object;)V":|<add><elementData><index>
+"arraylist.remove(int)" with signature "java.util.ArrayList#remove(I)Ljava/lang/Object;":|<remove><elementData><index>

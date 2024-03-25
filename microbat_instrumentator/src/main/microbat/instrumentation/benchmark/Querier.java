@@ -5,7 +5,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,16 +12,17 @@ public class Querier {
     private static String url = "https://api.openai.com/v1/chat/completions";
     private static String apiKey;
     private static String model = "gpt-3.5-turbo";
-    private static final String CONFIG_FILE = "./gpt/.env";
+    private static String base_directory = "/Applications/Eclipse.app/Contents/Eclipse/dropins/junit_lib/";
+    private static String propertiesFileName = base_directory + "properties.txt";
     private static Map<String, String> dictionary;
-    private static String dicFilename = "./gpt/dictionary.txt"; 
-    private static String proFilename = "./gpt/prompt.txt"; 
-    private static String prompt ;
+    private static String dicFilename = base_directory + "dictionary.txt";
+    private static String proFilename = base_directory + "prompt.txt";
+    private static String prompt;
 
 
     public Querier() {
         dictionary = new HashMap<>();
-        loadDictionary(); 
+        loadDictionary();
         prompt = addEscape(getPrompt());
         apiKey = getApiKey();
     }
@@ -67,15 +67,27 @@ public class Querier {
         }
     }
 
+//    public static String getApiKey() {
+//        Properties properties = new Properties();
+//        try {
+//            properties.load(new FileInputStream(CONFIG_FILE));
+//            return properties.getProperty("API_KEY");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return null;
+//        }
+//    }
+    
     public static String getApiKey() {
-        Properties properties = new Properties();
-        try {
-            properties.load(new FileInputStream(CONFIG_FILE));
-            return properties.getProperty("API_KEY");
+        try (BufferedReader reader = new BufferedReader(new FileReader(propertiesFileName))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                return line.split("=")[1];
+            }
         } catch (IOException e) {
             e.printStackTrace();
-            return null;
         }
+        return null;
     }
 
     public static String getPrompt() {
