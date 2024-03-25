@@ -421,12 +421,6 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				initInvokingDetail(invokeObj, invokeTypeSign, methodSig, params, paramTypeSignsCode, residingClassName,
 						latestNode);
 				
-				if (!methodSig.contains("<init>")) {
- 					String request = QueryRequestGenerator.getQueryRequest(methodSig);
-					Querier gptQuerier = new Querier();
-					String result = gptQuerier.getDependency(request);
-				}
-				
 				// used in _afterInvoke
 				latestNode.setParameters(params);
 
@@ -578,6 +572,13 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					// }
 					
 					// if a method is setter, add modified variable in written variables
+					String queryResult;
+					if (!invokeMethodSig.contains("<init>")) {
+	 					String request = QueryRequestGenerator.getQueryRequest(invokeMethodSig);
+						Querier gptQuerier = new Querier();
+						queryResult = gptQuerier.getDependency(request);
+					}
+					
 					ClassInfo classInfo = DependencyRules.getClassInfo(invokeMethodSig);
 					MethodInfo methodInfo = DependencyRules.getMethodInfo(invokeMethodSig);
 					if (methodInfo != null) {

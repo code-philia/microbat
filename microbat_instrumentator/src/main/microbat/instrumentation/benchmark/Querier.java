@@ -108,19 +108,27 @@ public class Querier {
         return input.replaceAll("(\")", "\\\\\"").replaceAll("(\n)", "\\\\n");
     }
 
-    public static String getResult(String input) throws Exception {
-
-        Pattern pattern = Pattern.compile("<([^<>]*)>[^<>]*<([^<>]*)>[^<>]*<([^<>]*)>$");
-        Matcher matcher = pattern.matcher(input);
-        
-        if (matcher.find()) {
-            String firstMatch = matcher.group(1);
-            String secondMatch = matcher.group(2);
-            String thirdMatch = matcher.group(3);
-            return "<"+ firstMatch + "><" + secondMatch + "><" +thirdMatch + ">";
-        } else {
-            throw new Exception("No correct result found.");
-        }
+//    public static String getResult(String input) throws Exception {
+//
+//        Pattern pattern = Pattern.compile("<([^<>]*)>[^<>]*<([^<>]*)>[^<>]*<([^<>]*)>$");
+//        Matcher matcher = pattern.matcher(input);
+//        
+//        if (matcher.find()) {
+//            String firstMatch = matcher.group(1);
+//            String secondMatch = matcher.group(2);
+//            String thirdMatch = matcher.group(3);
+//            return "<"+ firstMatch + "><" + secondMatch + "><" +thirdMatch + ">";
+//        } else {
+//            throw new Exception("No correct result found.");
+//        }
+//    }
+    
+    public static String getResult(String input) {
+    	int firstBracketIndex = input.indexOf('<');
+    	if (firstBracketIndex > 0) {
+    		return input.substring(firstBracketIndex);
+    	}
+        return input;
     }
 
     public static String chatGPT(String query) {
