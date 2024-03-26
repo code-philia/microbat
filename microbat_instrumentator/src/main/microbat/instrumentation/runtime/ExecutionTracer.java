@@ -31,6 +31,7 @@ import microbat.instrumentation.benchmark.MethodInfo.Index;
 import microbat.instrumentation.benchmark.MethodInfo.Type;
 import microbat.instrumentation.benchmark.Querier;
 import microbat.instrumentation.benchmark.QueryRequestGenerator;
+import microbat.instrumentation.benchmark.QueryResponseProcessor;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.model.BreakPoint;
 import microbat.model.trace.Trace;
@@ -572,17 +573,17 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					// }
 					
 					// if a method is setter, add modified variable in written variables
-					String queryResult;
+					String queryResult = "";
 					if (!invokeMethodSig.contains("<init>")) {
 	 					String request = QueryRequestGenerator.getQueryRequest(invokeMethodSig);
 						Querier gptQuerier = new Querier();
 						queryResult = gptQuerier.getDependency(request);
 					}
 					
-					ClassInfo classInfo = DependencyRules.getClassInfo(invokeMethodSig);
-					MethodInfo methodInfo = DependencyRules.getMethodInfo(invokeMethodSig);
+					/* GPT version*/
+					MethodInfo methodInfo = QueryResponseProcessor.getMethodInfo(invokeMethodSig, queryResult);
 					if (methodInfo != null) {
-						if (methodInfo.getType() == Type.IS_SETTER) {
+						if (methodInfo.getType() == Type.SET) {
 							String varType = invokeMethodSig.split("#")[0];
 							Variable var = new LocalVar("temp_var", varType, residingClassName, line);
 							String varID = "";
@@ -595,7 +596,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 							Action action = methodInfo.getAction();
 							if (action == Action.REMOVE) {
 								// record length
-								String criticalVariable = classInfo.getLengthVariable();
+								String criticalVariable = "size";
 								for (VarValue child : value.getChildren()) {
 									if (child.getVarName().equals(criticalVariable)) {
 										addRWriteValue(latestNode, child, true);
@@ -603,7 +604,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 								}
 							} else {
 								// record elements
-								String criticalDataStructure = classInfo.getCriticalDataStructure();
+								String criticalDataStructure = methodInfo.getCriticalDataStructure();
 								Index indexType = methodInfo.getIndex();
 								
 								// -1: assume to be the end
@@ -642,6 +643,73 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 							}
 						}
 					}
+					
+					/* Hardcode version*/
+//					ClassInfo classInfo = DependencyRules.getClassInfo(invokeMethodSig);
+//					MethodInfo methodInfo = DependencyRules.getMethodInfo(invokeMethodSig);
+//					if (methodInfo != null) {
+//						if (methodInfo.getType() == Type.SET) {
+//							String varType = invokeMethodSig.split("#")[0];
+//							Variable var = new LocalVar("temp_var", varType, residingClassName, line);
+//							String varID = "";
+//							var.setVarID(varID);
+//							String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
+//							var.setAliasVarID(aliasVarID);
+//							
+//							VarValue value = appendVarValue(invokeObj, var, null);
+//							
+//							Action action = methodInfo.getAction();
+//							if (action == Action.REMOVE) {
+//								// record length
+//								String criticalVariable = classInfo.getLengthVariable();
+//								for (VarValue child : value.getChildren()) {
+//									if (child.getVarName().equals(criticalVariable)) {
+//										addRWriteValue(latestNode, child, true);
+//									}
+//								}
+//							} else {
+//								// record elements
+//								String criticalDataStructure = classInfo.getCriticalDataStructure();
+//								Index indexType = methodInfo.getIndex();
+//								
+//								// -1: assume to be the end
+//								int index = -1;
+//								switch (indexType) {
+//									case START:
+//										index = 0;
+//									case INDEX:
+//										Object[] parameters = latestNode.getParameters();
+//										for (Object p : parameters) {
+//											if (p instanceof Integer) {
+//												index = (Integer) p;
+//												break;
+//											}
+//										}
+//								}
+//								
+//								for (VarValue child : value.getChildren()) {
+//									if (child.getVarName().equals(criticalDataStructure)) {
+//										List<VarValue> nextLayer = child.getChildren();
+//										if (nextLayer.size() > 0) {
+//											if (index >= 0) {
+//												addRWriteValue(latestNode, nextLayer.get(index), true);
+//											} else {
+//												// record last element
+//												for (int i = nextLayer.size() - 1; i >= 0; i--) {
+//													if (!nextLayer.get(i).getStringValue().equals("null")) {
+//														addRWriteValue(latestNode, nextLayer.get(i), true);
+//														break;
+//													}
+//												}
+//											}
+//										}
+//									}
+//								}
+//							}
+//						}
+//					}
+					
+					
 				}
 
 				if (returnedValue != null && invokeMethodSig.contains("clone()")) {

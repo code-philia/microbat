@@ -49,64 +49,64 @@ public class DependencyRules {
 		List<List<MethodInfo>> writterMethods = Arrays.asList(
 				// linkedlist
 				Arrays.asList(
-						new MethodInfo("add(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.ADD, Index.END),
-						new MethodInfo("add(ILjava/lang/Object;)V", Type.IS_SETTER, Action.ADD, Index.INDEX),
-						new MethodInfo("addAll(Ljava/util/Collection;)Z", Type.IS_SETTER, Action.ADD, Index.END),
-						new MethodInfo("addAll(ILjava/util/Collection;)Z", Type.IS_SETTER, Action.ADD, Index.INDEX),
-						new MethodInfo("addFirst(Ljava/lang/Object;)V", Type.IS_SETTER, Action.ADD, Index.START),
-						new MethodInfo("addLast(Ljava/lang/Object;)V", Type.IS_SETTER, Action.ADD, Index.END),
-						new MethodInfo("clear()V", Type.IS_SETTER, Action.REMOVE, Index.ALL),
-						new MethodInfo("offer(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.ADD, Index.END),
-						new MethodInfo("offerFirst(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.ADD, Index.START),
-						new MethodInfo("offerLast(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.ADD, Index.END),
-						new MethodInfo("poll()Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.START),
-						new MethodInfo("pollFirst()Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.START),
-						new MethodInfo("pollLast()Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.END),
-						new MethodInfo("pop()Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.START),
-						new MethodInfo("push(Ljava/lang/Object;)V", Type.IS_SETTER, Action.ADD, Index.START),
-						new MethodInfo("remove()Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.START),
-						new MethodInfo("remove(I)Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.INDEX),
-						new MethodInfo("remove(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.REMOVE, Index.NA),
-						new MethodInfo("removeFirst()Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.START),
-						new MethodInfo("removeFirstOccurrence(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.REMOVE, Index.NA),
-						new MethodInfo("removeLast()Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.END),
-						new MethodInfo("removeLastOccurrence(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.REMOVE, Index.NA),
-						new MethodInfo("set(ILjava/lang/Object;)Ljava/lang/Object;", Type.IS_SETTER, Action.REPLACE, Index.INDEX)),
+						new MethodInfo("add(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("add(ILjava/lang/Object;)V", Type.SET, Action.ADD, Index.INDEX),
+						new MethodInfo("addAll(Ljava/util/Collection;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("addAll(ILjava/util/Collection;)Z", Type.SET, Action.ADD, Index.INDEX),
+						new MethodInfo("addFirst(Ljava/lang/Object;)V", Type.SET, Action.ADD, Index.START),
+						new MethodInfo("addLast(Ljava/lang/Object;)V", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("clear()V", Type.SET, Action.REMOVE, Index.ALL),
+						new MethodInfo("offer(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("offerFirst(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.START),
+						new MethodInfo("offerLast(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("poll()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("pollFirst()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("pollLast()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.END),
+						new MethodInfo("pop()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("push(Ljava/lang/Object;)V", Type.SET, Action.ADD, Index.START),
+						new MethodInfo("remove()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("remove(I)Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.INDEX),
+						new MethodInfo("remove(Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("removeFirst()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("removeFirstOccurrence(Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("removeLast()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.END),
+						new MethodInfo("removeLastOccurrence(Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("set(ILjava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.REPLACE, Index.INDEX)),
 				// arraylist
 				Arrays.asList(
-						new MethodInfo("add(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.ADD, Index.END),
-						new MethodInfo("add(ILjava/lang/Object;)V", Type.IS_SETTER, Action.ADD, Index.INDEX),
-						new MethodInfo("addAll(Ljava/util/Collection;)Z", Type.IS_SETTER, Action.ADD, Index.END),
-						new MethodInfo("addAll(ILjava/util/Collection;)Z", Type.IS_SETTER, Action.ADD, Index.INDEX),
-						new MethodInfo("clear()V", Type.IS_SETTER, Action.REMOVE, Index.ALL),
-						new MethodInfo("forEach(Ljava/util/function/Consumer;)V", Type.IS_SETTER, Action.REPLACE, Index.ALL),
-						new MethodInfo("remove(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.REMOVE, Index.NA),
-						new MethodInfo("remove(I)Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.INDEX),
-						new MethodInfo("removeAll(Ljava/util/Collection;)Z", Type.IS_SETTER, Action.REMOVE, Index.NA),
-						new MethodInfo("removeIf(Ljava/util/function/Predicate;)Z", Type.IS_SETTER, Action.REMOVE, Index.NA),
-						new MethodInfo("removeRange(II)V", Type.IS_SETTER, Action.REMOVE, Index.INDEX),
-						new MethodInfo("replaceAll(Ljava/util/function/UnaryOperator;)V", Type.IS_SETTER, Action.REPLACE, Index.NA),
-						new MethodInfo("retainAll(Ljava/util/Collection;)Z", Type.IS_SETTER, Action.REMOVE, Index.NA),
-						new MethodInfo("set(ILjava/lang/Object;)Ljava/lang/Object;", Type.IS_SETTER, Action.REPLACE, Index.INDEX),
-						new MethodInfo("sort(Ljava/util/Comparator;)V", Type.IS_SETTER, Action.REPLACE, Index.NA)),
+						new MethodInfo("add(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("add(ILjava/lang/Object;)V", Type.SET, Action.ADD, Index.INDEX),
+						new MethodInfo("addAll(Ljava/util/Collection;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("addAll(ILjava/util/Collection;)Z", Type.SET, Action.ADD, Index.INDEX),
+						new MethodInfo("clear()V", Type.SET, Action.REMOVE, Index.ALL),
+						new MethodInfo("forEach(Ljava/util/function/Consumer;)V", Type.SET, Action.REPLACE, Index.ALL),
+						new MethodInfo("remove(Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("remove(I)Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.INDEX),
+						new MethodInfo("removeAll(Ljava/util/Collection;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("removeIf(Ljava/util/function/Predicate;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("removeRange(II)V", Type.SET, Action.REMOVE, Index.INDEX),
+						new MethodInfo("replaceAll(Ljava/util/function/UnaryOperator;)V", Type.SET, Action.REPLACE, Index.NA),
+						new MethodInfo("retainAll(Ljava/util/Collection;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("set(ILjava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.REPLACE, Index.INDEX),
+						new MethodInfo("sort(Ljava/util/Comparator;)V", Type.SET, Action.REPLACE, Index.NA)),
 				// hashmap
 				Arrays.asList(
-						new MethodInfo("clear()V", Type.IS_SETTER, Action.REMOVE, Index.ALL),
-						new MethodInfo("forEach(Ljava/util/function/BiConsumer;)V", Type.IS_SETTER, Action.REPLACE, Index.ALL),
-						new MethodInfo("merge(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;", Type.IS_SETTER, Action.REPLACE, Index.KEY),
-						new MethodInfo("put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.IS_SETTER, Action.ADD, Index.KEY),
-						new MethodInfo("putAll(Ljava/util/Map;)V", Type.IS_SETTER, Action.ADD, Index.KEY),
-						new MethodInfo("putIfAbsent(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.IS_SETTER, Action.ADD, Index.KEY),
-						new MethodInfo("remove(Ljava/lang/Object;)Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.KEY),
-						new MethodInfo("remove(Ljava/lang/Object;Ljava/lang/Object;)Z", Type.IS_SETTER, Action.REMOVE, Index.KEY),
-						new MethodInfo("replace(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.IS_SETTER, Action.REPLACE, Index.KEY),
-						new MethodInfo("replace(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z", Type.IS_SETTER, Action.REPLACE, Index.KEY),
-						new MethodInfo("replaceAll(Ljava/util/function/BiFunction;)V", Type.IS_SETTER, Action.REPLACE, Index.ALL)),
+						new MethodInfo("clear()V", Type.SET, Action.REMOVE, Index.ALL),
+						new MethodInfo("forEach(Ljava/util/function/BiConsumer;)V", Type.SET, Action.REPLACE, Index.ALL),
+						new MethodInfo("merge(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;", Type.SET, Action.REPLACE, Index.KEY),
+						new MethodInfo("put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.ADD, Index.KEY),
+						new MethodInfo("putAll(Ljava/util/Map;)V", Type.SET, Action.ADD, Index.KEY),
+						new MethodInfo("putIfAbsent(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.ADD, Index.KEY),
+						new MethodInfo("remove(Ljava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.KEY),
+						new MethodInfo("remove(Ljava/lang/Object;Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.KEY),
+						new MethodInfo("replace(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.REPLACE, Index.KEY),
+						new MethodInfo("replace(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z", Type.SET, Action.REPLACE, Index.KEY),
+						new MethodInfo("replaceAll(Ljava/util/function/BiFunction;)V", Type.SET, Action.REPLACE, Index.ALL)),
 				// hashset
 				Arrays.asList(
-						new MethodInfo("add(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.ADD, Index.KEY),
-						new MethodInfo("clear()V", Type.IS_SETTER, Action.REMOVE, Index.ALL),
-						new MethodInfo("remove(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.REMOVE, Index.KEY)),
+						new MethodInfo("add(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.KEY),
+						new MethodInfo("clear()V", Type.SET, Action.REMOVE, Index.ALL),
+						new MethodInfo("remove(Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.KEY)),
 //				// stringbuffer
 //				Arrays.asList("append(Z)Ljava/lang/StringBuffer;",
 //						"append(C)Ljava/lang/StringBuffer;",
@@ -212,10 +212,10 @@ public class DependencyRules {
 //						"set(Ljava/lang/Object;)V"),
 				//queue
 				Arrays.asList(
-						new MethodInfo("add(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.ADD, Index.END),
-						new MethodInfo("offer(Ljava/lang/Object;)Z", Type.IS_SETTER, Action.ADD, Index.END),
-						new MethodInfo("poll()Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.START),
-						new MethodInfo("remove()Ljava/lang/Object;", Type.IS_SETTER, Action.REMOVE, Index.START))
+						new MethodInfo("add(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("offer(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("poll()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("remove()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START))
 				);
 		
 		List<List<String>> criticalDataStructures = Arrays.asList(
@@ -273,7 +273,7 @@ public class DependencyRules {
 //		for (String clazz : relevantClasses) {
 //			if (classes.contains(clazz)) {
 //				if (classInfoMap.get(clazz).hasMethod(methodSignature)) {
-//					return Type.IS_SETTER;
+//					return Type.SET;
 //				}
 //			}
 //		}

@@ -4,14 +4,15 @@ public class MethodInfo {
 	
 	static public enum Type {
 		NONE,
-		IS_SETTER,
-		IS_GETTER
+		SET,
+		GET
 	}
 	
 	static public enum Action {
 		ADD,
 		REMOVE,
-		REPLACE
+		REPLACE,
+		NA
 	}
 	
 	static public enum Index {
@@ -26,12 +27,27 @@ public class MethodInfo {
 	private String methodSig;
 	private Type type;
 	private Action action;
+	private String criticalDataStructure;
 	private Index index;
 
+	/**
+	 * Used in hardcode version
+	 */
 	public MethodInfo(String methodSig, Type type, Action action, Index index) {
 		this.methodSig = methodSig;
 		this.type = type;
 		this.action = action;
+		this.index = index;
+	}
+	
+	/**
+	 * Used in ChatGPT version
+	 */
+	public MethodInfo(String methodSig, Type type, Action action, String criticalDataStructure, Index index) {
+		this.methodSig = methodSig;
+		this.type = type;
+		this.action = action;
+		this.criticalDataStructure = criticalDataStructure;
 		this.index = index;
 	}
 
@@ -45,6 +61,10 @@ public class MethodInfo {
 
 	public Action getAction() {
 		return action;
+	}
+	
+	public String getCriticalDataStructure() {
+		return criticalDataStructure;
 	}
 
 	public Index getIndex() {
