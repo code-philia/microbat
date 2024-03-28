@@ -44,6 +44,8 @@ public class TraceNode{
 	
 	private List<VarValue> readVariables;
 	private List<VarValue> writtenVariables;
+	/* valid if the node invokes a method */
+	private Object[] parameters;
 	
 	private transient Map<String, VarValue> readVariableMap = new HashMap<>();
 	private transient Map<String, VarValue> writtenVariableMap = new HashMap<>();
@@ -577,6 +579,14 @@ public class TraceNode{
 			}
 		}
 		return false;
+	}
+	
+	public Object[] getParameters() {
+		return this.parameters;
+	}
+	
+	public void setParameters(Object[] parameters) {
+		this.parameters = parameters;
 	}
 	
 //	public Map<Integer, TraceNode> findAllDominators() {

@@ -15,272 +15,222 @@ import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.commons.io.IOUtils;
 
+import microbat.instrumentation.benchmark.MethodInfo.Action;
+import microbat.instrumentation.benchmark.MethodInfo.Index;
+import microbat.instrumentation.benchmark.MethodInfo.Type;
+
 public class DependencyRules {
 	
 	static public Set<String> classes = new HashSet<>();
-	static public Map<String, Set<String>> writters = new HashMap<>();
-	
-	static public enum Type {
-		NONE,
-		IS_SETTER,
-		IS_GETTER
-	}
+	static public Map<String, ClassInfo> classInfoMap = new HashMap<>();
 
 	public DependencyRules() {}
 	
 	public static void setUp() {
 		String[] classNames = new String[] {
-				"java.util.List",
 				"java.util.LinkedList",
 				"java.util.ArrayList",
 				
-				"java.util.Map",
 				"java.util.HashMap",
 				
-				"java.util.Set",
 				"java.util.HashSet",
 				
-				"java.util.Collection",
-				
-				"java.lang.StringBuffer",
-				"java.io.Writer",
-				"java.io.StringWriter",
-				"java.io.PrintWriter",
-				"java.lang.StringBuilder",
-				
-				"java.util.Iterator",
-				"java.lang.Iterable",
-				"java.util.ListIterator",
+//				"java.lang.StringBuffer",
+//				"java.io.StringWriter",
+//				"java.io.PrintWriter",
+//				"java.lang.StringBuilder",
+//				
+//				"java.util.Iterator",
+//				"java.util.ListIterator",
 				
 				"java.util.Queue"
 				};
 		
-		List<List<String>> writterMethods = Arrays.asList(
-				// list
-				Arrays.asList("add(Ljava/lang/Object;)Z",
-						"add(ILjava/lang/Object;)V",
-						"addAll(Ljava/util/Collection;)Z",
-						"addAll(ILjava/util/Collection;)Z",
-						"clear()V",
-						"remove(I)Ljava/lang/Object;",
-						"remove(Ljava/lang/Object;)Z",
-						"removeAll(Ljava/util/Collection;)Z",
-						"replaceAll(Ljava/util/function/UnaryOperator;)V",
-						"retainAll(Ljava/util/Collection;)Z",
-						"set(ILjava/lang/Object;)Ljava/lang/Object;",
-						"sort(Ljava/util/Comparator;)V"),
+		List<List<MethodInfo>> writterMethods = Arrays.asList(
 				// linkedlist
-				Arrays.asList("add(Ljava/lang/Object;)Z",
-						"add(ILjava/lang/Object;)V",
-						"addAll(Ljava/util/Collection;)Z",
-						"addAll(ILjava/util/Collection;)Z",
-						"addFirst(Ljava/lang/Object;)V",
-						"addLast(Ljava/lang/Object;)V",
-						"clear()V",
-						"offer(Ljava/lang/Object;)Z",
-						"offerFirst(Ljava/lang/Object;)Z",
-						"offerLast(Ljava/lang/Object;)Z",
-						"poll()Ljava/lang/Object;",
-						"pollFirst()Ljava/lang/Object;",
-						"pollLast()Ljava/lang/Object;",
-						"pop()Ljava/lang/Object;",
-						"push(Ljava/lang/Object;)V",
-						"remove()Ljava/lang/Object;",
-						"remove(I)Ljava/lang/Object;",
-						"remove(Ljava/lang/Object;)Z",
-						"removeFirst()Ljava/lang/Object;",
-						"removeFirstOccurrence(Ljava/lang/Object;)Z",
-						"removeLast()Ljava/lang/Object;",
-						"removeLastOccurrence(Ljava/lang/Object;)Z",
-						"set(ILjava/lang/Object;)Ljava/lang/Object;"),
+				Arrays.asList(
+						new MethodInfo("add(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("add(ILjava/lang/Object;)V", Type.SET, Action.ADD, Index.INDEX),
+						new MethodInfo("addAll(Ljava/util/Collection;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("addAll(ILjava/util/Collection;)Z", Type.SET, Action.ADD, Index.INDEX),
+						new MethodInfo("addFirst(Ljava/lang/Object;)V", Type.SET, Action.ADD, Index.START),
+						new MethodInfo("addLast(Ljava/lang/Object;)V", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("clear()V", Type.SET, Action.REMOVE, Index.ALL),
+						new MethodInfo("offer(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("offerFirst(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.START),
+						new MethodInfo("offerLast(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("poll()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("pollFirst()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("pollLast()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.END),
+						new MethodInfo("pop()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("push(Ljava/lang/Object;)V", Type.SET, Action.ADD, Index.START),
+						new MethodInfo("remove()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("remove(I)Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.INDEX),
+						new MethodInfo("remove(Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("removeFirst()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("removeFirstOccurrence(Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("removeLast()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.END),
+						new MethodInfo("removeLastOccurrence(Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("set(ILjava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.REPLACE, Index.INDEX)),
 				// arraylist
-				Arrays.asList("add(Ljava/lang/Object;)Z",
-						"add(ILjava/lang/Object;)V",
-						"addAll(Ljava/util/Collection;)Z",
-						"addAll(ILjava/util/Collection;)Z",
-						"clear()V",
-						"ensureCapacity(I)V",
-						"forEach(Ljava/util/function/Consumer;)V",
-						"remove(Ljava/lang/Object;)Z",
-						"remove(I)Ljava/lang/Object;",
-						"removeAll(Ljava/util/Collection;)Z",
-						"removeIf(Ljava/util/function/Predicate;)Z",
-						"removeRange(II)V",
-						"replaceAll(Ljava/util/function/UnaryOperator;)V",
-						"retainAll(Ljava/util/Collection;)Z",
-						"set(ILjava/lang/Object;)Ljava/lang/Object;",
-						"sort(Ljava/util/Comparator;)V",
-						"trimToSize()V"),
-				// map
-				Arrays.asList("clear()V",
-						"forEach(Ljava/util/function/BiConsumer;)V",
-						"merge(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;",
-						"put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-						"putAll(Ljava/util/Map;)V",
-						"putIfAbsent(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-						"remove(Ljava/lang/Object;)Ljava/lang/Object;",
-						"remove(Ljava/lang/Object;Ljava/lang/Object;)Z",
-						"replace(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-						"replace(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z",
-						"replaceAll(Ljava/util/function/BiFunction;)V"),
+				Arrays.asList(
+						new MethodInfo("add(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("add(ILjava/lang/Object;)V", Type.SET, Action.ADD, Index.INDEX),
+						new MethodInfo("addAll(Ljava/util/Collection;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("addAll(ILjava/util/Collection;)Z", Type.SET, Action.ADD, Index.INDEX),
+						new MethodInfo("clear()V", Type.SET, Action.REMOVE, Index.ALL),
+						new MethodInfo("forEach(Ljava/util/function/Consumer;)V", Type.SET, Action.REPLACE, Index.ALL),
+						new MethodInfo("remove(Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("remove(I)Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.INDEX),
+						new MethodInfo("removeAll(Ljava/util/Collection;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("removeIf(Ljava/util/function/Predicate;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("removeRange(II)V", Type.SET, Action.REMOVE, Index.INDEX),
+						new MethodInfo("replaceAll(Ljava/util/function/UnaryOperator;)V", Type.SET, Action.REPLACE, Index.NA),
+						new MethodInfo("retainAll(Ljava/util/Collection;)Z", Type.SET, Action.REMOVE, Index.NA),
+						new MethodInfo("set(ILjava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.REPLACE, Index.INDEX),
+						new MethodInfo("sort(Ljava/util/Comparator;)V", Type.SET, Action.REPLACE, Index.NA)),
 				// hashmap
-				Arrays.asList("clear()V",
-						"forEach(Ljava/util/function/BiConsumer;)V",
-						"merge(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;",
-						"put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-						"putAll(Ljava/util/Map;)V",
-						"putIfAbsent(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-						"remove(Ljava/lang/Object;)Ljava/lang/Object;",
-						"remove(Ljava/lang/Object;Ljava/lang/Object;)Z",
-						"replace(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-						"replace(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z",
-						"replaceAll(Ljava/util/function/BiFunction;)V"),
-				// set
-				Arrays.asList("add(Ljava/lang/Object;)Z",
-						"addAll(Ljava/util/Collection;)Z",
-						"clear()V",
-						"remove(Ljava/lang/Object;)Z",
-						"removeAll(Ljava/util/Collection;)Z",
-						"retainAll(Ljava/util/Collection;)Z"),
+				Arrays.asList(
+						new MethodInfo("clear()V", Type.SET, Action.REMOVE, Index.ALL),
+						new MethodInfo("forEach(Ljava/util/function/BiConsumer;)V", Type.SET, Action.REPLACE, Index.ALL),
+						new MethodInfo("merge(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;", Type.SET, Action.REPLACE, Index.KEY),
+						new MethodInfo("put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.ADD, Index.KEY),
+						new MethodInfo("putAll(Ljava/util/Map;)V", Type.SET, Action.ADD, Index.KEY),
+						new MethodInfo("putIfAbsent(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.ADD, Index.KEY),
+						new MethodInfo("remove(Ljava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.KEY),
+						new MethodInfo("remove(Ljava/lang/Object;Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.KEY),
+						new MethodInfo("replace(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.REPLACE, Index.KEY),
+						new MethodInfo("replace(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z", Type.SET, Action.REPLACE, Index.KEY),
+						new MethodInfo("replaceAll(Ljava/util/function/BiFunction;)V", Type.SET, Action.REPLACE, Index.ALL)),
 				// hashset
-				Arrays.asList("add(Ljava/lang/Object;)Z",
-						"clear()V",
-						"remove(Ljava/lang/Object;)Z"),
-				// collection
-				Arrays.asList("add(Ljava/lang/Object;)Z",
-						"addAll(Ljava/util/Collection;)Z",
-						"clear()V",
-						"remove(Ljava/lang/Object;)Z",
-						"removeAll(Ljava/util/Collection;)Z",
-						"removeIf(Ljava/util/function/Predicate;)Z",
-						"retainAll(Ljava/util/Collection;)Z"),
-				// stringbuffer
-				Arrays.asList("append(Z)Ljava/lang/StringBuffer;",
-						"append(C)Ljava/lang/StringBuffer;",
-						"append([C)Ljava/lang/StringBuffer;",
-						"append([CII)Ljava/lang/StringBuffer;",
-						"append(Ljava/lang/CharSequence;)Ljava/lang/StringBuffer;",
-						"append(Ljava/lang/CharSequence;II)Ljava/lang/StringBuffer;",
-						"append(D)Ljava/lang/StringBuffer;",
-						"append(F)Ljava/lang/StringBuffer;",
-						"append(I)Ljava/lang/StringBuffer;",
-						"append(J)Ljava/lang/StringBuffer;",
-						"append(Ljava/lang/Object;)Ljava/lang/StringBuffer;",
-						"append(Ljava/lang/String;)Ljava/lang/StringBuffer;",
-						"append(Ljava/lang/StringBuffer;)Ljava/lang/StringBuffer;",
-						"appendCodePoint(I)Ljava/lang/StringBuffer;",
-						"delete(II)Ljava/lang/StringBuffer;",
-						"deleteCharAt(I)Ljava/lang/StringBuffer;",
-						"ensureCapacity(I)V",
-						"insert(IZ)Ljava/lang/StringBuffer;",
-						"insert(IC)Ljava/lang/StringBuffer;",
-						"insert(I[C)Ljava/lang/StringBuffer;",
-						"insert(I[CII)Ljava/lang/StringBuffer;",
-						"insert(ILjava/lang/CharSequence;)Ljava/lang/StringBuffer;",
-						"insert(ILjava/lang/CharSequence;II)Ljava/lang/StringBuffer;",
-						"insert(ID)Ljava/lang/StringBuffer;",
-						"insert(IF)Ljava/lang/StringBuffer;",
-						"insert(II)Ljava/lang/StringBuffer;",
-						"insert(IJ)Ljava/lang/StringBuffer;",
-						"insert(ILjava/lang/Object;)Ljava/lang/StringBuffer;",
-						"insert(ILjava/lang/String;)Ljava/lang/StringBuffer;",
-						"replace(IILjava/lang/String;)Ljava/lang/StringBuffer;",
-						"reverse()Ljava/lang/StringBuffer;",
-						"setCharAt(IC)V",
-						"setLength(I)V",
-						"trimToSize()V"),
-				// writer
-				Arrays.asList("write([C)V",
-						"write([CII)V",
-						"write(I)V",
-						"write(Ljava/lang/String;)V",
-						"write(Ljava/lang/String;II)V",
-						"append(C)Ljava/io/Writer;",
-						"append(Ljava/lang/CharSequence;)Ljava/io/Writer;",
-						"append(Ljava/lang/CharSequence;II)Ljava/io/Writer;",
-						"close()V",
-						"flush()V"),
-				// stringwriter
-				Arrays.asList("append(C)Ljava/io/StringWriter;",
-						"append(Ljava/lang/CharSequence;)Ljava/io/StringWriter;",
-						"append(Ljava/lang/CharSequence;II)Ljava/io/StringWriter;",
-						"close()V",
-						"flush()V",
-						"write([CII)V",
-						"write(I)V",
-						"write(Ljava/lang/String;)V",
-						"write(Ljava/lang/String;II)V"),
-				// printwriter
-				Arrays.asList("append(C)Ljava/io/PrintWriter;",
-						"append(Ljava/lang/CharSequence;)Ljava/io/PrintWriter;",
-						"append(Ljava/lang/CharSequence;II)Ljava/io/PrintWriter;",
-						"checkError()Z",
-						"clearError()V",
-						"close()V",
-						"flush()V",
-						"format(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/io/PrintWriter;",
-						"format(Ljava/lang/String;[Ljava/lang/Object;)Ljava/io/PrintWriter;",
-						"setError()V",
-						"write([C)V",
-						"write([CII)V",
-						"write(I)V",
-						"write(Ljava/lang/String;)V",
-						"write(Ljava/lang/String;II)V"),
-				// stringbuilder
-				Arrays.asList("append(Z)Ljava/lang/StringBuilder;",
-						"append(C)Ljava/lang/StringBuilder;",
-						"append([C)Ljava/lang/StringBuilder;",
-						"append([CII)Ljava/lang/StringBuilder;",
-						"append(Ljava/lang/CharSequence;)Ljava/lang/StringBuilder;",
-						"append(Ljava/lang/CharSequence;II)Ljava/lang/StringBuilder;",
-						"append(D)Ljava/lang/StringBuilder;",
-						"append(F)Ljava/lang/StringBuilder;",
-						"append(I)Ljava/lang/StringBuilder;",
-						"append(J)Ljava/lang/StringBuilder;",
-						"append(Ljava/lang/Object;)Ljava/lang/StringBuilder;",
-						"append(Ljava/lang/String;)Ljava/lang/StringBuilder;",
-						"append(Ljava/lang/StringBuffer;)Ljava/lang/StringBuilder;",
-						"delete(II)Ljava/lang/StringBuilder;",
-						"deleteCharAt(I)Ljava/lang/StringBuilder;",
-						"replace(IILjava/lang/Object;)Ljava/lang/StringBuilder;",
-						"appendCodePoint(I)Ljava/lang/StringBuilder;",
-						"ensureCapacity(I)V",
-						"reverse()Ljava/lang/StringBuilder;",
-						"setCharAt(IC)V",
-						"setLength(I)V",
-						"trimToSize()V",
-						"insert(IZ)Ljava/lang/StringBuilder;",
-						"insert(IC)Ljava/lang/StringBuilder;",
-						"insert(I[C)Ljava/lang/StringBuilder;",
-						"insert(I[CII)Ljava/lang/StringBuilder;",
-						"insert(ILjava/lang/CharSequence;)Ljava/lang/StringBuilder;",
-						"insert(ILjava/lang/CharSequence;II)Ljava/lang/StringBuilder;",
-						"insert(ID)Ljava/lang/StringBuilder;",
-						"insert(IF)Ljava/lang/StringBuilder;",
-						"insert(II)Ljava/lang/StringBuilder;",
-						"insert(IJ)Ljava/lang/StringBuilder;",
-						"insert(ILjava/lang/Object;)Ljava/lang/StringBuilder;",
-						"insert(ILjava/lang/String;)Ljava/lang/StringBuilder;"),
-				// iterator
-				Arrays.asList("forEachRemaining(Ljava/util/function/Consumer;)V",
-						"remove()V"),
-				// iterable
-				Arrays.asList("forEach(Ljava/util/function/Consumer;)V"),
-				// listiterator
-				Arrays.asList("add(Ljava/lang/Object;)V",
-						"remove()V",
-						"set(Ljava/lang/Object;)V"),
+				Arrays.asList(
+						new MethodInfo("add(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.KEY),
+						new MethodInfo("clear()V", Type.SET, Action.REMOVE, Index.ALL),
+						new MethodInfo("remove(Ljava/lang/Object;)Z", Type.SET, Action.REMOVE, Index.KEY)),
+//				// stringbuffer
+//				Arrays.asList("append(Z)Ljava/lang/StringBuffer;",
+//						"append(C)Ljava/lang/StringBuffer;",
+//						"append([C)Ljava/lang/StringBuffer;",
+//						"append([CII)Ljava/lang/StringBuffer;",
+//						"append(Ljava/lang/CharSequence;)Ljava/lang/StringBuffer;",
+//						"append(Ljava/lang/CharSequence;II)Ljava/lang/StringBuffer;",
+//						"append(D)Ljava/lang/StringBuffer;",
+//						"append(F)Ljava/lang/StringBuffer;",
+//						"append(I)Ljava/lang/StringBuffer;",
+//						"append(J)Ljava/lang/StringBuffer;",
+//						"append(Ljava/lang/Object;)Ljava/lang/StringBuffer;",
+//						"append(Ljava/lang/String;)Ljava/lang/StringBuffer;",
+//						"append(Ljava/lang/StringBuffer;)Ljava/lang/StringBuffer;",
+//						"appendCodePoint(I)Ljava/lang/StringBuffer;",
+//						"delete(II)Ljava/lang/StringBuffer;",
+//						"deleteCharAt(I)Ljava/lang/StringBuffer;",
+//						"ensureCapacity(I)V",
+//						"insert(IZ)Ljava/lang/StringBuffer;",
+//						"insert(IC)Ljava/lang/StringBuffer;",
+//						"insert(I[C)Ljava/lang/StringBuffer;",
+//						"insert(I[CII)Ljava/lang/StringBuffer;",
+//						"insert(ILjava/lang/CharSequence;)Ljava/lang/StringBuffer;",
+//						"insert(ILjava/lang/CharSequence;II)Ljava/lang/StringBuffer;",
+//						"insert(ID)Ljava/lang/StringBuffer;",
+//						"insert(IF)Ljava/lang/StringBuffer;",
+//						"insert(II)Ljava/lang/StringBuffer;",
+//						"insert(IJ)Ljava/lang/StringBuffer;",
+//						"insert(ILjava/lang/Object;)Ljava/lang/StringBuffer;",
+//						"insert(ILjava/lang/String;)Ljava/lang/StringBuffer;",
+//						"replace(IILjava/lang/String;)Ljava/lang/StringBuffer;",
+//						"reverse()Ljava/lang/StringBuffer;",
+//						"setCharAt(IC)V",
+//						"setLength(I)V",
+//						"trimToSize()V"),
+//				// stringwriter
+//				Arrays.asList("append(C)Ljava/io/StringWriter;",
+//						"append(Ljava/lang/CharSequence;)Ljava/io/StringWriter;",
+//						"append(Ljava/lang/CharSequence;II)Ljava/io/StringWriter;",
+//						"close()V",
+//						"flush()V",
+//						"write([CII)V",
+//						"write(I)V",
+//						"write(Ljava/lang/String;)V",
+//						"write(Ljava/lang/String;II)V"),
+//				// printwriter
+//				Arrays.asList("append(C)Ljava/io/PrintWriter;",
+//						"append(Ljava/lang/CharSequence;)Ljava/io/PrintWriter;",
+//						"append(Ljava/lang/CharSequence;II)Ljava/io/PrintWriter;",
+//						"checkError()Z",
+//						"clearError()V",
+//						"close()V",
+//						"flush()V",
+//						"format(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/io/PrintWriter;",
+//						"format(Ljava/lang/String;[Ljava/lang/Object;)Ljava/io/PrintWriter;",
+//						"setError()V",
+//						"write([C)V",
+//						"write([CII)V",
+//						"write(I)V",
+//						"write(Ljava/lang/String;)V",
+//						"write(Ljava/lang/String;II)V"),
+//				// stringbuilder
+//				Arrays.asList("append(Z)Ljava/lang/StringBuilder;",
+//						"append(C)Ljava/lang/StringBuilder;",
+//						"append([C)Ljava/lang/StringBuilder;",
+//						"append([CII)Ljava/lang/StringBuilder;",
+//						"append(Ljava/lang/CharSequence;)Ljava/lang/StringBuilder;",
+//						"append(Ljava/lang/CharSequence;II)Ljava/lang/StringBuilder;",
+//						"append(D)Ljava/lang/StringBuilder;",
+//						"append(F)Ljava/lang/StringBuilder;",
+//						"append(I)Ljava/lang/StringBuilder;",
+//						"append(J)Ljava/lang/StringBuilder;",
+//						"append(Ljava/lang/Object;)Ljava/lang/StringBuilder;",
+//						"append(Ljava/lang/String;)Ljava/lang/StringBuilder;",
+//						"append(Ljava/lang/StringBuffer;)Ljava/lang/StringBuilder;",
+//						"delete(II)Ljava/lang/StringBuilder;",
+//						"deleteCharAt(I)Ljava/lang/StringBuilder;",
+//						"replace(IILjava/lang/Object;)Ljava/lang/StringBuilder;",
+//						"appendCodePoint(I)Ljava/lang/StringBuilder;",
+//						"ensureCapacity(I)V",
+//						"reverse()Ljava/lang/StringBuilder;",
+//						"setCharAt(IC)V",
+//						"setLength(I)V",
+//						"trimToSize()V",
+//						"insert(IZ)Ljava/lang/StringBuilder;",
+//						"insert(IC)Ljava/lang/StringBuilder;",
+//						"insert(I[C)Ljava/lang/StringBuilder;",
+//						"insert(I[CII)Ljava/lang/StringBuilder;",
+//						"insert(ILjava/lang/CharSequence;)Ljava/lang/StringBuilder;",
+//						"insert(ILjava/lang/CharSequence;II)Ljava/lang/StringBuilder;",
+//						"insert(ID)Ljava/lang/StringBuilder;",
+//						"insert(IF)Ljava/lang/StringBuilder;",
+//						"insert(II)Ljava/lang/StringBuilder;",
+//						"insert(IJ)Ljava/lang/StringBuilder;",
+//						"insert(ILjava/lang/Object;)Ljava/lang/StringBuilder;",
+//						"insert(ILjava/lang/String;)Ljava/lang/StringBuilder;"),
+//				// iterator
+//				Arrays.asList("forEachRemaining(Ljava/util/function/Consumer;)V",
+//						"remove()V"),
+//				// listiterator
+//				Arrays.asList("add(Ljava/lang/Object;)V",
+//						"remove()V",
+//						"set(Ljava/lang/Object;)V"),
 				//queue
-				Arrays.asList("add(Ljava/lang/Object;)Z",
-						"offer(Ljava/lang/Object;)Z",
-						"poll()Ljava/lang/Object;",
-						"remove()Ljava/lang/Object;")
+				Arrays.asList(
+						new MethodInfo("add(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("offer(Ljava/lang/Object;)Z", Type.SET, Action.ADD, Index.END),
+						new MethodInfo("poll()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START),
+						new MethodInfo("remove()Ljava/lang/Object;", Type.SET, Action.REMOVE, Index.START))
+				);
+		
+		List<List<String>> criticalDataStructures = Arrays.asList(
+				Arrays.asList("", ""), // linkedlist
+				Arrays.asList("elementData", "size"), // arraylist
+				Arrays.asList("table", "size"), // hashmap
+				Arrays.asList("map.table", "map.size"), // hashset
+				Arrays.asList("queue", "size")// queue
 				);
 		
 		for (int i = 0; i < classNames.length; i++) {
 			String key = classNames[i];
 			classes.add(key);
-			writters.put(key, new HashSet<String>(writterMethods.get(i)));
+			classInfoMap.put(key, 
+					new ClassInfo(key, writterMethods.get(i), criticalDataStructures.get(i)));
 		}
 	}
 	
@@ -314,36 +264,61 @@ public class DependencyRules {
 		return relevantClasses;
 	}
 
-	public static Type getType(String method) throws IOException {
-		String[] methodInfo = method.split("#");
-		String methodSignature = methodInfo[1];
-		
-		ArrayList<String> relevantClasses = getRelevantClasses(method);
-		
-		for (String clazz : relevantClasses) {
-			if (classes.contains(clazz)) {
-				if (writters.get(clazz).contains(methodSignature)) {
-					return Type.IS_SETTER;
-				}
-			}
+//	public static Type getType(String method) throws IOException {
+//		String[] methodInfo = method.split("#");
+//		String methodSignature = methodInfo[1];
+//		
+//		ArrayList<String> relevantClasses = getRelevantClasses(method);
+//		
+//		for (String clazz : relevantClasses) {
+//			if (classes.contains(clazz)) {
+//				if (classInfoMap.get(clazz).hasMethod(methodSignature)) {
+//					return Type.SET;
+//				}
+//			}
+//		}
+//		return Type.NONE;
+//	}
+//	
+//	public static String getRuntimeType(String method) throws IOException {
+//		String[] methodInfo = method.split("#");
+//		String methodSignature = methodInfo[1];
+//		
+//		ArrayList<String> relevantClasses = getRelevantClasses(method);
+//		
+//		for (String clazz : relevantClasses) {
+//			if (classes.contains(clazz)) {
+//				if (classInfoMap.get(clazz).hasMethod(methodSignature)) {
+//					return clazz;
+//				}
+//			}
+//		}
+//		return "";
+//	}
+	
+	public static ClassInfo getClassInfo(String method) {
+		if (classes.isEmpty()) {
+			setUp();
 		}
-		return Type.NONE;
+		String clazz = method.split("#")[0];
+		return classInfoMap.get(clazz);
 	}
 	
-	public static String getRuntimeType(String method) throws IOException {
-		String[] methodInfo = method.split("#");
-		String methodSignature = methodInfo[1];
-		
-		ArrayList<String> relevantClasses = getRelevantClasses(method);
-		
-		for (String clazz : relevantClasses) {
-			if (classes.contains(clazz)) {
-				if (writters.get(clazz).contains(methodSignature)) {
-					return clazz;
-				}
-			}
+	public static MethodInfo getMethodInfo(String method) {
+		if (classes.isEmpty()) {
+			setUp();
 		}
-		return "";
+		
+		String clazz = method.split("#")[0];
+		String methodSignature = method.split("#")[1];
+		
+		ClassInfo classInfo = getClassInfo(clazz);
+		if (classInfo == null) {
+			return null;
+		}
+		
+		MethodInfo methodInfo = classInfo.getMethodInfo(methodSignature);
+		return methodInfo;
 	}
 	
 	private static String getFileName(String classFName) {
