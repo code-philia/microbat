@@ -607,11 +607,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 								String criticalDataStructure = methodInfo.getCriticalDataStructure();
 								Index indexType = methodInfo.getIndex();
 								
-								// -1: assume to be the end
-								int index = -1;
+								int index = Integer.MIN_VALUE;
+								String key = "";
 								switch (indexType) {
 									case START:
 										index = 0;
+										break;
 									case INDEX:
 										Object[] parameters = latestNode.getParameters();
 										for (Object p : parameters) {
@@ -620,18 +621,40 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 												break;
 											}
 										}
+										break;
+									case END:
+										// -1: assume to be the end
+										index = -1;
+										break;
+									case KEY:
+										parameters = latestNode.getParameters();
+										key = parameters[0].toString();
+										break;
 								}
 								
 								for (VarValue child : value.getChildren()) {
 									if (child.getVarName().equals(criticalDataStructure)) {
+										// if all positions change, record the critical data structure.
+										if (indexType.equals(Index.ALL)) {
+											addRWriteValue(latestNode, child, true);
+											break;
+										}
 										List<VarValue> nextLayer = child.getChildren();
 										if (nextLayer.size() > 0) {
 											if (index >= 0) {
 												addRWriteValue(latestNode, nextLayer.get(index), true);
-											} else {
+											} else if (index == -1) {
 												// record last element
 												for (int i = nextLayer.size() - 1; i >= 0; i--) {
 													if (!nextLayer.get(i).getStringValue().equals("null")) {
+														addRWriteValue(latestNode, nextLayer.get(i), true);
+														break;
+													}
+												}
+											} else if (indexType.equals(Index.KEY)) {
+												// record the element with key
+												for (int i = 0; i < nextLayer.size(); i++) {
+													if (nextLayer.get(i).getStringValue().startsWith(key + "=")) {
 														addRWriteValue(latestNode, nextLayer.get(i), true);
 														break;
 													}
