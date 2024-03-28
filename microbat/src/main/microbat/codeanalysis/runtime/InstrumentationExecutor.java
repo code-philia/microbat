@@ -285,7 +285,10 @@ public class InstrumentationExecutor {
 			trace.setAppJavaClassPath(appPath);
 //			trace.setMultiThread(info.getThreadNum()!=1);
 			
-			appendMissingInfo(trace, appPath);
+//			appendMissingInfo(trace, appPath);
+			for (Trace trace1 : result.getTraceList()) {
+				appendMissingInfo(trace1, appPath);
+			}
 			trace.setConstructTime((int) (System.currentTimeMillis() - start));
 			
 			return result;

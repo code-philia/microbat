@@ -72,6 +72,7 @@ import microbat.util.Settings;
 public class ConcurrentTraceView extends TraceView {
 
 	protected Map<Long, Trace> traceMap;
+	protected Map<Long, TreeViewer> treeViewMap = new HashMap<>();
 	protected Trace curTrace;
 
 	public Trace getCurrentTrace() {
@@ -198,6 +199,8 @@ public class ConcurrentTraceView extends TraceView {
 		}
 
 		/** keep the original expanded list */
+		curTreeViewer = this.treeViewMap.get(trace.getThreadId());
+		
 		Object[] expandedElements = curTreeViewer.getExpandedElements();
 		for (Object obj : expandedElements) {
 			TraceNode tn = (TraceNode) obj;
@@ -290,6 +293,7 @@ public class ConcurrentTraceView extends TraceView {
 		String threadName = trace.getThreadName();
 		group.setText(threadName != null ? threadName : "NA");
 		TreeViewer viewer = new TreeViewer(group, SWT.V_SCROLL | SWT.H_SCROLL | SWT.BORDER);
+		treeViewMap.put(trace.getThreadId(), viewer);
 		viewer.setContentProvider(new TraceContentProvider());
 		viewer.setLabelProvider(new TraceLabelProvider());
 		viewerList.add(viewer);
@@ -487,7 +491,7 @@ public class ConcurrentTraceView extends TraceView {
 		viewer.getTree().setMenu(menuMgr.createContextMenu(viewer.getTree()));
 	}
 
-	protected void otherViewsBehavior(TraceNode node) {
+	public void otherViewsBehavior(TraceNode node) {
 		DebugFeedbackView feedbackView = MicroBatViews.getDebugFeedbackView();
 
 		if (this.refreshProgramState) {
@@ -502,7 +506,7 @@ public class ConcurrentTraceView extends TraceView {
 	}
 
 	public void updateData() {
-
+		treeViewMap.clear();
 		Control[] childs = tracePanel.getChildren();
 		for (int k = 0; k < childs.length; k++) {
 			childs[k].dispose();

@@ -74,7 +74,7 @@ public class TraceAgent extends Agent {
 			trace.setInnerThreadId(threadIdGenerator.getId(tracer.getThreadId()));
 			trace.setThreadName(tracer.getThreadName());
 			trace.setMain(ExecutionTracer.getMainThreadStore().equals(tracer));
-			
+			trace.setAppJavaClassPath(ExecutionTracer.appJavaClassPath);
 			constructTrace(trace);
 			traceList.add(trace);
 		}

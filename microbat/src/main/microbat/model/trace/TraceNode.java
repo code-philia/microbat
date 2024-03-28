@@ -57,7 +57,6 @@ public class TraceNode{
 	
 //	private Map<TraceNode, List<String>> dataDominators = new HashMap<>();
 //	private Map<TraceNode, List<String>> dataDominatees = new HashMap<>();
-	
 	private TraceNode controlDominator;
 	private List<TraceNode> controlDominatees = new ArrayList<>();
 	
@@ -95,6 +94,17 @@ public class TraceNode{
 	private String bytecode;
 	
 	private transient double sliceBreakerProbability = 0;
+	
+	// Utility binding
+	private TraceNode boundTraceNode;
+	
+	public void setBoundTraceNode(TraceNode boundNode) {
+		this.boundTraceNode = boundNode;
+	}
+	
+	public TraceNode getBound() {
+		return this.boundTraceNode;
+	}
 	
 	/**
 	 * the first element of the pair is the read variable list, the second element is the 
