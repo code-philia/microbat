@@ -176,6 +176,10 @@ public class HeuristicIgnoringFieldRule {
 		return isHashMap;
 	}
 
+	public static boolean isAbstractStringBuilder(Class<?> type) {
+		return StringBuilder.class.isAssignableFrom(type) || StringBuffer.class.isAssignableFrom(type);
+	}
+
 	private static boolean isValidField(String fieldName, String className,
 			Map<String, List<String>> ignoringMap) {
 		List<String> fields = ignoringMap.get(className);
@@ -206,7 +210,7 @@ public class HeuristicIgnoringFieldRule {
 		Boolean isNeed = parsingTypeMap.get(typeName);
 		if(isNeed == null){
 			if(containPrefix(typeName, prefixExcludes)){
-				isNeed = isCollectionClass(type) || isHashMapClass(type);
+				isNeed = isCollectionClass(type) || isHashMapClass(type) || isAbstractStringBuilder(type);
 			}
 			else{
 				isNeed = true;				
@@ -264,6 +268,16 @@ public class HeuristicIgnoringFieldRule {
 			}
 		}
 		
+		if (isAbstractStringBuilder(objClass)) {
+			Field field;
+			try {
+				field = StringBuilder.class.getSuperclass().getDeclaredField("value");
+				validFields.add(field);
+			} catch (Exception e) {
+				AgentLogger.error(e);
+			}
+		}
+
 		return validFields;
 	}
 
