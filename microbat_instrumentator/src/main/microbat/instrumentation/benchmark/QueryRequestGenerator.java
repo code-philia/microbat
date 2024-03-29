@@ -14,16 +14,35 @@ public class QueryRequestGenerator {
 
 	public QueryRequestGenerator() {}
 	
-	public static String getQueryRequest(String methodSig) throws IOException {
+	public static String getQueryRequest(String methodSig, String runtimeType) throws IOException {
 		String clazz = methodSig.split("#")[0];
 		String methodInfo = methodSig.split("#")[1];
 		
-		ClassGen classGen = QueryRequestGenerator.loadClass(clazz);
-		Method method = QueryRequestGenerator.getMethod(classGen, methodInfo);
+		// try runtime type
+		ClassGen classGen = null;
+		Method method = null;
+		boolean shouldCheckCompiledType = true;
+		if (runtimeType != null) {
+			classGen = QueryRequestGenerator.loadClass(runtimeType);
+			method = QueryRequestGenerator.getMethod(classGen, methodInfo);
+			if (method != null) {
+				shouldCheckCompiledType = false;
+			}
+		}
+
+		// try clazz
+		if (shouldCheckCompiledType) {
+			classGen = QueryRequestGenerator.loadClass(clazz);
+			method = QueryRequestGenerator.getMethod(classGen, methodInfo);
+			if (method == null) {
+				return "";
+			}
+		}
+
 		String methodName = method.getName();
 		Type[] arguments = method.getArgumentTypes();
 		
-		String decompiledCode = getDecompiledCode(clazz, methodName, arguments);
+		String decompiledCode = getDecompiledCode(runtimeType == null ? clazz : runtimeType, methodName, arguments);
 		
 		StringBuilder stringBuilder = new StringBuilder("\"");
 		stringBuilder.append(decompiledCode);

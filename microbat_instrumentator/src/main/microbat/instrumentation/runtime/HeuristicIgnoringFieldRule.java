@@ -1,6 +1,7 @@
 package microbat.instrumentation.runtime;
 
 import java.io.Serializable;
+import java.io.Writer;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -176,8 +177,13 @@ public class HeuristicIgnoringFieldRule {
 		return isHashMap;
 	}
 
-	public static boolean isAbstractStringBuilder(Class<?> type) {
-		return StringBuilder.class.isAssignableFrom(type) || StringBuffer.class.isAssignableFrom(type);
+	public static boolean hasStringBuffer(Class<?> type) {
+		return StringBuilder.class.isAssignableFrom(type) || StringBuffer.class.isAssignableFrom(type)
+				|| isWriter(type);
+	}
+
+	public static boolean isWriter(Class<?> type) {
+		return Writer.class.isAssignableFrom(type);
 	}
 
 	private static boolean isValidField(String fieldName, String className,
@@ -210,7 +216,7 @@ public class HeuristicIgnoringFieldRule {
 		Boolean isNeed = parsingTypeMap.get(typeName);
 		if(isNeed == null){
 			if(containPrefix(typeName, prefixExcludes)){
-				isNeed = isCollectionClass(type) || isHashMapClass(type) || isAbstractStringBuilder(type);
+				isNeed = isCollectionClass(type) || isHashMapClass(type) || hasStringBuffer(type);
 			}
 			else{
 				isNeed = true;				
@@ -268,10 +274,20 @@ public class HeuristicIgnoringFieldRule {
 			}
 		}
 		
-		if (isAbstractStringBuilder(objClass)) {
+		if (hasStringBuffer(objClass)) {
 			Field field;
 			try {
 				field = StringBuilder.class.getSuperclass().getDeclaredField("value");
+				validFields.add(field);
+			} catch (Exception e) {
+				AgentLogger.error(e);
+			}
+		}
+
+		if (isWriter(objClass)) {
+			Field field;
+			try {
+				field = Writer.class.getDeclaredField("writeBuffer");
 				validFields.add(field);
 			} catch (Exception e) {
 				AgentLogger.error(e);

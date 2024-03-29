@@ -23,8 +23,6 @@ import microbat.codeanalysis.bytecode.MethodFinderBySignature;
 import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentLogger;
-import microbat.instrumentation.benchmark.ClassInfo;
-import microbat.instrumentation.benchmark.DependencyRules;
 import microbat.instrumentation.benchmark.MethodInfo;
 import microbat.instrumentation.benchmark.MethodInfo.Action;
 import microbat.instrumentation.benchmark.MethodInfo.Index;
@@ -573,26 +571,33 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					// }
 					
 					// if a method is setter, add modified variable in written variables
+					String varType = invokeMethodSig.split("#")[0];
+					Variable var = new LocalVar("temp_var", varType, residingClassName, line);
+					String varID = "";
+					var.setVarID(varID);
+					String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
+					var.setAliasVarID(aliasVarID);
+
+					VarValue value = appendVarValue(invokeObj, var, null);
+
 					String queryResult = "";
-					if (!invokeMethodSig.contains("<init>")) {
-	 					String request = QueryRequestGenerator.getQueryRequest(invokeMethodSig);
-						Querier gptQuerier = new Querier();
-						queryResult = gptQuerier.getDependency(request);
+					// skip constructor and methods where execution is recorded
+					if (!invokeMethodSig.contains("<init>") && latestNode.getParameters() != null) {
+						String request = QueryRequestGenerator.getQueryRequest(invokeMethodSig, value.getRuntimeType());
+						if (request.length() > 0) {
+							Querier gptQuerier = new Querier();
+							queryResult = gptQuerier.getDependency(request);
+						}
 					}
 					
 					/* GPT version*/
-					MethodInfo methodInfo = QueryResponseProcessor.getMethodInfo(invokeMethodSig, queryResult);
+					MethodInfo methodInfo = null;
+					if (queryResult != "") {
+						methodInfo = QueryResponseProcessor.getMethodInfo(invokeMethodSig, queryResult);
+					}
+
 					if (methodInfo != null) {
 						if (methodInfo.getType() == Type.SET) {
-							String varType = invokeMethodSig.split("#")[0];
-							Variable var = new LocalVar("temp_var", varType, residingClassName, line);
-							String varID = "";
-							var.setVarID(varID);
-							String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
-							var.setAliasVarID(aliasVarID);
-							
-							VarValue value = appendVarValue(invokeObj, var, null);
-							
 							Action action = methodInfo.getAction();
 							if (action == Action.REMOVE) {
 								// record length
@@ -631,9 +636,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 										key = parameters[0].toString();
 										break;
 								}
-								
-								for (VarValue child : value.getChildren()) {
+
+								List<VarValue> allChildren = value.getAllDescedentChildren();
+								boolean isCriticalDataStructureFound = false;
+								for (VarValue child : allChildren) {
 									if (child.getVarName().equals(criticalDataStructure)) {
+										isCriticalDataStructureFound = true;
 										// if all positions change, record the critical data structure.
 										if (indexType.equals(Index.ALL)) {
 											addRWriteValue(latestNode, child, true);
@@ -662,6 +670,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 											}
 										}
 									}
+								}
+
+								// if cannot find the critical data structure, add the variable itself as
+								// written variable
+								if (!isCriticalDataStructureFound) {
+									addRWriteValue(latestNode, value, true);
 								}
 							}
 						}

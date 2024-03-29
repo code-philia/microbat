@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public class Querier {
     private static String url = "https://api.openai.com/v1/chat/completions";
     private static String apiKey;
-    private static String model3 = "gpt-3.5-turbo";
+	private static String model3 = "gpt-3.5-turbo-0125";
     private static String model4 = "gpt-4-turbo-preview";
     private static String base_directory = "/Applications/Eclipse.app/Contents/Eclipse/dropins/junit_lib/";
     private static String propertiesFileName = base_directory + "properties.txt";
