@@ -1,14 +1,15 @@
-Return in the following format: <method type><method action><name of internal array><start index><end index>.
+Return in the following format: <method type><method action><name of internal array><index>.
 <method type> can take values from <get/set>, it represents whether the line of code gets or sets values in the invoking object. When a method is <get>, the tags afterward are not needed.
 <method action> can take values from <add/remove/replace>, it represents the type of operation done by the line of code. When a method is <remove>, the tags afterward are not needed.
 <name of internal array> represents the name of the internal array used to store elements in a data structure.
-<start index> and <end index> can take values from <start/end/all/index/key>, they represent the range of positions being modified in the internal array that stores the elements. When one element is modified, only one <index> is required.
+<index> can take values from <start/end/all/index/key>, they represent the range of positions being modified in the internal array that stores the elements.
 For example:
 "list.add(object)" with signature "java.util.List#add(Ljava/lang/Object;)V":<set><add><elementData><end>,
 "list.add(int, object)" with signature "java.util.List#add(ILjava/lang/Object;)V":<set><add><elementData><index>,
 "list.set(int, object)" with signature "java.util.List#set(ILjava/lang/Object;)Ljava/lang/Object;":<set><replace><elementData><index>,
 "list.get(int)" with signature "java.util.List#get(I)Ljava/lang/Object;":<get>,
 "list.remove(int)" with signature "java.util.List#remove(I)Ljava/lang/Object;":<set><remove>,
-"map.put(int, object)" with signature "java.util.HashMap#put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;":<set><add><table><key>,
-"map.forEach(biConsumer)" with signature "java.util.HashMap#forEach(Ljava/util/function/BiConsumer;)V":<set><replace><table><start><end>.
+"hashmap.put(int, object)" with signature "java.util.HashMap#put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;":<set><add><table><key>,
+"hashmap.forEach(biConsumer)" with signature "java.util.HashMap#forEach(Ljava/util/function/BiConsumer;)V":<set><replace><table><all>,
+"hashset.add(object)" with signature "java.util.HashSet#add(Ljava/lang/Object;)Z":<set><add><table><key>.
 Then
