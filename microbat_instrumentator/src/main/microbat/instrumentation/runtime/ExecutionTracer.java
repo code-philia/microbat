@@ -599,15 +599,22 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					if (methodInfo != null) {
 						if (methodInfo.getType() == Type.SET) {
 							Action action = methodInfo.getAction();
-							if (action == Action.REMOVE) {
+							List<VarValue> allChildren = value.getAllDescedentChildren();
+
+							boolean isSizeFound = action == Action.REPLACE;
+							boolean isCriticalDataStructureFound = action == Action.REMOVE;
+
+							if (action != Action.REPLACE) {
 								// record length
 								String criticalVariable = "size";
-								for (VarValue child : value.getChildren()) {
+								for (VarValue child : allChildren) {
 									if (child.getVarName().equals(criticalVariable)) {
+										isSizeFound = true;
 										addRWriteValue(latestNode, child, true);
 									}
 								}
-							} else {
+							}
+							if (action != Action.REMOVE) {
 								// record elements
 								String criticalDataStructure = methodInfo.getCriticalDataStructure();
 								Index indexType = methodInfo.getIndex();
@@ -637,8 +644,6 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 										break;
 								}
 
-								List<VarValue> allChildren = value.getAllDescedentChildren();
-								boolean isCriticalDataStructureFound = false;
 								for (VarValue child : allChildren) {
 									if (child.getVarName().equals(criticalDataStructure)) {
 										isCriticalDataStructureFound = true;
@@ -671,12 +676,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 										}
 									}
 								}
+							}
 
-								// if cannot find the critical data structure, add the variable itself as
-								// written variable
-								if (!isCriticalDataStructureFound) {
-									addRWriteValue(latestNode, value, true);
-								}
+							// if cannot find the critical data structure or the size, add the variable
+							// itself as written variable
+							if (!isCriticalDataStructureFound || !isSizeFound) {
+								addRWriteValue(latestNode, value, true);
 							}
 						}
 					}
