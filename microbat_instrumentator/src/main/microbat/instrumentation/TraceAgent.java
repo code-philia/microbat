@@ -9,6 +9,7 @@ import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.filter.OverLongMethodFilter;
 import microbat.instrumentation.instr.SystemClassTransformer;
 import microbat.instrumentation.instr.TraceTransformer;
+import microbat.instrumentation.instr.aggreplay.TimeoutThread;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.instrumentation.runtime.IExecutionTracer;
@@ -21,6 +22,7 @@ import sav.strategies.dto.AppJavaClassPath;
 public class TraceAgent extends Agent {
 	private AgentParams agentParams;
 	protected static ThreadIdGenerator threadIdGenerator = new ThreadIdGenerator();
+	private TimeoutThread timeoutThread = new TimeoutThread();
 //	private StopTimer timer;
 
 	public TraceAgent(CommandLine cmd) {
@@ -32,6 +34,7 @@ public class TraceAgent extends Agent {
 	}
 
 	public void startup0(long vmStartupTime, long agentPreStartup) {
+		timeoutThread.start();
 		SystemClassTransformer.attachThreadId(getInstrumentation(), this.getClass());
 //		timer = new StopTimer("Trace Construction");
 //		timer.newPoint("Execution");

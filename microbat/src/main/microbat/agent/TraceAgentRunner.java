@@ -309,6 +309,10 @@ public class TraceAgentRunner extends AgentVmRunner {
 			return;
 		}
 		int sIdx = msg.indexOf(";");
+		if (sIdx < 0 || msg.length() < sIdx) {
+			unknownTestResult = true;
+			return;
+		}
 		isTestSuccessful = Boolean.valueOf(msg.substring(0, sIdx));
 		testFailureMessage = msg.substring(sIdx + 1, msg.length());
 	}

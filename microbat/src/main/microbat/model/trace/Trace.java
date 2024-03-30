@@ -269,6 +269,9 @@ public class Trace {
 	 * @return
 	 */
 	public TraceNode findDataDependency(TraceNode checkingNode, VarValue readVar) {
+		if (checkingNode.getBound() != null) {
+			return checkingNode.getBound().getDataDominator(readVar);
+		}
 		return findProducer(readVar, checkingNode);
 	}
 	
