@@ -33,6 +33,14 @@ public class SharedObjectAccessInstrumentator extends ObjectAccessInstrumentator
 		AggrePlaySharedVariableAgent._onArrayAccess(arrayRef, index);
 	}
 	
+	public static void _assertObjectExists(Object object) {
+		AggrePlaySharedVariableAgent._assertArrayExists(object);
+	}
+	
+	public static void _assertArrayExists(Object object) {
+		AggrePlaySharedVariableAgent._assertArrayExists(object);
+	}
+	
 	public static void _onArrayWrite(Object arrayRef, int index) {
 		AggrePlaySharedVariableAgent._onArrayAccess(arrayRef, index);
 	}

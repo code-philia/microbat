@@ -9,6 +9,7 @@ import microbat.instrumentation.instr.aggreplay.agents.AggrePlayRecordingAgent;
 import microbat.instrumentation.instr.aggreplay.agents.AggrePlayReplayAgent;
 import microbat.instrumentation.instr.aggreplay.agents.AggrePlaySharedVariableAgent;
 import microbat.instrumentation.instr.aggreplay.agents.RNRRecordingAgent;
+import microbat.instrumentation.precheck.MemoryMeasurementAgent;
 import microbat.instrumentation.precheck.PrecheckAgent;
 
 /**
@@ -39,6 +40,9 @@ public class AgentFactory {
 			agent.setInstrumentation(inst);
 		} else if (cmd.getBoolean(AgentParams.OPT_CONC_REPLAY, false)) { 
 			agent = AggrePlayReplayAgent.getAttached(cmd);
+			agent.setInstrumentation(inst);
+		} else if (cmd.getBoolean(AgentParams.MEASURE_MEM, false)) {
+			agent = MemoryMeasurementAgent.getMeasurementAgent(cmd);
 			agent.setInstrumentation(inst);
 		} else {
 			agent = new TraceAgent(cmd);

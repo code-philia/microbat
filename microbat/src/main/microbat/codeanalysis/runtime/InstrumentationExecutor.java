@@ -185,6 +185,21 @@ public class InstrumentationExecutor {
 		return null;
 	}
 	
+	public void runMemoryMeasureMent(String dumpFile) {
+
+		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
+		agentRunner.addAgentParam(AgentParams.OPT_DUMP_FILE, dumpFile);
+		agentRunner.getConfig().setPort(9000);
+		agentRunner.addAgentParam(AgentParams.MEASURE_MEM, true);
+		try {
+			agentRunner.startAndWaitUntilStop(agentRunner.getConfig());
+		} catch (SavException e) {
+			e.printStackTrace();
+		}
+		agentRunner.removeAgentParam(AgentParams.OPT_DUMP_FILE);
+		agentRunner.removeAgentParam(AgentParams.MEASURE_MEM);
+	}
+	
 	
 	public void runSharedVariable(String dumpFile, int stepLimit) {
 		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);

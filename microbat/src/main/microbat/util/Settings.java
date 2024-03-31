@@ -2,12 +2,11 @@ package microbat.util;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Stack;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-
-import com.google.common.base.Optional;
 
 import microbat.Activator;
 import microbat.handler.CheckingState;
@@ -25,7 +24,7 @@ public class Settings {
 	 * Used to indicate the dump file used for record and replay.
 	 * If the dump file is not provided, a temp file is used.
 	 */
-	public static Optional<String> concurrentDumpFile = Optional.absent();
+	public static Optional<String> concurrentDumpFile = Optional.empty();
 	
 	public static boolean isRecordSnapshot;
 	public static boolean isApplyAdvancedInspector;

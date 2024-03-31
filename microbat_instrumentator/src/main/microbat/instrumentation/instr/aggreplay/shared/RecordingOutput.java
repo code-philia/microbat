@@ -42,6 +42,7 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 	public List<ThreadId> threadIds;
 	public List<SharedMemoryLocation> sharedMemoryLocations; // W_var(e)
 	public Map<ObjectId, List<Event>> lockAcquisitionMap;
+	public long memoryUsed;
 	public RecordingOutput(ReadWriteAccessList rwAccessList,
 			List<ThreadId> threadIds,
 			List<SharedMemoryLocation> sharedMemoryLocations,
@@ -52,6 +53,7 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 		this.sharedMemoryLocations = sharedMemoryLocations;
 		this.threadIds = threadIds;
 		this.lockAcquisitionMap = lockAcquisitionMap;
+		this.memoryUsed = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 	}
 	
 	public RecordingOutput() {
@@ -95,6 +97,7 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 	public RecordingOutput parse(ParseData parseData) {
 		rwAccessList = new ReadWriteAccessList().parse(parseData.getField("rwAccessList"));
 		threadIds = parseThreadIds(parseData.getField("threadIds"));
+		this.memoryUsed = parseData.getField("memoryUsed").getLongValue();
 		this.lockAcquisitionMap = parseData.getField("lockAcquisitionMap")
 				.toMap(new Function<ParseData, ObjectId>() {
 			@Override

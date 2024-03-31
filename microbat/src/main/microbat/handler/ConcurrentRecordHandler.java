@@ -3,6 +3,7 @@ package microbat.handler;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -14,7 +15,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
 
-import com.google.common.base.Optional;
 
 import microbat.codeanalysis.runtime.InstrumentationExecutor;
 import microbat.evaluation.junit.TestCaseAnalyzer;
@@ -37,45 +37,6 @@ import sav.strategies.dto.AppJavaClassPath;
 public class ConcurrentRecordHandler extends AbstractHandler {
 	
 
-	/**
-	 * Used to check if the job is canceled
-	 * @author Gabau
-	 *
-	 */
-	private static class CancelThread extends Thread {
-		public boolean stopped = false;
-		IProgressMonitor monitor;
-		InstrumentationExecutor executor;
-		public CancelThread(IProgressMonitor monitor,
-				InstrumentationExecutor executor) {
-			this.setName("Cancel thread");
-			this.monitor = monitor;
-			this.executor = executor;
-			this.setDaemon(true);
-		}
-		
-		@Override
-		public void run() {
-			while (!stopped) {
-				if (monitor.isCanceled()) {
-					executor.interrupt();
-					stopped = true;
-					break;
-				}
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
-		
-		public void stopMonitoring() {
-			this.stopped = true;
-		}
-		
-	}
 	protected String generateTraceDir(AppJavaClassPath appPath) {
 		String traceFolder;
 		if (appPath.getOptionalTestClass() != null) {

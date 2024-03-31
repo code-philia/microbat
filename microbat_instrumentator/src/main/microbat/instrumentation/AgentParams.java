@@ -47,6 +47,7 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_CODE_RANGE = "code_range";
 	public static final String OPT_TRACE_RECORDER = "trace_recorder";
 	public static final String OPT_RUN_ID = "run_id";
+	public static final String MEASURE_MEM = "measure_mem";
 	
 	private boolean precheck;
 	private EntryPoint entryPoint;

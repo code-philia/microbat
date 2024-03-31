@@ -14,6 +14,7 @@ import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.instr.SystemClassTransformer;
+import microbat.instrumentation.instr.aggreplay.TimeoutThread;
 import microbat.instrumentation.instr.aggreplay.output.SharedVariableOutput;
 import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.RecordingOutput;
@@ -45,6 +46,7 @@ public abstract class RNRRecordingAgent extends Agent {
 		}
 	});
 	protected AgentParams agentParams;
+	protected TimeoutThread timeoutThread;
 	
 	protected void assertObjectExists(Object object) {
 		if (objectIdGenerator.getId(object) != null) {
@@ -101,10 +103,12 @@ public abstract class RNRRecordingAgent extends Agent {
 	}
 	
 	public static void _onObjectRead(Object object, String field) {
+		_assertObjectExists(object);
 		recordingAgent.onObjectRead(object, field);
 	}
 	
 	public static void _onObjectWrite(Object object, String field) {
+		_assertObjectExists(object);
 		recordingAgent.onObjectWrite(object, field);
 	}
 	
@@ -143,10 +147,12 @@ public abstract class RNRRecordingAgent extends Agent {
 	}
 	
 	public static void _onArrayRead(Object arrayRef, int index) {
+		_assertArrayExists(arrayRef);
 		recordingAgent.onArrayRead(arrayRef, index);
 	}
 	
 	public static void _onArrayWrite(Object arrayRef, int index) {
+		_assertArrayExists(arrayRef);
 		recordingAgent.onArrayWrite(arrayRef, index);
 	}
 	
@@ -248,6 +254,8 @@ public abstract class RNRRecordingAgent extends Agent {
 	
 	@Override
 	public void startup0(long vmStartupTime, long agentStartupTime) {
+		timeoutThread = new TimeoutThread(this);
+		timeoutThread.start();
 		AppJavaClassPath appPath = agentParams.initAppClassPath();
 		GlobalFilterChecker.setup(appPath, agentParams.getIncludesExpression(), agentParams.getExcludesExpression());
 		recordingAgent = this;

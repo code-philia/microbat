@@ -207,18 +207,22 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	}
 	
 	public static void _onArrayRead(Object arrayRef, int index) {
+		_assertArrayExists(arrayRef);
 		attachedAgent.onArrayRead(arrayRef, index);
 	}
 	
 	public static void _onArrayWrite(Object arrayRef, int index) {
+		_assertArrayExists(arrayRef);
 		attachedAgent.onArrayWrite(arrayRef, index);
 	}
 	
 	public static void _onObjectRead(Object object, String field) {
+		_assertObjectExists(object);
 		attachedAgent.onObjectRead(object, field);
 	}
 	
 	public static void _onObjectWrite(Object object, String field) {
+		_assertObjectExists(object);
 		attachedAgent.onObjectWrite(object, field);
 	}
 	
@@ -392,6 +396,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 
 			Trace trace = tracer.getTrace();
 			trace.setThreadId(tracer.getThreadId());
+			trace.setInnerThreadId(this.threadIdGenerator.getId(tracer.getThreadId()));
 			trace.setThreadName(tracer.getThreadName());
 			trace.setMain(ExecutionTracer.getMainThreadStore().equals(tracer));
 			trace.setInnerThreadId(threadIdGenerator.getId(trace.getThreadId()));

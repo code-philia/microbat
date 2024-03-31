@@ -41,6 +41,7 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	private SharedVariableObjectGenerator shObjectIdGenerator = new SharedVariableObjectGenerator();
 	private static AggrePlaySharedVariableAgent agent = new AggrePlaySharedVariableAgent();
 	private AgentParams agentParams = null;
+	private TimeoutThread timeoutThread;
 	
 	
 	public static AggrePlaySharedVariableAgent getAgent(CommandLine cmd) {
@@ -58,6 +59,7 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	}
 	
 	public static void _onArrayAccess(Object arrayRef, int index) {
+		_assertArrayExists(arrayRef);
 		agent.onArrayAccess(arrayRef, index);
 	}
 	
@@ -84,6 +86,7 @@ public class AggrePlaySharedVariableAgent extends Agent {
 	
 	
 	public static void _onObjectAccess(Object object, String field) {
+		_assertObjectExists(object);
 		agent.shObjectIdGenerator.getId(object).addAccess(Thread.currentThread().getId(), field);
 	}
 	
@@ -100,8 +103,8 @@ public class AggrePlaySharedVariableAgent extends Agent {
 
 	@Override
 	public void startup0(long vmStartupTime, long agentPreStartup) {
-		System.out.println("Started shared variable detection");
-
+		this.timeoutThread = new TimeoutThread(this);
+		timeoutThread.start();
 		AppJavaClassPath appPath = agentParams.initAppClassPath();
 		GlobalFilterChecker.setup(appPath, agentParams.getIncludesExpression(), agentParams.getExcludesExpression());
 		SystemClassTransformer.attachThreadId(getInstrumentation());

@@ -6,6 +6,11 @@ import microbat.instrumentation.runtime.ExecutionTracer;
 
 public class TimeoutThread extends Thread {
 	
+	private Agent attachedAgent;
+	
+	public TimeoutThread(Agent attachedAgent) { 
+		this.attachedAgent = attachedAgent;
+	}
 	
 	public TimeoutThread() {
 		super.setDaemon(true);
@@ -17,8 +22,15 @@ public class TimeoutThread extends Thread {
 		} catch (InterruptedException e) {
 		}
 		AgentLogger.debug("Interrupted program due to timeout");
-		Agent._exitProgram("false;Timeout");
-		// kill all other threads
+		if (attachedAgent != null) {
+			Agent._exitProgram("false;Timeout");
+		} else {
+//			try {
+//				attachedAgent.shutdown();
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
+		}
 		System.exit(1);
 	}
 }

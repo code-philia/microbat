@@ -30,7 +30,7 @@ public class SharedVariableObjectGenerator implements IdGenerator<Object, Shared
 	
 	public void assertArrayId(Object object) {
 		if (arrayIdGenerator.getId(object) != null) return;
-		arrayIdGenerator.getId(object);
+		arrayIdGenerator.createId(object);
 	}
 	
 	@Override
