@@ -283,6 +283,8 @@ public class TraceNode{
 		TraceNode other = (TraceNode) obj;
 		if (order != other.order)
 			return false;
+		if (trace.getThreadId() != other.getTrace().getThreadId())
+			return false;
 		return true;
 	}
 
