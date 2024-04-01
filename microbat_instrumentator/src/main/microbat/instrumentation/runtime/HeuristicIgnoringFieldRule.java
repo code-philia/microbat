@@ -1,6 +1,8 @@
 package microbat.instrumentation.runtime;
 
+import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -133,6 +135,12 @@ public class HeuristicIgnoringFieldRule {
 					return true;
 				}
 			}
+			
+			if (isAbstractStringBuilder(type) || isStringWriterClass(type) || isPrintWriterClass(type) 
+					|| isHeapByteBuffer(type) || isDirectByteBuffer(type)) {
+				return true;
+			}
+			
 			return false;
 		}
 		
@@ -177,14 +185,27 @@ public class HeuristicIgnoringFieldRule {
 		return isHashMap;
 	}
 
-	public static boolean hasStringBuffer(Class<?> type) {
-		return StringBuilder.class.isAssignableFrom(type) || StringBuffer.class.isAssignableFrom(type)
-				|| isWriter(type);
+	public static boolean isAbstractStringBuilder(Class<?> type) {
+		return StringBuilder.class.isAssignableFrom(type) || StringBuffer.class.isAssignableFrom(type);
+	}
+	
+
+	public static boolean isStringWriterClass(Class<?> type) {
+	    return StringWriter.class.isAssignableFrom(type);
 	}
 
-	public static boolean isWriter(Class<?> type) {
-		return Writer.class.isAssignableFrom(type);
+	public static boolean isPrintWriterClass(Class<?> type) {
+	    return PrintWriter.class.isAssignableFrom(type);
 	}
+	
+	public static boolean isHeapByteBuffer(Class<?> type) {
+	    return "java.nio.HeapByteBuffer".equals(type.getName());
+	}
+
+	public static boolean isDirectByteBuffer(Class<?> type) {
+	    return "java.nio.DirectByteBuffer".equals(type.getName());
+	}
+	
 
 	private static boolean isValidField(String fieldName, String className,
 			Map<String, List<String>> ignoringMap) {
@@ -216,7 +237,9 @@ public class HeuristicIgnoringFieldRule {
 		Boolean isNeed = parsingTypeMap.get(typeName);
 		if(isNeed == null){
 			if(containPrefix(typeName, prefixExcludes)){
-				isNeed = isCollectionClass(type) || isHashMapClass(type) || hasStringBuffer(type);
+				isNeed = isCollectionClass(type) || isHashMapClass(type) || isAbstractStringBuilder(type) 
+						|| isStringWriterClass(type) || isPrintWriterClass(type) || isHeapByteBuffer(type) 
+						|| isDirectByteBuffer(type);
 			}
 			else{
 				isNeed = true;				
@@ -274,7 +297,7 @@ public class HeuristicIgnoringFieldRule {
 			}
 		}
 		
-		if (hasStringBuffer(objClass)) {
+		if (isAbstractStringBuilder(objClass)) {
 			Field field;
 			try {
 				field = StringBuilder.class.getSuperclass().getDeclaredField("value");
@@ -283,16 +306,46 @@ public class HeuristicIgnoringFieldRule {
 				AgentLogger.error(e);
 			}
 		}
+		
+	    if (isStringWriterClass(objClass)) {
+	        try {
+	            Field bufferField = StringWriter.class.getDeclaredField("buf");
+	            bufferField.setAccessible(true);
+	            validFields.add(bufferField);
+	        } catch (Exception e) {
+	            AgentLogger.error(e);
+	        }
+	    }
 
-		if (isWriter(objClass)) {
-			Field field;
-			try {
-				field = Writer.class.getDeclaredField("writeBuffer");
-				validFields.add(field);
-			} catch (Exception e) {
-				AgentLogger.error(e);
-			}
-		}
+	    if (isPrintWriterClass(objClass)) {
+	        try {
+	            Field outField = PrintWriter.class.getDeclaredField("out");
+	            outField.setAccessible(true);
+	            validFields.add(outField);
+	        } catch (Exception e) {
+	            AgentLogger.error(e);
+	        }
+	    }
+	    
+	    if (isHeapByteBuffer(objClass)) {
+	        try {
+	            Field hbField = objClass.getDeclaredField("hb");
+	            hbField.setAccessible(true);
+	            validFields.add(hbField); 
+	        } catch (Exception e) {
+	            AgentLogger.error(e);
+	        }
+	    }
+	    
+	    if (isDirectByteBuffer(objClass)) {
+	        try {
+	            Field cleanerField = objClass.getDeclaredField("cleaner");
+	            cleanerField.setAccessible(true); 
+	            validFields.add(cleanerField); 
+	        } catch (Exception e) {
+	            AgentLogger.error(e);
+	        }
+	    }
 
 		return validFields;
 	}
