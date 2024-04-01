@@ -1,6 +1,8 @@
 package microbat.codeanalysis.runtime;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -201,19 +203,27 @@ public class InstrumentationExecutor {
 	}
 	
 	
-	public void runSharedVariable(String dumpFile, int stepLimit) {
+	public String runSharedVariable(String dumpFile, int stepLimit) {
 		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
 		agentRunner.getConfig().setPort(9000);
 		agentRunner.addAgentParam(AgentParams.OPT_DUMP_FILE, dumpFile);
 		agentRunner.addAgentParam(AgentParams.OPT_STEP_LIMIT, stepLimit);
 		agentRunner.addAgentParam(AgentParams.OPT_SHARED_DETECTION, true);
+		String result = "";
 		try {
 			agentRunner.sharedDetection();
+			result = agentRunner.getProccessError();
 		} catch (SavException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			result = pw.toString();
+		} finally {
+			
 		}
 		agentRunner.removeAgentParam(AgentParams.OPT_SHARED_DETECTION);
+		return result;
 	}
 	
 	/**
@@ -222,16 +232,22 @@ public class InstrumentationExecutor {
 	 * @param concDumpFile
 	 * @param stepLimit
 	 */
-	public void runRecordConc(String dumpFile, String concDumpFile, int stepLimit) {
+	public String runRecordConc(String dumpFile, String concDumpFile, int stepLimit) {
 		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
 		agentRunner.getConfig().setPort(9000);
 		agentRunner.addAgentParam(AgentParams.OPT_STEP_LIMIT, stepLimit);
+		String result;
 		try {
 			agentRunner.concReplay(AgentParams.OPT_CONC_RECORD, concDumpFile, dumpFile);
+			String processError = agentRunner.getProccessError();
+			result = processError;
 		} catch (SavException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			StringWriter s = new StringWriter();
+			PrintWriter p = new PrintWriter(s);
+			e.printStackTrace(p);
+			result = s.toString();
 		}
+		return result;
 	}
 	
 	

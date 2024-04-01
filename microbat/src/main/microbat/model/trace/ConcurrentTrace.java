@@ -111,7 +111,7 @@ public class ConcurrentTrace extends Trace {
 				
 				if (isOnHeap && writtenValue.getAliasVarID() != null
 						&& writtenValue.getAliasVarID().equals(varValue.getAliasVarID())) {
-					return node;
+					return node.initialTraceNode;
 				}
 				if (!isOnHeap && concNode.getCurrentThread() != node.getCurrentThread()) {
 					// when the value is on a different thread
