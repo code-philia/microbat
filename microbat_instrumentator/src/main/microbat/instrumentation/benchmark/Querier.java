@@ -20,8 +20,8 @@ public class Querier {
     private static String base_directory = "/Applications/Eclipse.app/Contents/Eclipse/dropins/junit_lib/";
     private static String propertiesFileName = base_directory + "properties.txt";
     private static Map<String, String> dictionary;
-    private static String dicFilename = base_directory + "dictionary.txt";
-    private static String proFilename = base_directory + "prompt.txt";
+    private static String dicFilename = base_directory + "dictionary_v2.txt";
+    private static String proFilename = base_directory + "prompt_v2.txt";
     private static String prompt;
 
 
@@ -189,7 +189,7 @@ public class Querier {
             try {
                 value = chatGPT(addEscape(query));
                 value = getResult(value);
-                addWord(query, value);
+//                addWord(query, value);
                 return value;
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());

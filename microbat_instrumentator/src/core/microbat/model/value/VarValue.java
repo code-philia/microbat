@@ -199,6 +199,33 @@ public abstract class VarValue implements GraphNode, Serializable {
 		return String.format("(%s:%s)", this.variable.getName(), getChildren());
 	}
 	
+	public String getJsonString() {
+		StringBuilder stringBuilder = new StringBuilder("{name:");
+		stringBuilder.append(this.variable.getName());
+		stringBuilder.append(",type:");
+		stringBuilder.append(this.variable.getRuntimeType() == null 
+				? this.variable.getType() : this.variable.getRuntimeType());
+		
+		List<VarValue> children = this.getChildren();
+		stringBuilder.append(",value:");
+		
+		if (children.size() > 0) {
+			stringBuilder.append("<");
+			for (VarValue child : children) {
+				if (!child.getStringValue().equals("null")) {
+					stringBuilder.append(child.getJsonString());
+					stringBuilder.append(";");
+				}
+			}
+			stringBuilder.append(">");
+		} else {
+			stringBuilder.append(this.getStringValue());
+		}
+		
+		stringBuilder.append("}");
+		return stringBuilder.toString();
+	}
+	
 	public boolean isElementOfArray() {
 		return variable instanceof ArrayElementVar;
 	}

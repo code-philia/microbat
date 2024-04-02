@@ -31,6 +31,7 @@ import microbat.instrumentation.benchmark.Querier;
 import microbat.instrumentation.benchmark.QueryRequestGenerator;
 import microbat.instrumentation.benchmark.QueryResponseProcessor;
 import microbat.instrumentation.filter.GlobalFilterChecker;
+import microbat.instrumentation.utils.QueryUtils;
 import microbat.model.BreakPoint;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
@@ -421,8 +422,27 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 						latestNode);
 				
 				// used in _afterInvoke
-				latestNode.setParameters(params);
+//				latestNode.setParameters(params);
+				
+				// if a method is setter, add modified variable in written variables
+				int lineNo = latestNode.getLineNumber();
+				String code = QueryUtils.getCode(residingClassName, lineNo);
+				String varName = QueryUtils.getInvokingObjectName(code);
+				
+				String varType = methodSig.split("#")[0];
+				Variable tempVar = new LocalVar(varName, varType, residingClassName, line);
+				tempVar.setVarID("");
+				String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
+				tempVar.setAliasVarID(aliasVarID);
 
+				VarValue varValue = appendVarValue(invokeObj, tempVar, null);
+				String variableInfo = varValue.getJsonString();
+				
+				// skip constructor and methods where execution is recorded
+				if (!methodSig.contains("<init>") && !QueryUtils.isTempVar(code, methodSig)) {
+					latestNode.setVariableInfo(variableInfo);
+				}
+				
 				if (methodSig.contains("clone()")) {
 
 					String type = SignatureUtils.signatureToName(invokeTypeSign);
@@ -570,187 +590,52 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					// latestNode.setInvokingMatchNode(invokingMatchNode);
 					// }
 					
-					// if a method is setter, add modified variable in written variables
+					
+					
+					/* Prompt V2 */
+					// get var value
+					int lineNo = latestNode.getLineNumber();
+					String code = QueryUtils.getCode(residingClassName, lineNo);
+					String varName = QueryUtils.getInvokingObjectName(code);
+					
 					String varType = invokeMethodSig.split("#")[0];
-					Variable var = new LocalVar("temp_var", varType, residingClassName, line);
-					String varID = "";
-					var.setVarID(varID);
+					Variable tempVar = new LocalVar(varName, varType, residingClassName, line);
+					tempVar.setVarID("");
 					String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
-					var.setAliasVarID(aliasVarID);
+					tempVar.setAliasVarID(aliasVarID);
 
-					VarValue value = appendVarValue(invokeObj, var, null);
+					VarValue varValue = appendVarValue(invokeObj, tempVar, null);
+					
+					// get variable info
+					String variableInfo = latestNode.getVariableInfo();
+					String request = "";
+					if (variableInfo != null && !variableInfo.equals("")) {
+						request = QueryRequestGenerator.getQueryRequestV2(varName, variableInfo, code);
+					}
 
+					// query gpt
 					String queryResult = "";
-					// skip constructor and methods where execution is recorded
-					if (!invokeMethodSig.contains("<init>") && latestNode.getParameters() != null) {
-						String request = QueryRequestGenerator.getQueryRequest(invokeMethodSig, value.getRuntimeType());
-						if (request.length() > 0) {
-							Querier gptQuerier = new Querier();
-							queryResult = gptQuerier.getDependency(request);
-						}
+					if (request.length() > 0) {
+						Querier gptQuerier = new Querier();
+						queryResult = gptQuerier.getDependency(request);
 					}
 					
-					/* GPT version*/
-					MethodInfo methodInfo = null;
-					if (queryResult != "") {
-						methodInfo = QueryResponseProcessor.getMethodInfo(invokeMethodSig, queryResult);
+					Map<String, String> variables = null;
+					if (!queryResult.equals("")) {
+						variables = QueryResponseProcessor.getWrittenVars(variableInfo, queryResult);
 					}
-
-					if (methodInfo != null) {
-						if (methodInfo.getType() == Type.SET) {
-							Action action = methodInfo.getAction();
-							List<VarValue> allChildren = value.getAllDescedentChildren();
-
-							boolean isSizeFound = action == Action.REPLACE;
-							boolean isCriticalDataStructureFound = action == Action.REMOVE;
-
-							if (action != Action.REPLACE) {
-								// record length
-								String criticalVariable = "size";
-								for (VarValue child : allChildren) {
-									if (child.getVarName().equals(criticalVariable)) {
-										isSizeFound = true;
-										addRWriteValue(latestNode, child, true);
-									}
-								}
-							}
-							if (action != Action.REMOVE) {
-								// record elements
-								String criticalDataStructure = methodInfo.getCriticalDataStructure();
-								Index indexType = methodInfo.getIndex();
-								
-								int index = Integer.MIN_VALUE;
-								String key = "";
-								switch (indexType) {
-									case START:
-										index = 0;
-										break;
-									case INDEX:
-										Object[] parameters = latestNode.getParameters();
-										for (Object p : parameters) {
-											if (p instanceof Integer) {
-												index = (Integer) p;
-												break;
-											}
-										}
-										break;
-									case END:
-										// -1: assume to be the end
-										index = -1;
-										break;
-									case KEY:
-										parameters = latestNode.getParameters();
-										key = parameters[0].toString();
-										break;
-								}
-
-								for (VarValue child : allChildren) {
-									if (child.getVarName().equals(criticalDataStructure)) {
-										isCriticalDataStructureFound = true;
-										// if all positions change, record the critical data structure.
-										if (indexType.equals(Index.ALL)) {
-											addRWriteValue(latestNode, child, true);
-											break;
-										}
-										List<VarValue> nextLayer = child.getChildren();
-										if (nextLayer.size() > 0) {
-											if (index >= 0) {
-												addRWriteValue(latestNode, nextLayer.get(index), true);
-											} else if (index == -1) {
-												// record last element
-												for (int i = nextLayer.size() - 1; i >= 0; i--) {
-													if (!nextLayer.get(i).getStringValue().equals("null")) {
-														addRWriteValue(latestNode, nextLayer.get(i), true);
-														break;
-													}
-												}
-											} else if (indexType.equals(Index.KEY)) {
-												// record the element with key
-												for (int i = 0; i < nextLayer.size(); i++) {
-													if (nextLayer.get(i).getStringValue().startsWith(key + "=")) {
-														addRWriteValue(latestNode, nextLayer.get(i), true);
-														break;
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-
-							// if cannot find the critical data structure or the size, add the variable
-							// itself as written variable
-							if (!isCriticalDataStructureFound || !isSizeFound) {
-								addRWriteValue(latestNode, value, true);
+					
+					// variable mapping
+					if (variables != null) {
+						List<VarValue> allChildren = varValue.getAllDescedentChildren();
+						
+						for (VarValue child : allChildren) {
+							String name = child.getVarName();
+							if (variables.containsKey(name)) {
+								addRWriteValue(latestNode, child, true);
 							}
 						}
 					}
-					
-					/* Hardcode version*/
-//					ClassInfo classInfo = DependencyRules.getClassInfo(invokeMethodSig);
-//					MethodInfo methodInfo = DependencyRules.getMethodInfo(invokeMethodSig);
-//					if (methodInfo != null) {
-//						if (methodInfo.getType() == Type.SET) {
-//							String varType = invokeMethodSig.split("#")[0];
-//							Variable var = new LocalVar("temp_var", varType, residingClassName, line);
-//							String varID = "";
-//							var.setVarID(varID);
-//							String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
-//							var.setAliasVarID(aliasVarID);
-//							
-//							VarValue value = appendVarValue(invokeObj, var, null);
-//							
-//							Action action = methodInfo.getAction();
-//							if (action == Action.REMOVE) {
-//								// record length
-//								String criticalVariable = classInfo.getLengthVariable();
-//								for (VarValue child : value.getChildren()) {
-//									if (child.getVarName().equals(criticalVariable)) {
-//										addRWriteValue(latestNode, child, true);
-//									}
-//								}
-//							} else {
-//								// record elements
-//								String criticalDataStructure = classInfo.getCriticalDataStructure();
-//								Index indexType = methodInfo.getIndex();
-//								
-//								// -1: assume to be the end
-//								int index = -1;
-//								switch (indexType) {
-//									case START:
-//										index = 0;
-//									case INDEX:
-//										Object[] parameters = latestNode.getParameters();
-//										for (Object p : parameters) {
-//											if (p instanceof Integer) {
-//												index = (Integer) p;
-//												break;
-//											}
-//										}
-//								}
-//								
-//								for (VarValue child : value.getChildren()) {
-//									if (child.getVarName().equals(criticalDataStructure)) {
-//										List<VarValue> nextLayer = child.getChildren();
-//										if (nextLayer.size() > 0) {
-//											if (index >= 0) {
-//												addRWriteValue(latestNode, nextLayer.get(index), true);
-//											} else {
-//												// record last element
-//												for (int i = nextLayer.size() - 1; i >= 0; i--) {
-//													if (!nextLayer.get(i).getStringValue().equals("null")) {
-//														addRWriteValue(latestNode, nextLayer.get(i), true);
-//														break;
-//													}
-//												}
-//											}
-//										}
-//									}
-//								}
-//							}
-//						}
-//					}
-					
 					
 				}
 

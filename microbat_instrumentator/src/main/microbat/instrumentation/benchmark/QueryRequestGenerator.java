@@ -52,6 +52,22 @@ public class QueryRequestGenerator {
 		
 		return stringBuilder.toString();
 	}
+	
+	public static String getQueryRequestV2(String varName, String varInfo, String code) throws IOException {
+		if (code.startsWith("//")) {
+			return "";
+		}
+		
+		StringBuilder stringBuilder = new StringBuilder("Given variable ");
+		stringBuilder.append(varInfo);
+		stringBuilder.append(" After calling \"");
+		stringBuilder.append(code);
+		stringBuilder.append("\" once, ");
+		stringBuilder.append(varName);
+		stringBuilder.append(".value becomes:");
+		
+		return stringBuilder.toString();
+	}
 
 	private static ClassGen loadClass(String className) throws IOException {
 		String classFName = className.replace('.', '/');
