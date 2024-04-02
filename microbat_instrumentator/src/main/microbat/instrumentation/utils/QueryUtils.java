@@ -47,9 +47,9 @@ public class QueryUtils {
 		return lines.get(lineNo - 1).trim();
 	}
 	
-	public static boolean isTempVar(String code, String methodSignature) {
+	public static boolean isValidVar(String code, String methodSignature) {
 		String actualMethodName = getMethodNameFromCode(code);
-		return !methodSignature.contains(actualMethodName) && methodSignature.contains("valueOf");
+		return methodSignature.contains(actualMethodName) && !methodSignature.contains("valueOf");
 	}
 	
 	private static String getMethodNameFromCode(String code) {
