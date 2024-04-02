@@ -1,0 +1,5 @@
+e.g.:
+Given variable {name:var,type:java.util.ArrayList,value:<{name:elementData,type:java.lang.Object[],value:<{name:.elementData[0],type:java.lang.Integer,value:1};>};{name:size,type:int,value:1};>}
+After calling "var.add(2)" once, var.value becomes:
+<{name:elementData,type:java.lang.Object[],value:<{name:.elementData[0],type:java.lang.Integer,value:1};{name:.elementData[1],type:java.lang.Object,value:2};>};{name:size,type:int,value:2};>
+Then
