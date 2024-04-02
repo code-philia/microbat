@@ -25,7 +25,8 @@ public enum TracerMethods {
 	WRITE_FIELD(true, "microbat/instrumentation/runtime/IExecutionTracer", "_writeField", "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V", 8),
 	WRITE_LOCAL_VAR(true, "microbat/instrumentation/runtime/IExecutionTracer", "_writeLocalVar", "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;IIIILjava/lang/String;Ljava/lang/String;)V", 10),
 	WRITE_STATIC_FIELD(true, "microbat/instrumentation/runtime/IExecutionTracer", "_writeStaticField", "(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;)V", 8),
-
+	MONITER_ENTER(false, "microbat/instrumentation/runtime/ExecutionTracer", "_onLockAcquire", "(Ljava/lang/Object;)V", 1),
+	MONITOR_EXIT(false, "microbat/instrumentation/runtime/ExecutionTracer", "_afterLockAcquire", "()V", 0)
 	;
 	private boolean interfaceMethod;
 	private String declareClass;

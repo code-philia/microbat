@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import microbat.instrumentation.filter.GlobalFilterChecker;
+import microbat.instrumentation.instr.aggreplay.TimeoutThread;
 import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.instrumentation.runtime.IExecutionTracer;
 
@@ -76,12 +77,23 @@ public abstract class Agent {
 		});
 	}
 
+	public static void _forceProgramStop(String programMsg) {
+		String currentThreadName = Thread.currentThread().getName();
+		assert(currentThreadName.equals(TimeoutThread.ID));
+		Agent.programMsg = programMsg;
+		ExecutionTracer.getMainThreadStore().lock();
+		stop();
+		ExecutionTracer.getMainThreadStore().unLock();
+		Runtime.getRuntime().exit(1); // force program to exit to avoid getting stuck by background running threads.
+	}
+	
 	/**
 	 * This method will be instrumented at the end of main() method.
 	 * @param programMsg
 	 */
 	public static void _exitProgram(String programMsg) {
-		if(Thread.currentThread().getName().equals("main")) {
+		String currentThreadName = Thread.currentThread().getName();
+		if(currentThreadName.equals("main") || currentThreadName.equals(TimeoutThread.ID)) {
 			ExecutionTracer.getMainThreadStore().lock();
 			Agent.programMsg = programMsg;
 			

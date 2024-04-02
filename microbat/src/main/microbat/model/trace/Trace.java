@@ -1,8 +1,10 @@
 package microbat.model.trace;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -38,6 +40,27 @@ public class Trace {
 	private String threadName;
 	private String id;
 	private ThreadId innerThreadId;
+	/**
+	 * Used to detect deadlocks
+	 */
+	private List<Long> acquiredLocks = null;
+	private Long acquiringLock = null;
+	
+	public Long getAcquiringLock() {
+		return this.acquiringLock;
+	}
+	
+	public List<Long> getAcquiredLocks() {
+		return this.acquiredLocks;
+	}
+	
+	public void setAcquiredLocks(Collection<Long> values) {
+		this.acquiredLocks = new LinkedList<Long>(values);
+	}
+	
+	public void setAcquiringLock(Long value) {
+		this.acquiringLock = value;
+	}
 	
 	/**
 	 * Getter for inner thread id. Representation of a

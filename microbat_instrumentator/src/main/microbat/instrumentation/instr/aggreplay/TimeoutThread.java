@@ -6,10 +6,13 @@ import microbat.instrumentation.runtime.ExecutionTracer;
 
 public class TimeoutThread extends Thread {
 	
-	private Agent attachedAgent;
+	private Agent attachedAgent = null;
+	public static final String ID = "Timeout-thread$$";
+	public static final String TIMEOUT_MSG = "false;Timeout";
 	
 	public TimeoutThread(Agent attachedAgent) { 
 		this.attachedAgent = attachedAgent;
+		super.setName(ID);
 	}
 	
 	public TimeoutThread() {
@@ -18,19 +21,20 @@ public class TimeoutThread extends Thread {
 	@Override
 	public void run() {
 		try {
-			Thread.sleep(30000L);
+			Thread.sleep(300000L);
 		} catch (InterruptedException e) {
 		}
 		AgentLogger.debug("Interrupted program due to timeout");
-		if (attachedAgent != null) {
-			Agent._exitProgram("false;Timeout");
-		} else {
-//			try {
-//				attachedAgent.shutdown();
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-		}
-		System.exit(1);
+		Agent._forceProgramStop(TIMEOUT_MSG);
+//		if (attachedAgent == null) {
+//			Agent._exitProgram("false;Timeout");
+//		} else {
+////			try {
+////				attachedAgent.shutdown();
+////			} catch (Exception e) {
+////				e.printStackTrace();
+////			}
+//		}
+//		System.exit(1);
 	}
 }

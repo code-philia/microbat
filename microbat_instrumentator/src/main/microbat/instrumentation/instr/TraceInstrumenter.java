@@ -61,6 +61,8 @@ import microbat.instrumentation.instr.instruction.info.FieldInstructionInfo;
 import microbat.instrumentation.instr.instruction.info.LineInstructionInfo;
 import microbat.instrumentation.instr.instruction.info.LocalVarInstructionInfo;
 import microbat.instrumentation.instr.instruction.info.RWInstructionInfo;
+import microbat.instrumentation.model.id.AggrePlayMethods;
+import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.instrumentation.runtime.IExecutionTracer;
 import microbat.instrumentation.runtime.TraceUtils;
 import microbat.instrumentation.utils.MicrobatUtils;
@@ -300,11 +302,36 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 				injectCodeTracerExit(exitInsHandle, insnList, constPool, tracerVar, line, classNameVar, methodSigVar, isMainMethod, isEntry);
 			}
 
+			for (InstructionHandle monitorEnterHandle : lineInfo.getMonitorEnterInstructionHandles()) {
+				injectMonitorEnterInstruction(insnList, monitorEnterHandle, constPool);
+			}
+			
+			for (InstructionHandle monitorExitHandle : lineInfo.getMonitorExitInstructionHandles()) {
+				injectMonitorExitInstruction(insnList, monitorExitHandle, constPool);
+			}
+			
 			lineInfo.dispose();
 		}
 		injectCodeInitTracer(methodGen, constPool, startLine, endLine, isAppClass, classNameVar,
 				methodSigVar, isMainMethod, tracerVar);
 		return true;
+	}
+	
+	protected void injectMonitorEnterInstruction(InstructionList il, InstructionHandle ih, ConstantPoolGen cpg) {
+		InstructionList beforeMonitorEnter = new InstructionList();
+		beforeMonitorEnter.append(new DUP());
+		beforeMonitorEnter.append(AggrePlayMethods.ON_LOCK_ACQUIRE.toInvokeStatic(cpg, ExecutionTracer.class));
+
+		InstructionList afterMonitorEnter = new InstructionList();
+		afterMonitorEnter.append(AggrePlayMethods.ON_LOCK_ACQUIRE2.toInvokeStatic(cpg, ExecutionTracer.class));
+		insertInsnHandler(il, beforeMonitorEnter, ih);
+		appendInstruction(il, afterMonitorEnter, ih);
+	}
+	
+	protected void injectMonitorExitInstruction(InstructionList il, InstructionHandle ih, ConstantPoolGen cp) {
+		InstructionList afterMonitorExitInstructionList = new InstructionList();
+		afterMonitorExitInstructionList.append(AggrePlayMethods.AFTER_LOCK_ACQUIRE.toInvokeStatic(cp, ExecutionTracer.class));
+		appendInstruction(il, afterMonitorExitInstructionList, ih);
 	}
 
 	protected void injectCodeTracerExit(InstructionHandle exitInsHandle, InstructionList insnList, 

@@ -53,6 +53,10 @@ public class TraceOutputReader extends OutputReader {
 			readStepVariableRelation(trace);
 			ThreadId threadId = readTraceInnerThreadId();
 			trace.setInnerThreadId(threadId);
+			List<Long> lockList = readSerializableList();
+			long acquiringLock = readLong();
+			trace.setAcquiredLocks(lockList);
+			trace.setAcquiringLock(acquiringLock);
 			traceList.add(trace);
 		}
 		

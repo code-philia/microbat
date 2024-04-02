@@ -34,7 +34,7 @@ public class TraceAgent extends Agent {
 	}
 
 	public void startup0(long vmStartupTime, long agentPreStartup) {
-		timeoutThread.start();
+		if (!timeoutThread.isAlive()) timeoutThread.start();
 		SystemClassTransformer.attachThreadId(getInstrumentation(), this.getClass());
 //		timer = new StopTimer("Trace Construction");
 //		timer.newPoint("Execution");
@@ -78,6 +78,8 @@ public class TraceAgent extends Agent {
 			trace.setThreadName(tracer.getThreadName());
 			trace.setMain(ExecutionTracer.getMainThreadStore().equals(tracer));
 			trace.setAppJavaClassPath(ExecutionTracer.appJavaClassPath);
+			trace.setAcquiredLocks(tracer.getLockAcquired());
+			trace.setAcquiringLock(tracer.getAcquiringLock());
 			constructTrace(trace);
 			traceList.add(trace);
 		}

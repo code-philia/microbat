@@ -5,11 +5,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.LocalVariable;
@@ -58,10 +61,16 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 //	private static int tolerantExpectedSteps = expectedSteps;
 	public static boolean avoidProxyToString = false;
 	private long threadId;
-
+	/**
+	 * When the current thread is trying to acquire an object.
+	 */
+	private Long acquiringLock = null;
 	private Trace trace;
 
 	private MethodCallStack methodCallStack;
+	
+	// stack containing the list of locks acquired
+	private Stack<Long> lockStack = new Stack<Long>();
 	
 	/**
 	 * indicate whether the execution of the thread should be recorded 
@@ -74,6 +83,25 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 //			tolerantExpectedSteps = expectedSteps * 2;
 		}
 	}
+	
+	// fires before lock is acquire
+	public static void _onLockAcquire(Object object) {
+		ExecutionTracer tracer = rtStore.get(Thread.currentThread().getId());
+		tracer.acquiringLock = TraceUtils.getUniqueId(object);
+	}
+	
+	// fire immediately after lock is acquired
+	public static void _onLockAcquire2() {
+		ExecutionTracer tracer = rtStore.get(Thread.currentThread().getId());
+		tracer.lockStack.add(tracer.acquiringLock);
+		tracer.acquiringLock = null;
+	}
+	
+	public static void _afterLockAcquire() {
+		ExecutionTracer tracer = rtStore.get(Thread.currentThread().getId());
+		tracer.lockStack.pop();
+	}
+
 
 	public static void setStepLimit(int stepLimit) {
 		if (stepLimit != AgentConstants.UNSPECIFIED_INT_VALUE) {
@@ -680,7 +708,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			BreakPoint bkp = new BreakPoint(className, methodSignature, line);
 			long timestamp = System.currentTimeMillis();
 			TraceNode currentNode = new TraceNode(bkp, null, order, trace, numOfReadVars, numOfWrittenVars, timestamp, bytecode);
-
+			
 			trace.addTraceNode(currentNode);
 			AgentLogger.printProgress(order);
 			if (!methodCallStack.isEmpty()) {
@@ -1326,6 +1354,17 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 
 	public Trace getTrace() {
 		return trace;
+	}
+	
+	public Collection<Long> getLockAcquired() {
+		return Collections.unmodifiableCollection(this.lockStack);
+	}
+	
+	public long getAcquiringLock() {
+		if (this.acquiringLock == null) {
+			return -1;
+		}
+		return this.acquiringLock;
 	}
 
 	private static volatile LockedThreads lockedThreads = new LockedThreads();

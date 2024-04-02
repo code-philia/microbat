@@ -61,6 +61,8 @@ public class TraceOutputWriter extends OutputWriter {
 		writeSteps(trace.getExecutionList(), locIdIdxMap);
 		writeStepVariableRelation(trace);
 		writeTraceThreadId(trace);
+		writeSerializableList(trace.getAcquiredLocks());
+		writeLong(trace.getAcquiringLock());
 	}
 	
 	private void writeTraceThreadId(Trace trace) throws IOException {
