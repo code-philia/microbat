@@ -62,9 +62,7 @@ public class QueryRequestGenerator {
 		stringBuilder.append(varInfo);
 		stringBuilder.append(" After calling \"");
 		stringBuilder.append(code);
-		stringBuilder.append("\" once, ");
-		stringBuilder.append(varName);
-		stringBuilder.append(".value becomes:");
+		stringBuilder.append("\" once:");
 		
 		return stringBuilder.toString();
 	}

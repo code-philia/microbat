@@ -1,6 +1,7 @@
 package microbat.instrumentation.benchmark;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -10,7 +11,9 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class Querier {
     private static String url = "https://api.openai.com/v1/chat/completions";
@@ -19,7 +22,10 @@ public class Querier {
     private static String model4 = "gpt-4-turbo-preview";
     private static String base_directory = "/Applications/Eclipse.app/Contents/Eclipse/dropins/junit_lib/";
     private static String propertiesFileName = base_directory + "properties.txt";
+    /* v1: (request : response) */
     private static Map<String, String> dictionary;
+    /* v2: getter methods */
+    private static Set<String> getterMethods;
     private static String dicFilename = base_directory + "dictionary_v2.txt";
     private static String proFilename = base_directory + "prompt_v2.txt";
     private static String prompt;
@@ -27,7 +33,18 @@ public class Querier {
 
     public Querier() {
         dictionary = new HashMap<>();
-        loadDictionary();
+        getterMethods = new HashSet<>();
+//        loadDictionary();
+        loadGetterMethods();
+        prompt = addEscape(getPrompt());
+        apiKey = getApiKey();
+    }
+    
+    public static void setUp() {
+    	dictionary = new HashMap<>();
+        getterMethods = new HashSet<>();
+//        loadDictionary();
+        loadGetterMethods();
         prompt = addEscape(getPrompt());
         apiKey = getApiKey();
     }
@@ -36,6 +53,13 @@ public class Querier {
         dictionary.put(key, value);
         saveDictionary(); 
         System.out.println("'" + key + "' added to dictionary.");
+    }
+    
+    public static void addGetterMethod(String methodInfo) {
+    	if (!getterMethods.contains(methodInfo)) {
+    		getterMethods.add(methodInfo);
+            saveGetterMethod(methodInfo);
+    	}
     }
 
     public static String searchWord(String key) {
@@ -61,6 +85,17 @@ public class Querier {
             System.err.println("Error loading dictionary from file: " + e.getMessage());
         }
     }
+    
+    public static void loadGetterMethods() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(dicFilename))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                getterMethods.add(line);
+            }
+        } catch (IOException e) {
+            System.err.println("Error loading dictionary from file: " + e.getMessage());
+        }
+    }
 
     public static void saveDictionary() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(dicFilename))) {
@@ -69,6 +104,15 @@ public class Querier {
             }
         } catch (IOException e) {
             System.err.println("Error saving dictionary to file: " + e.getMessage());
+        }
+    }
+    
+    public static void saveGetterMethod(String methodInfo) {
+    	try (BufferedWriter writer = new BufferedWriter(new FileWriter(dicFilename, true))) {
+            writer.write(methodInfo);
+            writer.newLine();
+        } catch (IOException e) {
+            System.err.println("Error appending line to file: " + e.getMessage());
         }
     }
 
@@ -135,6 +179,14 @@ public class Querier {
     	}
         return input;
     }
+    
+    public static String getResultV2(String input) {
+    	int firstBracketIndex = input.indexOf('{');
+    	if (firstBracketIndex > 0) {
+    		return input.substring(firstBracketIndex);
+    	}
+        return input;
+    }
 
     public static String chatGPT(String query) {
 
@@ -189,7 +241,27 @@ public class Querier {
             try {
                 value = chatGPT(addEscape(query));
                 value = getResult(value);
-//                addWord(query, value);
+                addWord(query, value);
+                return value;
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+        return value;
+    }
+    
+    public static String getDependencyV2(String methodInfo, String query) {
+    	if (getterMethods == null) {
+    		setUp();
+    	}
+    	
+    	String value = "";
+        if (getterMethods.contains(methodInfo)) {
+        	return value;
+        } else{
+            try {
+                value = chatGPT(addEscape(query));
+                value = getResultV2(value);
                 return value;
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());

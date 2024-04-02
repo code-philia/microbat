@@ -44,7 +44,7 @@ public class QueryResponseProcessor {
 	 * @param response
 	 * @return
 	 */
-	public static Map<String, String> getWrittenVars(String originalInfo, String queryResponse) {
+	public static Set<String> getWrittenVars(String originalInfo, String queryResponse) {
 		if (originalInfo.equals("") || queryResponse.equals("")) {
 			return null;
 		}
@@ -52,22 +52,39 @@ public class QueryResponseProcessor {
 		Set<String> originalVars = getVariables(originalInfo);
 		Set<String> newVars = getVariables(queryResponse);
 		
-		Map<String, String> writtenVariables = new HashMap<>();
+		Set<String> writtenVariables = new HashSet<>();
+		
+		// get added variables and common variables
 		for (String variable : newVars) {
 			if (!originalVars.contains(variable)) {
-				String[] pairs = variable.split(",");
-				String name = "";
-				String type = "";
-				for (String pair : pairs) {
-					String key = pair.split(":")[0];
-					if (key.equals("name")) {
-						name = pair.split(":")[1];
-					} else if (key.equals("type")) {
-						type = pair.split(":")[1];
-					}
+				String[] pairs = variable.split(",type:");
+				if (pairs.length < 2) {
+					continue;
 				}
-				if (!name.equals("") && !type.equals("")) {
-					writtenVariables.put(name, type);
+				String[] nameInfo = pairs[0].split("name:");
+				if (nameInfo.length < 2) {
+					continue;
+				}
+				String name = nameInfo[1];
+				if (!name.equals("")) {
+					writtenVariables.add(name);
+				}
+			}
+		}
+		// get removed variables
+		for (String variable : originalVars) {
+			if (!newVars.contains(variable)) {
+				String[] pairs = variable.split(",type:");
+				if (pairs.length < 2) {
+					continue;
+				}
+				String[] nameInfo = pairs[0].split("name:");
+				if (nameInfo.length < 2) {
+					continue;
+				}
+				String name = nameInfo[1];
+				if (!name.equals("")) {
+					writtenVariables.add(name);
 				}
 			}
 		}
@@ -93,18 +110,25 @@ public class QueryResponseProcessor {
 		}
 		info = info.substring(startIndex + 1, endIndex - 1);
 		
-		String[] entries = info.split("\\{");
+		String[] entries = info.split("\\{name:");
 		Set<String> variables = new HashSet<>();
 		for (String entry : entries) {
 			if (entry == null || entry.equals("")) {
 				continue;
 			}
-			if (entry.contains("}")) {
-				int index = entry.indexOf("}");
-				variables.add(entry.substring(0, index));
-			} else {
-				variables.add(entry);
+			
+			entry = "name:" + entry;
+			
+			char[] entryChars = entry.toCharArray();
+			int index = entryChars.length;
+			for (int i = entryChars.length - 1; i >= 0; i--) {
+				if (entryChars[i] == '}' || entryChars[i] == ';' || entryChars[i] == '>') {
+					index = i;
+				} else {
+					break;
+				}
 			}
+			variables.add(entry.substring(0, index));
 		}
 		
 		return variables;

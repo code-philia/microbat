@@ -587,11 +587,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					// latestNode.setInvokingMatchNode(invokingMatchNode);
 					// }
 					
-					
-					
+
 					/* Prompt V2 */
-					
-					// find invokingObject
+					// find object before invoking
 					String varType = invokeMethodSig.split("#")[0];
 					String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
 					VarValue varValue = null;
@@ -615,25 +613,39 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					// query gpt
 					String queryResult = "";
 					if (request.length() > 0) {
-						Querier gptQuerier = new Querier();
-						queryResult = gptQuerier.getDependency(request);
+						queryResult = Querier.getDependencyV2(invokeMethodSig, request);
 					}
 					
-					Map<String, String> variables = null;
+					Set<String> variables = null;
 					if (!queryResult.equals("")) {
 						variables = QueryResponseProcessor.getWrittenVars(variableInfo, queryResult);
 					}
 					
+					// find object after invoking
+					String varName = varValue == null ? "" : varValue.getVarName();
+	 				Variable tempVar = new LocalVar(varName, varType, residingClassName, line);
+	 				tempVar.setVarID(varValue == null ? "" : varValue.getVarID());
+	 				String newAliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
+	 				tempVar.setAliasVarID(newAliasVarID);
+
+	 				VarValue newVarValue = appendVarValue(invokeObj, tempVar, null);
+					
 					// variable mapping
+					boolean isGetter = true;
 					if (variables != null) {
-						List<VarValue> allChildren = varValue.getAllDescedentChildren();
+						List<VarValue> allChildren = newVarValue.getAllDescedentChildren();
 						
 						for (VarValue child : allChildren) {
 							String name = child.getVarName();
-							if (variables.containsKey(name)) {
+							if (variables.contains(name)) {
+								isGetter = false;
 								addRWriteValue(latestNode, child, true);
 							}
 						}
+					}
+					
+					if (!queryResult.equals("") && isGetter) {
+						Querier.addGetterMethod(invokeMethodSig);
 					}
 					
 				}
