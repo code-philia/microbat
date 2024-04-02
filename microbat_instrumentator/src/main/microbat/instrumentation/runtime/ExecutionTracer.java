@@ -23,10 +23,6 @@ import microbat.codeanalysis.bytecode.MethodFinderBySignature;
 import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentLogger;
-import microbat.instrumentation.benchmark.MethodInfo;
-import microbat.instrumentation.benchmark.MethodInfo.Action;
-import microbat.instrumentation.benchmark.MethodInfo.Index;
-import microbat.instrumentation.benchmark.MethodInfo.Type;
 import microbat.instrumentation.benchmark.Querier;
 import microbat.instrumentation.benchmark.QueryRequestGenerator;
 import microbat.instrumentation.benchmark.QueryResponseProcessor;
@@ -424,22 +420,23 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				// used in _afterInvoke
 //				latestNode.setParameters(params);
 				
+				// find invokingObject
+				String varType = methodSig.split("#")[0];
+				String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
+				VarValue varValue = null;
+				for (VarValue var : latestNode.getReadVariables()) {
+					if (var.getAliasVarID().equals(aliasVarID)) {
+						varValue = var;
+						break;
+					}
+				}
 				// if a method is setter, add modified variable in written variables
 				int lineNo = latestNode.getLineNumber();
 				String code = QueryUtils.getCode(residingClassName, lineNo);
-				String varName = QueryUtils.getInvokingObjectName(code);
-				
-				String varType = methodSig.split("#")[0];
-				Variable tempVar = new LocalVar(varName, varType, residingClassName, line);
-				tempVar.setVarID("");
-				String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
-				tempVar.setAliasVarID(aliasVarID);
-
-				VarValue varValue = appendVarValue(invokeObj, tempVar, null);
-				String variableInfo = varValue.getJsonString();
 				
 				// skip constructor and methods where execution is recorded
-				if (!methodSig.contains("<init>") && !QueryUtils.isTempVar(code, methodSig)) {
+				if (varValue != null && !methodSig.contains("<init>") && !QueryUtils.isTempVar(code, methodSig)) {
+					String variableInfo = varValue.getJsonString();
 					latestNode.setVariableInfo(variableInfo);
 				}
 				
@@ -593,23 +590,25 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					
 					
 					/* Prompt V2 */
-					// get var value
+					
+					// find invokingObject
+					String varType = invokeMethodSig.split("#")[0];
+					String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
+					VarValue varValue = null;
+					for (VarValue var : latestNode.getReadVariables()) {
+						if (var.getAliasVarID().equals(aliasVarID)) {
+							varValue = var;
+							break;
+						}
+					}
 					int lineNo = latestNode.getLineNumber();
 					String code = QueryUtils.getCode(residingClassName, lineNo);
-					String varName = QueryUtils.getInvokingObjectName(code);
-					
-					String varType = invokeMethodSig.split("#")[0];
-					Variable tempVar = new LocalVar(varName, varType, residingClassName, line);
-					tempVar.setVarID("");
-					String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
-					tempVar.setAliasVarID(aliasVarID);
-
-					VarValue varValue = appendVarValue(invokeObj, tempVar, null);
 					
 					// get variable info
 					String variableInfo = latestNode.getVariableInfo();
 					String request = "";
-					if (variableInfo != null && !variableInfo.equals("")) {
+					if (varValue != null && variableInfo != null && !variableInfo.equals("")) {
+						String varName = varValue.getVarName();
 						request = QueryRequestGenerator.getQueryRequestV2(varName, variableInfo, code);
 					}
 

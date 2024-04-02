@@ -47,15 +47,6 @@ public class QueryUtils {
 		return lines.get(lineNo - 1).trim();
 	}
 	
-	public static String getInvokingObjectName(String code) {
-		String[] subStrings = code.split("\\.");
-		if (subStrings.length <= 1) {
-			// cannot find var name
-			return "";
-		}
-		return subStrings[0];
-	}
-	
 	public static boolean isTempVar(String code, String methodSignature) {
 		String actualMethodName = getMethodNameFromCode(code);
 		return !methodSignature.contains(actualMethodName) && methodSignature.contains("valueOf");
