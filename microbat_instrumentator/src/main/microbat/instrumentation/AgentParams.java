@@ -43,6 +43,8 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_CODE_RANGE = "code_range";
 	public static final String OPT_TRACE_RECORDER = "trace_recorder";
 	public static final String OPT_RUN_ID = "run_id";
+	public static final String OPT_SRC_PATH = "src_path";
+	public static final String OPT_TEST_PATH = "test_path";
 	
 	private boolean precheck;
 	private EntryPoint entryPoint;
@@ -63,6 +65,8 @@ public class AgentParams extends CommonParams {
 	private List<CodeRangeEntry> codeRanges;
 	private String recorderName;
 	private String runId;
+	private String src_path;
+	private String test_path;
 	
 	public AgentParams(CommandLine cmd) {
 		super(cmd);
@@ -99,6 +103,8 @@ public class AgentParams extends CommonParams {
 		codeRanges = CodeRangeEntry.parse(cmd.getStringList(OPT_CODE_RANGE));
 		recorderName = cmd.getString(OPT_TRACE_RECORDER);
 		runId = cmd.getString(OPT_RUN_ID);
+		src_path = cmd.getString(OPT_SRC_PATH);
+		test_path = cmd.getString(OPT_TEST_PATH);
 	}
 
 	public static AgentParams initFrom(CommandLine cmd) {

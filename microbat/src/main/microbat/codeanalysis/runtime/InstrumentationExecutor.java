@@ -53,9 +53,19 @@ public class InstrumentationExecutor {
 	private List<String> excludeLibs = Collections.emptyList();
 	
 	public InstrumentationExecutor(AppJavaClassPath appPath, String traceDir, String traceName, 
+			List<String> includeLibs, List<String> excludeLibs, String srcPath, String testPath) {
+		this(appPath, traceDir, traceName, includeLibs, excludeLibs);
+		agentRunner = createTraceAgentRunner();
+		agentRunner.addAgentParam(AgentParams.OPT_SRC_PATH, srcPath);
+		agentRunner.addAgentParam(AgentParams.OPT_TEST_PATH, testPath);
+	}
+	
+	public InstrumentationExecutor(AppJavaClassPath appPath, String traceDir, String traceName, 
 			List<String> includeLibs, List<String> excludeLibs) {
 		this(appPath, generateTraceFilePath(traceDir, traceName), includeLibs, excludeLibs);
 		agentRunner = createTraceAgentRunner();
+		agentRunner.addAgentParam(AgentParams.OPT_SRC_PATH, "src" + File.separator + "main" + File.separator + "java");
+		agentRunner.addAgentParam(AgentParams.OPT_TEST_PATH, "src" + File.separator + "test" + File.separator + "java");
 	}
 	
 	public InstrumentationExecutor(AppJavaClassPath appPath, String traceExecFilePath, 

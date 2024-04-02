@@ -9,16 +9,16 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class QueryUtils {
-
-	private static final String PATH_MAVEN_SRC = "src" + File.separator + "main" + File.separator + "java";
-	private static final String PATH_MAVEN_TEST = "src" + File.separator + "test" + File.separator + "java";
+	
+	public static String srcPath;
+	public static String testPath;
 
 	public static Path getPath(String className) {
 		String basePath = System.getProperty("user.dir");
 		
 		StringBuilder pathBuilder = new StringBuilder(basePath);
 		pathBuilder.append(File.separator);
-		pathBuilder.append(PATH_MAVEN_SRC);
+		pathBuilder.append(srcPath);
 		pathBuilder.append(File.separator);
 		pathBuilder.append(className.replace(".", File.separator));
 		pathBuilder.append(".java");
@@ -28,7 +28,7 @@ public class QueryUtils {
 		if (Files.notExists(path)) {
 			pathBuilder = new StringBuilder(basePath);
 			pathBuilder.append(File.separator);
-			pathBuilder.append(PATH_MAVEN_TEST);
+			pathBuilder.append(testPath);
 			pathBuilder.append(File.separator);
 			pathBuilder.append(className.replace(".", File.separator));
 			pathBuilder.append(".java");

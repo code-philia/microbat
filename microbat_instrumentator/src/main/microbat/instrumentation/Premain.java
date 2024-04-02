@@ -13,6 +13,7 @@ import java.util.jar.JarFile;
 import microbat.instrumentation.instr.TestRunnerTranformer;
 import microbat.instrumentation.utils.CollectionUtils;
 import microbat.instrumentation.utils.FileUtils;
+import microbat.instrumentation.utils.QueryUtils;
 
 /**
  * 
@@ -31,6 +32,8 @@ public class Premain {
 		long agentPreStartup = System.currentTimeMillis();
 		installBootstrap(inst);
 		CommandLine cmd = CommandLine.parse(agentArgs);
+		QueryUtils.srcPath = cmd.getString(AgentParams.OPT_SRC_PATH);
+		QueryUtils.testPath = cmd.getString(AgentParams.OPT_TEST_PATH);
 		AgentFactory.cmd = cmd;
 		
 		Class<?>[] retransformableClasses = getRetransformableClasses(inst);
