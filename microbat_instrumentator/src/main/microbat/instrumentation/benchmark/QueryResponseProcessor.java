@@ -108,7 +108,7 @@ public class QueryResponseProcessor {
 				break;
 			}
 		}
-		info = info.substring(startIndex + 1, endIndex - 1);
+		info = info.substring(startIndex + 1, endIndex);
 		
 		String[] entries = info.split("\\{name:");
 		Set<String> variables = new HashSet<>();

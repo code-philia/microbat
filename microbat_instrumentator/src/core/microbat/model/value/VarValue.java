@@ -212,7 +212,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 		if (children.size() > 0) {
 			stringBuilder.append("<");
 			for (VarValue child : children) {
-				if (!child.getStringValue().equals("null")) {
+				if (child.stringValue != null && child.stringValue.hashCode() != 0) {
 					stringBuilder.append(child.getJsonString());
 					stringBuilder.append(";");
 				}
