@@ -74,7 +74,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 		if (this.getVarName().equals(name)) {
 			return this;
 		}
-		List<VarValue> children = this.getChildren();
+		List<VarValue> children = this.getAllDescedentChildren();
 		for (VarValue child : children) {
 			if (child.getVarName().equals(name)) {
 				return child;

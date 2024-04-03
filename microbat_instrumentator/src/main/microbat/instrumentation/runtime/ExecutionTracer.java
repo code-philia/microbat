@@ -628,9 +628,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					Set<VarValue> variables = null;
 					if (!queryResult.equals("")) {
 						variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue);
-					}
-					for (VarValue variable : variables) {
-						addRWriteValue(latestNode, variable, true);
+						for (VarValue variable : variables) {
+							addRWriteValue(latestNode, variable, true);
+						}
 					}
 					
 					// variable mapping

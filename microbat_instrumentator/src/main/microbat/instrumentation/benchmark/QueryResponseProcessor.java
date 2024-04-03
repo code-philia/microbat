@@ -117,13 +117,13 @@ public class QueryResponseProcessor {
 			String[] names = entry.split("#");
 			int index = 1;
 			VarValue current = variable;
-			boolean isFound = true;
+			boolean isFound = false;
 			while (index < names.length) {
 				VarValue temp = current.findVarValueByName(names[index]);
 				if (temp != null) {
+					isFound = true;
 					current = temp;
 				} else {
-					isFound = false;
 					break;
 				}
 				index++;

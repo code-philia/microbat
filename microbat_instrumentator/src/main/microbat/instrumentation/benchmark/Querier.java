@@ -167,7 +167,7 @@ public class Querier {
     	char[] characters = input.toCharArray();
     	for (int i = 0; i < characters.length; i++) {
     		char c = characters[i];
-    		if (c < 0 || c > 127) {
+			if (c <= 0 || c > 255) {
     			characters[i] = 65; // replace with A
     		}
     	}
