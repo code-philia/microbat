@@ -78,11 +78,11 @@ public class QueryResponseProcessor {
 				if (pairs.length < 2) {
 					continue;
 				}
-				String[] nameInfo = pairs[0].split("name:");
+				String[] nameInfo = pairs[0].trim().split("name:");
 				if (nameInfo.length < 2) {
 					continue;
 				}
-				String name = nameInfo[1];
+				String name = nameInfo[1].trim();
 				if (!name.equals("")) {
 					writtenVariables.add(name);
 				}

@@ -219,7 +219,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 			}
 			stringBuilder.append(">");
 		} else {
-			stringBuilder.append(this.stringValue.hashCode() == 0 ? "null" : this.getStringValue());
+			stringBuilder.append((this.stringValue != null && this.stringValue.hashCode() == 0) ? "null" : this.getStringValue());
 		}
 		
 		stringBuilder.append("}");

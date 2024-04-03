@@ -1,7 +1,6 @@
 package microbat.instrumentation.benchmark;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,9 +10,7 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 public class Querier {
     private static String url = "https://api.openai.com/v1/chat/completions";
@@ -25,7 +22,8 @@ public class Querier {
     /* v1: (request : response) */
     private static Map<String, String> dictionary;
     /* v2: getter methods */
-    private static Set<String> getterMethods;
+    private static Map<String, Integer> getterMethods;
+    private static int limit = 2;
     private static String dicFilename = base_directory + "dictionary_v2.txt";
     private static String proFilename = base_directory + "prompt_v2.txt";
     private static String prompt;
@@ -33,7 +31,7 @@ public class Querier {
 
     public Querier() {
         dictionary = new HashMap<>();
-        getterMethods = new HashSet<>();
+        getterMethods = new HashMap<>();
 //        loadDictionary();
         loadGetterMethods();
         prompt = addEscape(getPrompt());
@@ -42,7 +40,7 @@ public class Querier {
     
     public static void setUp() {
     	dictionary = new HashMap<>();
-        getterMethods = new HashSet<>();
+        getterMethods = new HashMap<>();
 //        loadDictionary();
         loadGetterMethods();
         prompt = addEscape(getPrompt());
@@ -55,10 +53,20 @@ public class Querier {
         System.out.println("'" + key + "' added to dictionary.");
     }
     
-    public static void addGetterMethod(String methodInfo) {
-    	if (!getterMethods.contains(methodInfo)) {
-    		getterMethods.add(methodInfo);
-            saveGetterMethod(methodInfo);
+    public static void addGetterMethodOccurrence(String methodInfo) {
+    	if (!getterMethods.containsKey(methodInfo)) {
+    		getterMethods.put(methodInfo, 1);
+            saveGetterMethod();
+    	} else {
+    		getterMethods.put(methodInfo, getterMethods.get(methodInfo) + 1);
+    		saveGetterMethod();
+    	}
+    }
+    
+    public static void removeGetterMethodOccurrence(String methodInfo) {
+    	if (getterMethods.containsKey(methodInfo)) {
+    		getterMethods.put(methodInfo, getterMethods.get(methodInfo) - 1);
+    		saveGetterMethod();
     	}
     }
 
@@ -90,7 +98,8 @@ public class Querier {
         try (BufferedReader reader = new BufferedReader(new FileReader(dicFilename))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                getterMethods.add(line);
+            	String[] parts = line.split("\\|", 2);
+                getterMethods.put(parts[0], Integer.valueOf(parts[1]));
             }
         } catch (IOException e) {
             System.err.println("Error loading dictionary from file: " + e.getMessage());
@@ -107,10 +116,11 @@ public class Querier {
         }
     }
     
-    public static void saveGetterMethod(String methodInfo) {
-    	try (BufferedWriter writer = new BufferedWriter(new FileWriter(dicFilename, true))) {
-            writer.write(methodInfo);
-            writer.newLine();
+    public static void saveGetterMethod() {
+    	try (PrintWriter writer = new PrintWriter(new FileWriter(dicFilename))) {
+    		for (Map.Entry<String, Integer> entry : getterMethods.entrySet()) {
+                writer.println(entry.getKey() + "|" + entry.getValue());
+            }
         } catch (IOException e) {
             System.err.println("Error appending line to file: " + e.getMessage());
         }
@@ -256,7 +266,7 @@ public class Querier {
     	}
     	
     	String value = "";
-        if (getterMethods.contains(methodInfo)) {
+        if (getterMethods.containsKey(methodInfo) && getterMethods.get(methodInfo) >= limit) {
         	return value;
         } else{
             try {
