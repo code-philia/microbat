@@ -644,9 +644,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 						}
 					}
 					
-//					if (!queryResult.equals("") && isGetter) {
-//						Querier.addGetterMethod(invokeMethodSig);
-//					}
+					if (!queryResult.equals("") && isGetter) {
+						Querier.addGetterMethod(invokeMethodSig);
+					}
 					
 				}
 
