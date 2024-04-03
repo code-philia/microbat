@@ -1,13 +1,12 @@
 package microbat.instrumentation.benchmark;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import microbat.instrumentation.benchmark.MethodInfo.Action;
 import microbat.instrumentation.benchmark.MethodInfo.Index;
 import microbat.instrumentation.benchmark.MethodInfo.Type;
+import microbat.model.value.VarValue;
 
 public class QueryResponseProcessor {
 
@@ -92,10 +91,54 @@ public class QueryResponseProcessor {
 		return writtenVariables;
 	}
 	
+	public static Set<VarValue> getWrittenVariables(String response, VarValue variable) {
+		Set<VarValue> variables = new HashSet<>();
+		String[] entries = response.split(";");
+		for (String entry : entries) {
+			entry = entry.trim();
+			
+			char[] characters = entry.toCharArray();
+			int startIndex = -1;
+			int endIndex = characters.length;
+			for (int i = 0; i < characters.length; i++) {
+				if (characters[i] == '<') {
+					startIndex = i;
+					break;
+				}
+			}
+			for (int i = characters.length - 1; i >= 0; i--) {
+				if (characters[i] == '>') {
+					endIndex = i;
+					break;
+				}
+			}
+			entry = entry.substring(startIndex + 1, endIndex);
+			
+			String[] names = entry.split("#");
+			int index = 1;
+			VarValue current = variable;
+			boolean isFound = true;
+			while (index < names.length) {
+				VarValue temp = current.findVarValueByName(names[index]);
+				if (temp != null) {
+					current = temp;
+				} else {
+					isFound = false;
+					break;
+				}
+				index++;
+			}
+			if (isFound) {
+				variables.add(current);
+			}
+		}
+		return variables;
+	}
+	
 	private static Set<String> getVariables(String info) {
 		char[] characters = info.toCharArray();
 		int startIndex = -1;
-		int endIndex = characters.length + 1;
+		int endIndex = characters.length;
 		for (int i = 0; i < characters.length; i++) {
 			if (characters[i] == '<') {
 				startIndex = i;

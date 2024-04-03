@@ -70,6 +70,19 @@ public abstract class VarValue implements GraphNode, Serializable {
 		}
 	}
 	
+	public VarValue findVarValueByName(String name) {
+		if (this.getVarName().equals(name)) {
+			return this;
+		}
+		List<VarValue> children = this.getChildren();
+		for (VarValue child : children) {
+			if (child.getVarName().equals(name)) {
+				return child;
+			}
+		}
+		return null;
+	}
+	
 	public VarValue findVarValue(String varID){
 		Set<String> visitedIDs = new HashSet<>();
 		VarValue value = findVarValue(varID, visitedIDs);
@@ -210,14 +223,25 @@ public abstract class VarValue implements GraphNode, Serializable {
 		stringBuilder.append(",value:");
 		
 		if (children.size() > 0) {
-			stringBuilder.append("<");
+			stringBuilder.append("[");
+			int count = 0;
+			int limit = 1;
 			for (VarValue child : children) {
-				if (child.stringValue != null) {
+				if (child.getStringValue().equals("null")) {
+					continue;
+				}
+				if (child.stringValue != null && child.stringValue.hashCode() != 0) {
 					stringBuilder.append(child.getJsonString());
 					stringBuilder.append(";");
+				} else if (child.stringValue != null && child.stringValue.hashCode() == 0) {
+					if (count < limit) {
+						stringBuilder.append(child.getJsonString());
+						stringBuilder.append(";");
+						count++;
+					}
 				}
 			}
-			stringBuilder.append(">");
+			stringBuilder.append("]");
 		} else {
 			stringBuilder.append((this.stringValue != null && this.stringValue.hashCode() == 0) ? "null" : this.getStringValue());
 		}

@@ -62,7 +62,9 @@ public class QueryRequestGenerator {
 		stringBuilder.append(varInfo);
 		stringBuilder.append(" After calling \"");
 		stringBuilder.append(code);
-		stringBuilder.append("\" once, the variable becomes:");
+		stringBuilder.append("\" once, the following fields of \"");
+		stringBuilder.append(varName);
+		stringBuilder.append("\" are modified:");
 		
 		return stringBuilder.toString();
 	}

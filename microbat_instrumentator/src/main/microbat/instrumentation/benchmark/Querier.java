@@ -164,7 +164,15 @@ public class Querier {
     }
 
     public static String addEscape(String input) {
-        return input.replaceAll("(\")", "\\\\\"").replaceAll("(\n)", "\\\\n");
+    	char[] characters = input.toCharArray();
+    	for (int i = 0; i < characters.length; i++) {
+    		char c = characters[i];
+    		if (c < 0 || c > 127) {
+    			characters[i] = 65; // replace with A
+    		}
+    	}
+		String request = new String(characters);
+		return request.replaceAll("(\")", "\\\\\"").replaceAll("(\n)", "\\\\n");
     }
 
 //    public static String getResult(String input) throws Exception {
@@ -271,7 +279,7 @@ public class Querier {
         } else{
             try {
                 value = chatGPT(addEscape(query));
-                value = getResultV2(value);
+                value = getResult(value);
                 return value;
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());

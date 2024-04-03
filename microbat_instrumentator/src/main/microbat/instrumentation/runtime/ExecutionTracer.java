@@ -616,11 +616,6 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 						queryResult = Querier.getDependencyV2(invokeMethodSig, request);
 					}
 					
-					Set<String> variables = null;
-					if (!queryResult.equals("")) {
-						variables = QueryResponseProcessor.getWrittenVars(variableInfo, queryResult);
-					}
-					
 					// find object after invoking
 					String varName = varValue == null ? "" : varValue.getVarName();
 	 				Variable tempVar = new LocalVar(varName, varType, residingClassName, line);
@@ -630,24 +625,30 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 
 	 				VarValue newVarValue = appendVarValue(invokeObj, tempVar, null);
 					
-					// variable mapping
-					boolean isGetter = true;
-					if (variables != null) {
-						List<VarValue> allChildren = newVarValue.getAllDescedentChildren();
-						
-						for (VarValue child : allChildren) {
-							String name = child.getVarName();
-							if (variables.contains(name)) {
-								isGetter = false;
-								addRWriteValue(latestNode, child, true);
-							}
-						}
+					Set<VarValue> variables = null;
+					if (!queryResult.equals("")) {
+						variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue);
+					}
+					for (VarValue variable : variables) {
+						addRWriteValue(latestNode, variable, true);
 					}
 					
-					if (!queryResult.equals("") && isGetter) {
+					// variable mapping
+//					if (variables != null) {
+//						List<VarValue> allChildren = newVarValue.getAllDescedentChildren();
+//						
+//						for (VarValue child : allChildren) {
+//							String name = child.getVarName();
+//							if (variables.contains(name)) {
+//								addRWriteValue(latestNode, child, true);
+//							}
+//						}
+//					}
+					
+					if (!queryResult.equals("") && (variables == null || variables.isEmpty())) {
 						Querier.addGetterMethodOccurrence(invokeMethodSig);
 					}
-					if (!isGetter) {
+					if (variables != null && !variables.isEmpty()) {
 						Querier.removeGetterMethodOccurrence(invokeMethodSig);
 					}
 					
