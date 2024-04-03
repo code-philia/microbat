@@ -1,4 +1,1 @@
-e.g.:
-Given variable {name:var,type:java.util.ArrayList,value:<{name:elementData,type:java.lang.Object[],value:<{name:.elementData[0],type:java.lang.Integer,value:1};>};{name:size,type:int,value:1};>}
-After calling "var.add(2)" once:{name:var,type:java.util.ArrayList,value:<{name:elementData,type:java.lang.Object[],value:<{name:.elementData[0],type:java.lang.Integer,value:1};{name:.elementData[1],type:java.lang.Object,value:2};>};{name:size,type:int,value:2};>}
-Then
+Let {name:var_name,type:var_type,value:var_value} represent a variable. In your response, return the variable without description.
