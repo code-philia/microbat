@@ -8,6 +8,7 @@ import java.util.Stack;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
+import fj.P;
 import microbat.Activator;
 import microbat.handler.CheckingState;
 import microbat.model.UserInterestedVariables;
@@ -31,6 +32,7 @@ public class Settings {
 	public static boolean isRunTest;
 	public static boolean isRunWtihDebugMode;
 	public static int stepLimit;
+	public static long timeLimit;
 	
 	private static Integer variableLayer;
 	
@@ -74,6 +76,16 @@ public class Settings {
 				stepLimit = Integer.valueOf(limitNumString);
 				if(stepLimit == 0){
 					stepLimit = 5000;
+				}
+				String timeLimitString = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.TIMEOUT);
+				try {
+					timeLimit = Long.valueOf(timeLimitString);
+				} catch (NumberFormatException except) {
+					
+				}
+		
+				if (timeLimit == 0) {
+					timeLimit = 10000L;
 				}
 				String varLayerString = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.VARIABLE_LAYER);
 				variableLayer = Integer.valueOf(varLayerString);

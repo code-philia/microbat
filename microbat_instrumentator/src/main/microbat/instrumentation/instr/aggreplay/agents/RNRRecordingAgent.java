@@ -278,6 +278,7 @@ public abstract class RNRRecordingAgent extends Agent {
 	@Override
 	public void startup0(long vmStartupTime, long agentStartupTime) {
 		timeoutThread = new TimeoutThread(this);
+		timeoutThread.setTimeout(agentParams.getTimeOut());
 		timeoutThread.start();
 		AppJavaClassPath appPath = agentParams.initAppClassPath();
 		GlobalFilterChecker.setup(appPath, agentParams.getIncludesExpression(), agentParams.getExcludesExpression());

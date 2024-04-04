@@ -28,6 +28,8 @@ public class TimeoutThread extends Thread {
 	}
 	@Override
 	public void run() {
+		// the timeout is forever
+		if (timeOut < 0) return;
 		try {
 			Thread.sleep(timeOut);
 		} catch (InterruptedException e) {

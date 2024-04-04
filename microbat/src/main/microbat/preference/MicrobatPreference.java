@@ -87,6 +87,7 @@ public class MicrobatPreference extends PreferencePage implements
 	public static final String SUPPORT_CONCURRENT_TRACE = "supportConcurrentTrace";
 	public static final String AGGREPLAY_CONCURRENT_RECORDING = "aggrePlayConcurrentRecording";
 	public static final String RUN_WITH_DEBUG_MODE = "runWithDebugMode";
+	public static final String TIMEOUT = "timeOut";
 	
 	private Combo projectCombo;
 	private Text lanuchClassText;
@@ -95,9 +96,9 @@ public class MicrobatPreference extends PreferencePage implements
 	private Text lineNumberText;
 	private Text stepLimitText;
 	private Text variableLayerText;
+	private Text timeOutText;
 	private Button recordSnapshotButton;
 	private Button supportConcurrentTraceButton;
-	private Button supportAggrePlayRecordAndReplayButton;
 	private Button recordingOptimizationButton;
 	private Button advancedDetailInspectorButton;
 	private Button runTestButton;
@@ -119,6 +120,7 @@ public class MicrobatPreference extends PreferencePage implements
 	private String defaultJava7HomePath;
 	private String defaultApplyRecodingOptimization;
 	private String defaultRunWithDebugMode = "false";
+	private Long defaultTimeoutLong = 10000L;
 	private boolean defaultEnableMethodSplitting;
 	
 	@Override
@@ -183,6 +185,19 @@ public class MicrobatPreference extends PreferencePage implements
 		variableLayerText.setLayoutData(variableLayerTextData);
 		variableLayerText.setToolTipText("how many layers of variable children does the debugger need to retrieve, -1 means infinite.");
 		
+		Label timeOutLabel = new Label(settingGroup, SWT.NONE);
+		timeOutLabel.setText("Timeout: ");
+		
+		
+		GridData timeOutLayerTextData = new GridData(SWT.FILL, SWT.FILL, true, false);
+		timeOutLayerTextData.horizontalSpan = 2;
+		timeOutText = new Text(settingGroup, SWT.BORDER);
+		timeOutText.setText(this.defaultTimeoutLong + "");
+		timeOutText.setLayoutData(variableLayerTextData);
+		timeOutText.setToolTipText("How long do you want the timeout, -1 means infinite.");
+		
+		
+		
 		supportConcurrentTraceButton = new Button(settingGroup, SWT.CHECK);
 		supportConcurrentTraceButton.setText("Support concurrent trace");
 		GridData supportConcurrentTraceButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
@@ -190,11 +205,6 @@ public class MicrobatPreference extends PreferencePage implements
 		supportConcurrentTraceButton.setLayoutData(supportConcurrentTraceButtonData);
 		boolean supportConcurrentTraceSelected = this.defaultSupportConcurrentTrace.equals("true");
 		supportConcurrentTraceButton.setSelection(supportConcurrentTraceSelected);
-		
-		supportAggrePlayRecordAndReplayButton = new Button(settingGroup, SWT.CHECK);
-		supportAggrePlayRecordAndReplayButton.setText("Support aggre play trace gen");
-		supportAggrePlayRecordAndReplayButton.setLayoutData(supportConcurrentTraceButtonData);
-		supportAggrePlayRecordAndReplayButton.setSelection(supportConcurrentTraceSelected);
 		
 		recordSnapshotButton = new Button(settingGroup, SWT.CHECK);
 		recordSnapshotButton.setText("Record snapshot");
@@ -291,6 +301,7 @@ public class MicrobatPreference extends PreferencePage implements
 		preferences.put(TARGET_PORJECT, this.projectCombo.getText());
 		preferences.put(LANUCH_CLASS, this.lanuchClassText.getText());
 		preferences.put(TEST_METHOD, this.testMethodText.getText());
+		preferences.put(TIMEOUT, this.timeOutText.getText());
 //		preferences.put(CLASS_NAME, this.classNameText.getText());
 //		preferences.put(LINE_NUMBER, this.lineNumberText.getText());
 		preferences.put(RECORD_SNAPSHORT, String.valueOf(this.recordSnapshotButton.getSelection()));
@@ -307,6 +318,7 @@ public class MicrobatPreference extends PreferencePage implements
 		Activator.getDefault().getPreferenceStore().putValue(TARGET_PORJECT, this.projectCombo.getText());
 		Activator.getDefault().getPreferenceStore().putValue(LANUCH_CLASS, this.lanuchClassText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(TEST_METHOD, this.testMethodText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(TIMEOUT, timeOutText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(CLASS_NAME, this.classNameText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(LINE_NUMBER, this.lineNumberText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(RECORD_SNAPSHORT, String.valueOf(this.recordSnapshotButton.getSelection()));
@@ -330,6 +342,7 @@ public class MicrobatPreference extends PreferencePage implements
 		Settings.projectName = this.projectCombo.getText();
 		Settings.launchClass = this.lanuchClassText.getText();
 		Settings.testMethod = this.testMethodText.getText();
+		Settings.timeLimit = Long.parseLong(this.timeOutText.getText());
 //		Settings.buggyClassName = this.classNameText.getText();
 //		Settings.buggyLineNumber = this.lineNumberText.getText();
 		Settings.isRecordSnapshot = this.recordSnapshotButton.getSelection();
@@ -339,7 +352,6 @@ public class MicrobatPreference extends PreferencePage implements
 		Settings.isRunTest = this.runTestButton.getSelection();
 		Settings.applyLibraryOptimization = this.recordingOptimizationButton.getSelection();
 		Settings.supportConcurrentTrace = this.supportConcurrentTraceButton.getSelection();
-		Settings.supportAggrePlayTrace = this.supportAggrePlayRecordAndReplayButton.getSelection();
 		Settings.isRunWtihDebugMode = this.runWithDebugModeButton.getSelection();
 	}
 	

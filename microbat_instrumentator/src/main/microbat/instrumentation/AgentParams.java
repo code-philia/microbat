@@ -48,7 +48,9 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_TRACE_RECORDER = "trace_recorder";
 	public static final String OPT_RUN_ID = "run_id";
 	public static final String MEASURE_MEM = "measure_mem";
+	public static final String TIMEOUT = "time_out"; // the timeout of instrumentation.
 	
+	private long timeOut = 100000L;
 	private boolean precheck;
 	private EntryPoint entryPoint;
 	private String concDumpFile;
@@ -80,7 +82,9 @@ public class AgentParams extends CommonParams {
 			EntryPoint entryPoint = new EntryPoint(mainClass, mainMethod);
 			this.entryPoint = entryPoint;
 		}
-		
+		if (cmd.getString(TIMEOUT) != null) {
+			this.timeOut = Long.parseLong(cmd.getString(TIMEOUT));
+		}
 		setJavaHome(cmd.getString(OPT_JAVA_HOME));
 		setWorkingDirectory(cmd.getString(OPT_WORKING_DIR));
 
@@ -131,6 +135,10 @@ public class AgentParams extends CommonParams {
 			expression = cmd.getString(opt);
 		}
 		return expression;
+	}
+	
+	public long getTimeOut() {
+		return this.timeOut;
 	}
 	
 	public EntryPoint getEntryPoint() {

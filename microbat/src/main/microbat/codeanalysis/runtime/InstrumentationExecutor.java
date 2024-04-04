@@ -120,7 +120,8 @@ public class InstrumentationExecutor {
 		agentRunner.setTimeout(timeout);
 		// FIXME Xuezhi [2]
 		List<CodeRangeEntry> entries = ExecutionRangePreference.getCodeRangeEntrys();
-		agentRunner.addAgentParams(AgentParams.OPT_CODE_RANGE, entries); 
+		agentRunner.addAgentParams(AgentParams.OPT_CODE_RANGE, entries);
+		agentRunner.addAgentParam(AgentParams.TIMEOUT, Settings.timeLimit + "");
 		return agentRunner;
 	}
 	
