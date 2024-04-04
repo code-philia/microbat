@@ -92,6 +92,7 @@ public abstract class Agent {
 	 * @param programMsg
 	 */
 	public static void _exitProgram(String programMsg) {
+		if (!ExecutionTracer.isRecordingOrStarted() && !ExecutionTracer.isShutdown()) return;
 		String currentThreadName = Thread.currentThread().getName();
 		if(currentThreadName.equals("main") || currentThreadName.equals(TimeoutThread.ID)) {
 			ExecutionTracer.getMainThreadStore().lock();
