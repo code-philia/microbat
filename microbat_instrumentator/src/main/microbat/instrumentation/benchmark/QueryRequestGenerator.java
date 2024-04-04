@@ -85,7 +85,7 @@ public class QueryRequestGenerator {
 	}
 
 	public static String getCode(String varName, String methodSig, Object[] args) {
-		String methodName = methodSig.split("#")[1].split("(")[0];
+		String methodName = methodSig.split("#")[1].split("\\(")[0];
 
 		StringBuilder stringBuilder = new StringBuilder(varName);
 		stringBuilder.append(".");
