@@ -2,11 +2,7 @@ package microbat.model.trace;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -259,6 +255,10 @@ public class Trace {
 	 */
 	public TraceNode findDataDependency(TraceNode checkingNode, VarValue readVar) {
 		return findProducer(readVar, checkingNode);
+	}
+
+	public TraceNode findDataDependencyV2(TraceNode checkingNode, VarValue readVar) {
+		return findProducerV2(readVar, checkingNode);
 	}
 	
 	public List<TraceNode> findDataDependentee(TraceNode traceNode, VarValue writtenVar) {
@@ -919,6 +919,45 @@ public class Trace {
 		return null;
 	}
 	
+	public TraceNode findProducerV2(VarValue varValue, TraceNode startNode) {
+
+		List<VarValue> children = varValue.getAllDescedentChildren();
+		children.add(varValue);
+
+		for (VarValue var : children) {
+			if (var == null) {
+				continue;
+			}
+
+			String varID = Variable.truncateSimpleID(var.getVarID());
+			String headID = Variable.truncateSimpleID(var.getAliasVarID());
+
+			for (int i = startNode.getOrder() - 1; i >= 1; i--) {
+				TraceNode node = this.getTraceNode(i);
+				for (VarValue writtenValue : node.getWrittenVariables()) {
+
+					String wVarID = Variable.truncateSimpleID(writtenValue.getVarID());
+					String wHeadID = Variable.truncateSimpleID(writtenValue.getAliasVarID());
+
+					if (wVarID != null && wVarID.equals(varID)) {
+						return node;
+					}
+
+					if (wHeadID != null && wHeadID.equals(headID)) {
+						return node;
+					}
+
+					VarValue childValue = writtenValue.findVarValue(varID, headID);
+					if (childValue != null) {
+						return node;
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+
 	public TraceNode findProducer(VarValue varValue, TraceNode startNode) {
 		
 		String varID = Variable.truncateSimpleID(varValue.getVarID());
