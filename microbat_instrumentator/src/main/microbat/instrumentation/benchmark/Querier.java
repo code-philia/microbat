@@ -169,6 +169,8 @@ public class Querier {
     		char c = characters[i];
 			if ((c < 32 || c > 127) && c != 10) {
     			characters[i] = 65; // replace with A
+			} else if (c == 92) {
+				characters[i] = 47; // replace '\' with '/'
     		}
     	}
 		String request = new String(characters);
