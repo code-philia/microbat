@@ -27,7 +27,6 @@ import microbat.instrumentation.benchmark.Querier;
 import microbat.instrumentation.benchmark.QueryRequestGenerator;
 import microbat.instrumentation.benchmark.QueryResponseProcessor;
 import microbat.instrumentation.filter.GlobalFilterChecker;
-import microbat.instrumentation.utils.QueryUtils;
 import microbat.model.BreakPoint;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
@@ -425,19 +424,24 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
 				VarValue varValue = null;
 				for (VarValue var : latestNode.getReadVariables()) {
-					if (var.getAliasVarID().equals(aliasVarID)) {
+					if (var != null && var.getAliasVarID() != null && var.getAliasVarID().equals(aliasVarID)) {
 						varValue = var;
 						break;
 					}
 				}
-				// if a method is setter, add modified variable in written variables
-				int lineNo = latestNode.getLineNumber();
-				String code = QueryUtils.getCode(residingClassName, lineNo);
 				
 				// skip constructor and methods where execution is recorded
-				if (varValue != null && !methodSig.contains("<init>") && QueryUtils.isValidVar(code, methodSig)) {
+				if (varValue != null && !methodSig.contains("<init>") && !methodSig.contains("valueOf")) {
 					String variableInfo = varValue.getJsonString();
 					latestNode.setVariableInfo(variableInfo);
+
+					String code = QueryRequestGenerator.getCode(varValue.getVarName(), methodSig, varValue == null
+							? methodSig.split("#")[0]
+							: (varValue.getRuntimeType() == null ? varValue.getType() : varValue.getRuntimeType()));
+					if (code == null || code.equals("")) {
+						code = QueryRequestGenerator.getCode(varValue.getVarName(), methodSig, params);
+					}
+					latestNode.setSourceCode(code);
 				}
 				
 				if (methodSig.contains("clone()")) {
@@ -594,18 +598,17 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
 					VarValue varValue = null;
 					for (VarValue var : latestNode.getReadVariables()) {
-						if (var.getAliasVarID().equals(aliasVarID)) {
+						if (var != null && var.getAliasVarID() != null && var.getAliasVarID().equals(aliasVarID)) {
 							varValue = var;
 							break;
 						}
 					}
-					int lineNo = latestNode.getLineNumber();
-					String code = QueryUtils.getCode(residingClassName, lineNo);
 					
 					// get variable info
+					String code = latestNode.getSourceCode();
 					String variableInfo = latestNode.getVariableInfo();
 					String request = "";
-					if (varValue != null && variableInfo != null && !variableInfo.equals("")) {
+					if (varValue != null && variableInfo != null && !variableInfo.equals("") && code != null && !code.equals("")) {
 						String varName = varValue.getVarName();
 						request = QueryRequestGenerator.getQueryRequestV2(varName, variableInfo, code);
 					}
@@ -630,6 +633,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 						variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue);
 						for (VarValue variable : variables) {
 							addRWriteValue(latestNode, variable, true);
+						}
+						if (variables != null && !variables.isEmpty() && !variables.contains(newVarValue)) {
+							addRWriteValue(latestNode, newVarValue, true);
 						}
 					}
 					

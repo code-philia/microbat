@@ -17,7 +17,6 @@ import microbat.model.Scope;
 import microbat.model.value.PrimitiveValue;
 import microbat.model.value.VarValue;
 import microbat.model.variable.ConditionVar;
-import microbat.model.variable.LocalVar;
 import microbat.model.variable.Variable;
 import sav.common.core.utils.CollectionUtils;
 
@@ -47,6 +46,7 @@ public class TraceNode{
 	/* valid if the node invokes a method */
 	private Object[] parameters;
 	private String variableInfo;
+	private String sourceCode;
 	
 	private transient Map<String, VarValue> readVariableMap = new HashMap<>();
 	private transient Map<String, VarValue> writtenVariableMap = new HashMap<>();
@@ -598,6 +598,14 @@ public class TraceNode{
 		this.variableInfo = info;
 	}
 	
+	public String getSourceCode() {
+		return this.sourceCode;
+	}
+
+	public void setSourceCode(String code) {
+		this.sourceCode = code;
+	}
+
 //	public Map<Integer, TraceNode> findAllDominators() {
 //		Map<Integer, TraceNode> dominators = new HashMap<>();
 //		

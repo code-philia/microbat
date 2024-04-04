@@ -13,9 +13,12 @@ public class QueryUtils {
 	public static String srcPath;
 	public static String testPath;
 
-	public static Path getPath(String className) {
+	public static Path getPath(String className) throws ClassNotFoundException {
 		String basePath = System.getProperty("user.dir");
 		
+		int dollarSignIndex = className.indexOf("$");
+		className = className.substring(0, dollarSignIndex == -1 ? className.length() : dollarSignIndex);
+
 		StringBuilder pathBuilder = new StringBuilder(basePath);
 		pathBuilder.append(File.separator);
 		pathBuilder.append(srcPath);
@@ -39,33 +42,10 @@ public class QueryUtils {
 		return path;
 	}
 	
-	public static String getCode(String className, int lineNo) throws IOException {
-		Path path = QueryUtils.getPath(className);
+	public static String getCode(Path path, int lineNo) throws IOException {
 		Charset charset = Charset.forName("UTF-8");
 		
 		List<String> lines = Files.readAllLines(path, charset);
 		return lines.get(lineNo - 1).trim();
-	}
-	
-	public static boolean isValidVar(String code, String methodSignature) {
-		String actualMethodName = getMethodNameFromCode(code);
-		return methodSignature.contains(actualMethodName) && !methodSignature.contains("valueOf");
-	}
-	
-	private static String getMethodNameFromCode(String code) {
-		String[] subStrings = code.split("\\.");
-		if (subStrings.length == 0) {
-			// empty string
-			return "";
-		}
-		
-		String methodInfo = "";
-		if (subStrings.length == 1) {
-			methodInfo = subStrings[0];
-		} else {
-			methodInfo = subStrings[1];
-		}
-		
-		return methodInfo.split("\\(")[0];
 	}
 }

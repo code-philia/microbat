@@ -115,7 +115,7 @@ public class QueryResponseProcessor {
 			entry = entry.substring(startIndex + 1, endIndex);
 			
 			String[] names = entry.split("#");
-			int index = 1;
+			int index = 0;
 			VarValue current = variable;
 			boolean isFound = false;
 			while (index < names.length) {
@@ -123,6 +123,8 @@ public class QueryResponseProcessor {
 				if (temp != null) {
 					isFound = true;
 					current = temp;
+				} else if (current.getVarName().equals(names[index])) {
+					isFound = true;
 				} else {
 					break;
 				}

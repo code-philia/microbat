@@ -17,7 +17,7 @@ public class Querier {
     private static String apiKey;
 	private static String model3 = "gpt-3.5-turbo";
     private static String model4 = "gpt-4-turbo-preview";
-    private static String base_directory = "/Applications/Eclipse.app/Contents/Eclipse/dropins/junit_lib/";
+	private static String base_directory = "C:\\Users\\hongshu\\eclipse\\dropins\\junit_lib\\";
     private static String propertiesFileName = base_directory + "properties.txt";
     /* v1: (request : response) */
     private static Map<String, String> dictionary;
@@ -167,7 +167,7 @@ public class Querier {
     	char[] characters = input.toCharArray();
     	for (int i = 0; i < characters.length; i++) {
     		char c = characters[i];
-			if (c <= 0 || c > 255) {
+			if ((c < 32 || c > 127) && c != 10) {
     			characters[i] = 65; // replace with A
     		}
     	}

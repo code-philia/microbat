@@ -15,34 +15,7 @@ public class QueryRequestGenerator {
 	public QueryRequestGenerator() {}
 	
 	public static String getQueryRequest(String methodSig, String runtimeType) throws IOException {
-		String clazz = methodSig.split("#")[0];
-		String methodInfo = methodSig.split("#")[1];
-		
-		// try runtime type
-		ClassGen classGen = null;
-		Method method = null;
-		boolean shouldCheckCompiledType = true;
-		if (runtimeType != null) {
-			classGen = QueryRequestGenerator.loadClass(runtimeType);
-			method = QueryRequestGenerator.getMethod(classGen, methodInfo);
-			if (method != null) {
-				shouldCheckCompiledType = false;
-			}
-		}
-
-		// try clazz
-		if (shouldCheckCompiledType) {
-			classGen = QueryRequestGenerator.loadClass(clazz);
-			method = QueryRequestGenerator.getMethod(classGen, methodInfo);
-			if (method == null) {
-				return "";
-			}
-		}
-
-		String methodName = method.getName();
-		Type[] arguments = method.getArgumentTypes();
-		
-		String decompiledCode = getDecompiledCode(runtimeType == null ? clazz : runtimeType, methodName, arguments);
+		String decompiledCode = getCode(methodSig, runtimeType);
 		
 		StringBuilder stringBuilder = new StringBuilder("\"");
 		stringBuilder.append(decompiledCode);
@@ -54,6 +27,10 @@ public class QueryRequestGenerator {
 	}
 	
 	public static String getQueryRequestV2(String varName, String varInfo, String code) throws IOException {
+		if (code == null || code.equals("")) {
+			return "";
+		}
+
 		if (code.startsWith("//")) {
 			return "";
 		}
@@ -69,14 +46,18 @@ public class QueryRequestGenerator {
 		return stringBuilder.toString();
 	}
 
-	private static ClassGen loadClass(String className) throws IOException {
-		String classFName = className.replace('.', '/');
-		String fileName = classFName  + ".class";
-		byte[] bytecode = QueryRequestGenerator.loadByteCode(fileName);
-		
-		ClassParser cp = new ClassParser(new java.io.ByteArrayInputStream(bytecode), classFName);
-		JavaClass jc = cp.parse();
-		return new ClassGen(jc);
+	private static ClassGen loadClass(String className) {
+		try {
+			String classFName = className.replace('.', '/');
+			String fileName = classFName + ".class";
+			byte[] bytecode = QueryRequestGenerator.loadByteCode(fileName);
+
+			ClassParser cp = new ClassParser(new java.io.ByteArrayInputStream(bytecode), classFName);
+			JavaClass jc = cp.parse();
+			return new ClassGen(jc);
+		} catch (IOException | NullPointerException e) {
+			return null;
+		}
 	}
 	
 	private static byte[] loadByteCode(String fileName) throws IOException {
@@ -102,7 +83,94 @@ public class QueryRequestGenerator {
 		}
 		return null;
 	}
-	
+
+	public static String getCode(String varName, String methodSig, Object[] args) {
+		String methodName = methodSig.split("#")[1].split("(")[0];
+
+		StringBuilder stringBuilder = new StringBuilder(varName);
+		stringBuilder.append(".");
+		stringBuilder.append(methodName);
+		stringBuilder.append("(");
+		for (int i = 0; i < args.length; i++) {
+			Object arg = args[i];
+			if (arg == null) {
+				stringBuilder.append("null");
+			} else {
+				stringBuilder.append(arg.toString());
+			}
+			if (i < args.length - 1) {
+				stringBuilder.append(",");
+			}
+		}
+		stringBuilder.append(")");
+		return stringBuilder.toString();
+	}
+
+	public static String getCode(String varName, String methodSig, String runtimeType) throws IOException {
+		Method method = getMethod(methodSig, runtimeType);
+		if (method == null) {
+			return "";
+		}
+
+		StringBuilder stringBuilder = new StringBuilder(varName);
+		stringBuilder.append(".");
+		stringBuilder.append(method.getName());
+		stringBuilder.append("(");
+		Type[] arguments = method.getArgumentTypes();
+		for (int i = 0; i < arguments.length; i++) {
+			Type argument = arguments[i];
+			stringBuilder.append(getDecompiledObjectName(argument.toString()));
+			if (i < arguments.length - 1) {
+				stringBuilder.append(",");
+			}
+		}
+		stringBuilder.append(")");
+
+		return stringBuilder.toString();
+	}
+
+	public static String getCode(String methodSig, String runtimeType) throws IOException {
+		Method method = getMethod(methodSig, runtimeType);
+		if (method == null) {
+			return "";
+		}
+
+		String methodName = method.getName();
+		Type[] arguments = method.getArgumentTypes();
+
+		String clazz = methodSig.split("#")[0];
+		return getDecompiledCode(runtimeType == null ? clazz : runtimeType, methodName, arguments);
+	}
+
+	private static Method getMethod(String methodSig, String runtimeType) throws IOException {
+		String clazz = methodSig.split("#")[0];
+		String methodInfo = methodSig.split("#")[1];
+
+		// try runtime type
+		ClassGen classGen = null;
+		Method method = null;
+		boolean shouldCheckCompiledType = true;
+		if (runtimeType != null) {
+			classGen = QueryRequestGenerator.loadClass(runtimeType);
+			if (classGen != null) {
+				method = QueryRequestGenerator.getMethod(classGen, methodInfo);
+			}
+			if (method != null) {
+				shouldCheckCompiledType = false;
+			}
+		}
+
+		// try clazz
+		if (shouldCheckCompiledType) {
+			classGen = QueryRequestGenerator.loadClass(clazz);
+			if (classGen != null) {
+				method = QueryRequestGenerator.getMethod(classGen, methodInfo);
+			}
+		}
+
+		return method;
+	}
+
 	private static String getDecompiledCode(String invokingClass, String methodName, Type[] arguments) {
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(getDecompiledObjectName(invokingClass));
