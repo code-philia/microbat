@@ -3,7 +3,6 @@ package microbat.instrumentation.runtime;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -136,8 +135,7 @@ public class HeuristicIgnoringFieldRule {
 				}
 			}
 			
-			if (isAbstractStringBuilder(type) || isStringWriterClass(type) || isPrintWriterClass(type) 
-					|| isHeapByteBuffer(type) || isDirectByteBuffer(type)) {
+			if (isAbstractStringBuilder(type) || isStringWriterClass(type) || isPrintWriterClass(type)) {
 				return true;
 			}
 			
@@ -197,15 +195,6 @@ public class HeuristicIgnoringFieldRule {
 	public static boolean isPrintWriterClass(Class<?> type) {
 	    return PrintWriter.class.isAssignableFrom(type);
 	}
-	
-	public static boolean isHeapByteBuffer(Class<?> type) {
-	    return "java.nio.HeapByteBuffer".equals(type.getName());
-	}
-
-	public static boolean isDirectByteBuffer(Class<?> type) {
-	    return "java.nio.DirectByteBuffer".equals(type.getName());
-	}
-	
 
 	private static boolean isValidField(String fieldName, String className,
 			Map<String, List<String>> ignoringMap) {
@@ -238,8 +227,7 @@ public class HeuristicIgnoringFieldRule {
 		if(isNeed == null){
 			if(containPrefix(typeName, prefixExcludes)){
 				isNeed = isCollectionClass(type) || isHashMapClass(type) || isAbstractStringBuilder(type) 
-						|| isStringWriterClass(type) || isPrintWriterClass(type) || isHeapByteBuffer(type) 
-						|| isDirectByteBuffer(type);
+						|| isStringWriterClass(type) || isPrintWriterClass(type);
 			}
 			else{
 				isNeed = true;				
@@ -322,26 +310,6 @@ public class HeuristicIgnoringFieldRule {
 	            Field outField = PrintWriter.class.getDeclaredField("out");
 	            outField.setAccessible(true);
 	            validFields.add(outField);
-	        } catch (Exception e) {
-	            AgentLogger.error(e);
-	        }
-	    }
-	    
-	    if (isHeapByteBuffer(objClass)) {
-	        try {
-	            Field hbField = objClass.getDeclaredField("hb");
-	            hbField.setAccessible(true);
-	            validFields.add(hbField); 
-	        } catch (Exception e) {
-	            AgentLogger.error(e);
-	        }
-	    }
-	    
-	    if (isDirectByteBuffer(objClass)) {
-	        try {
-	            Field cleanerField = objClass.getDeclaredField("cleaner");
-	            cleanerField.setAccessible(true); 
-	            validFields.add(cleanerField); 
 	        } catch (Exception e) {
 	            AgentLogger.error(e);
 	        }
