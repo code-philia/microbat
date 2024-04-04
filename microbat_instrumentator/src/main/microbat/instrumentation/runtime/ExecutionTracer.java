@@ -634,9 +634,6 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 						for (VarValue variable : variables) {
 							addRWriteValue(latestNode, variable, true);
 						}
-						if (variables != null && !variables.isEmpty() && !variables.contains(newVarValue)) {
-							addRWriteValue(latestNode, newVarValue, true);
-						}
 					}
 					
 					// variable mapping
