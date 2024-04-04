@@ -1,5 +1,9 @@
 package microbat.instrumentation.instr.aggreplay;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
@@ -31,12 +35,25 @@ import org.apache.bcel.generic.SWAP;
 import org.apache.bcel.generic.Type;
 
 import javassist.bytecode.Opcode;
+import microbat.instrumentation.AgentParams;
+import microbat.instrumentation.filter.UserFilters;
 import microbat.instrumentation.instr.AbstractInstrumenter;
+import microbat.instrumentation.instr.GeneratedMethods;
+import microbat.instrumentation.instr.MethodSplitter;
+import microbat.instrumentation.instr.TracerMethods;
+import microbat.instrumentation.instr.instruction.info.EntryPoint;
 import microbat.instrumentation.model.id.AggrePlayMethods;
+import microbat.instrumentation.runtime.ExecutionTracer;
+import microbat.instrumentation.utils.MicrobatUtils;
 
 public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 
 	protected Class<?> agentClass;
+	
+	private EntryPoint entryPoint;
+	private UserFilters userFilters;
+	private Set<String> requireSplittingMethods = Collections.emptySet();
+	
 	/**
 	 * Fired after a new object is created
 	 */
@@ -55,8 +72,12 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 	public static final String ON_OBJECT_READ = "_onObjectRead";
 	public static final String ON_OBJECT_READ_SIG = "(Ljava/lang/Object;Ljava/lang/String;)V";
 	
-	public ObjectAccessInstrumentator(Class<?> agentClass) {
+	public ObjectAccessInstrumentator(Class<?> agentClass, AgentParams agentParams) {
 		this.agentClass = agentClass;
+		this.entryPoint = agentParams.getEntryPoint();
+		if (agentParams.isRequireMethodSplit()) {
+			this.requireSplittingMethods = agentParams.getOverlongMethods();
+		}
 	}
 	
 	@Override
@@ -89,7 +110,7 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 		final INVOKESTATIC onObjectWriteInvoke = new INVOKESTATIC(onObjectWrite);
 		final INVOKESTATIC onObjectReadInvoke = new INVOKESTATIC(onObjectRead);
 		final DUP dup = new DUP();
-		
+		boolean entry = entryPoint == null ? false : className.equals(entryPoint.getClassName());
 		for (Method method : classGen.getMethods()) {
 			if (method.isNative() || method.isAbstract() || method.getCode() == null) {
 				continue; // Only instrument methods with code in them!
@@ -97,64 +118,97 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 			MethodGen mGen = new MethodGen(method, className, constPool);
 			InstructionList iList =  mGen.getInstructionList();
 			InstructionHandle[] ihs = iList.getInstructionHandles();
-			for (InstructionHandle handle: ihs) {
-				InstructionList newList = new InstructionList();
-				if (handle.getInstruction().getOpcode() == Opcode.NEW) {
-					newList.append(dup);
-					newList.append(onNewObjectInvoke);
-					if(handle.getNext() == null) {
-						iList.append(newList);
-					} else {
-						insertInsnHandler(iList, newList, handle.getNext());
-					}
-					newList.dispose();
-					continue;
-				}
-				if (handle.getInstruction().getOpcode() == Opcode.GETFIELD) {
-					GETFIELD getfield = (GETFIELD) handle.getInstruction();
-					instrumentGetField(constPool, onObjectReadInvoke, iList, handle, getfield);
-					continue;
-				}
-				if (handle.getInstruction().getOpcode() == Opcode.PUTFIELD) {
-					PUTFIELD putField = (PUTFIELD) handle.getInstruction();
-					instrumentPutField(constPool, onObjectWriteInvoke, iList, handle, putField);
-					continue;
-				}
-				if (handle.getInstruction().getOpcode() == Opcode.MONITORENTER) {
-					instrumentMonitorEnter(constPool, iList, handle);
-					continue;
-				}
-				if (handle.getInstruction() instanceof ArrayInstruction) {
-					instrumentArrayAccess(constPool, iList, handle);
-					continue;
-				}
-				if (handle.getInstruction().getOpcode() == Opcode.GETSTATIC) {
-					instrumentGetStaticInstruction(constPool, iList, handle);
-					continue;
-				}
-				if (handle.getInstruction().getOpcode() == Opcode.PUTSTATIC) {
-					instrumentPutStatic(constPool, iList, handle);
-					continue;
-				}
-				if (handle.getInstruction().getOpcode() == Opcode.MULTIANEWARRAY
-						|| handle.getInstruction().getOpcode() == Opcode.NEWARRAY
-						|| handle.getInstruction().getOpcode() == Opcode.ANEWARRAY) {
-					instrumentNewArray(constPool, iList, handle);
-					continue;
-				}
-				
-				if (handle.getInstruction() instanceof InvokeInstruction) {
-					instrumentMethodReturn(constPool, iList, handle);
-					continue;
-				}
+			boolean isMainMethod = entry && entryPoint.matchMethod(method.getName(), method.getSignature());
+			if (isMainMethod) {
+				iList.insert(AggrePlayMethods.START.toInvokeStatic(constPool, ExecutionTracer.class));
 			}
-			
-			mGen.setMaxLocals();
-			mGen.setMaxStack();
-			classGen.replaceMethod(method, mGen.getMethod());
+			instrumentMethod(constPool, onNewObjectInvoke, onObjectWriteInvoke, onObjectReadInvoke, dup, mGen, iList,
+					ihs);
+			checkSplitMethods(mGen, classGen, method);
 		}
 	
 		return classGen.getJavaClass().getBytes();
+	}
+	
+	private void checkSplitMethods(MethodGen mg, ClassGen classGen, Method oldMethod) {
+		String methodFullName = MicrobatUtils.getMicrobatMethodFullName(classGen.getClassName(), mg.getMethod());
+		if (requireSplittingMethods.contains(methodFullName)) {
+			MethodSplitter methodSplitter = new MethodSplitter(classGen, classGen.getConstantPool());
+			GeneratedMethods generatedMethods = methodSplitter.splitMethod(mg);
+			for (MethodGen newMethodGen : generatedMethods.getExtractedMethods()) {
+				newMethodGen.setMaxStack();
+				newMethodGen.setMaxLocals();
+				classGen.addMethod(newMethodGen.getMethod());
+			}
+			MethodGen rootMethodGen = generatedMethods.getRootMethod();
+			InstructionList iList = rootMethodGen.getInstructionList();
+			iList.setPositions();
+			rootMethodGen.setMaxStack();
+			rootMethodGen.setMaxLocals();
+			classGen.replaceMethod(oldMethod, rootMethodGen.getMethod());;
+		} else {
+			InstructionList instructionList = mg.getInstructionList();
+			instructionList.setPositions();
+			mg.setMaxStack();
+			mg.setMaxLocals();
+			classGen.replaceMethod(oldMethod, mg.getMethod());
+		}
+	}
+
+	private void instrumentMethod(ConstantPoolGen constPool, final INVOKESTATIC onNewObjectInvoke,
+			final INVOKESTATIC onObjectWriteInvoke, final INVOKESTATIC onObjectReadInvoke, final DUP dup,
+			MethodGen mGen, InstructionList iList, InstructionHandle[] ihs) {
+		for (InstructionHandle handle: ihs) {
+			InstructionList newList = new InstructionList();
+			if (handle.getInstruction().getOpcode() == Opcode.NEW) {
+				newList.append(dup);
+				newList.append(onNewObjectInvoke);
+				if(handle.getNext() == null) {
+					iList.append(newList);
+				} else {
+					insertInsnHandler(iList, newList, handle.getNext());
+				}
+				newList.dispose();
+				continue;
+			}
+			if (handle.getInstruction().getOpcode() == Opcode.GETFIELD) {
+				GETFIELD getfield = (GETFIELD) handle.getInstruction();
+				instrumentGetField(constPool, onObjectReadInvoke, iList, handle, getfield);
+				continue;
+			}
+			if (handle.getInstruction().getOpcode() == Opcode.PUTFIELD) {
+				PUTFIELD putField = (PUTFIELD) handle.getInstruction();
+				instrumentPutField(constPool, onObjectWriteInvoke, iList, handle, putField);
+				continue;
+			}
+			if (handle.getInstruction().getOpcode() == Opcode.MONITORENTER) {
+				instrumentMonitorEnter(constPool, iList, handle);
+				continue;
+			}
+			if (handle.getInstruction() instanceof ArrayInstruction) {
+				instrumentArrayAccess(constPool, iList, handle);
+				continue;
+			}
+			if (handle.getInstruction().getOpcode() == Opcode.GETSTATIC) {
+				instrumentGetStaticInstruction(constPool, iList, handle);
+				continue;
+			}
+			if (handle.getInstruction().getOpcode() == Opcode.PUTSTATIC) {
+				instrumentPutStatic(constPool, iList, handle);
+				continue;
+			}
+			if (handle.getInstruction().getOpcode() == Opcode.MULTIANEWARRAY
+					|| handle.getInstruction().getOpcode() == Opcode.NEWARRAY
+					|| handle.getInstruction().getOpcode() == Opcode.ANEWARRAY) {
+				instrumentNewArray(constPool, iList, handle);
+				continue;
+			}
+			
+			if (handle.getInstruction() instanceof InvokeInstruction) {
+				instrumentMethodReturn(constPool, iList, handle);
+				continue;
+			}
+		}
 	}
 	
 	protected void instrumentMethodReturn(ConstantPoolGen cpg, InstructionList il, InstructionHandle ih) {

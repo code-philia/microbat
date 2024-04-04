@@ -36,7 +36,6 @@ import microbat.instrumentation.model.id.ThreadId;
 public class LaxRecordingAgent extends RNRRecordingAgent {
 	private ReadCountVector rcVector = new ReadCountVector();
 	private ReadWriteAccessList rwal = new ReadWriteAccessList();
-	private ClassFileTransformer transformer = new BasicTransformer(new RecordingInstrumentor(RNRRecordingAgent.class));
 	private Map<ObjectId, List<Event>> lockAcquisitionListMap = new HashMap<>();
 
 
@@ -143,22 +142,12 @@ public class LaxRecordingAgent extends RNRRecordingAgent {
 		
 	}
 
-	@Override
-	public void startTest(String junitClass, String junitMethod) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void finishTest(String junitClass, String junitMethod) {
-		// TODO Auto-generated method stub
-		
-	}
+	
 
 	@Override
 	public ClassFileTransformer getTransformer0() {
 		// TODO Auto-generated method stub
-		return transformer;
+		return new BasicTransformer(new RecordingInstrumentor(RNRRecordingAgent.class, agentParams));
 	}
 
 	@Override

@@ -5,9 +5,8 @@ import java.lang.instrument.Instrumentation;
 import microbat.instrumentation.AgentParams.LogType;
 import microbat.instrumentation.cfgcoverage.CoverageAgent;
 import microbat.instrumentation.cfgcoverage.CoverageAgentParams;
-import microbat.instrumentation.instr.aggreplay.agents.AggrePlayRecordingAgent;
 import microbat.instrumentation.instr.aggreplay.agents.AggrePlayReplayAgent;
-import microbat.instrumentation.instr.aggreplay.agents.AggrePlaySharedVariableAgent;
+import microbat.instrumentation.instr.aggreplay.agents.SharedVariableAgent;
 import microbat.instrumentation.instr.aggreplay.agents.RNRRecordingAgent;
 import microbat.instrumentation.precheck.MemoryMeasurementAgent;
 import microbat.instrumentation.precheck.PrecheckAgent;
@@ -33,7 +32,7 @@ public class AgentFactory {
 			agent = new PrecheckAgent(cmd, inst);
 			agent.setInstrumentation(inst);
 		} else if (cmd.getBoolean(AgentParams.OPT_SHARED_DETECTION, false)) {
-			agent = AggrePlaySharedVariableAgent.getAgent(cmd);
+			agent = SharedVariableAgent.getAgent(cmd);
 			agent.setInstrumentation(inst);
 		} else if (cmd.getBoolean(AgentParams.OPT_CONC_RECORD, false)) {
 			agent = RNRRecordingAgent.getAttached(cmd);

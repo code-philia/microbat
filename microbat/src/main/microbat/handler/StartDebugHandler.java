@@ -62,68 +62,6 @@ public class StartDebugHandler extends AbstractHandler {
 		});
 	}
 	
-	// TODO(Gab): Use a separate option in instrumentation exectutor to do this.
-	private Object executeAggr(ExecutionEvent event, final AppJavaClassPath appJavaClassPath) {
-		List<String> includedClassNames = AnalysisScopePreference.getIncludedLibList();
-		List<String> excludedClassNames = AnalysisScopePreference.getExcludedLibList();
-		InstrumentationExecutor executor = new InstrumentationExecutor(appJavaClassPath,
-				generateTraceDir(appJavaClassPath), "trace", includedClassNames, excludedClassNames);
-
-		
-		Job runningJob = new Job("Run aggr") {
-			@Override
-			public IStatus run(IProgressMonitor monitor) {
-				String fileName = null;
-				File dumpFile = null;
-				File concDumpFile = null;
-				File outputFile = null;
-				String concFileNameString = null;
-				String outputFileNameString = null;
-				try {
-					dumpFile = File.createTempFile("temp", ".txt");
-					concDumpFile = File.createTempFile("concTemp", ".txt");
-					outputFile = File.createTempFile("outputFile", ".txt");
-					outputFileNameString = outputFile.getPath();
-					fileName = dumpFile.getPath();
-					concFileNameString = concDumpFile.getPath();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				executor.runSharedVariable(fileName, Settings.stepLimit);
-				executor.runRecordConc(fileName, concFileNameString, Settings.stepLimit);
-				System.out.println(concFileNameString);
-				final RunningInfo result = executor.runReplayTracer(concFileNameString, outputFileNameString, Settings.stepLimit);
-				
-				if (dumpFile != null) dumpFile.delete();
-				if (concDumpFile != null) concDumpFile.delete();
-				System.out.println("Running shared");
-				Display.getDefault().asyncExec(new Runnable() {
-					
-					@Override
-					public void run() {
-						TraceView traceView = MicroBatViews.getTraceView();
-						if (result == null) {
-							traceView.setMainTrace(null);
-							traceView.setTraceList(null);
-							return;
-						}
-						Trace trace = result.getMainTrace();
-						trace.setAppJavaClassPath(appJavaClassPath);
-						List<Trace> traces = result.getTraceList();
-						
-						traceView.setMainTrace(trace);
-						traceView.setTraceList(traces);
-						traceView.updateData();
-					}
-				});
-				return Status.OK_STATUS;
-			}
-		};
-		runningJob.schedule();
-		return null;
-	}
-	
 	
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 
@@ -142,9 +80,7 @@ public class StartDebugHandler extends AbstractHandler {
 				appClassPath.getAdditionalSourceFolders().add(srcFolder);
 			}
 		}
-		if (Settings.supportAggrePlayTrace) {
-			return executeAggr(event, appClassPath);
-		}
+		
 //		InstrumentationExecutor ex = new InstrumentationExecutor(appClassPath);
 //		ex.run();
 		

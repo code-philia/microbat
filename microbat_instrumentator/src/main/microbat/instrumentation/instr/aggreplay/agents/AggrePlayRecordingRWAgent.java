@@ -76,7 +76,7 @@ public class AggrePlayRecordingRWAgent extends RNRRecordingAgent {
 
 	@Override
 	public ClassFileTransformer getTransformer0() {
-		return new BasicTransformer(new RecordingInstrumentor(RNRRecordingAgent.class));
+		return new BasicTransformer(new RecordingInstrumentor(RNRRecordingAgent.class, agentParams));
 	}
 
 	@Override

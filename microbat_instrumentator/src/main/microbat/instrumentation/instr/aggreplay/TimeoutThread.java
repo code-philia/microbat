@@ -10,18 +10,26 @@ public class TimeoutThread extends Thread {
 	public static final String ID = "Timeout-thread$$";
 	public static final String TIMEOUT_MSG = "false;Timeout";
 	
+	private long timeOut = 10000L;
+	
 	public TimeoutThread(Agent attachedAgent) { 
 		this.attachedAgent = attachedAgent;
 		super.setName(ID);
+		super.setDaemon(true);
+	}
+	
+	public void setTimeout(long timeOut) {
+		this.timeOut = timeOut;
 	}
 	
 	public TimeoutThread() {
+		super.setName(ID);
 		super.setDaemon(true);
 	}
 	@Override
 	public void run() {
 		try {
-			Thread.sleep(100000L);
+			Thread.sleep(timeOut);
 		} catch (InterruptedException e) {
 		}
 		AgentLogger.debug("Interrupted program due to timeout");

@@ -42,6 +42,7 @@ import microbat.instrumentation.model.id.ReadCountVector;
 import microbat.instrumentation.model.id.ReadWriteAccessList;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
 import microbat.instrumentation.model.id.ThreadId;
+import microbat.instrumentation.output.StorableReader;
 import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.instrumentation.runtime.IExecutionTracer;
 import microbat.model.trace.Trace;
@@ -50,7 +51,6 @@ import microbat.sql.Recorder;
 public class AggrePlayReplayAgent extends TraceAgent {
 	
 	private AgentParams agentParams;
-	private IExecutionTracer executionTracer;
 	
 	/**
 	 * Current replay values
@@ -72,7 +72,6 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	
 	// maps from recording thread to replay
 	private HashMap<Long, Long> threadIdMap = new HashMap<>();
-	private ThreadIdGenerator threadIdGenerator = new ThreadIdGenerator();
 	
 	/**
 	 * Recorded output
@@ -83,7 +82,14 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	private Map<ObjectId, Stack<Event>> lockAcquisitionMap;
 	private ReadWriteAccessListReplay rwalGeneratedAccessListReplay;
 	
+
+	protected static boolean cannotRecord() {
+		return !ExecutionTracer.isRecordingOrStarted();
+	}
+	
+	
 	public static void _assertObjectExists(Object obj) {
+		if (cannotRecord()) return;
 		if (attachedAgent.objectIdGenerator.getId(obj) != null) {
 			return;
 		}
@@ -91,6 +97,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	}
 	
 	public static void _assertArrayExists(Object object) {
+		if (cannotRecord()) return;
 		attachedAgent.assertArrayExists(object);
 	}
 	
@@ -99,6 +106,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	}
 	
 	public static void _onNewObject(Object object) {
+		if (cannotRecord()) return;
 		attachedAgent.onObjectCreate(object);
 	}
 	
@@ -107,11 +115,16 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	}
 	
 	public static void _onThreadStart(Thread thread) {
-		attachedAgent.onThreadStart(thread);
+		if (cannotRecord()) return;
+		if (ExecutionTracer.isRecordingOrStarted()) {
+			attachedAgent.onThreadStart(thread);	
+		}
+		
 	}
 	
 	
 	public static void _onLockAcquire(Object object) {
+		if (cannotRecord()) return;
 		attachedAgent.onLockAcquire(object);
 	}
 	
@@ -126,6 +139,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	}
 	
 	public static void _afterLockAcquire() {
+		if (cannotRecord()) return;
 		attachedAgent.afterLockAcquire();
 	}
 	
@@ -191,14 +205,17 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		}
 	}
 	public static void _onStaticRead(String className, String fieldName) {
+		if (cannotRecord()) return;
 		attachedAgent.onStaticRead(className, fieldName);
 	}
 	
 	public static void _onStaticWrite(String className, String fieldName) {
+		if (cannotRecord()) return;
 		attachedAgent.onStaticWrite(className, fieldName);
 	}
 	
 	public static void _onNewArray(Object object) {
+		if (cannotRecord()) return;
 		attachedAgent.onNewArray(object);
 	}
 	
@@ -207,21 +224,25 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	}
 	
 	public static void _onArrayRead(Object arrayRef, int index) {
+		if (cannotRecord()) return;
 		_assertArrayExists(arrayRef);
 		attachedAgent.onArrayRead(arrayRef, index);
 	}
 	
 	public static void _onArrayWrite(Object arrayRef, int index) {
+		if (cannotRecord()) return;
 		_assertArrayExists(arrayRef);
 		attachedAgent.onArrayWrite(arrayRef, index);
 	}
 	
 	public static void _onObjectRead(Object object, String field) {
+		if (cannotRecord()) return;
 		_assertObjectExists(object);
 		attachedAgent.onObjectRead(object, field);
 	}
 	
 	public static void _onObjectWrite(Object object, String field) {
+		if (cannotRecord()) return;
 		_assertObjectExists(object);
 		attachedAgent.onObjectWrite(object, field);
 	}
@@ -288,6 +309,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	}
 	
 	public static void _afterObjectWrite() {
+		if (cannotRecord()) return;
 		attachedAgent.afterObjectWrite();
 	}
 	
@@ -305,6 +327,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		
 	}
 	public static void _afterObjectRead() {
+		if (cannotRecord()) return;
 		attachedAgent.afterObjectRead();
 	}
 	
@@ -338,10 +361,9 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	public void startup0(long vmStartupTime, long agentPreStartup) {
 		File concDumpFile = new File(agentParams.getConcDumpFile());
 		try {
-			FileReader concReader = new FileReader(concDumpFile);
+			StorableReader reader = new StorableReader(concDumpFile);
 			RecordingOutput input = new RecordingOutput();
-			SharedDataParser parser = new SharedDataParser();
-			List<ParseData> result = parser.parse(concReader);
+			List<ParseData> result = reader.read();
 			RecordingOutput output = input.parse(result.get(0));
 			this.rwal = output.rwAccessList;
 			this.recordingOutput = output;
@@ -361,7 +383,6 @@ public class AggrePlayReplayAgent extends TraceAgent {
 			System.exit(-1);
 		}
 		super.startup0(vmStartupTime, agentPreStartup);
-		ExecutionTracer._start();
 	}
 	
 
@@ -396,7 +417,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 
 			Trace trace = tracer.getTrace();
 			trace.setThreadId(tracer.getThreadId());
-			trace.setInnerThreadId(this.threadIdGenerator.getId(tracer.getThreadId()));
+			trace.setInnerThreadId(threadIdGenerator.getId(tracer.getThreadId()));
 			trace.setThreadName(tracer.getThreadName());
 			trace.setMain(ExecutionTracer.getMainThreadStore().equals(tracer));
 			trace.setInnerThreadId(threadIdGenerator.getId(trace.getThreadId()));
@@ -413,15 +434,6 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		Recorder.create(agentParams).store(traceList);
 //		AgentLogger.debug(timer.getResultString());
 	}
-	
-
-	@Override
-	public void finishTest(String junitClass, String junitMethod) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	
 
 
 	@Override

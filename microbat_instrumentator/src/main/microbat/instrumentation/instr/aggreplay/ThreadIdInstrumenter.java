@@ -14,8 +14,9 @@ import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.MethodGen;
 
 import microbat.instrumentation.instr.AbstractInstrumenter;
-import microbat.instrumentation.instr.aggreplay.agents.AggrePlaySharedVariableAgent;
+import microbat.instrumentation.instr.aggreplay.agents.SharedVariableAgent;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
+import microbat.instrumentation.runtime.ExecutionTracer;
 
 /**
  * Instrumenter solely for generating thread id
@@ -34,7 +35,9 @@ public class ThreadIdInstrumenter extends AbstractInstrumenter {
 	}
 	
 	public static void _onThreadStart(Thread thread) {
-		ThreadIdGenerator.threadGenerator.createId(thread);
+		if (ExecutionTracer.isRecordingOrStarted()) {
+			ThreadIdGenerator.threadGenerator.createId(thread);
+		}
 	}
 	
 	

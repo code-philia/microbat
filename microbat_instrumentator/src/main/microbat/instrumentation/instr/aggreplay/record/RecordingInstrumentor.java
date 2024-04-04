@@ -23,9 +23,9 @@ import org.apache.bcel.generic.PUTSTATIC;
 import org.apache.bcel.generic.SWAP;
 import org.apache.bcel.generic.Type;
 
+import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.instr.aggreplay.ObjectAccessInstrumentator;
-import microbat.instrumentation.instr.aggreplay.agents.AggrePlayRecordingAgent;
-import microbat.instrumentation.instr.aggreplay.agents.AggrePlaySharedVariableAgent;
+import microbat.instrumentation.instr.aggreplay.agents.SharedVariableAgent;
 import microbat.instrumentation.model.id.AggrePlayMethods;
 
 public class RecordingInstrumentor extends ObjectAccessInstrumentator {
@@ -34,12 +34,8 @@ public class RecordingInstrumentor extends ObjectAccessInstrumentator {
 	public static final String RELEASE_LOCK_STRING = "_releaseLock";
 	public static final String LOCK_SIG_STRING = "()V";
 	
-	public RecordingInstrumentor() {
-		super(AggrePlayRecordingAgent.class);
-	}
-	
-	public RecordingInstrumentor(Class<?> clazz) {
-		super(clazz);
+	public RecordingInstrumentor(Class<?> clazz, AgentParams agentParams) {
+		super(clazz, agentParams);
 	}
 	
 	

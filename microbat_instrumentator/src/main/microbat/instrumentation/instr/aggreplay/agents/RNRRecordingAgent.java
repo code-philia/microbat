@@ -28,6 +28,9 @@ import microbat.instrumentation.model.id.SharedMemoryLocation;
 import microbat.instrumentation.model.id.ThreadId;
 import microbat.instrumentation.model.storage.FileStorage;
 import microbat.instrumentation.model.storage.Storable;
+import microbat.instrumentation.output.StorableReader;
+import microbat.instrumentation.output.StorableWriter;
+import microbat.instrumentation.runtime.ExecutionTracer;
 import sav.strategies.dto.AppJavaClassPath;
 
 /**
@@ -48,6 +51,11 @@ public abstract class RNRRecordingAgent extends Agent {
 	protected AgentParams agentParams;
 	protected TimeoutThread timeoutThread;
 	
+
+	protected static boolean cannotRecord() {
+		return !ExecutionTracer.isRecordingOrStarted();
+	}
+	
 	protected void assertObjectExists(Object object) {
 		if (objectIdGenerator.getId(object) != null) {
 			return;
@@ -56,10 +64,12 @@ public abstract class RNRRecordingAgent extends Agent {
 	}
 	
 	public static void _assertObjectExists(Object object) {
+		if (cannotRecord()) return;
 		recordingAgent.assertObjectExists(object);
 	}
 	
 	public static void _assertArrayExists(Object object) {
+		if (cannotRecord()) return;
 		recordingAgent.assertArrayExists(object);
 	}
 	
@@ -69,10 +79,12 @@ public abstract class RNRRecordingAgent extends Agent {
 	
 	
 	public static void _acquireLock() {
+		if (cannotRecord()) return;
 		recordingAgent.acquireLock();
 	}
 	
 	public static void _releaseLock() {
+		if (cannotRecord()) return;
 		recordingAgent.releaseLock();
 	}
 	
@@ -91,10 +103,12 @@ public abstract class RNRRecordingAgent extends Agent {
 	}
 	
 	public static void _onNewObject(Object object) {
+		if (cannotRecord()) return;
 		recordingAgent.onObjectCreate(object);
 	}
 	
 	public static void _onNewArray(Object obj) {
+		if (cannotRecord()) return;
 		recordingAgent.onNewArray(obj);
 	}
 	
@@ -103,17 +117,20 @@ public abstract class RNRRecordingAgent extends Agent {
 	}
 	
 	public static void _onObjectRead(Object object, String field) {
+		if (cannotRecord()) return;
 		_assertObjectExists(object);
 		recordingAgent.onObjectRead(object, field);
 	}
 	
 	public static void _onObjectWrite(Object object, String field) {
+		if (cannotRecord()) return;
 		_assertObjectExists(object);
 		recordingAgent.onObjectWrite(object, field);
 	}
 	
 	
 	public static void _afterObjectWrite() {
+		if (cannotRecord()) return;
 		recordingAgent._afterObjectWriteInner();
 	}
 	
@@ -135,28 +152,34 @@ public abstract class RNRRecordingAgent extends Agent {
 	}
 	
 	public static void _afterObjectRead() {
+		if (cannotRecord()) return;
 		recordingAgent._afterObjectReadInner();
 	}
 	
 	public static void _onStaticRead(String className, String fieldName) {
+		if (cannotRecord()) return;
 		recordingAgent.onStaticRead(className, fieldName);
 	}
 	
 	public static void _onStaticWrite(String className, String fieldName) {
+		if (cannotRecord()) return;
 		recordingAgent.onStaticWrite(className, fieldName);
 	}
 	
 	public static void _onArrayRead(Object arrayRef, int index) {
+		if (cannotRecord()) return;
 		_assertArrayExists(arrayRef);
 		recordingAgent.onArrayRead(arrayRef, index);
 	}
 	
 	public static void _onArrayWrite(Object arrayRef, int index) {
+		if (cannotRecord()) return;
 		_assertArrayExists(arrayRef);
 		recordingAgent.onArrayWrite(arrayRef, index);
 	}
 	
 	public static void _onLockAcquire(Object object) {
+		if (cannotRecord()) return;
 		recordingAgent.onLockAcquire(object);
 	}
 	
@@ -260,21 +283,19 @@ public abstract class RNRRecordingAgent extends Agent {
 		GlobalFilterChecker.setup(appPath, agentParams.getIncludesExpression(), agentParams.getExcludesExpression());
 		recordingAgent = this;
 		SystemClassTransformer.attachThreadId(getInstrumentation());
-//		timeoutThread.start();
-		SharedDataParser parser = new SharedDataParser();
 		String dumpFileStr = agentParams.getDumpFile();
 		if (dumpFileStr == null) dumpFileStr = "temp.txt";
 		File dumpFile = new File(dumpFileStr);
-		FileReader fileReader = null;
+		StorableReader fileReader = null;
 		try {
-			fileReader = new FileReader(dumpFile);
+			fileReader = new StorableReader(dumpFile);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			throw new RuntimeException("Failed to find dump file");
 		}
 		
 		try {
-			List<ParseData> data = parser.parse(fileReader);
+			List<ParseData> data = fileReader.read();
 			SharedVariableOutput svOutput = new SharedVariableOutput(data.get(0));
 			sharedGenerator.init(svOutput);
 			parseSharedOutput(svOutput);
@@ -285,14 +306,31 @@ public abstract class RNRRecordingAgent extends Agent {
 	
 	@Override
 	public void shutdown() {
-		FileStorage fileStorage = new FileStorage(this.agentParams.getConcDumpFile());
-		RecordingOutput output = getRecordingOutput();
-		List<Storable> values = new LinkedList<>();
-		values.add(output);
-		fileStorage.store(values);
+		File file = new File(this.agentParams.getConcDumpFile());
+		try {
+			StorableWriter writer = new StorableWriter(file);
+			RecordingOutput output = getRecordingOutput();
+			writer.writeStorable(output);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	protected abstract RecordingOutput getRecordingOutput();
 
 	protected abstract void parseSharedOutput(SharedVariableOutput svo);
+
+	@Override
+	public void startTest(String junitClass, String junitMethod) {
+		ExecutionTracer._start();
+		ExecutionTracer.appJavaClassPath.setOptionalTestClass(junitClass);
+		ExecutionTracer.appJavaClassPath.setOptionalTestMethod(junitMethod);
+	}
+
+	@Override
+	public void finishTest(String junitClass, String junitMethod) {
+		ExecutionTracer.shutdown();
+	}
+
 }

@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
+import microbat.instrumentation.utils.MicrobatUtils;
 import microbat.model.trace.Trace;
 import sav.common.core.SavRtException;
 
@@ -25,11 +26,23 @@ public class RunningInfo {
 	private int expectedSteps;
 	private int collectedSteps;
 	
+	/**
+	 * For use with concurrent bugs,
+	 * the information at
+	 * precheck is not sufficient.
+	 */
+	private boolean passTest;
+	
+	public boolean hasPassedTest() {
+		return passTest;
+	}
+	
 	public RunningInfo(String programMsg, List<Trace> traceList, int expectedSteps, int collectedSteps) {
 		this.programMsg = programMsg;
 		this.traceList = traceList;
 		this.expectedSteps = expectedSteps;
 		this.collectedSteps = collectedSteps;
+		this.passTest = MicrobatUtils.checkTestResult(programMsg);
 	}
 	
 	public static RunningInfo readFromFile(String execTraceFile) { 

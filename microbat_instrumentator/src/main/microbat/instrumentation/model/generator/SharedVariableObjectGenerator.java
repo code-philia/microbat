@@ -24,13 +24,13 @@ public class SharedVariableObjectGenerator implements IdGenerator<Object, Shared
 	private ConcurrentHashMap<StaticFieldLocation, HashSet<Long>> staticFieldMap = new ConcurrentHashMap<>();
 	
 	public void assertId(Object object) {
-		if (objectIdGenerator.getId(object) != null) return;
-		objectIdGenerator.createId(object);
+		if (sharedVariableMap.containsKey(System.identityHashCode(object))) return;
+		createId(object);
  	}
 	
 	public void assertArrayId(Object object) {
-		if (arrayIdGenerator.getId(object) != null) return;
-		arrayIdGenerator.createId(object);
+		if (arrayRefMap.containsKey(System.identityHashCode(object))) return;
+		createArrayId(object);
 	}
 	
 	@Override

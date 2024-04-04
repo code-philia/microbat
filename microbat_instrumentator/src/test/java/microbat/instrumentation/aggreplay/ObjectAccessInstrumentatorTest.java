@@ -27,6 +27,8 @@ import org.junit.internal.runners.TestClass;
 import org.junit.validator.PublicClassValidator;
 
 import javassist.bytecode.Opcode;
+import microbat.instrumentation.AgentParams;
+import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.instr.aggreplay.ObjectAccessInstrumentator;
 
 
@@ -39,7 +41,7 @@ public class ObjectAccessInstrumentatorTest {
 	private static class InjectedObjectAccessInstrumentor extends ObjectAccessInstrumentator {
 		private static int counter = 0;
 		public InjectedObjectAccessInstrumentor() {
-			super(InjectedObjectAccessInstrumentor.class);
+			super(InjectedObjectAccessInstrumentor.class, AgentParams.initFrom(new CommandLine()));
 		}
 		public static void _onNewObject(Object object) {
 			counter++;

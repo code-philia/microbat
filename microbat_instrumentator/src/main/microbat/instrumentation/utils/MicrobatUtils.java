@@ -10,4 +10,12 @@ public class MicrobatUtils {
 			.append(method.getSignature().replace(";", ":"));
 		return sb.toString();
 	}
+	
+	public static boolean checkTestResult(String msg) {
+		int sIdx = msg.indexOf(";");
+		if (sIdx < 0 || msg.length() < sIdx) {
+			return false;
+		}
+		return Boolean.valueOf(msg.substring(0, sIdx));
+	}
 }

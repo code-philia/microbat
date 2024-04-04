@@ -17,6 +17,7 @@ import microbat.instrumentation.precheck.PrecheckInfo;
 import microbat.model.trace.Trace;
 import microbat.preference.DatabasePreference;
 import microbat.trace.Reader;
+import microbat.util.MicroBatUtil;
 import sav.common.core.SavException;
 import sav.common.core.SavRtException;
 import sav.common.core.utils.CollectionBuilder;
@@ -308,12 +309,12 @@ public class TraceAgentRunner extends AgentVmRunner {
 			unknownTestResult = true;
 			return;
 		}
+		isTestSuccessful = MicroBatUtil.checkTestResult(msg);
 		int sIdx = msg.indexOf(";");
 		if (sIdx < 0 || msg.length() < sIdx) {
 			unknownTestResult = true;
 			return;
 		}
-		isTestSuccessful = Boolean.valueOf(msg.substring(0, sIdx));
 		testFailureMessage = msg.substring(sIdx + 1, msg.length());
 	}
 

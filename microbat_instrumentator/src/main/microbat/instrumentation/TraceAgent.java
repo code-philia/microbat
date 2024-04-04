@@ -37,7 +37,7 @@ public class TraceAgent extends Agent {
 
 	public void startup0(long vmStartupTime, long agentPreStartup) {
 		if (!timeoutThread.isAlive()) timeoutThread.start();
-		SystemClassTransformer.attachThreadId(getInstrumentation(), this.getClass());
+		SystemClassTransformer.attachThreadId(getInstrumentation(), TraceAgent.class);
 //		timer = new StopTimer("Trace Construction");
 //		timer.newPoint("Execution");
 		/* init filter */

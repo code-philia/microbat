@@ -12,11 +12,7 @@ import microbat.instrumentation.instr.AbstractInstrumenter;
 import microbat.instrumentation.instr.AbstractTransformer;
 
 public class BasicTransformer extends AbstractTransformer implements ClassFileTransformer {
-	private AbstractInstrumenter instrumenter = new SharedObjectAccessInstrumentator();
-	
-	public BasicTransformer() {
-		
-	}
+	private AbstractInstrumenter instrumenter;
 	
 	public BasicTransformer(AbstractInstrumenter inst) {
 		this.instrumenter = inst;
