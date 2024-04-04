@@ -13,6 +13,10 @@ public class ThreadId extends Storable {
 
 	public int internalHashCode = 100002301;
 	
+	public String printRootListNode() {
+		return rootListNode.getFromStore();
+	}
+	
 	private static class ListNode extends Storable {
 		long value;
 		ListNode parent;

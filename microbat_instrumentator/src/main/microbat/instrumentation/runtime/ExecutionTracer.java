@@ -1347,6 +1347,10 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public static void _start() {
 		state = TracingState.TEST_STARTED;
 	}
+	
+	public static boolean isRecordingOrStarted() {
+		return state == TracingState.TEST_STARTED || state == TracingState.RECORDING;
+	}
 
 	public static boolean isShutdown() {
 		return state == TracingState.SHUTDOWN;

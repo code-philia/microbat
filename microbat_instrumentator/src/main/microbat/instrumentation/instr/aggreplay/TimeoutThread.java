@@ -21,7 +21,7 @@ public class TimeoutThread extends Thread {
 	@Override
 	public void run() {
 		try {
-			Thread.sleep(300000L);
+			Thread.sleep(100000L);
 		} catch (InterruptedException e) {
 		}
 		AgentLogger.debug("Interrupted program due to timeout");

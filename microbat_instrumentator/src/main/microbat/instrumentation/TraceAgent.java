@@ -30,7 +30,9 @@ public class TraceAgent extends Agent {
 	}
 	
 	public static void _onThreadStart(Thread thread) {
-		threadIdGenerator.createId(thread);
+		if (ExecutionTracer.isRecordingOrStarted()) {
+			threadIdGenerator.createId(thread);
+		}
 	}
 
 	public void startup0(long vmStartupTime, long agentPreStartup) {
