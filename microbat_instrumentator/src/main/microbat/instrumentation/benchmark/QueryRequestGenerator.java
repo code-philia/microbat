@@ -2,6 +2,7 @@ package microbat.instrumentation.benchmark;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.JavaClass;
@@ -46,7 +47,7 @@ public class QueryRequestGenerator {
 		return stringBuilder.toString();
 	}
 	
-	public static String getQueryRequestFromParams(String[] names, String[] params, String code) {
+	public static String getQueryRequestFromParams(List<String> names, List<String> params, String code) {
 		if (code == null || code.equals("")) {
 			return "";
 		}
@@ -55,7 +56,7 @@ public class QueryRequestGenerator {
 			return "";
 		}
 		
-		if (params == null || params.length == 0 || names == null || names.length == 0) {
+		if (params == null || params.isEmpty() || names == null || names.isEmpty() || params.size() != names.size()) {
 			return "";
 		}
 		
@@ -67,10 +68,10 @@ public class QueryRequestGenerator {
 		stringBuilder.append(" After calling \"");
 		stringBuilder.append(code);
 		stringBuilder.append("\" once, the following fields of ");
-		for (int i = 0; i < names.length; i++) {
+		for (int i = 0; i < names.size(); i++) {
 			stringBuilder.append("\"");
-			stringBuilder.append(names[i]);
-			if (i < names.length - 1) {
+			stringBuilder.append(names.get(i));
+			if (i < names.size() - 1) {
 				stringBuilder.append("\",");
 			}
 		}

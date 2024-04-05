@@ -651,13 +651,15 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					} else if (varValue == null && variableInfo == null && code != null && !code.equals("")) {
 						// case 2: query for static method
 						// note that in this case, all the read variables are parameters
-						String[] names = new String[params.length];
-						String[] variables = new String[params.length];
-						int i = 0;
+						List<String> names = new ArrayList<>();
+						List<String> variables = new ArrayList<>();
 						for (VarValue var : readVars) {
-							names[i] = var.getVarName();
-							variables[i] = var.getJsonString();
-							i++;
+							// skip primitives
+							if (var.getAliasVarID() == null) {
+								continue;
+							}
+							names.add(var.getVarName());
+							variables.add(var.getJsonString());
 						}
 						request = QueryRequestGenerator.getQueryRequestFromParams(names, variables, code);
 					}
