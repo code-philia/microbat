@@ -45,6 +45,39 @@ public class QueryRequestGenerator {
 		
 		return stringBuilder.toString();
 	}
+	
+	public static String getQueryRequestFromParams(String[] names, String[] params, String code) {
+		if (code == null || code.equals("")) {
+			return "";
+		}
+		
+		if (code.startsWith("//")) {
+			return "";
+		}
+		
+		if (params == null || params.length == 0 || names == null || names.length == 0) {
+			return "";
+		}
+		
+		StringBuilder stringBuilder = new StringBuilder("Given variables");
+		for (String param : params) {
+			stringBuilder.append(" ");
+			stringBuilder.append(param);
+		}
+		stringBuilder.append(" After calling \"");
+		stringBuilder.append(code);
+		stringBuilder.append("\" once, the following fields of ");
+		for (int i = 0; i < names.length; i++) {
+			stringBuilder.append("\"");
+			stringBuilder.append(names[i]);
+			if (i < names.length - 1) {
+				stringBuilder.append("\",");
+			}
+		}
+		stringBuilder.append("\" are modified:");
+		
+		return stringBuilder.toString();
+	}
 
 	private static ClassGen loadClass(String className) {
 		try {
@@ -140,6 +173,50 @@ public class QueryRequestGenerator {
 
 		String clazz = methodSig.split("#")[0];
 		return getDecompiledCode(runtimeType == null ? clazz : runtimeType, methodName, arguments);
+	}
+	
+	public static String getCodeStatic(String methodSig) throws IOException {
+		String type = methodSig.split("#")[0];
+		Method method = getMethod(methodSig, type);
+		if (method == null) {
+			return "";
+		}
+
+		StringBuilder stringBuilder = new StringBuilder(type);
+		stringBuilder.append(".");
+		stringBuilder.append(method.getName());
+		stringBuilder.append("(");
+		Type[] arguments = method.getArgumentTypes();
+		for (int i = 0; i < arguments.length; i++) {
+			Type argument = arguments[i];
+			stringBuilder.append(getDecompiledObjectName(argument.toString()));
+			if (i < arguments.length - 1) {
+				stringBuilder.append(",");
+			}
+		}
+		stringBuilder.append(")");
+
+		return stringBuilder.toString();
+	}
+	
+	public static String getCodeStatic(String methodSig, Object[] args) {
+		String methodName = methodSig.replace("#", ".").split("\\(")[0];
+
+		StringBuilder stringBuilder = new StringBuilder(methodName);
+		stringBuilder.append("(");
+		for (int i = 0; i < args.length; i++) {
+			Object arg = args[i];
+			if (arg == null) {
+				stringBuilder.append("null");
+			} else {
+				stringBuilder.append(arg.toString());
+			}
+			if (i < args.length - 1) {
+				stringBuilder.append(",");
+			}
+		}
+		stringBuilder.append(")");
+		return stringBuilder.toString();
 	}
 
 	private static Method getMethod(String methodSig, String runtimeType) throws IOException {

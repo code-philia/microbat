@@ -6,6 +6,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -556,6 +557,29 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			if (latestNode != null) {
 				latestNode.addInvokingMethod(methodSig);
 				initInvokingDetail(null, invokeTypeSign, methodSig, params, paramTypeSignsCode, className, latestNode);
+				
+				/* Retrieve code. */
+				if (!methodSig.contains("valueOf")) {
+					Path path = QueryUtils.getPath(className);
+					String code = "";
+					
+					// first attempt: get source code
+					if (path != null) {
+						code = QueryUtils.getCode(path, line);
+					}
+					
+					// second attempt: decompile code from method signature, where arguments are from method
+					if (code == null || code.equals("")) {
+						code = QueryRequestGenerator.getCodeStatic(methodSig);
+					}
+					
+					// third attempt: decompile code from method signature, where arguments are from the current node
+					if (code == null || code.equals("")) {
+						code = QueryRequestGenerator.getCodeStatic(methodSig, params);
+					}
+					latestNode.setSourceCode(code);
+					latestNode.setParameters(params);
+				}
 			}
 		} catch (Throwable t) {
 			handleException(t);
@@ -609,23 +633,33 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 
 					/* Prompt V2 */
 					// find object before invoking
+					Collection<VarValue> readVars = latestNode.getReadVariables();
 					String varType = invokeMethodSig.split("#")[0];
-					String aliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
-					VarValue varValue = null;
-					for (VarValue var : latestNode.getReadVariables()) {
-						if (var != null && var.getAliasVarID() != null && var.getAliasVarID().equals(aliasVarID)) {
-							varValue = var;
-							break;
-						}
-					}
+					VarValue varValue = findVariable(varType, invokeObj, readVars);
 					
 					// get variable info
 					String code = latestNode.getSourceCode();
 					String variableInfo = latestNode.getVariableInfo();
 					String request = "";
+					
+					Object[] params = latestNode.getParameters();
+					
 					if (varValue != null && variableInfo != null && !variableInfo.equals("") && code != null && !code.equals("")) {
+						// case 1: query for field method
 						String varName = varValue.getVarName();
 						request = QueryRequestGenerator.getQueryRequestV2(varName, variableInfo, code);
+					} else if (varValue == null && variableInfo == null && code != null && !code.equals("")) {
+						// case 2: query for static method
+						// note that in this case, all the read variables are parameters
+						String[] names = new String[params.length];
+						String[] variables = new String[params.length];
+						int i = 0;
+						for (VarValue var : readVars) {
+							names[i] = var.getVarName();
+							variables[i] = var.getJsonString();
+							i++;
+						}
+						request = QueryRequestGenerator.getQueryRequestFromParams(names, variables, code);
 					}
 
 					// query gpt
@@ -635,21 +669,57 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					}
 					
 					// find object after invoking
-					String varName = varValue == null ? "" : varValue.getVarName();
-	 				Variable tempVar = new LocalVar(varName, varType, residingClassName, line);
-	 				tempVar.setVarID(varValue == null ? "" : varValue.getVarID());
-	 				String newAliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
-	 				tempVar.setAliasVarID(newAliasVarID);
-
-	 				VarValue newVarValue = appendVarValue(invokeObj, tempVar, null);
-					
-					Set<VarValue> variables = null;
 					boolean isGetter = true;
-					if (!queryResult.equals("")) {
-						variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue);
-						for (VarValue variable : variables) {
-							isGetter = false;
-							addRWriteValue(latestNode, variable, true);
+					if (varValue != null) {
+						String varName = varValue == null ? "" : varValue.getVarName();
+		 				Variable tempVar = new LocalVar(varName, varType, residingClassName, line);
+		 				tempVar.setVarID(varValue == null ? "" : varValue.getVarID());
+		 				String newAliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
+		 				tempVar.setAliasVarID(newAliasVarID);
+
+		 				VarValue newVarValue = appendVarValue(invokeObj, tempVar, null);
+						
+						Set<VarValue> variables = null;
+						if (!queryResult.equals("")) {
+							variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue);
+							for (VarValue variable : variables) {
+								isGetter = false;
+								addRWriteValue(latestNode, variable, true);
+							}
+						}
+					} else if (params != null) {
+						for (VarValue var : readVars) {
+							if (var.getAliasVarID() == null) {
+								continue;
+							}
+							String varName = var == null ? "" : var.getVarName();
+			 				Variable tempVar = new LocalVar(varName, var.getRuntimeType() == null ? var.getType() : var.getRuntimeType(), residingClassName, line);
+			 				tempVar.setVarID(var == null ? "" : var.getVarID());
+			 				
+			 				String newAliasVarID = "";
+			 				int index = -1;
+			 				for (int i = 0; i < params.length; i++) {
+			 					newAliasVarID = TraceUtils.getObjectVarId(params[i], params[i].getClass().getName());
+			 					if (var.getAliasVarID().equals(newAliasVarID)) {
+			 						index = i;
+			 						break;
+			 					}
+			 				}
+			 				
+			 				tempVar.setAliasVarID(newAliasVarID);
+
+			 				if (index >= 0) {
+			 					VarValue newVarValue = appendVarValue(params[index], tempVar, null);
+								
+								Set<VarValue> variables = null;
+								if (!queryResult.equals("")) {
+									variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue);
+									for (VarValue variable : variables) {
+										isGetter = false;
+										addRWriteValue(latestNode, variable, true);
+									}
+								}
+			 				}
 						}
 					}
 					
@@ -695,6 +765,18 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			handleException(t);
 		}
 		trackingDelegate.track();
+	}
+	
+	private VarValue findVariable(String varType, Object object, Collection<VarValue> readVariables) {
+		String aliasVarID = TraceUtils.getObjectVarId(object, varType);
+		VarValue varValue = null;
+		for (VarValue var : readVariables) {
+			if (var != null && var.getAliasVarID() != null && var.getAliasVarID().equals(aliasVarID)) {
+				varValue = var;
+				break;
+			}
+		}
+		return varValue;
 	}
 
 	private TraceNode findInvokingMatchNode(TraceNode latestNode, String invokingMethodSig) {
