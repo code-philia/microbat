@@ -257,7 +257,7 @@ public class Trace {
 		return findProducer(readVar, checkingNode);
 	}
 
-	public TraceNode findDataDependencyV2(TraceNode checkingNode, VarValue readVar) {
+	public List<TraceNode> findDataDependencyV2(TraceNode checkingNode, VarValue readVar) {
 		return findProducerV2(readVar, checkingNode);
 	}
 	
@@ -919,11 +919,13 @@ public class Trace {
 		return null;
 	}
 	
-	public TraceNode findProducerV2(VarValue varValue, TraceNode startNode) {
+	public List<TraceNode> findProducerV2(VarValue varValue, TraceNode startNode) {
 
 		List<VarValue> children = varValue.getAllDescedentChildren();
 		Collections.reverse(children);
 		children.add(varValue);
+
+		List<TraceNode> dataDoms = new ArrayList<>();
 
 		for (VarValue var : children) {
 			if (var == null) {
@@ -935,28 +937,38 @@ public class Trace {
 
 			for (int i = startNode.getOrder() - 1; i >= 1; i--) {
 				TraceNode node = this.getTraceNode(i);
+				boolean found = false;
 				for (VarValue writtenValue : node.getWrittenVariables()) {
 
 					String wVarID = Variable.truncateSimpleID(writtenValue.getVarID());
 					String wHeadID = Variable.truncateSimpleID(writtenValue.getAliasVarID());
 
 					if (wVarID != null && wVarID.equals(varID)) {
-						return node;
+						dataDoms.add(node);
+						found = true;
+						break;
 					}
 
 					if (wHeadID != null && wHeadID.equals(headID)) {
-						return node;
+						dataDoms.add(node);
+						found = true;
+						break;
 					}
 
 					VarValue childValue = writtenValue.findVarValue(varID, headID);
 					if (childValue != null) {
-						return node;
+						dataDoms.add(node);
+						found = true;
+						break;
 					}
+				}
+				if (found) {
+					break;
 				}
 			}
 		}
 
-		return null;
+		return dataDoms;
 	}
 
 	public TraceNode findProducer(VarValue varValue, TraceNode startNode) {
