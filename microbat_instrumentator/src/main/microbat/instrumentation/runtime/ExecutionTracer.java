@@ -4,6 +4,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import microbat.instrumentation.benchmark.Querier;
 import microbat.instrumentation.benchmark.QueryRequestGenerator;
 import microbat.instrumentation.benchmark.QueryResponseProcessor;
 import microbat.instrumentation.filter.GlobalFilterChecker;
+import microbat.instrumentation.utils.QueryUtils;
 import microbat.model.BreakPoint;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
@@ -434,10 +436,23 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				if (varValue != null && !methodSig.contains("<init>") && !methodSig.contains("valueOf")) {
 					String variableInfo = varValue.getJsonString();
 					latestNode.setVariableInfo(variableInfo);
-
-					String code = QueryRequestGenerator.getCode(varValue.getVarName(), methodSig, varValue == null
-							? methodSig.split("#")[0]
-							: (varValue.getRuntimeType() == null ? varValue.getType() : varValue.getRuntimeType()));
+					
+					Path path = QueryUtils.getPath(residingClassName);
+					String code = "";
+					
+					// first attempt: get source code
+					if (path != null) {
+						code = QueryUtils.getCode(path, line);
+					}
+					
+					// second attempt: decompile code from method signature, where arguments are from method
+					if (code == null || code.equals("")) {
+						code = QueryRequestGenerator.getCode(varValue.getVarName(), methodSig, varValue == null
+								? methodSig.split("#")[0]
+								: (varValue.getRuntimeType() == null ? varValue.getType() : varValue.getRuntimeType()));
+					}
+					
+					// third attempt: decompile code from method signature, where arguments are from the current node
 					if (code == null || code.equals("")) {
 						code = QueryRequestGenerator.getCode(varValue.getVarName(), methodSig, params);
 					}

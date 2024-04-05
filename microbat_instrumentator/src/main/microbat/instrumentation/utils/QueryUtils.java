@@ -39,6 +39,10 @@ public class QueryUtils {
 			path = Paths.get(pathBuilder.toString());
 		}
 		
+		if (Files.notExists(path)) {
+			return null;
+		}
+		
 		return path;
 	}
 	
