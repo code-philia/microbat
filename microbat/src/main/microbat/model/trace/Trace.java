@@ -922,6 +922,7 @@ public class Trace {
 	public TraceNode findProducerV2(VarValue varValue, TraceNode startNode) {
 
 		List<VarValue> children = varValue.getAllDescedentChildren();
+		Collections.reverse(children);
 		children.add(varValue);
 
 		for (VarValue var : children) {
