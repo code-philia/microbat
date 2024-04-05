@@ -17,13 +17,13 @@ public class Querier {
     private static String apiKey;
 	private static String model3 = "gpt-3.5-turbo";
     private static String model4 = "gpt-4-turbo-preview";
-	private static String base_directory = "C:\\Users\\hongshu\\eclipse\\dropins\\junit_lib\\";
+	private static String base_directory = "C:\\Users\\hongshu3\\eclipse\\dropins\\junit_lib\\";
     private static String propertiesFileName = base_directory + "properties.txt";
     /* v1: (request : response) */
     private static Map<String, String> dictionary;
     /* v2: getter methods */
     private static Map<String, Integer> getterMethods;
-    private static int limit = 2;
+    private static int limit = 5;
     private static String dicFilename = base_directory + "dictionary_v2.txt";
     private static String proFilename = base_directory + "prompt_v2.txt";
     private static String prompt;
@@ -64,10 +64,8 @@ public class Querier {
     }
     
     public static void removeGetterMethodOccurrence(String methodInfo) {
-    	if (getterMethods.containsKey(methodInfo)) {
-    		getterMethods.put(methodInfo, getterMethods.get(methodInfo) - 1);
-    		saveGetterMethod();
-    	}
+    	getterMethods.put(methodInfo, 0);
+		saveGetterMethod();
     }
 
     public static String searchWord(String key) {

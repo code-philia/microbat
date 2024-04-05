@@ -644,9 +644,11 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	 				VarValue newVarValue = appendVarValue(invokeObj, tempVar, null);
 					
 					Set<VarValue> variables = null;
+					boolean isGetter = true;
 					if (!queryResult.equals("")) {
 						variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue);
 						for (VarValue variable : variables) {
+							isGetter = false;
 							addRWriteValue(latestNode, variable, true);
 						}
 					}
@@ -663,10 +665,10 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 //						}
 //					}
 					
-					if (!queryResult.equals("") && (variables == null || variables.isEmpty())) {
+					if (!queryResult.equals("") && isGetter) {
 						Querier.addGetterMethodOccurrence(invokeMethodSig);
 					}
-					if (variables != null && !variables.isEmpty()) {
+					if (!queryResult.equals("") && !isGetter) {
 						Querier.removeGetterMethodOccurrence(invokeMethodSig);
 					}
 					
