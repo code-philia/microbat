@@ -42,6 +42,8 @@ public interface IExecutionTracer {
 
 	public void _hitMethodEnd(int line, String className, String methodSignature);
 	
+	public int getLatestOrder();
+	
 	/**
 	 * 
 	 * @return: isLocking

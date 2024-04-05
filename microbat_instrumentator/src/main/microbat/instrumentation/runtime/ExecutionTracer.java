@@ -60,6 +60,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public static int expectedSteps = Integer.MAX_VALUE;
 //	private static int tolerantExpectedSteps = expectedSteps;
 	public static boolean avoidProxyToString = false;
+	private boolean lock = false;
 	private long threadId;
 	/**
 	 * When the current thread is trying to acquire an object.
@@ -319,6 +320,20 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * Lock used to stop modifications to the trace
+	 */
+	public void setLock() {
+		this.lock = true;
+	}
+	
+	/**
+	 * Used to remove lock
+	 */
+	public void removeLock() {
+		this.lock = false;
 	}
 
 	/*
@@ -708,8 +723,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			BreakPoint bkp = new BreakPoint(className, methodSignature, line);
 			long timestamp = System.currentTimeMillis();
 			TraceNode currentNode = new TraceNode(bkp, null, order, trace, numOfReadVars, numOfWrittenVars, timestamp, bytecode);
-			
-			trace.addTraceNode(currentNode);
+			if (!lock) {
+				trace.addTraceNode(currentNode);
+			}
 			AgentLogger.printProgress(order);
 			if (!methodCallStack.isEmpty()) {
 				TraceNode caller = methodCallStack.peek();
@@ -1305,6 +1321,11 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		return rtStore.getAllThreadTracer();
 	}
 
+	public int getLatestOrder() {
+		if (trace.getLatestNode() == null) return -1; 
+		return trace.getLatestNode().getOrder();
+	}
+	
 	public static synchronized IExecutionTracer getCurrentThreadStore() {
 		synchronized (rtStore) {
 			long threadId = Thread.currentThread().getId();

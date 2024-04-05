@@ -118,5 +118,10 @@ public class EmptyExecutionTracer implements IExecutionTracer {
 	public void setThreadName(String threadName) {
 		
 	}
+	
+	@Override
+	public int getLatestOrder() {
+		return 0;
+	}
 
 }

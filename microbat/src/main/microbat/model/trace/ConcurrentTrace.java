@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import microbat.instrumentation.model.id.ThreadId;
 import microbat.model.value.VarValue;
 import microbat.model.variable.Variable;
 import sav.strategies.dto.AppJavaClassPath;
@@ -36,6 +37,15 @@ public class ConcurrentTrace extends Trace {
 	public ConcurrentTrace(AppJavaClassPath appJavaClassPath) {
 		super(appJavaClassPath);
 		// TODO Auto-generated constructor stub
+	}
+	
+	public Trace getCorrespondingTrace(ThreadId threadId) {
+		for (Trace trace : originalTraces) {
+			if (threadId.equals(trace.getInnerThreadId())) {
+				return trace;
+			}
+		}
+		return null;
 	}
 	
 	/**
@@ -108,7 +118,7 @@ public class ConcurrentTrace extends Trace {
 		for(int i=j-2; i>=1; i--) {
 			ConcurrentTraceNode node = this.getSequentialTrace().get(i);
 			for(VarValue writtenValue: node.getWrittenVariables()) {
-				
+				String  k = writtenValue.getAliasVarID();
 				if (isOnHeap && writtenValue.getAliasVarID() != null
 						&& writtenValue.getAliasVarID().equals(varValue.getAliasVarID())) {
 					return node.initialTraceNode;

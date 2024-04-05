@@ -8,7 +8,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import microbat.instrumentation.utils.MicrobatUtils;
 import microbat.model.trace.Trace;
@@ -39,7 +41,16 @@ public class RunningInfo {
 	
 	public RunningInfo(String programMsg, List<Trace> traceList, int expectedSteps, int collectedSteps) {
 		this.programMsg = programMsg;
-		this.traceList = traceList;
+		if (traceList != null) {
+			// used  to get rid of redundant threads.
+			this.traceList = traceList.stream().filter(trace -> trace.size() != 0 || trace.getThreadName().equals("main")).collect(Collectors.toList());
+		} else {
+			traceList = new LinkedList<Trace>();
+		}
+		if (traceList.size() == 0) {
+			this.traceList = traceList;
+		}
+		
 		this.expectedSteps = expectedSteps;
 		this.collectedSteps = collectedSteps;
 		this.passTest = MicrobatUtils.checkTestResult(programMsg);
@@ -83,6 +94,7 @@ public class RunningInfo {
 	}
 	
 	public Trace getMainTrace() {
+		if (traceList == null) return null;
 		for(Trace trace: traceList) {
 			if(trace.isMain()) {
 				return trace;

@@ -24,6 +24,7 @@ import org.eclipse.ui.editors.text.TextFileDocumentProvider;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 
+import microbat.instrumentation.model.id.ThreadId;
 import microbat.model.BreakPoint;
 import microbat.model.BreakPointValue;
 import microbat.model.UserInterestedVariables;
@@ -337,6 +338,24 @@ public class ConcurrentTraceNode extends TraceNode {
 //			}
 //		}
 //		return result;
+	}
+
+	@Override
+	public TraceNode getInvocationMethodOrDominator() {
+		TraceNode invcationParent = super.getInvocationMethodOrDominator();
+		if (invcationParent != null) return invcationParent;
+		ConcurrentTrace concTrace = this.getConcurrentTrace();
+		Trace currTrace = this.initialTraceNode.getTrace();
+		ThreadId threadId = currTrace.getInnerThreadId();
+		if (threadId == null) return null;
+		if (threadId.getSpawnOrder() != -1) {
+			Trace parentTrace = concTrace.getCorrespondingTrace(threadId.getParent());
+			if (parentTrace != null) return parentTrace.getTraceNode(threadId.getSpawnOrder());
+		}
+		
+		// find the node which invoked this thread
+		return null;
+		
 	}
 
 	@Override

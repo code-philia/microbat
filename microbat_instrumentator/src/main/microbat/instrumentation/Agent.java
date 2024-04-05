@@ -81,7 +81,19 @@ public abstract class Agent {
 		String currentThreadName = Thread.currentThread().getName();
 		assert(currentThreadName.equals(TimeoutThread.ID));
 		Agent.programMsg = programMsg;
+		for (IExecutionTracer tracer: ExecutionTracer.getAllThreadStore()) {
+			if (tracer instanceof ExecutionTracer) {
+				ExecutionTracer executionTracer = (ExecutionTracer) tracer;
+				executionTracer.setLock();
+			}
+		}
 		ExecutionTracer.getMainThreadStore().lock();
+		try {
+			Thread.sleep(100L);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		stop();
 		ExecutionTracer.getMainThreadStore().unLock();
 		Runtime.getRuntime().exit(1); // force program to exit to avoid getting stuck by background running threads.
@@ -92,6 +104,7 @@ public abstract class Agent {
 	 * @param programMsg
 	 */
 	public static void _exitProgram(String programMsg) {
+		// this is necessary to handle exitProgram called in test case 
 		if (!ExecutionTracer.isRecordingOrStarted() && !ExecutionTracer.isShutdown()) return;
 		String currentThreadName = Thread.currentThread().getName();
 		if(currentThreadName.equals("main") || currentThreadName.equals(TimeoutThread.ID)) {

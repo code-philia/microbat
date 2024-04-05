@@ -9,7 +9,24 @@ public class ThreadId extends Storable {
 
 	public ListNode rootListNode = null;
 	public long threadId;
+	// keeps track of the order of the trace node which spawned this node.
+	public int spawnOrder = -1;
 	private long idCounter = 0;
+	
+	public void setSpawnOrder(Integer spawnOrder) {
+		this.spawnOrder = spawnOrder;
+	}
+	
+	public ThreadId getParent() {
+		if (rootListNode == null) {
+			return null;
+		}
+		return new ThreadId(rootListNode.parent);
+	}
+	
+	public Integer getSpawnOrder() {
+		return this.spawnOrder;
+	}
 
 	public int internalHashCode = 100002301;
 	

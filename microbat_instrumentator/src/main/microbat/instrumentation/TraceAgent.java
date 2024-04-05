@@ -31,7 +31,8 @@ public class TraceAgent extends Agent {
 	
 	public static void _onThreadStart(Thread thread) {
 		if (ExecutionTracer.isRecordingOrStarted()) {
-			threadIdGenerator.createId(thread);
+			int order = ExecutionTracer.getCurrentThreadStore().getLatestOrder();
+			threadIdGenerator.createId(thread, order);
 		}
 	}
 

@@ -36,6 +36,10 @@ public class ThreadIdGenerator extends Storable implements IdGenerator<Thread, T
 		idMap.put(Thread.currentThread().getId(), rootId);
 	}
 	
+	public void createId(Thread thread, int spawnOrder) {
+		ThreadId id = createId(thread);
+		id.setSpawnOrder(spawnOrder);
+	}
 
 	@Override
 	public ThreadId createId(Thread thread) { 
@@ -69,8 +73,11 @@ public class ThreadIdGenerator extends Storable implements IdGenerator<Thread, T
 		if (idMap.get(threadId) == null) {
 			if (rootId == null) {
 				createRootId();
+				return rootId;
 			}
-			return rootId;
+			// Not supposed to happen
+			// Happen's when Thread.start() isn't used to initialise the thread.
+			return null;
 		}
 		return idMap.get(threadId);
 	}
