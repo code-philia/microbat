@@ -68,7 +68,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		}
 	});
 	
-	ThreadLocal<Stack<Event>> lastObjStackLocal = ThreadLocal.withInitial(() -> null);
+	ThreadLocal<Stack<Event>> lastObjStackLocal = ThreadLocal.withInitial(() -> new Stack<>());
 	
 	// maps from recording thread to replay
 	private HashMap<Long, Long> threadIdMap = new HashMap<>();
@@ -144,6 +144,8 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	}
 	
 	protected void afterLockAcquire() {
+		if (lastObjStackLocal.get() == null) return;
+		if (lastObjStackLocal.get().empty()) return;
 		lastObjStackLocal.get().pop();
 	}
 	
@@ -178,8 +180,11 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	private long getPreviousThreadId() {
 		Long previousThreadID = threadIdMap.get(Thread.currentThread().getId());
 		if (previousThreadID == null) {
-			// this is the root thread.
-			return recordedThreadIdMap.get(threadIdGenerator.getRoot());
+			ThreadId currentThreadId = threadIdGenerator.getId(Thread.currentThread());
+			if (currentThreadId == null) {
+				return -1;
+			}
+			return recordedThreadIdMap.get(currentThreadId);
 		}
 		return previousThreadID;
 	}

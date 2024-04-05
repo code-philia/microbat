@@ -408,7 +408,7 @@ public class AggrePlayTraceInstrumenter extends TraceInstrumenter {
 				classNameVar, methodSigVar, isAppClass);
 		InstructionList toAppend = new InstructionList();
 		InvokeInstruction invokeInstruction = (InvokeInstruction) insnHandler.getInstruction();
-		String signature = invokeInstruction.getSignature(constPool);
+		String signature = invokeInstruction.getReturnType(constPool).getSignature();
 		if (signature.startsWith("L")) {
 			toAppend.append(new DUP());
 			toAppend.append(AggrePlayMethods.ASSERT_OBJECT_EXISTS.toInvokeStatic(constPool, instrumentationClass));

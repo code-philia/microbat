@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
+import java.time.DayOfWeek;
 
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.instr.AbstractInstrumenter;
@@ -42,10 +43,17 @@ public class BasicTransformer extends AbstractTransformer implements ClassFileTr
 			byte[] result = instrumenter.instrument(classFName, classfileBuffer);
 
 			if (classFName.equals("simplebug1/simplebug/TestObject")) {
-				File tocreate = new File("C:\\Users\\Gabriel\\Documents\\Output.class");
+				File otherFile = new File("K:\\OldOutput.class");
+				File tocreate = new File("K:\\Output.class");
 				try {
+					FileOutputStream fileOutputStream = new FileOutputStream(otherFile);
+					fileOutputStream.write(classfileBuffer);
+					
 					FileOutputStream fw = new FileOutputStream(tocreate);
 					fw.write(result);
+					fw.flush();
+					fileOutputStream.flush();
+					fileOutputStream.close();
 					fw.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block

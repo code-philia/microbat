@@ -23,6 +23,7 @@ import microbat.instrumentation.model.id.MemoryLocation;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.ReadWriteAccessList;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
+import microbat.instrumentation.runtime.ExecutionTracer;
 
 /**
  * Agent used for recording data.
@@ -82,20 +83,17 @@ public class AggrePlayRecordingRWAgent extends RNRRecordingAgent {
 	@Override
 	public void retransformBootstrapClasses(Instrumentation instrumentation, Class<?>[] retransformableClasses)
 			throws Exception {
-		// TODO Auto-generated method stub
-		
+		instrumentation.retransformClasses(retransformableClasses);
 	}
 
 	@Override
 	public void exitTest(String testResultMsg, String junitClass, String junitMethod, long threadId) {
-		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
 	public boolean isInstrumentationActive0() {
-		// TODO Auto-generated method stub
-		return false;
+		return !ExecutionTracer.isShutdown();
 	}
 	
 	@Override

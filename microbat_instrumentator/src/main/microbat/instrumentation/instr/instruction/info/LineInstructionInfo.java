@@ -277,7 +277,7 @@ public class LineInstructionInfo {
 	}
 	
 	protected static List<InstructionHandle> extractInvokeInstructions(List<InstructionHandle> insns) {
-		List<InstructionHandle> invokeInsns = new ArrayList<>(3);
+		List<InstructionHandle> invokeInsns = new ArrayList<>();
 		for (InstructionHandle insnHandler : insns) {
 			Instruction insn = insnHandler.getInstruction();
 			if (insn instanceof InvokeInstruction) {
