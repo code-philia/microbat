@@ -173,8 +173,7 @@ public class SharedVariableAgent extends Agent {
 
 	@Override
 	public boolean isInstrumentationActive0() {
-		// TODO Auto-generated method stub
-		return false;
+		return !ExecutionTracer.isShutdown();
 	}
 
 }

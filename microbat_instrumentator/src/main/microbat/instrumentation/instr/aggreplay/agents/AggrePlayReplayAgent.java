@@ -442,23 +442,5 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		return this.transformer;
 	}
 
-	@Override
-	public void retransformBootstrapClasses(Instrumentation instrumentation, Class<?>[] retransformableClasses)
-			throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void exitTest(String testResultMsg, String junitClass, String junitMethod, long threadId) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isInstrumentationActive0() {
-		// TODO Auto-generated method stub
-		return false;
-	}
 
 }

@@ -27,6 +27,7 @@ import microbat.instrumentation.model.id.ReadCountVector;
 import microbat.instrumentation.model.id.ReadWriteAccessList;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
 import microbat.instrumentation.model.id.ThreadId;
+import microbat.instrumentation.runtime.ExecutionTracer;
 
 /**
  * Implementration of AggrePlay for non-blocking wait.
@@ -165,8 +166,7 @@ public class LaxRecordingAgent extends RNRRecordingAgent {
 
 	@Override
 	public boolean isInstrumentationActive0() {
-		// TODO Auto-generated method stub
-		return false;
+		return !ExecutionTracer.isShutdown();
 	}
 
 }

@@ -50,6 +50,7 @@ public class MicrobatPreference extends PreferencePage implements
 		this.defaultRecordSnapshot = Activator.getDefault().getPreferenceStore().getString(RECORD_SNAPSHORT);
 		this.defaultRunWithDebugMode = Activator.getDefault().getPreferenceStore().getString(RUN_WITH_DEBUG_MODE);
 		this.defaultAdvancedDetailInspector = Activator.getDefault().getPreferenceStore().getString(APPLY_ADVANCE_INSPECTOR);
+		this.defaultTimeoutLong = Long.parseLong(Activator.getDefault().getPreferenceStore().getString(TIMEOUT));
 		this.defaultStepLimit = getStepLimit();
 		this.defaultRunTest = Activator.getDefault().getPreferenceStore().getString(RUN_TEST);
 		this.defaultVariableLayer = getVariableValue();

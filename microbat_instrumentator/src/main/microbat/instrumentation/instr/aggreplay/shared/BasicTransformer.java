@@ -41,17 +41,17 @@ public class BasicTransformer extends AbstractTransformer implements ClassFileTr
 		try {
 			byte[] result = instrumenter.instrument(classFName, classfileBuffer);
 
-//			if (classFName.equals("benchmark/account/Main")) {
-//				File tocreate = new File("K:\\OutputMain.class");
-//				try {
-//					FileOutputStream fw = new FileOutputStream(tocreate);
-//					fw.write(result);
-//					fw.close();
-//				} catch (IOException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//			}
+			if (classFName.equals("simplebug1/simplebug/TestObject")) {
+				File tocreate = new File("C:\\Users\\Gabriel\\Documents\\Output.class");
+				try {
+					FileOutputStream fw = new FileOutputStream(tocreate);
+					fw.write(result);
+					fw.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 			
 			return result;
 		} catch (Exception e) {
