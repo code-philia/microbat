@@ -559,7 +559,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				initInvokingDetail(null, invokeTypeSign, methodSig, params, paramTypeSignsCode, className, latestNode);
 				
 				/* gpt v2 */
-				if (!methodSig.contains("valueOf")) {
+				if (!methodSig.contains("<init>") && !methodSig.contains("valueOf")) {
 					/* Retrieve code. */
 					Path path = QueryUtils.getPath(className);
 					String code = "";
@@ -581,7 +581,10 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					List<Integer> indices = new ArrayList<>();
 					for (int i = 0; i < params.length; i++) {
 						Object param = params[i];
-						String varName = "temp" + i;
+						if (param == null || param.getClass() == null) {
+							continue;
+						}
+						String varName = "input" + i;
 						String varType = param.getClass().toString();
 						VarValue parameter = createVarValue(varName, varType, className, line, "", param);
 
