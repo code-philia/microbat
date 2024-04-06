@@ -674,16 +674,13 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					boolean isGetter = true;
 					if (varValue != null) {
 						String varName = varValue == null ? "" : varValue.getVarName();
-		 				Variable tempVar = new LocalVar(varName, varType, residingClassName, line);
-		 				tempVar.setVarID(varValue == null ? "" : varValue.getVarID());
-		 				String newAliasVarID = TraceUtils.getObjectVarId(invokeObj, varType);
-		 				tempVar.setAliasVarID(newAliasVarID);
-
-		 				VarValue newVarValue = appendVarValue(invokeObj, tempVar, null);
+						String id = varValue == null ? "" : varValue.getVarID();
+						VarValue newVarValue = createVarValue(varName, varType, residingClassName, line, id, invokeObj);
 						
 						Set<VarValue> variables = null;
 						if (!queryResult.equals("")) {
-							variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue);
+							variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue, invokeObj,
+									residingClassName, line, this);
 							for (VarValue variable : variables) {
 								isGetter = false;
 								addRWriteValue(latestNode, variable, true);
@@ -715,7 +712,8 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 								
 								Set<VarValue> variables = null;
 								if (!queryResult.equals("")) {
-									variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue);
+									variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue,
+											params[index], residingClassName, line, this);
 									for (VarValue variable : variables) {
 										isGetter = false;
 										addRWriteValue(latestNode, variable, true);
@@ -769,6 +767,17 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		trackingDelegate.track();
 	}
 	
+	public VarValue createVarValue(String varName, String varType, String residingClassName, int line, String id,
+			Object value) {
+		Variable tempVar = new LocalVar(varName, varType, residingClassName, line);
+		tempVar.setVarID(id);
+		String newAliasVarID = TraceUtils.getObjectVarId(value, varType);
+		tempVar.setAliasVarID(newAliasVarID);
+
+		VarValue newVarValue = appendVarValue(value, tempVar, null);
+		return newVarValue;
+	}
+
 	private VarValue findVariable(String varType, Object object, Collection<VarValue> readVariables) {
 		String aliasVarID = TraceUtils.getObjectVarId(object, varType);
 		VarValue varValue = null;

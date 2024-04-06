@@ -1,11 +1,13 @@
 package microbat.instrumentation.benchmark;
 
+import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 
 import microbat.instrumentation.benchmark.MethodInfo.Action;
 import microbat.instrumentation.benchmark.MethodInfo.Index;
 import microbat.instrumentation.benchmark.MethodInfo.Type;
+import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.model.value.VarValue;
 
 public class QueryResponseProcessor {
@@ -91,9 +93,14 @@ public class QueryResponseProcessor {
 		return writtenVariables;
 	}
 	
-	public static Set<VarValue> getWrittenVariables(String response, VarValue variable) {
+	public static Set<VarValue> getWrittenVariables(String response, VarValue variable, Object value,
+			String residingClass, int line, ExecutionTracer tracer) {
 		Set<VarValue> variables = new HashSet<>();
 		String[] entries = response.split(";");
+		Field[] fields = null;
+		if (value != null) {
+			fields = value.getClass().getDeclaredFields();
+		}
 		for (String entry : entries) {
 			entry = entry.trim();
 			
@@ -132,6 +139,25 @@ public class QueryResponseProcessor {
 			}
 			if (isFound) {
 				variables.add(current);
+			} else {
+				index = 0;
+				while (index < names.length) {
+					String fieldName = names[index];
+					for (Field f : fields) {
+						if (f != null && f.getName().equals(fieldName)) {
+							try {
+								String varName = variable.getVarName() + "." + fieldName;
+								String varType = f.getType().toString();
+								VarValue newVarValue = tracer.createVarValue(varName, varType, residingClass, line, "",
+										f.get(value));
+								variables.add(newVarValue);
+							} catch (IllegalArgumentException | IllegalAccessException e) {
+								variables.add(variable);
+							}
+						}
+					}
+					index++;
+				}
 			}
 		}
 		return variables;
