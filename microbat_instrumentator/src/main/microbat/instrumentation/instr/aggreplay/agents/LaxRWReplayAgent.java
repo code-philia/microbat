@@ -1,44 +1,44 @@
 package microbat.instrumentation.instr.aggreplay.agents;
 
-import java.lang.instrument.ClassFileTransformer;
-import java.util.Map;
+import java.util.Stack;
 import java.util.concurrent.Semaphore;
 
 import microbat.instrumentation.CommandLine;
-import microbat.instrumentation.model.RecorderObjectId;
 import microbat.instrumentation.model.id.Event;
 import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.id.SharedMemoryLocation;
 
-/**
- * Different mode of replay, used to test stricter replay.
- * Use blocking yield instead.
- * For every shm, we have a list of writes, and the reads associated to each write.
- * So each write, we can simply wait for the read to occur
- * before we allow another write.
- * 
- * @author Gabau
- *
- */
-public class AggrePlayRWReplayAgent extends AggrePlayReplayAgent {
+public class LaxRWReplayAgent extends AggrePlayReplayAgent {
 
-	private Semaphore smp = new Semaphore(1);
 	/**
-	 * Simplified RW replay agent as only need
-	 * store set of shared memory locations
+	 * RW replay with non blocking yield
 	 * @param cmd
 	 */
-	
-	public AggrePlayRWReplayAgent(CommandLine cmd) {
+	public LaxRWReplayAgent(CommandLine cmd) {
 		super(cmd);
 	}
 
+	private Semaphore smp = new Semaphore(1);
+
+
+	@Override
+	protected void onLockAcquire(Object obj) {
+
+		ObjectId oid = sharedMemGenerator.ofObjectOrArray(obj);
+		Stack<Event> eventStack = this.lockAcquisitionMap.get(oid);
+		Event currEvent = new Event(null, getPreviousThreadId());
+		if (eventStack == null || !currEvent.equals(eventStack.peek())) {
+			Thread.yield();
+		}
+		lastObjStackLocal.set(eventStack);
+	}
+	
 	@Override
 	protected void onRead(long previousThreadId, SharedMemoryLocation sharedMemLocation) {
 		// TODO Auto-generated method stub
 		Event readEvent = new Event(sharedMemLocation, previousThreadId);
 		lastEventLocal.set(readEvent);
-		while (!sharedMemLocation.canRead(readEvent)) {
+		if (!sharedMemLocation.canRead(readEvent)) {
 			Thread.yield();
 		}
 	}
@@ -46,7 +46,7 @@ public class AggrePlayRWReplayAgent extends AggrePlayReplayAgent {
 	@Override
 	protected void onWrite(long p_tid, SharedMemoryLocation shm) {
 		Event writeEvent = new Event(shm, p_tid);
-		while (!shm.canWrite(writeEvent)) {
+		if (!shm.canWrite(writeEvent)) {
 			Thread.yield();
 		}
 		lastEventLocal.set(writeEvent);

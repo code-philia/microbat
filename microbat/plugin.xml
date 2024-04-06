@@ -142,6 +142,12 @@
             id="microbat.command.conc.replay"
             name="Concurrent Replay">
       </command>
+      <command
+            defaultHandler="microbat.handler.ReplayExperimentHandler"
+            description="Need to run record before running the experiment"
+            id="microbat.command.replayExperiment"
+            name="Run replay experiment">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.menus">

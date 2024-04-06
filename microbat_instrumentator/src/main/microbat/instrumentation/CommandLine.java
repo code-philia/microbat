@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import microbat.instrumentation.instr.aggreplay.ReplayMode;
 import sav.common.core.utils.CollectionUtils;
 
 /**
@@ -63,5 +64,17 @@ public class CommandLine {
 
 	public String getString(String option) {
 		return argMap.get(option);
+	}
+	
+	public ReplayMode getReplayMode(String option) {
+		String valueString = argMap.get(option);
+		if (valueString == null) {
+			return ReplayMode.AGGR;
+		}
+		ReplayMode resultMode = ReplayMode.parse(valueString);
+		if (resultMode == null) {
+			return ReplayMode.AGGR;
+		}
+		return resultMode;
 	}
 }

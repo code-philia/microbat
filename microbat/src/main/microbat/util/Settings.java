@@ -11,6 +11,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import fj.P;
 import microbat.Activator;
 import microbat.handler.CheckingState;
+import microbat.instrumentation.instr.aggreplay.ReplayMode;
 import microbat.model.UserInterestedVariables;
 import microbat.model.trace.PotentialCorrectPatternList;
 import microbat.preference.MicrobatPreference;
@@ -33,6 +34,7 @@ public class Settings {
 	public static boolean isRunWtihDebugMode;
 	public static int stepLimit;
 	public static long timeLimit;
+	public static ReplayMode replayMode;
 	
 	private static Integer variableLayer;
 	
@@ -63,6 +65,7 @@ public class Settings {
 	static{
 		if(Activator.getDefault() != null){
 			try{
+				replayMode = ReplayMode.parse(Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.REPLAY_MODE));	
 				projectName = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.TARGET_PORJECT);
 				launchClass = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.LANUCH_CLASS);
 				testMethod = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.TEST_METHOD);

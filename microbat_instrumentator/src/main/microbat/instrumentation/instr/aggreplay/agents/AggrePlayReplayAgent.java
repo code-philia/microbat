@@ -55,7 +55,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	/**
 	 * Current replay values
 	 */
-	private ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
+	protected ObjectIdGenerator objectIdGenerator = new ObjectIdGenerator();
 	protected SharedMemoryGenerator sharedMemGenerator = new SharedMemoryGenerator(objectIdGenerator);
 	private ClassFileTransformer transformer;
 	private static AggrePlayReplayAgent attachedAgent;
@@ -79,7 +79,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	private ReadWriteAccessList rwal;
 	protected RecordingOutput recordingOutput;
 	private HashMap<ThreadId, Long> recordedThreadIdMap = new HashMap<>();
-	private Map<ObjectId, Stack<Event>> lockAcquisitionMap;
+	protected Map<ObjectId, Stack<Event>> lockAcquisitionMap;
 	private ReadWriteAccessListReplay rwalGeneratedAccessListReplay;
 	
 
@@ -129,7 +129,8 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	}
 	
 	protected void onLockAcquire(Object obj) {
-		ObjectId oid = this.objectIdGenerator.getId(obj);
+		ObjectId oid = this.sharedMemGenerator.ofObjectOrArray(obj);
+		
 		Stack<Event> eventStack = this.lockAcquisitionMap.get(oid);
 		Event currEvent = new Event(null, getPreviousThreadId());
 		if (eventStack == null || !currEvent.equals(eventStack.peek())) {
@@ -164,11 +165,21 @@ public class AggrePlayReplayAgent extends TraceAgent {
 
 	
 	public static AggrePlayReplayAgent getAttached(CommandLine cmd) {
+		AgentParams parameAgentParams = AgentParams.initFrom(cmd);
 		if (attachedAgent == null) {
-			attachedAgent = new AggrePlayReplayAgent(cmd);
-//			attachedAgent = new AggrePlayRWReplayAgent(cmd);
+			switch (parameAgentParams.getReplayMode()) {
+			case RELAX_RW:
+				attachedAgent = new LaxRWReplayAgent(cmd);
+				break;
+			case STRICT_RW:
+				attachedAgent = new StrictRWReplay(cmd);
+				break;
+			case AGGR:
+			default:
+				attachedAgent = new AggrePlayReplayAgent(cmd);
+			}
 		}
-		attachedAgent.agentParams = AgentParams.initFrom(cmd);
+		attachedAgent.agentParams = parameAgentParams;
 		return attachedAgent;
 	}
 	
@@ -177,7 +188,7 @@ public class AggrePlayReplayAgent extends TraceAgent {
 	 * Used to get the thread id from the previous thread which the current thread maps to.
 	 * @return
 	 */
-	private long getPreviousThreadId() {
+	protected long getPreviousThreadId() {
 		Long previousThreadID = threadIdMap.get(Thread.currentThread().getId());
 		if (previousThreadID == null) {
 			ThreadId currentThreadId = threadIdGenerator.getId(Thread.currentThread());

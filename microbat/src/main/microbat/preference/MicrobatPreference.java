@@ -21,7 +21,9 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
+import java_cup.internal_error;
 import microbat.Activator;
+import microbat.instrumentation.instr.aggreplay.ReplayMode;
 import microbat.util.SWTFactory;
 import microbat.util.Settings;
 
@@ -58,6 +60,7 @@ public class MicrobatPreference extends PreferencePage implements
 		this.defaultApplyRecodingOptimization = Activator.getDefault().getPreferenceStore().getString(RECORDING_OPTIMIZATION);
 		this.defaultEnableMethodSplitting = Activator.getDefault().getPreferenceStore().getBoolean(REQUIRE_METHOD_SPLITTING);
 		this.defaultRunWithDebugMode = Activator.getDefault().getPreferenceStore().getString(RUN_WITH_DEBUG_MODE);
+		this.defaultReplayMode = ReplayMode.parse(Activator.getDefault().getPreferenceStore().getString(REPLAY_MODE));
 	}
 
 	public static String getStepLimit() {
@@ -89,6 +92,7 @@ public class MicrobatPreference extends PreferencePage implements
 	public static final String AGGREPLAY_CONCURRENT_RECORDING = "aggrePlayConcurrentRecording";
 	public static final String RUN_WITH_DEBUG_MODE = "runWithDebugMode";
 	public static final String TIMEOUT = "timeOut";
+	public static final String REPLAY_MODE = "replay_mode";
 	
 	private Combo projectCombo;
 	private Text lanuchClassText;
@@ -106,6 +110,7 @@ public class MicrobatPreference extends PreferencePage implements
 	private Button runWithDebugModeButton;
 	private Button enableMethodSplittingButton;
 	private Text java7HomePathText;
+	private Combo replayModeSelectorCombo;
 	
 	private String defaultTargetProject = "";
 	private String defaultLanuchClass = "";
@@ -122,6 +127,7 @@ public class MicrobatPreference extends PreferencePage implements
 	private String defaultApplyRecodingOptimization;
 	private String defaultRunWithDebugMode = "false";
 	private Long defaultTimeoutLong = 10000L;
+	private ReplayMode defaultReplayMode = ReplayMode.AGGR;
 	private boolean defaultEnableMethodSplitting;
 	
 	@Override
@@ -241,6 +247,26 @@ public class MicrobatPreference extends PreferencePage implements
 		
 		enableMethodSplittingButton = SWTFactory.createCheckbox(settingGroup, "Enable method splitting function", 2);
 		enableMethodSplittingButton.setSelection(this.defaultEnableMethodSplitting);
+		
+		createReplaySelector(parent);
+	}
+
+	
+	private void createReplaySelector(Composite parent) {
+		Label replaySelectorLabel = new Label(parent, SWT.BORDER);
+		replaySelectorLabel.setText("Select replay mode");
+		replaySelectorLabel.setToolTipText("Strict - Chance of deadlock when sync methods used");
+		this.replayModeSelectorCombo = new Combo(parent, SWT.BORDER);
+		ReplayMode[] replayModes = ReplayMode.values();
+		String[] dataStrings = new String[replayModes.length];
+		for (int i = 0; i < dataStrings.length; ++i) {
+			dataStrings[i] = replayModes[i].toString();
+		}
+		replayModeSelectorCombo.setItems(dataStrings);
+		replayModeSelectorCombo.setText(defaultReplayMode.toString());
+		GridData comboData = new GridData(SWT.FILL, SWT.FILL, true, false);
+		comboData.horizontalSpan = 2;
+		this.replayModeSelectorCombo.setLayoutData(comboData);
 	}
 	
 	private void createSeedStatementGroup(Composite parent){
@@ -315,6 +341,7 @@ public class MicrobatPreference extends PreferencePage implements
 		preferences.putBoolean(REQUIRE_METHOD_SPLITTING, this.enableMethodSplittingButton.getSelection());
 		preferences.put(SUPPORT_CONCURRENT_TRACE, String.valueOf(this.supportConcurrentTraceButton.getSelection()));
 		preferences.put(RUN_WITH_DEBUG_MODE, String.valueOf(this.runWithDebugModeButton.getSelection()));
+		preferences.put(REPLAY_MODE, this.replayModeSelectorCombo.getText());
 		
 		Activator.getDefault().getPreferenceStore().putValue(TARGET_PORJECT, this.projectCombo.getText());
 		Activator.getDefault().getPreferenceStore().putValue(LANUCH_CLASS, this.lanuchClassText.getText());
@@ -332,7 +359,7 @@ public class MicrobatPreference extends PreferencePage implements
 		Activator.getDefault().getPreferenceStore().putValue(REQUIRE_METHOD_SPLITTING, String.valueOf(this.enableMethodSplittingButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(SUPPORT_CONCURRENT_TRACE, String.valueOf(this.supportConcurrentTraceButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(RUN_WITH_DEBUG_MODE, String.valueOf(this.runWithDebugModeButton.getSelection()));
-		
+		Activator.getDefault().getPreferenceStore().putValue(REPLAY_MODE, this.replayModeSelectorCombo.getText());
 		confirmChanges();
 		
 		return true;
@@ -354,6 +381,7 @@ public class MicrobatPreference extends PreferencePage implements
 		Settings.applyLibraryOptimization = this.recordingOptimizationButton.getSelection();
 		Settings.supportConcurrentTrace = this.supportConcurrentTraceButton.getSelection();
 		Settings.isRunWtihDebugMode = this.runWithDebugModeButton.getSelection();
+		Settings.replayMode = ReplayMode.parse(this.replayModeSelectorCombo.getText());
 	}
 	
 	private String[] getProjectsInWorkspace(){

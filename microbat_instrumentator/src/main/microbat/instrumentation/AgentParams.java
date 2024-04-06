@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import microbat.instrumentation.filter.CodeRangeEntry;
+import microbat.instrumentation.instr.aggreplay.ReplayMode;
 import microbat.instrumentation.instr.instruction.info.EntryPoint;
 import microbat.instrumentation.utils.FileUtils;
 import microbat.sql.TraceRecorder;
@@ -49,8 +50,10 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_RUN_ID = "run_id";
 	public static final String MEASURE_MEM = "measure_mem";
 	public static final String TIMEOUT = "time_out"; // the timeout of instrumentation.
+	public static final String REPLAY_MODE = "replay_mode";
 	
 	private long timeOut = 100000L;
+	private ReplayMode replayMode = ReplayMode.AGGR;
 	private boolean precheck;
 	private EntryPoint entryPoint;
 	private String concDumpFile;
@@ -75,6 +78,7 @@ public class AgentParams extends CommonParams {
 		super(cmd);
 		precheck = cmd.getBoolean(OPT_PRECHECK, false);
 		String entryPointStr = cmd.getString(OPT_ENTRY_POINT);
+		replayMode = cmd.getReplayMode(REPLAY_MODE);
 		if (entryPointStr != null) {
 			int idx = entryPointStr.lastIndexOf(".");
 			String mainClass = entryPointStr.substring(0, idx);
@@ -163,6 +167,10 @@ public class AgentParams extends CommonParams {
 
 	public void setLaunchClass(String launchClass) {
 		this.launchClass = launchClass;
+	}
+	
+	public ReplayMode getReplayMode() {
+		return replayMode;
 	}
 	
 	public int getTcpPort() {

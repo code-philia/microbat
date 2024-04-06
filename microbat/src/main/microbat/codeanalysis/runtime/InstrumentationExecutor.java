@@ -251,6 +251,10 @@ public class InstrumentationExecutor {
 		return result;
 	}
 	
+	public String getProcessError() {
+		return this.agentRunner.getProccessError();
+	}
+	
 	
 	public RunningInfo runReplayTracer(String concFile, String outputFile, int stepLimit) {
 		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
@@ -258,12 +262,14 @@ public class InstrumentationExecutor {
 		agentRunner.getConfig().setPort(9000);
 		agentRunner.addAgentParam(AgentParams.OPT_STEP_LIMIT, stepLimit);
 		agentRunner.addAgentParam(AgentParams.OPT_TRACE_RECORDER, "FILE");
+		agentRunner.addAgentParam(AgentParams.REPLAY_MODE, Settings.replayMode.toString());
 		try {
 			agentRunner.concReplay(AgentParams.OPT_CONC_REPLAY, concFile, outputFile);
 		} catch (SavException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		agentRunner.removeAgentParam(AgentParams.REPLAY_MODE);
 		FileTraceReader fileTraceReader = new FileTraceReader();
 		RunningInfo result = fileTraceReader.read(null, outputFile);
 		return result;

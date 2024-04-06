@@ -16,6 +16,12 @@ import microbat.instrumentation.model.id.ObjectId;
 import microbat.instrumentation.model.storage.Storable;
 import microbat.instrumentation.model.storage.Storage;
 
+/**
+ * Represents an object during the shared variable detection
+ * stage
+ * @author Gabau
+ *
+ */
 public class SharedVariableObjectId extends Storable implements Parser<SharedVariableObjectId> {
 	private ObjectId objectId;
 	private Map<String, Set<Long>> fieldAccessMap = new HashMap<>();
@@ -73,7 +79,9 @@ public class SharedVariableObjectId extends Storable implements Parser<SharedVar
 			hSet.add(threadId);
 			// only do this on the second access
 			if (hSet.size() == 2) {
-				fieldAccessList.add(field);
+				synchronized(fieldAccessList) {
+					fieldAccessList.add(field);	
+				}
 			}
 		}
 	}
@@ -93,7 +101,7 @@ public class SharedVariableObjectId extends Storable implements Parser<SharedVar
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(fieldAccessList, objectId);
+		return Objects.hash(objectId);
 	}
 
 	@Override

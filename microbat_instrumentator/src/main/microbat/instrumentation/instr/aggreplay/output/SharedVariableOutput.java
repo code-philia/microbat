@@ -1,6 +1,8 @@
 package microbat.instrumentation.instr.aggreplay.output;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,6 +38,7 @@ public class SharedVariableOutput extends Storable implements Parser<SharedVaria
 	public Set<SharedVariableArrayRef> sharedArrays;
 	public Set<StaticFieldLocation> sharedStaticFields;
 	public SharedVariableOutput(SharedVariableObjectGenerator objectGen) {
+		Collection<SharedVariableObjectId> sharedObjectsIds = objectGen.getSharedVariables();
 		sharedObjects = objectGen.getSharedVariables()
 				.stream().collect(Collectors.<SharedVariableObjectId>toSet());
 		sharedArrays = objectGen.getSharedArrays();
