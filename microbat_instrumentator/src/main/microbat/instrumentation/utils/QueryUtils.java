@@ -46,10 +46,14 @@ public class QueryUtils {
 		return path;
 	}
 	
-	public static String getCode(Path path, int lineNo) throws IOException {
-		Charset charset = Charset.forName("UTF-8");
-		
-		List<String> lines = Files.readAllLines(path, charset);
-		return lines.get(lineNo - 1).trim();
+	public static String getCode(Path path, int lineNo) {
+		try {
+			Charset charset = Charset.forName("UTF-8");
+
+			List<String> lines = Files.readAllLines(path, charset);
+			return lines.get(lineNo - 1).trim();
+		} catch (IOException e) {
+			return "";
+		}
 	}
 }

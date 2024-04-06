@@ -94,16 +94,18 @@ public class QueryRequestGenerator {
 		}
 	}
 	
-	private static byte[] loadByteCode(String fileName) throws IOException {
-		InputStream inputStream = ClassLoader
-        		.getSystemClassLoader()
-        		.getResourceAsStream(fileName);
-		if (inputStream != null) {
-			byte[] bytecode = IOUtils.toByteArray(inputStream);
-            inputStream.close();
-            return bytecode;
-        }
-		return null;
+	private static byte[] loadByteCode(String fileName) {
+		try {
+			InputStream inputStream = ClassLoader.getSystemClassLoader().getResourceAsStream(fileName);
+			if (inputStream != null) {
+				byte[] bytecode = IOUtils.toByteArray(inputStream);
+				inputStream.close();
+				return bytecode;
+			}
+			return null;
+		} catch (IOException e) {
+			return null;
+		}
 	}
 	
 	private static Method getMethod(ClassGen classGen, String methodInfo) {
@@ -140,7 +142,7 @@ public class QueryRequestGenerator {
 		return stringBuilder.toString();
 	}
 
-	public static String getCode(String varName, String methodSig, String runtimeType) throws IOException {
+	public static String getCode(String varName, String methodSig, String runtimeType) {
 		Method method = getMethod(methodSig, runtimeType);
 		if (method == null) {
 			return "";
@@ -163,7 +165,7 @@ public class QueryRequestGenerator {
 		return stringBuilder.toString();
 	}
 
-	public static String getCode(String methodSig, String runtimeType) throws IOException {
+	public static String getCode(String methodSig, String runtimeType) {
 		Method method = getMethod(methodSig, runtimeType);
 		if (method == null) {
 			return "";
@@ -176,7 +178,7 @@ public class QueryRequestGenerator {
 		return getDecompiledCode(runtimeType == null ? clazz : runtimeType, methodName, arguments);
 	}
 	
-	public static String getCodeStatic(String methodSig) throws IOException {
+	public static String getCodeStatic(String methodSig) {
 		String type = methodSig.split("#")[0];
 		Method method = getMethod(methodSig, type);
 		if (method == null) {
@@ -220,7 +222,7 @@ public class QueryRequestGenerator {
 		return stringBuilder.toString();
 	}
 
-	private static Method getMethod(String methodSig, String runtimeType) throws IOException {
+	private static Method getMethod(String methodSig, String runtimeType) {
 		String clazz = methodSig.split("#")[0];
 		String methodInfo = methodSig.split("#")[1];
 
