@@ -13,7 +13,6 @@ import java.util.function.Supplier;
 
 import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.instr.aggreplay.shared.Parser;
-import microbat.instrumentation.instr.aggreplay.shared.SharedDataParser;
 import microbat.instrumentation.model.generator.ThreadIdGenerator;
 import microbat.instrumentation.model.storage.Storable;
 import microbat.instrumentation.model.storage.Storage;
@@ -98,7 +97,7 @@ public class ObjectId extends Storable implements Parser<ObjectId> {
 
 	@Override
 	public ObjectId parse(ParseData data) {
-		this.threadId = SharedDataParser.createThreadId(data.getField("threadId"));
+		this.threadId = ThreadId.createThreadId(data.getField("threadId"));
 		this.objectCounter = data.getField("objectCounter").getLongValue();
 		return this;
 	}

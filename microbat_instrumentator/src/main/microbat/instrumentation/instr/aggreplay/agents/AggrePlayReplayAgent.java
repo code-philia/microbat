@@ -122,7 +122,10 @@ public class AggrePlayReplayAgent extends TraceAgent {
 		
 	}
 	
-	
+	/**
+	 * Instruemented before the lock acquisition
+	 * @param object
+	 */
 	public static void _onLockAcquire(Object object) {
 		if (cannotRecord()) return;
 		attachedAgent.onLockAcquire(object);

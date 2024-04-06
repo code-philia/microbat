@@ -2,6 +2,7 @@ package microbat.instrumentation.model.id;
 
 import java.util.Objects;
 
+import microbat.instrumentation.instr.aggreplay.shared.ParseData;
 import microbat.instrumentation.model.storage.Storable;
 
 public class ThreadId extends Storable {
@@ -78,10 +79,11 @@ public class ThreadId extends Storable {
 		precomputeHashCode();
 	}
 	
-	private ThreadId(int internalHashCode, String threadId, long threadValue) {
+	private ThreadId(int internalHashCode, String threadId, long threadValue, int spawnOrder) {
 		this.internalHashCode = internalHashCode;
 		this.rootListNode = fromString(threadId);
 		this.threadId = threadValue;
+		this.spawnOrder = spawnOrder;
 	}
 	
 	public static ListNode fromString(String hashedId) {
@@ -101,8 +103,9 @@ public class ThreadId extends Storable {
 	 * @param threadValue The id {@code long} of the thread. TODO(Gab): Not ideal to store in this class
 	 * @return
 	 */
-	public static ThreadId createThread(int internalHashCode, String threadId, long threadValue) {
-		return new ThreadId(internalHashCode, threadId, threadValue);
+	public static ThreadId createThread(int internalHashCode, String threadId, long threadValue,
+			int spawnOrder) {
+		return new ThreadId(internalHashCode, threadId, threadValue, spawnOrder);
 	}
 	
 	private void precomputeHashCode() {
@@ -154,6 +157,13 @@ public class ThreadId extends Storable {
 
 	public long getId() {
 		return this.threadId;
+	}
+
+	public static ThreadId createThreadId(ParseData data) {
+		int internalHashCode = Integer.parseInt(data.getField("internalHashCode").getValue());
+		int spawnOrder = data.getField("spawnOrder").getIntValue();
+		return createThread(internalHashCode, data.getField("rootListNode").getValue(),
+				data.getField("threadId").getLongValue(), spawnOrder);
 	}
 
 }

@@ -69,7 +69,7 @@ public class TraceOutputReader extends OutputReader {
 		StringReader threadIdReader = new StringReader(threadIDString);
 		SharedDataParser parser = new SharedDataParser();
 		ParseData data = parser.parse(threadIdReader).get(0);
-		ThreadId resulThreadId = parser.createThreadId(data);
+		ThreadId resulThreadId = ThreadId.createThreadId(data);
 		return resulThreadId;
 	}
 

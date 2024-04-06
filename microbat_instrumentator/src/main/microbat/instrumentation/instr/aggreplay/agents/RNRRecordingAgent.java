@@ -178,6 +178,10 @@ public abstract class RNRRecordingAgent extends Agent {
 		recordingAgent.onArrayWrite(arrayRef, index);
 	}
 	
+	/**
+	 * Instrumented after the lock has been acquired
+	 * @param object
+	 */
 	public static void _onLockAcquire(Object object) {
 		if (cannotRecord()) return;
 		recordingAgent.onLockAcquire(object);

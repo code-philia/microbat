@@ -88,7 +88,7 @@ public class RecordingOutput extends Storable implements Parser<RecordingOutput>
 		return values.stream().map(new Function<ParseData, ThreadId>() {
 			@Override
 			public ThreadId apply(ParseData pData) {
-				return SharedDataParser.createThreadId(pData);
+				return ThreadId.createThreadId(pData);
 			}
 		}).collect(Collectors.<ThreadId>toList());
 	}
