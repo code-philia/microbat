@@ -1,5 +1,7 @@
 package microbat.model.trace;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -158,6 +160,13 @@ public class ConcurrentTrace extends Trace {
 	public static ConcurrentTrace fromTimeStampOrder(List<Trace> inputTraces) {
 		ConcurrentTrace resultTrace = new ConcurrentTrace("");
 		resultTrace.originalTraces = inputTraces;
+		
+		AppJavaClassPath cPath = null;
+		for (Trace trace : inputTraces) {
+			cPath = trace.getAppJavaClassPath();
+			if (cPath != null) break;
+		}
+		resultTrace.setAppJavaClassPath(cPath);
 		resultTrace.generateTraces();
 		ArrayList<ArrayList<ConcurrentTraceNode>> traces = resultTrace.traces;
 
@@ -286,7 +295,7 @@ public class ConcurrentTrace extends Trace {
 	@Override
 	public TraceNode getTraceNode(int order) {
 		// TODO Auto-generated method stub
-		return this.getSequentialTrace().get(order);
+		return this.getSequentialTrace().get(order - 1);
 	}
 	
 
