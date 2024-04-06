@@ -558,27 +558,70 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				latestNode.addInvokingMethod(methodSig);
 				initInvokingDetail(null, invokeTypeSign, methodSig, params, paramTypeSignsCode, className, latestNode);
 				
-				/* Retrieve code. */
+				/* gpt v2 */
 				if (!methodSig.contains("valueOf")) {
+					/* Retrieve code. */
 					Path path = QueryUtils.getPath(className);
 					String code = "";
-					
 					// first attempt: get source code
 					if (path != null) {
 						code = QueryUtils.getCode(path, line);
 					}
-					
 					// second attempt: decompile code from method signature, where arguments are from method
 					if (code == null || code.equals("")) {
 						code = QueryRequestGenerator.getCodeStatic(methodSig);
 					}
-					
 					// third attempt: decompile code from method signature, where arguments are from the current node
 					if (code == null || code.equals("")) {
 						code = QueryRequestGenerator.getCodeStatic(methodSig, params);
 					}
-					latestNode.setSourceCode(code);
-					latestNode.setParameters(params);
+
+					/* get request */
+					List<VarValue> parameters = new ArrayList<>();
+					List<Integer> indices = new ArrayList<>();
+					for (int i = 0; i < params.length; i++) {
+						Object param = params[i];
+						String varName = "temp" + i;
+						String varType = param.getClass().toString();
+						VarValue parameter = createVarValue(varName, varType, className, line, "", param);
+
+						// skip primitives
+						if (parameter.getAliasVarID() == null) {
+							continue;
+						}
+						parameters.add(parameter);
+						indices.add(i);
+					}
+					String request = QueryRequestGenerator.getQueryRequestFromParams(parameters, code);
+
+					/* query gpt */
+					String queryResult = "";
+					if (request.length() > 0) {
+						queryResult = Querier.getDependencyV2(methodSig, request);
+					}
+
+					/* variable mapping */
+					boolean isGetter = true;
+					for (int i = 0; i < parameters.size(); i++) {
+						VarValue var = parameters.get(i);
+						Object value = params[indices.get(i)];
+						Set<VarValue> writtenVariables = null;
+						if (!queryResult.equals("")) {
+							writtenVariables = QueryResponseProcessor.getWrittenVariables(queryResult, var,
+									value, className, line, this);
+							for (VarValue variable : writtenVariables) {
+								isGetter = false;
+								addRWriteValue(latestNode, variable, true);
+							}
+						}
+					}
+
+					if (!queryResult.equals("") && isGetter) {
+						Querier.addGetterMethodOccurrence(methodSig);
+					}
+					if (!queryResult.equals("") && !isGetter) {
+						Querier.removeGetterMethodOccurrence(methodSig);
+					}
 				}
 			}
 		} catch (Throwable t) {
@@ -633,35 +676,18 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 
 					/* Prompt V2 */
 					// find object before invoking
-					Collection<VarValue> readVars = latestNode.getReadVariables();
 					String varType = invokeMethodSig.split("#")[0];
-					VarValue varValue = findVariable(varType, invokeObj, readVars);
+					VarValue varValue = findVariable(varType, invokeObj, latestNode.getReadVariables());
 					
 					// get variable info
 					String code = latestNode.getSourceCode();
 					String variableInfo = latestNode.getVariableInfo();
 					String request = "";
 					
-					Object[] params = latestNode.getParameters();
-					
 					if (varValue != null && variableInfo != null && !variableInfo.equals("") && code != null && !code.equals("")) {
-						// case 1: query for field method
+						// query for field method
 						String varName = varValue.getVarName();
 						request = QueryRequestGenerator.getQueryRequestV2(varName, variableInfo, code);
-					} else if (varValue == null && variableInfo == null && code != null && !code.equals("")) {
-						// case 2: query for static method
-						// note that in this case, all the read variables are parameters
-						List<String> names = new ArrayList<>();
-						List<String> variables = new ArrayList<>();
-						for (VarValue var : readVars) {
-							// skip primitives
-							if (var.getAliasVarID() == null) {
-								continue;
-							}
-							names.add(var.getVarName());
-							variables.add(var.getJsonString());
-						}
-						request = QueryRequestGenerator.getQueryRequestFromParams(names, variables, code);
 					}
 
 					// query gpt
@@ -685,41 +711,6 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 								isGetter = false;
 								addRWriteValue(latestNode, variable, true);
 							}
-						}
-					} else if (params != null) {
-						for (VarValue var : readVars) {
-							if (var.getAliasVarID() == null) {
-								continue;
-							}
-							String varName = var == null ? "" : var.getVarName();
-			 				Variable tempVar = new LocalVar(varName, var.getRuntimeType() == null ? var.getType() : var.getRuntimeType(), residingClassName, line);
-			 				tempVar.setVarID(var == null ? "" : var.getVarID());
-			 				
-			 				String newAliasVarID = "";
-			 				int index = -1;
-			 				for (int i = 0; i < params.length; i++) {
-			 					newAliasVarID = TraceUtils.getObjectVarId(params[i], params[i].getClass().getName());
-			 					if (var.getAliasVarID().equals(newAliasVarID)) {
-			 						index = i;
-			 						break;
-			 					}
-			 				}
-			 				
-			 				tempVar.setAliasVarID(newAliasVarID);
-
-			 				if (index >= 0) {
-			 					VarValue newVarValue = appendVarValue(params[index], tempVar, null);
-								
-								Set<VarValue> variables = null;
-								if (!queryResult.equals("")) {
-									variables = QueryResponseProcessor.getWrittenVariables(queryResult, newVarValue,
-											params[index], residingClassName, line, this);
-									for (VarValue variable : variables) {
-										isGetter = false;
-										addRWriteValue(latestNode, variable, true);
-									}
-								}
-			 				}
 						}
 					}
 					

@@ -11,6 +11,8 @@ import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.Type;
 import org.apache.commons.io.IOUtils;
 
+import microbat.model.value.VarValue;
+
 public class QueryRequestGenerator {
 
 	public QueryRequestGenerator() {}
@@ -47,31 +49,26 @@ public class QueryRequestGenerator {
 		return stringBuilder.toString();
 	}
 	
-	public static String getQueryRequestFromParams(List<String> names, List<String> params, String code) {
-		if (code == null || code.equals("")) {
+	public static String getQueryRequestFromParams(List<VarValue> parameters, String code) {
+		if (code == null || code.equals("") || code.startsWith("//")) {
 			return "";
 		}
-		
-		if (code.startsWith("//")) {
-			return "";
-		}
-		
-		if (params == null || params.isEmpty() || names == null || names.isEmpty() || params.size() != names.size()) {
+		if (parameters == null || parameters.size() == 0) {
 			return "";
 		}
 		
 		StringBuilder stringBuilder = new StringBuilder("Given variables");
-		for (String param : params) {
+		for (VarValue param : parameters) {
 			stringBuilder.append(" ");
-			stringBuilder.append(param);
+			stringBuilder.append(param.getJsonString());
 		}
 		stringBuilder.append(" After calling \"");
 		stringBuilder.append(code);
 		stringBuilder.append("\" once, the following fields of ");
-		for (int i = 0; i < names.size(); i++) {
+		for (int i = 0; i < parameters.size(); i++) {
 			stringBuilder.append("\"");
-			stringBuilder.append(names.get(i));
-			if (i < names.size() - 1) {
+			stringBuilder.append(parameters.get(i).getVarName());
+			if (i < parameters.size() - 1) {
 				stringBuilder.append("\",");
 			}
 		}
