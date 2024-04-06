@@ -132,7 +132,7 @@ public class ConcurrentTrace extends Trace {
 				
 				String wVarID = Variable.truncateSimpleID(writtenValue.getVarID());
 				String wHeadID = Variable.truncateSimpleID(writtenValue.getAliasVarID());
-				
+//				if (wVarID != null && wVarID.equals(varID) && concNode.getCurrentThread() == node.getCurrentThread()) {
 				if(wVarID != null && wVarID.equals(varID)) {
 					return node.initialTraceNode;						
 				}
