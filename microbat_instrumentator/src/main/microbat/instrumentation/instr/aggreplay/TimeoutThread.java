@@ -35,6 +35,7 @@ public class TimeoutThread extends Thread {
 		} catch (InterruptedException e) {
 		}
 		AgentLogger.debug("Interrupted program due to timeout");
+		ExecutionTracer.shutdown();
 		Agent._forceProgramStop(TIMEOUT_MSG);
 //		if (attachedAgent == null) {
 //			Agent._exitProgram("false;Timeout");

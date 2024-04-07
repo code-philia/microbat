@@ -22,9 +22,14 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 
+import microbat.instrumentation.instr.aggreplay.ReplayMode;
+import microbat.util.Settings;
+
 
 public class ReplayExperimentHandler extends AbstractHandler {
 	private int numberOfRuns = 100;
+	private static String resultLocation = "D:\\replayExperiment.xlsx";
+	private boolean skipStrict = false;
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		ExperimentJob experimentJob = new ExperimentJob(numberOfRuns);
@@ -44,7 +49,7 @@ public class ReplayExperimentHandler extends AbstractHandler {
 		
 		private void writeWorkBook() {
 			try {
-				FileOutputStream fileOutputStream = new FileOutputStream(new File("K:\\replayExperiment.xlsx"));
+				FileOutputStream fileOutputStream = new FileOutputStream(new File(resultLocation));
 				this.workbook.write(fileOutputStream);
 				fileOutputStream.flush();
 				fileOutputStream.close();
@@ -57,22 +62,29 @@ public class ReplayExperimentHandler extends AbstractHandler {
 
 		@Override
 		protected IStatus run(IProgressMonitor monitor) {
-			ConcurrentReplayHandler replayHandler = new ConcurrentReplayHandler(); 
-			LinkedList<ReplayStats> stats = new LinkedList<>();
-			for (int i = 0; i < numberOfRuns; ++i) {
-				ConcurrentReplayJob newJob = replayHandler.createReplayJob();
-				newJob.schedule();
-				try {
-					newJob.join();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+			ConcurrentReplayHandler replayHandler = new ConcurrentReplayHandler();
+			ReplayMode[] replayMode = ReplayMode.values();
+			
+			ReplayMode temp = Settings.replayMode;
+			// run the experiment over the replay modes
+			for (int j = 0; j < replayMode.length; ++j) {
+				Settings.replayMode = replayMode[j];
+				LinkedList<ReplayStats> stats = new LinkedList<>();
+				for (int i = 0; i < numberOfRuns; ++i) {
+					ConcurrentReplayJob newJob = replayHandler.createReplayJob();
+					newJob.schedule();
+					try {
+						newJob.join();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					stats.add(newJob.getReplayStats());
 				}
-				stats.add(newJob.getReplayStats());
+				XSSFSheet spreadSheetWorkbook = workbook.createSheet("replay experiment data " + replayMode[j].toString());
+				writeToWorkSheet(spreadSheetWorkbook, stats);
 			}
-			XSSFSheet spreadSheetWorkbook = workbook.createSheet("replay experiment data");
-
-			writeToWorkSheet(spreadSheetWorkbook, stats);
+			Settings.replayMode = temp;
 			LinkedList<ReplayStats> normalStats = new LinkedList<ReplayStats>(); 
 			for (int i = 0; i < numberOfRuns; ++i) {
 				NormalTraceGeneration normalTraceGeneration = new NormalTraceGeneration();

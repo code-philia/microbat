@@ -68,6 +68,7 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	}
 	
 	public boolean canWrite(Event e) {
+		if (this.writeEventStack.empty()) return false;
 		return this.writeEventStack.peek().equals(e) && 
 				this.repWrMapSetMap.getOrDefault(lastWrite, Collections.emptySet()).isEmpty();
 	}
@@ -100,6 +101,7 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	}
 	
 	public void popRecordedLastWR() {
+		if (repWrStack.empty()) return;
 		repWrStack.pop();
 	}
 	
@@ -120,6 +122,7 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	 * @return
 	 */
 	public boolean isSameAsPrevRunWrite(Event e) {
+		if (writeEventStack.empty()) return false;
 		return writeEventStack.peek().equals(e);
 	}
 	
@@ -133,6 +136,7 @@ public class SharedMemoryLocation extends Storable implements Parser<SharedMemor
 	}
 	
 	public void popEvent() {
+		if (writeEventStack.empty()) return;
 		writeEventStack.pop();
 	}
 	
