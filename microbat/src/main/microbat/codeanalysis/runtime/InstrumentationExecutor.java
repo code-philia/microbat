@@ -52,6 +52,7 @@ public class InstrumentationExecutor {
 	private String traceExecFilePath;
 	private TraceAgentRunner agentRunner;
 	private long timeout = VMRunner.NO_TIME_OUT;
+	private boolean isForceJunit3Or4 = false;
 	
 	private List<String> includeLibs = Collections.emptyList();
 	private List<String> excludeLibs = Collections.emptyList();
@@ -69,6 +70,11 @@ public class InstrumentationExecutor {
 		this.includeLibs = includeLibs;
 		this.excludeLibs = excludeLibs;
 		
+		agentRunner = createTraceAgentRunner();
+	}
+	
+	public void setIsForceJunit3Or4(boolean isForceJunit3Or4) {
+		this.isForceJunit3Or4 = isForceJunit3Or4;
 		agentRunner = createTraceAgentRunner();
 	}
 	
@@ -95,6 +101,11 @@ public class InstrumentationExecutor {
 		if (appPath.getOptionalTestClass() != null) {
 			config.addProgramArgs(appPath.getOptionalTestClass());
 			config.addProgramArgs(appPath.getOptionalTestMethod());
+			// force the test runner to run only 3 or 4 -> skip the check
+			if (this.isForceJunit3Or4) {
+				config.addProgramArgs("forceJunit3Or4");
+			}
+			
 			agentRunner.addAgentParam(AgentParams.OPT_LAUNCH_CLASS, appPath.getOptionalTestClass());
 		} else {
 			agentRunner.addAgentParam(AgentParams.OPT_ENTRY_POINT,
@@ -313,7 +324,8 @@ public class InstrumentationExecutor {
 			RunningInfo result = agentRunner.getRunningInfo();
 //			System.out.println(result);
 			System.out.println("isExpectedStepsMet? " + result.isExpectedStepsMet());
-			System.out.println("trace length: " + result.getMainTrace() == null ? "0" : result.getMainTrace().size());
+			int size = result.getMainTrace() == null ? 0 : result.getMainTrace().size();
+			System.out.println("trace length: " + size);
 			System.out.println("isTestSuccessful? " + agentRunner.isTestSuccessful());
 			System.out.println("testFailureMessage: " + agentRunner.getTestFailureMessage());
 			System.out.println("finish!");

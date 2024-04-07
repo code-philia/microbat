@@ -35,6 +35,7 @@ public class Settings {
 	public static int stepLimit;
 	public static long timeLimit;
 	public static ReplayMode replayMode;
+	public static boolean isForce3Or4;
 	
 	private static Integer variableLayer;
 	
