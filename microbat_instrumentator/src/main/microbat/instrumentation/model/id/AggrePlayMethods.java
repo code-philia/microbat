@@ -29,7 +29,19 @@ public enum AggrePlayMethods {
 	BEFORE_STATIC_READ("_onStaticRead", "(Ljava/lang/String;Ljava/lang/String;)V"),
 	BEFORE_STATIC_WRITE("_onStaticWrite", "(Ljava/lang/String;Ljava/lang/String;)V"),
 	ASSERT_OBJECT_EXISTS("_assertObjectExists", "(Ljava/lang/Object;)V"),
-	ASSERT_ARRAY_EXISTS("_assertArrayExists", "(Ljava/lang/Object;)V");
+	ASSERT_ARRAY_EXISTS("_assertArrayExists", "(Ljava/lang/Object;)V"),
+	/**
+	 * Executed before synchronized method
+	 */
+	BEFORE_SYNC_ENTR("_beforeSyncEnter", "(Ljava/lang/String;)V"),
+	/**
+	 * Executed within synchronized method
+	 */
+	INSIDE_SYNC_ENTR("_insideSyncEnter", "()V"),
+	/**
+	 * Executed after synchronized method
+	 */
+	AFTER_SYNC_ENTR("_afterSyncEnter", "()V");
 	
 	public final String methodName;
 	public final String methodSig;

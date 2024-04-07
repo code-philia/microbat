@@ -213,6 +213,10 @@ public abstract class ObjectAccessInstrumentator extends AbstractInstrumenter {
 	
 	protected void instrumentMethodReturn(ConstantPoolGen cpg, InstructionList il, InstructionHandle ih) {
 		InstructionList toAppend = new InstructionList();
+		InvokeInstruction invokeInstruction = ((InvokeInstruction) ih.getInstruction());
+		String classNameString = invokeInstruction.getClassName(cpg);
+		
+		
 		String signature = ((InvokeInstruction) ih.getInstruction()).getReturnType(cpg).getSignature();
 		if (signature.startsWith("L")) {
 			toAppend.append(new DUP());
