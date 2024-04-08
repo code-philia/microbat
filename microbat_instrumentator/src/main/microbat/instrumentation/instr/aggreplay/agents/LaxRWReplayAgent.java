@@ -27,7 +27,7 @@ public class LaxRWReplayAgent extends AggrePlayReplayAgent {
 		ObjectId oid = sharedMemGenerator.ofObjectOrArray(obj);
 		Stack<Event> eventStack = this.lockAcquisitionMap.get(oid);
 		Event currEvent = new Event(null, getPreviousThreadId());
-		if (eventStack == null || !currEvent.equals(eventStack.peek())) {
+		if (eventStack == null || eventStack.empty() ||  !currEvent.equals(eventStack.peek())) {
 			Thread.yield();
 		}
 		lastObjStackLocal.set(eventStack);
