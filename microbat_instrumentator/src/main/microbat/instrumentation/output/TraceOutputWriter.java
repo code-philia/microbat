@@ -63,6 +63,7 @@ public class TraceOutputWriter extends OutputWriter {
 		writeTraceThreadId(trace);
 		writeSerializableList(trace.getAcquiredLocks());
 		writeLong(trace.getAcquiringLock());
+		writeLong(Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory());
 	}
 	
 	private void writeTraceThreadId(Trace trace) throws IOException {

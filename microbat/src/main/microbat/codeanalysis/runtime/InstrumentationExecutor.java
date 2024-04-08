@@ -1,6 +1,8 @@
 package microbat.codeanalysis.runtime;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.sql.SQLException;
@@ -11,6 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -199,7 +202,7 @@ public class InstrumentationExecutor {
 		return null;
 	}
 	
-	public void runMemoryMeasureMent(String dumpFile) {
+	public String runMemoryMeasureMent(String dumpFile) {
 
 		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
 		agentRunner.addAgentParam(AgentParams.OPT_DUMP_FILE, dumpFile);
@@ -212,6 +215,8 @@ public class InstrumentationExecutor {
 		}
 		agentRunner.removeAgentParam(AgentParams.OPT_DUMP_FILE);
 		agentRunner.removeAgentParam(AgentParams.MEASURE_MEM);
+		
+		return agentRunner.getProccessError();	
 	}
 	
 	

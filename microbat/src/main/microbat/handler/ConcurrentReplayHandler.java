@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
 
 import microbat.codeanalysis.runtime.InstrumentationExecutor;
+import microbat.handler.replayexp.ConcurrentReplayJob;
 import microbat.instrumentation.output.RunningInfo;
 import microbat.model.trace.Trace;
 import microbat.util.MicroBatUtil;

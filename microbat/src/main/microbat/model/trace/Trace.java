@@ -40,6 +40,16 @@ public class Trace {
 	private String threadName;
 	private String id;
 	private ThreadId innerThreadId;
+	private long memoryUsed = -1;
+
+	public void setMemoryUsed(long memoryUsed) {
+		this.memoryUsed = memoryUsed;
+	}
+	
+	public long getMemoryUsed() {
+		return this.memoryUsed;
+	}
+	
 	/**
 	 * Used to detect deadlocks
 	 */

@@ -18,7 +18,8 @@ public abstract class Storable {
 		for (T val : list) {
 			values.append(fromObject(val));
 			values.append(Storage.LIST_SEP);
-		}
+		}	
+		
 		values.append(Storage.LIST_END);
 		return values.toString();
 	}

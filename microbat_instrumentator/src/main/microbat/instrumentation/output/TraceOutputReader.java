@@ -57,6 +57,8 @@ public class TraceOutputReader extends OutputReader {
 			long acquiringLock = readLong();
 			trace.setAcquiredLocks(lockList);
 			trace.setAcquiringLock(acquiringLock);
+			long memoryUsed = readLong();
+			trace.setMemoryUsed(memoryUsed);
 			traceList.add(trace);
 		}
 		

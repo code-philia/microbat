@@ -41,11 +41,20 @@ public class Trace {
 	private boolean isMain;
 	private String threadName;
 	private ThreadId innerThreadId;
+	private long memoryUsed = -1;
 	/**
 	 * Used to detect deadlocks
 	 */
 	private List<Long> acquiredLocks = null;
 	private Long acquiringLock = null;
+	
+	public void setMemoryUsed(long memoryUsed) {
+		this.memoryUsed = memoryUsed;
+	}
+	
+	public long getMemoryUsed() {
+		return this.memoryUsed;
+	}
 	
 	public Long getAcquiringLock() {
 		if (this.acquiringLock == null) {

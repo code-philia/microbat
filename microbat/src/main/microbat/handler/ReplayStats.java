@@ -21,15 +21,21 @@ public class ReplayStats {
 	/**
 	 * The size of the recording.
 	 */
-	public long dumpFileSize;
+	public long dumpFileSize = -1;
 	/**
 	 * The size of the logs.
 	 */
-	public long traceFileSize;
+	public long traceFileSize = -1;
 	/**
 	 * The runtime in miliseconds
 	 */
-	public long runTime;
+	public long runTime = -1;
+	
+	/**
+	 * The memory used during execution
+	 */
+	public long memoryUsed = -1;
+	
 
 	public ReplayStats() {
 		
@@ -52,10 +58,12 @@ public class ReplayStats {
 	}
 
 	public String getStdout() {
+		if (stderr == null) return "null";
 		return stderr;
 	}
 
 	public void setStdError(String stderrString) {
+		if (stderrString == null) this.stderr = "null";
 		this.stderr = stderrString;
 	}
 

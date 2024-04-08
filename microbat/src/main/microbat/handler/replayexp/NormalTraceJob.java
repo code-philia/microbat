@@ -1,4 +1,4 @@
-package microbat.handler;
+package microbat.handler.replayexp;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +11,8 @@ import org.eclipse.swt.widgets.Display;
 
 import microbat.codeanalysis.runtime.InstrumentationExecutor;
 import microbat.codeanalysis.runtime.StepLimitException;
+import microbat.handler.CancelThread;
+import microbat.handler.InstrumentExecutorSupplierImpl;
 import microbat.instrumentation.output.RunningInfo;
 import microbat.model.trace.Trace;
 import microbat.util.Settings;
@@ -18,14 +20,12 @@ import microbat.views.MicroBatViews;
 import microbat.views.TraceView;
 import sav.common.core.utils.SingleTimer;
 
-public class NormalTraceGeneration extends Job {
+public class NormalTraceJob extends ReplayJob {
 	
-
-	private ReplayStats stats = new ReplayStats();
 	
 	boolean finishedExecution = false;
 	
-	public NormalTraceGeneration() {
+	public NormalTraceJob() {
 		super("Run normal trace");
 	}
 
@@ -65,6 +65,12 @@ public class NormalTraceGeneration extends Job {
 		ct.stopMonitoring();
 		long executionTime = timer.getExecutionTime();
 		this.stats.setRunTime(executionTime);
+		// when there is a trace avail
+		if (result != null && result.getMainTrace() != null) {
+			Trace mainTrace = result.getMainTrace();
+			this.stats.memoryUsed = mainTrace.getMemoryUsed();
+			this.stats.setRunTime(mainTrace.getConstructTime());
+		}
 		this.stats.setDumpFileSize(-1);
 		this.stats.setTraceFileSize(outputFile.length());
 		this.stats.setStdError(executor.getProcessError());
@@ -72,8 +78,5 @@ public class NormalTraceGeneration extends Job {
 		return org.eclipse.core.runtime.Status.OK_STATUS;
 	}
 	
-	public ReplayStats getReplayStats() {
-		return this.stats;
-	}
 
 }

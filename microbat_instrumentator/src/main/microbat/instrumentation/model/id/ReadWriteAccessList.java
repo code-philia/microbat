@@ -91,6 +91,9 @@ public class ReadWriteAccessList extends Storable implements Parser<ReadWriteAcc
 		long tid = event.getThreadId();
 		assertExListThread(tid);
 		Map<Long, Integer> rcMap = readVector.get(memoryLocation, tid);
+		if (rcMap == null) {
+			rcMap = new HashMap<>();
+		}
 		exList.get(tid).add(new Node(new HashMap<>(rcMap), memoryLocation, event));
 	}
 
