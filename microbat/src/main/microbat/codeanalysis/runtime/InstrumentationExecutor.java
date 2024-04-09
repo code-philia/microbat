@@ -288,6 +288,10 @@ public class InstrumentationExecutor {
 		agentRunner.removeAgentParam(AgentParams.REPLAY_MODE);
 		FileTraceReader fileTraceReader = new FileTraceReader();
 		RunningInfo result = fileTraceReader.read(null, outputFile);
+		for (Trace trace : result.getTraceList()) {
+			trace.setAppJavaClassPath(appPath);
+			appendMissingInfo(trace, appPath);
+		}
 		return result;
 	}
 	
