@@ -205,4 +205,5 @@ Export-Package:
  org.apache.bcel;uses:="org.apache.bcel.classfile,org.apache.bcel.util",
  org.apache.bcel.classfile,
  org.apache.bcel.generic
-Import-Package: microbat.trace
+Import-Package: microbat.model.value,
+ microbat.trace

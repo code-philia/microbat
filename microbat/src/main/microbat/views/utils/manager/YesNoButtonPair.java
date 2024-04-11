@@ -7,11 +7,11 @@ import microbat.log.Log;
 public class YesNoButtonPair {
 	protected Button yesButton = null;
 	protected Button noButton = null;
-	
+
 	public YesNoButtonPair() {
-		
+
 	}
-	
+
 	public YesNoButtonPair(final Button yesButton, final Button noButton) {
 		this.yesButton = yesButton;
 		this.noButton = noButton;
@@ -32,7 +32,7 @@ public class YesNoButtonPair {
 	public Button getNoButton() {
 		return noButton;
 	}
-	
+
 	public void dispose() {
 		if (this.yesButton != null) {
 			this.yesButton.dispose();
@@ -41,7 +41,7 @@ public class YesNoButtonPair {
 			this.noButton.dispose();
 		}
 	}
-	
+
 	public void handleCheck(final boolean isYesButton) {
 		if (!this.isValid()) {
 			throw new RuntimeException(Log.genMsg(getClass(), "Yes No Button Pair is not valid"));
@@ -68,7 +68,7 @@ public class YesNoButtonPair {
 		this.yesButton.setSelection(true);
 		this.noButton.setSelection(false);
 	}
-	
+
 	public void checkNoButton() {
 		if (!this.isValid()) {
 			throw new RuntimeException(Log.genMsg(getClass(), "Yes No Button Pair is not valid"));
@@ -76,34 +76,34 @@ public class YesNoButtonPair {
 		this.yesButton.setSelection(false);
 		this.noButton.setSelection(true);
 	}
-	
+
 	public void uncheckYesButton() {
 		if (!this.isValid()) {
 			throw new RuntimeException(Log.genMsg(getClass(), "Yes No Button Pair is not valid"));
 		}
 		this.yesButton.setSelection(false);
 	}
-	
+
 	public void uncheckNoButton() {
 		if (!this.isValid()) {
 			throw new RuntimeException(Log.genMsg(getClass(), "Yes No Button Pair is not valid"));
 		}
 		this.noButton.setSelection(false);
 	}
-	
+
 	public void uncheckBothButton() {
 		this.uncheckYesButton();
 		this.uncheckNoButton();
 	}
-	
+
 	public boolean isYesButtonSelected() {
 		return this.yesButton.getSelection();
 	}
-	
+
 	public boolean isNoButtonSelected() {
 		return this.noButton.getSelection();
 	}
-	
+
 	public boolean isValid() {
 		return this.yesButton != null && this.noButton != null;
 	}

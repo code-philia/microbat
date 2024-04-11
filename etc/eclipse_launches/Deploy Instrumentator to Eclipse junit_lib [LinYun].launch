@@ -8,11 +8,12 @@
         <listEntry value="1"/>
     </listAttribute>
     <mapAttribute key="org.eclipse.debug.core.environmentVariables">
-        <mapEntry key="deploy_dir" value="C:\Users\david\eclipse\committers-2023-06\eclipse\dropins\junit_lib\"/>
+        <mapEntry key="deploy_dir" value="/Applications/Eclipse.app/Contents/Eclipse/dropins/junit_lib/"/>
     </mapAttribute>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_ATTR_USE_ARGFILE" value="false"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_SHOW_CODEDETAILS_IN_EXCEPTION_MESSAGES" value="true"/>
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_CLASSPATH_ONLY_JAR" value="false"/>
+    <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
     <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="microbat.tools.JarPackageTool"/>
     <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="microbat_instrumentator"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="microbat_instrumentator"/>

@@ -49,7 +49,7 @@ import microbat.debugpilot.DebugPilotExecutor;
 import microbat.debugpilot.DebugPilotInfo;
 import microbat.debugpilot.pathfinding.FeedbackPath;
 import microbat.debugpilot.userfeedback.DPUserFeedback;
-import microbat.handler.DebugPilotHandler;
+import microbat.debugpilot.userfeedback.DPUserFeedbackType;
 import microbat.handler.callbacks.HandlerCallback;
 import microbat.handler.callbacks.HandlerCallbackManager;
 import microbat.model.trace.Trace;
@@ -66,6 +66,7 @@ import microbat.views.utils.contentprovider.WrittenVariableContentProvider;
 import microbat.views.utils.lableprovider.ControlDominatorLabelProvider;
 import microbat.views.utils.lableprovider.DummyLabelProvider;
 import microbat.views.utils.lableprovider.VariableLabelProvider;
+import microbat.views.utils.manager.DependencyRecovery;
 import microbat.views.utils.manager.FeedbackSelectionManager;
 
 public class DebugPilotFeedbackView extends ViewPart {
@@ -108,6 +109,7 @@ public class DebugPilotFeedbackView extends ViewPart {
 	protected TableViewerColumn nextNodeViewerColumn;
 	protected List<Button> nextNodeButtons = new ArrayList<>();
 	protected FeedbackSelectionManager feedbackSelectionManager = new FeedbackSelectionManager();
+	protected DependencyRecovery dependencyRecovery = new DependencyRecovery();
 	
 	
     protected final int operations = DND.DROP_COPY | DND.DROP_MOVE;
@@ -435,6 +437,13 @@ public class DebugPilotFeedbackView extends ViewPart {
 					return;
 				}
 				DPUserFeedback userFeedback = feedbackSelectionManager.genDpUserFeedback(currentNode);
+				
+				//dependency recovery - GPT Version
+				if(userFeedback.getType() == DPUserFeedbackType.WRONG_VARIABLE) {
+					for (VarValue wrongVar : userFeedback.getWrongVars()) {
+						dependencyRecovery.recoverWrongVar(trace, userFeedback.getNode(), wrongVar);
+					}
+				}
 			
 				Job job = new Job("DebugPilot ....") {
 					@Override

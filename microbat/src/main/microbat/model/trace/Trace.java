@@ -1005,6 +1005,10 @@ public class Trace {
 	public TraceNode getTraceNode(int order){
 		return this.executionList.get(order-1);
 	}
+	
+	public void setTraceNode(int order, TraceNode node){
+		this.executionList.set(order-1, node);
+	}
 
 	public List<BreakPoint> allLocations() {
 		List<BreakPoint> locations = new ArrayList<>();
