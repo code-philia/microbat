@@ -1321,7 +1321,7 @@ public class TraceNode implements Comparator<TraceNode> {
 		return this.bytecode.contains("athrow");
 	}
 	
-	public void addInvokingMethod(final String invoking) {
+	public void addInvokingMethod(final String invokingMethod) {
 		this.invokingMethod += invokingMethod + "%";
 	}
 	
