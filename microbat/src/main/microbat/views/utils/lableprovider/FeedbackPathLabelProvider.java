@@ -76,6 +76,8 @@ public class FeedbackPathLabelProvider extends ColumnLabelProvider implements IT
 					throw new RuntimeException(Log.genMsg(getClass(), "Unhandled feedback type: " + userFeedback.getType()));
 				}
 			case 3:
+				return String.valueOf(userFeedback.getConfidence());
+			case 4:
 				return userFeedback.getNode().confirmed ? "Yes" : "No";
 			}
 		}

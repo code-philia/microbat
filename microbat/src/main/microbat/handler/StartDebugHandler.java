@@ -1,6 +1,9 @@
 package microbat.handler;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -16,52 +19,29 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.swt.widgets.Display;
 
-import microbat.behavior.Behavior;
-import microbat.behavior.BehaviorData;
-import microbat.behavior.BehaviorReader;
-import microbat.behavior.BehaviorReporter;
 import microbat.codeanalysis.runtime.InstrumentationExecutor;
 import microbat.codeanalysis.runtime.StepLimitException;
-import microbat.debugpilot.pathfinding.FeedbackPath;
 import microbat.evaluation.junit.TestCaseAnalyzer;
 import microbat.handler.callbacks.HandlerCallbackManager;
 import microbat.instrumentation.output.RunningInfo;
 import microbat.model.trace.Trace;
-import microbat.model.trace.TraceNode;
 import microbat.preference.AnalysisScopePreference;
 import microbat.util.JavaUtil;
 import microbat.util.MicroBatUtil;
 import microbat.util.Settings;
-import microbat.views.DebugFeedbackView;
 import microbat.views.MicroBatViews;
 import microbat.views.TraceView;
-//import microbat.views.TraceView;
 import sav.common.core.utils.FileUtils;
 import sav.strategies.dto.AppJavaClassPath;
 
 public class StartDebugHandler extends AbstractHandler {
+	private final String PYTHON_ENV = "D:\\software\\Anaconda\\envs\\pytorch\\python";
 	
-	private void clearOldData(){
-		Settings.interestedVariables.clear();
-		Settings.wrongPathNodeOrder.clear();
-//		Settings.localVariableScopes.clear();
-		Settings.potentialCorrectPatterns.clear();
-		Settings.checkingStateStack.clear();
-		
-		Settings.compilationUnitMap.clear();
-		Settings.iCompilationUnitMap.clear();
-		
-		Display.getDefault().asyncExec(new Runnable(){
-			@Override
-			public void run() {
-				DebugFeedbackView view = MicroBatViews.getDebugFeedbackView();
-				view.clear();
-			}
-			
-		});
-	}
+	private final String PYTHON_FILE = "/microbat/resources/Predictor_Server/server.py";
+	private Process process = null;
 	
 	public Object execute(ExecutionEvent event) throws ExecutionException {
+//		setUpServer();
 		
 		// Clear the DebugPilot debugging process if there are any
 		HandlerCallbackManager.getInstance().runDebugPilotTerminateCallbacks();
@@ -69,7 +49,6 @@ public class StartDebugHandler extends AbstractHandler {
 		
 		// Clear the path view and program output form
 		MicroBatViews.getPathView().updateFeedbackPath(null);
-//		MicroBatViews.getDebugPilotFeedbackView().clearProgramOutput();
 		
 		final AppJavaClassPath appClassPath = MicroBatUtil.constructClassPaths();
 		if (Settings.isRunTest) {
@@ -85,24 +64,37 @@ public class StartDebugHandler extends AbstractHandler {
 				appClassPath.getAdditionalSourceFolders().add(srcFolder);
 			}
 		}
-		
-//		InstrumentationExecutor ex = new InstrumentationExecutor(appClassPath);
-//		ex.run();
-		
-//		try {
-//			new BehaviorReader().readXLSX();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		};
-//		
-//		Behavior behavior = BehaviorData.getOrNewBehavior(Settings.launchClass);
-//		behavior.increaseGenerateTrace();
-//		new BehaviorReporter(Settings.launchClass).export(BehaviorData.projectBehavior);
-		
+
 		this.generateTrace(appClassPath);
 		return null;
 	}
 
+	private void setUpServer() {
+		if(process != null) {
+			return;
+		}
+    	try {
+			process = Runtime.getRuntime().exec(String.join(" ", PYTHON_ENV,PYTHON_FILE));
+			InputStream inputStream = process.getInputStream();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+            
+
+            BufferedReader reader2 = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String line2;
+            while ((line2 = reader2.readLine()) != null) {
+                System.out.println(line2);
+            }
+            
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    	System.out.println("--INFO-- Server has been successfully setup.");
+	}
+	
 	protected void generateTrace(final AppJavaClassPath appClassPath) {
 		try {
 			

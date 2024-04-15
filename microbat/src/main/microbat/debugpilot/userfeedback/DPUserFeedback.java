@@ -17,10 +17,18 @@ import microbat.model.value.VarValue;
  */
 public class DPUserFeedback {
 	
-	protected final DPUserFeedbackType type;
+	protected DPUserFeedbackType type;
 	protected final TraceNode node;
 	protected final Set<VarValue> correctVars;
 	protected final Set<VarValue> wrongVars;
+
+	private boolean confirmed;
+	private DPUserFeedback parent;
+	private DPUserFeedbackType parent_type;
+	private float confidence;
+	private double reach_possibility;
+	private double[] step_prediction;
+	private double[][] var_prediction;
 	
 	public DPUserFeedback(final DPUserFeedbackType type, final TraceNode node) {
 		this(type, node, null, null);
@@ -39,6 +47,7 @@ public class DPUserFeedback {
 		if (correctVars != null) {			
 			this.addCorrectVars(correctVars);
 		}
+		this.parent = null;
 	}
  
 	/**
@@ -85,6 +94,38 @@ public class DPUserFeedback {
 	public DPUserFeedbackType getType() {
 		return type;
 	}
+	
+	public String getTypeStr() {
+		if(type == DPUserFeedbackType.CORRECT) {
+			return "<CORRECT>";
+		}
+		else if(type == DPUserFeedbackType.ROOT_CAUSE) {
+			return "<ROOT>";
+		}
+		else if(type == DPUserFeedbackType.WRONG_PATH) {
+			return "<CONTROL>";
+		}
+		else if(type == DPUserFeedbackType.WRONG_VARIABLE) {
+			return "<DATA>";
+		}
+		return "<UNCLEAR>";
+	}
+	
+	public String getTypeDesc() {
+		if(type == DPUserFeedbackType.CORRECT) {
+			return "the step is correct";
+		}
+		else if(type == DPUserFeedbackType.ROOT_CAUSE) {
+			return "the step is root cause of bug";
+		}
+		else if(type == DPUserFeedbackType.WRONG_PATH) {
+			return "the step should not be excuted";
+		}
+		else if(type == DPUserFeedbackType.WRONG_VARIABLE) {
+			return "some variables are wrong";
+		}
+		return "unclear";
+	}
 
 	public TraceNode getNode() {
 		return node;
@@ -98,6 +139,99 @@ public class DPUserFeedback {
 		return wrongVars;
 	}
 	
+	public DPUserFeedback getParent() {
+		return parent;
+	}
+	
+	public float getConfidence() {
+		return confidence;
+	}
+	
+	public double getReachPossibility() {
+		return reach_possibility;
+	}
+	
+	public DPUserFeedbackType getParentType() {
+		return parent_type;
+	}
+	
+	public double[] getPrediction() {
+		return step_prediction;
+	}
+	
+	public void setPrediction(double[] p) {
+		step_prediction = p;
+	}
+	
+	public double[][] getVarPrediction(){
+		return var_prediction;
+	}
+	
+	public void setVarPrediction(double[][] p) {
+		var_prediction = p;
+	}
+	
+	public void setParentType(DPUserFeedbackType type) {
+		parent_type = type;
+	}
+	
+	public boolean isConfirmed() {
+		return confirmed;
+	}
+	
+	public void setParent(DPUserFeedback p) {
+		parent = p;
+	}
+	
+	public void setType(DPUserFeedbackType t) {
+		type = t;
+	}
+	
+	public void setTypeByPred(int i) {
+		switch(i) {
+		case 0:
+			type = DPUserFeedbackType.ROOT_CAUSE;
+			break;
+		case 1:
+			type = DPUserFeedbackType.CORRECT;
+			break;
+		case 2:
+			type = DPUserFeedbackType.WRONG_PATH;
+			break;
+		case 3:
+			type = DPUserFeedbackType.WRONG_VARIABLE;
+			break;
+		default:
+			type = DPUserFeedbackType.UNCLEAR;
+		}
+	}
+	
+	public void setConfidence(float c) {
+		confidence = c;
+	}
+	
+	public void setConfidence() {
+	    if(type==DPUserFeedbackType.ROOT_CAUSE) {
+			confidence = (float)step_prediction[0];
+		}
+		else if(type==DPUserFeedbackType.CORRECT) {
+			confidence = (float)step_prediction[1];
+		}
+		else if(type==DPUserFeedbackType.WRONG_PATH) {
+			confidence = (float)step_prediction[2];
+		}
+		else if(type == DPUserFeedbackType.WRONG_VARIABLE){
+			confidence = (float)step_prediction[3];
+		}
+	}
+	
+	public void setReachPossibility(double p) {
+		reach_possibility = p;
+	}
+	
+	public void setConfirmed(boolean c) {
+		confirmed = c;
+	}
 	
 	/**
 	 * Two feedback are similar if: <br/>

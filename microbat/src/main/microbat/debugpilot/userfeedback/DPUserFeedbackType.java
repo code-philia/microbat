@@ -20,4 +20,6 @@ public enum DPUserFeedbackType {
 	 * This node is correct
 	 */
 	CORRECT,
+	
+	UNCLEAR
 }

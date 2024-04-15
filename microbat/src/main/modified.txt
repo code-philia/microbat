@@ -1,0 +1,23 @@
+tregression:
+	tregression.util.DebuggingTraceRecorder
+	tregression.handler.AllDefects4jHandler
+	tregression.handler.OnMutationHandler
+	tregression.handler.SeparateVersionHandler
+	mutation.MutationGenerationHandler
+	mutation.trace.MutationGeneretor
+	
+	
+microbat:
+	microbat.DebugPilotExecutor 
+	microbat.StartDebugHandler 
+	microbat.DecisionPredictor.*
+	microbat.debugpilot.userfeedback.DPUserFeedbackType
+	microbat.debugpilot.userfeedback.DPUserFeedback
+	microbat.views.PathView
+	microbat.views.utils.lableprovider
+	
+	lib/javaparser
+	lib/json
+	
+	
+//--

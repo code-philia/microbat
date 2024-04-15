@@ -1,8 +1,8 @@
 package microbat.debugpilot;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 
 import org.eclipse.swt.widgets.Display;
@@ -11,6 +11,7 @@ import microbat.debugpilot.pathfinding.FeedbackPath;
 import microbat.debugpilot.settings.DebugPilotSettings;
 import microbat.debugpilot.userfeedback.DPUserFeedback;
 import microbat.debugpilot.userfeedback.DPUserFeedbackType;
+import microbat.decisionprediction.*;
 import microbat.handler.PreferenceParser;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
@@ -42,19 +43,32 @@ public class DebugPilotExecutor {
 	}
 	
 	public void execute(final DPUserFeedback userFeedback) {
-		List<DPUserFeedback> avaiableFeedbacks = this.collectAvailableFeedbacks(userFeedback);
-		if (avaiableFeedbacks == null) {
+		List<DPUserFeedback> availableFeedbacks = this.collectAvailableFeedbacks(userFeedback);
+		if (availableFeedbacks == null) {
 			return;
 		}
+		for(int i = 1;i<availableFeedbacks.size();i++) {
+			availableFeedbacks.get(i).setParent(availableFeedbacks.get(i-1));
+		}
 		
+		System.out.println("--INFO-- In DebugPilotExecutor: ");
+		System.out.println("--INFO-- userFeedback: "+userFeedback.toString());
+		System.out.println("--INFO-- lastNode: "+userFeedback.getNode().getOrder());
+		System.out.println("--INFO-- availableFeedbacks: ");
+		for(DPUserFeedback a : availableFeedbacks) {
+			System.out.println(a.getNode().getOrder()+"  "+a.toString());
+		}
+		
+		
+		// 1. dead end with Correct
 		if (userFeedback.getType() == DPUserFeedbackType.CORRECT) {
-			FeedbackPath path = new FeedbackPath(avaiableFeedbacks);
+			FeedbackPath path = new FeedbackPath(availableFeedbacks);
 			path.getFeedbacks().stream().forEach(feedback -> feedback.getNode().confirmed = true);
 			this.updatePathView(path);
-			if (avaiableFeedbacks.size() >= 1) {
+			if (availableFeedbacks.size() >= 1) {
 				
-				int idx = avaiableFeedbacks.indexOf(userFeedback);
-				DPUserFeedback prevFeedback = avaiableFeedbacks.get(idx-1);
+				int idx = availableFeedbacks.indexOf(userFeedback);
+				DPUserFeedback prevFeedback = availableFeedbacks.get(idx-1);
 				
 				String message = this.genOmissionMessage(userFeedback.getNode().getOrder(), prevFeedback.getNode().getOrder(), prevFeedback);
 				DialogUtil.popInformationDialog(message, "DebugPilot Info");
@@ -62,48 +76,74 @@ public class DebugPilotExecutor {
 			return;
 		}
 		
-		// Get debug pilot setting from preference
-		DebugPilotSettings settings = new DebugPilotSettings();
-		settings.setPropagatorSettings(PreferenceParser.getPreferencePropagatorSettings());
-		settings.setPathFinderSettings(PreferenceParser.getPreferencePathFinderSettings());
-		settings.setRootCauseLocatorSettings(PreferenceParser.getPrefereRootCauseLocatorSettings());
-		settings.setWrongVars(new HashSet<>());
-		settings.setCorrectVars(new HashSet<>());
-		// Determine the output step
-		// We can directly get(0) because feedbacks must have one element
-		final TraceNode outputNode = avaiableFeedbacks.get(0).getNode();
-		settings.setOutputNode(outputNode);
 		
-		// Set trace
-		final Trace trace = this.traceView.getTrace();
-		settings.setTrace(trace);
-		
-		// Set feedbacks
-		settings.setFeedbackRecords(avaiableFeedbacks);
-		
-		final DebugPilot debugPilot = new DebugPilot(settings);
-		debugPilot.multiSlicing();
-		debugPilot.propagate();
-		
-		TraceNode rootCause = debugPilot.locateRootCause();
-		if (rootCause == null) {
-			DialogUtil.popErrorDialog("Cannot locate root cause.", "DebugPilot Error");
-			return;
+		// 2. learn feedback, fine-tune the model during runtime
+		boolean learnFeedback = false;
+		if(learnFeedback) {
+			FeedbackLearner feedbackLearner = new FeedbackLearner();
+			try {
+				feedbackLearner.learnFeedback(userFeedback);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		
-		FeedbackPath path = debugPilot.constructPath(rootCause);
-		this.updatePathView(path);
-		
-		Display.getDefault().syncExec(() -> {
+		// 3. construct debugging plan
+		boolean useDebugPilot = false;		
+		if(useDebugPilot) {
+			final Trace trace = this.traceView.getTrace();
+			final TraceNode outputNode = availableFeedbacks.get(0).getNode();
 			
-			for (TraceNode nextNode : TraceUtil.findAllNextNodes(userFeedback)) {
-				if (path.containFeedbackByNode(nextNode)) {
-					this.pathView.focusOnNode(nextNode);
-					break;
-				}
+			// Get debug pilot setting from preference
+			DebugPilotSettings settings = new DebugPilotSettings();
+			settings.setPropagatorSettings(PreferenceParser.getPreferencePropagatorSettings());
+			settings.setPathFinderSettings(PreferenceParser.getPreferencePathFinderSettings());
+			settings.setRootCauseLocatorSettings(PreferenceParser.getPrefereRootCauseLocatorSettings());
+			
+			// Determine the output step
+			// We can directly get(0) because feedbacks must have one element
+			settings.setOutputNode(outputNode);
+			
+			// Set trace
+			settings.setTrace(trace);
+			
+			// Set feedbacks
+			settings.setFeedbackRecords(availableFeedbacks);
+
+			// Run DebugPilot 
+			final DebugPilot debugPilot = new DebugPilot(settings);
+			debugPilot.multiSlicing();
+			debugPilot.propagate();
+			
+			TraceNode rootCause = debugPilot.locateRootCause();
+			if (rootCause == null) {
+				DialogUtil.popErrorDialog("Cannot locate root cause.", "DebugPilot Error");
+				return;
 			}
-			
-		});
+			FeedbackPath path = debugPilot.constructPath(rootCause);
+			this.updatePathView(path);
+			Display.getDefault().syncExec(() -> {
+				for (TraceNode nextNode : TraceUtil.findAllNextNodes(userFeedback)) {
+					if (path.containFeedbackByNode(nextNode)) {
+						this.pathView.focusOnNode(nextNode);
+						break;
+					}
+				}
+			});
+		}
+		else {// use DecisionPredictor
+			FeedbackPathGenerator feedbackPathGenerator = new FeedbackPathGenerator();
+			FeedbackPath path = feedbackPathGenerator.generateFeedbackPath(availableFeedbacks);
+			this.updatePathView(path);
+			Display.getDefault().syncExec(() -> {
+				for (TraceNode nextNode : TraceUtil.findAllNextNodes(userFeedback)) {
+					if (path.containFeedbackByNode(nextNode)) {
+						this.pathView.focusOnNode(nextNode);
+						break;
+					}
+				}
+			});
+		}
 	}
 	
 	protected List<DPUserFeedback> collectAvailableFeedbacks(final DPUserFeedback userFeedback) {
@@ -120,6 +160,7 @@ public class DebugPilotExecutor {
 		
 		// Collect available feedbacks and sort it
 		List<DPUserFeedback> avaiableFeedbacks = new ArrayList<>();
+		userFeedback.setConfirmed(true);
 		avaiableFeedbacks.add(userFeedback);
 		if (feedbackPath != null) {
 			for(DPUserFeedback dpUserFeedback : feedbackPath.getFeedbacks()) {

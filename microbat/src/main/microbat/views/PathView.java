@@ -213,22 +213,27 @@ public class PathView extends ViewPart {
 		table.setLayoutData(gridData);
 		
 		TableColumn IdColumn = new TableColumn(table, SWT.LEFT);
-		IdColumn.setAlignment(SWT.LEFT);
+		IdColumn.setAlignment(SWT.CENTER);
 		IdColumn.setText("Path");
 		IdColumn.setWidth(50);
 		
 		TableColumn TraceNodeColumn = new TableColumn(table, SWT.LEFT);
-		TraceNodeColumn.setAlignment(SWT.LEFT);
+		TraceNodeColumn.setAlignment(SWT.CENTER);
 		TraceNodeColumn.setText("Step");
 		TraceNodeColumn.setWidth(100);
 		
 		TableColumn predictionColumn = new TableColumn(table, SWT.LEFT);
-		predictionColumn.setAlignment(SWT.LEFT);
+		predictionColumn.setAlignment(SWT.CENTER);
 		predictionColumn.setText("Prediction");
-		predictionColumn.setWidth(200);
+		predictionColumn.setWidth(180);
+		
+		TableColumn confidenceColumn = new TableColumn(table, SWT.LEFT);
+		confidenceColumn.setAlignment(SWT.CENTER);
+		confidenceColumn.setText("Confidence");
+		confidenceColumn.setWidth(120);
 		
 		TableColumn confirmColumn = new TableColumn(table, SWT.LEFT);
-		confirmColumn.setAlignment(SWT.LEFT);
+		confirmColumn.setAlignment(SWT.CENTER);
 		confirmColumn.setText("Confirm");
 		confirmColumn.setWidth(70);
 		
@@ -243,6 +248,13 @@ public class PathView extends ViewPart {
 	}
 	
 	public void updateFeedbackPath(final FeedbackPath feedbackPath) {
+		// -- clear previous confirm
+		if(feedbackPath == null && this.feedbackPath != null) {
+			for(DPUserFeedback feedback : this.feedbackPath.getFeedbacks()) {
+				feedback.getNode().confirmed = false;
+			}
+		}
+		
 		this.feedbackPath = feedbackPath;
 		Display.getDefault().syncExec(new Runnable() {
 		    @Override

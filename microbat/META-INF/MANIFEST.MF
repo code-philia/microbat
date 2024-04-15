@@ -43,7 +43,9 @@ Bundle-ClassPath: .,
  lib/jgrapht-core-1.5.2.jar,
  lib/jgrapht-io-1.5.2.jar,
  lib/jheaps-0.14.jar,
- lib/belief-propagation-java.jar
+ lib/belief-propagation-java.jar,
+ lib/javaparser-core-3.25.8.jar,
+ lib/json-20151123.jar
 Export-Package: 
  microbat;uses:="org.osgi.framework,org.eclipse.jface.resource,org.eclipse.ui.plugin",
  microbat.agent,
