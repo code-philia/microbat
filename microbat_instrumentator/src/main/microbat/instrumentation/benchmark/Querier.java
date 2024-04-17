@@ -17,7 +17,7 @@ public class Querier {
     private static String apiKey;
 	private static String model3 = "gpt-3.5-turbo";
     private static String model4 = "gpt-4-turbo-preview";
-	private static String base_directory = "C:\\Users\\hongshu3\\eclipse\\dropins\\junit_lib\\";
+	private static String base_directory = "C:\\Users\\hongshu\\eclipse\\dropins\\junit_lib\\";
     private static String propertiesFileName = base_directory + "properties.txt";
     /* v1: (request : response) */
     private static Map<String, String> dictionary;
@@ -170,7 +170,9 @@ public class Querier {
 			}
     	}
 		String request = new String(characters);
-		return request.replaceAll("(\")", "\\\\\"").replaceAll("(\n)", "\\\\n");
+		return request.replaceAll("\\\\", "/").replaceAll("(\')", "\"")
+				.replaceAll("(\")", "\\\\\"")
+				.replaceAll("(\n)", "\\\\n");
     }
 
 //    public static String getResult(String input) throws Exception {
@@ -237,6 +239,7 @@ public class Querier {
             return extractMessageFromJSONResponse(response.toString());
 
         } catch (IOException e) {
+			System.out.println(query);
             throw new RuntimeException(e);
         }
     }

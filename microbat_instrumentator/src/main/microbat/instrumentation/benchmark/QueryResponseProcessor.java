@@ -97,9 +97,17 @@ public class QueryResponseProcessor {
 			String residingClass, int line, ExecutionTracer tracer) {
 		Set<VarValue> variables = new HashSet<>();
 		String[] entries = response.split(";");
-		Field[] fields = null;
+		Set<Field> fields = new HashSet<>();
 		if (value != null) {
-			fields = value.getClass().getDeclaredFields();
+			Class<?> clazz = value.getClass();
+			while (clazz != null) {
+				Field[] layer = clazz.getDeclaredFields();
+				for (Field f : layer) {
+					f.setAccessible(true);
+					fields.add(f);
+				}
+				clazz = clazz.getSuperclass();
+			}
 		}
 		for (String entry : entries) {
 			entry = entry.trim();
@@ -137,7 +145,7 @@ public class QueryResponseProcessor {
 				}
 				index++;
 			}
-			if (isFound) {
+			if (isFound || variable.getVarName().equals(names[index])) {
 				variables.add(current);
 			} else {
 				index = 0;
@@ -150,7 +158,8 @@ public class QueryResponseProcessor {
 								String varType = f.getType().toString();
 								VarValue newVarValue = tracer.createVarValue(varName, varType, residingClass, line, "",
 										f.get(value));
-								variables.add(newVarValue);
+								variable.addChild(newVarValue);
+								variables.add(variable);
 							} catch (IllegalArgumentException | IllegalAccessException e) {
 								variables.add(variable);
 							}

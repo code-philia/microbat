@@ -447,7 +447,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					}
 					
 					// second attempt: decompile code from method signature, where arguments are from method
-					if (code == null || code.equals("")) {
+					if (code == null || code.equals("") || !code.endsWith(";") || code.contains("\\")) {
 						code = QueryRequestGenerator.getCode(varValue.getVarName(), methodSig, varValue == null
 								? methodSig.split("#")[0]
 								: (varValue.getRuntimeType() == null ? varValue.getType() : varValue.getRuntimeType()));
@@ -559,7 +559,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				initInvokingDetail(null, invokeTypeSign, methodSig, params, paramTypeSignsCode, className, latestNode);
 				
 				/* gpt v2 */
-				if (!methodSig.contains("<init>") && !methodSig.contains("valueOf")) {
+				if (!methodSig.contains("valueOf")) {
 					/* Retrieve code. */
 					Path path = QueryUtils.getPath(className);
 					String code = "";
@@ -568,7 +568,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 						code = QueryUtils.getCode(path, line);
 					}
 					// second attempt: decompile code from method signature, where arguments are from method
-					if (code == null || code.equals("")) {
+					if (code == null || code.equals("") || !code.endsWith(";") || code.contains("\\")) {
 						code = QueryRequestGenerator.getCodeStatic(methodSig);
 					}
 					// third attempt: decompile code from method signature, where arguments are from the current node
@@ -577,6 +577,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					}
 
 					/* get request */
+					Collection<VarValue> readVariables = latestNode.getReadVariables();
 					List<VarValue> parameters = new ArrayList<>();
 					List<Integer> indices = new ArrayList<>();
 					for (int i = 0; i < params.length; i++) {
@@ -584,16 +585,15 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 						if (param == null || param.getClass() == null) {
 							continue;
 						}
-						String varName = "input" + i;
 						String varType = param.getClass().toString();
-						VarValue parameter = createVarValue(varName, varType, className, line, "", param);
-
-						// skip primitives
-						if (parameter.getAliasVarID() == null) {
-							continue;
+						String aliasID = TraceUtils.getObjectVarId(param, varType);
+						for (VarValue readVar : readVariables) {
+							if (readVar.getAliasVarID() != null && readVar.getAliasVarID().equals(aliasID)) {
+								parameters.add(readVar);
+								indices.add(i);
+								break;
+							}
 						}
-						parameters.add(parameter);
-						indices.add(i);
 					}
 					String request = QueryRequestGenerator.getQueryRequestFromParams(parameters, code);
 
