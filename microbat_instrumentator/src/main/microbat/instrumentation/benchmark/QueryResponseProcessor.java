@@ -1,5 +1,6 @@
 package microbat.instrumentation.benchmark;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
@@ -147,26 +148,43 @@ public class QueryResponseProcessor {
 			}
 			if (isFound || variable.getVarName().equals(names[index])) {
 				variables.add(current);
-			} else {
-				index = 0;
-				while (index < names.length) {
-					String fieldName = names[index];
-					for (Field f : fields) {
-						if (f != null && f.getName().equals(fieldName)) {
-							try {
+			}
+			index = 0;
+			while (index < names.length) {
+				String fieldName = names[index];
+				boolean isElementInArray = false;
+				int elementPos = -1;
+				if (fieldName.contains("[")) {
+					isElementInArray = true;
+					String array = fieldName.substring(0, fieldName.indexOf("["));
+					elementPos = Integer.valueOf(fieldName.substring(fieldName.indexOf("[") + 1, fieldName.indexOf("]")));
+					fieldName = array;
+				}
+				for (Field f : fields) {
+					if (f != null && f.getName().equals(fieldName)) {
+						try {
+							if (isElementInArray) {
+								String varName = variable.getVarName() + "." + fieldName + "[" + elementPos + "]";
+								Object elementValue = Array.get(f.get(value), elementPos);
+								String varType = elementValue.getClass().getName();
+								VarValue newVarValue = tracer.createVarValue(varName, varType, residingClass, line, "",
+										elementValue);
+								variable.addChild(newVarValue);
+								variables.add(variable);
+							} else {
 								String varName = variable.getVarName() + "." + fieldName;
 								String varType = f.getType().toString();
 								VarValue newVarValue = tracer.createVarValue(varName, varType, residingClass, line, "",
 										f.get(value));
 								variable.addChild(newVarValue);
 								variables.add(variable);
-							} catch (IllegalArgumentException | IllegalAccessException e) {
-								variables.add(variable);
 							}
+						} catch (IllegalArgumentException | IllegalAccessException e) {
+							variables.add(variable);
 						}
 					}
-					index++;
 				}
+				index++;
 			}
 		}
 		return variables;
