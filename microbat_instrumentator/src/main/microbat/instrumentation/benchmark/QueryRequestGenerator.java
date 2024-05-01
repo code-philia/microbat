@@ -2,8 +2,10 @@ package microbat.instrumentation.benchmark;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.List;
-
 import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
@@ -12,6 +14,7 @@ import org.apache.bcel.generic.Type;
 import org.apache.commons.io.IOUtils;
 
 import microbat.model.value.VarValue;
+import microbat.util.PrimitiveUtils;
 
 public class QueryRequestGenerator {
 
@@ -75,6 +78,110 @@ public class QueryRequestGenerator {
 		stringBuilder.append("\" are modified:");
 		
 		return stringBuilder.toString();
+	}
+	
+	public static String getVariableJsonString(String variableName, Object variableValue) {
+		StringBuilder stringBuilder = new StringBuilder();
+		getJsonStringRecur(stringBuilder, variableName, variableValue.getClass().getName(), variableValue, 3);
+		return stringBuilder.toString();
+	}
+	
+	private static void getJsonStringRecur(StringBuilder sb, String name, String type, Object variableValue, int layer) {
+		if (layer < 0) {
+			return;
+		} else if (layer == 0) {
+			sb.append("{name:");
+			sb.append(name);
+			sb.append(",type:");
+			sb.append(type);
+			sb.append(",value:");
+			if (variableValue == null) {
+				sb.append("null};");
+				return;
+			} else {
+				sb.append(getStringValue(variableValue, type));
+				sb.append("};");
+				return;
+			}
+		}
+		
+		sb.append("{name:");
+		sb.append(name);
+		sb.append(",type:");
+		sb.append(type);
+		sb.append(",value:");
+		if (variableValue == null) {
+			sb.append("null};");
+			return;
+		}
+		
+		if (PrimitiveUtils.isPrimitiveTypeOrString(type)) {
+			/* primitive or string */
+			sb.append(getStringValue(variableValue, type));
+			sb.append("};");
+		} else if (type.contains("[")) {
+			/* array */
+			int length = Array.getLength(variableValue);
+			sb.append("[");
+			for (int i = 0; i < length; i++) {
+				String varName = name + "[" + i + "]";
+				Object elementValue = Array.get(variableValue, i);
+				String componentType = elementValue == null ? type.substring(1): elementValue.getClass().getName();
+				getJsonStringRecur(sb, varName, componentType, elementValue, layer - 1);
+			}
+			sb.append("]};");
+		} else {
+			/* reference type */
+			sb.append("[");
+			Class<?> clazz = variableValue.getClass();
+			while (clazz != null) {
+				Field[] fields = clazz.getDeclaredFields();
+				for (Field f : fields) {
+					boolean isFinal = Modifier.isFinal(f.getModifiers());
+					if (isFinal) {
+						continue;
+					}
+					f.setAccessible(true);
+					try {
+						String varName = f.getName();
+						String componentType = f.getType().getName();
+						Object val = f.get(variableValue);
+						getJsonStringRecur(sb, varName, componentType, val, layer - 1);
+					} catch (IllegalArgumentException | IllegalAccessException e) {
+						e.printStackTrace();
+					}
+				}
+				clazz = clazz.getSuperclass();
+			}
+			sb.append("]};");
+		}
+
+	}
+	
+	private static String getStringValue(final Object obj, String type) {
+		try {
+			if (obj == null) {
+				return "null";
+			}
+
+			String simpleType = null;
+			if (type != null && type.contains("[")) {
+				simpleType = type.substring(1);
+			}
+
+			if (simpleType != null) {
+				if (simpleType.equals("char")) {
+					char[] charArray = (char[]) obj;
+					return String.valueOf(charArray);
+				}
+			}
+
+			String value = String.valueOf(obj);
+			
+			return value;
+		} catch (Throwable t) {
+			return null;
+		}
 	}
 
 	private static ClassGen loadClass(String className) {

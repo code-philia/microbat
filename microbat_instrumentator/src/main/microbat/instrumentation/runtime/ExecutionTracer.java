@@ -435,7 +435,8 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				
 				// skip constructor and methods where execution is recorded
 				if (varValue != null && !methodSig.contains("<init>") && !methodSig.contains("valueOf")) {
-					String variableInfo = varValue.getJsonString();
+					String variableInfo = QueryRequestGenerator.getVariableJsonString(varValue.getVarName(), invokeObj);
+//					String variableInfo = varValue.getJsonString();
 					latestNode.setVariableInfo(variableInfo);
 					
 					Path path = QueryUtils.getPath(residingClassName);
