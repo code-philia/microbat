@@ -73,7 +73,11 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	 * indicate whether the execution of the thread should be recorded 
 	 */
 	private TrackingDelegate trackingDelegate;
-
+	
+	private String runningMethod;
+	private TraceNode invokeNode;
+	private Map<String, TraceNode> shouldSendQuery = new HashMap<>();
+	
 	public static void setExpectedSteps(int expectedSteps) {
 		if (expectedSteps != AgentConstants.UNSPECIFIED_INT_VALUE) {
 			ExecutionTracer.expectedSteps = expectedSteps;
@@ -307,6 +311,11 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			String paramTypeSignsCode, String paramNamesCode, Object[] params) {
 		trackingDelegate.untrack();
 		TraceNode caller = trace.getLatestNode();
+		
+		if (runningMethod != null && !methodSignature.equals(runningMethod)) {
+			shouldSendQuery.put(runningMethod, invokeNode);
+		}
+		
 		if (caller != null && caller.getMethodSign().contains("<clinit>")) {
 			caller = caller.getInvocationParent();
 		}
@@ -435,6 +444,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				
 				// skip constructor and methods where execution is recorded
 				if (varValue != null && !methodSig.contains("<init>") && !methodSig.contains("valueOf")) {
+					runningMethod = methodSig;
+					invokeNode = latestNode;
+					
 					String variableInfo = QueryRequestGenerator.getVariableJsonString(varValue.getVarName(), invokeObj);
 //					String variableInfo = varValue.getJsonString();
 					latestNode.setVariableInfo(variableInfo);
@@ -684,14 +696,24 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					VarValue varValue = findVariable(varType, invokeObj, latestNode.getReadVariables());
 					
 					// get variable info
+					String invokeVarName = varValue == null ? null : varValue.getVarName();
 					String code = latestNode.getSourceCode();
 					String variableInfo = latestNode.getVariableInfo();
 					String request = "";
 					
-					if (varValue != null && variableInfo != null && !variableInfo.equals("") && code != null && !code.equals("")) {
+					// special case
+					if (invokeVarName == null && code == null && variableInfo == null && shouldSendQuery.containsKey(invokeMethodSig)) {
+						TraceNode stepInNode = shouldSendQuery.get(invokeMethodSig);
+						varValue = findVariable(varType, invokeObj, stepInNode.getReadVariables());
+						invokeVarName = varValue == null ? null : varValue.getVarName();
+						code = stepInNode.getSourceCode();
+						variableInfo = stepInNode.getVariableInfo();
+						shouldSendQuery.remove(invokeMethodSig);
+					}
+					
+					if (invokeVarName != null && variableInfo != null && !variableInfo.equals("") && code != null && !code.equals("")) {
 						// query for field method
-						String varName = varValue.getVarName();
-						request = QueryRequestGenerator.getQueryRequestV2(varName, variableInfo, code);
+						request = QueryRequestGenerator.getQueryRequestV2(invokeVarName, variableInfo, code);
 					}
 
 					// query gpt
