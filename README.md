@@ -17,6 +17,11 @@ If you need to reference our technique, please use the following citations:
 - Yun Lin, Jun Sun, Yinxing Xue, Yang Liu, and Jinsong Dong. Feedback-based Debugging. The 39th ACM SIGSOFT International Conference on Software Engineering (ICSE 2017), pp. 393-403.
 - Yun Lin, Jun Sun, Lyly Tran, Guangdong Bai, Haijun Wang, and Jinsong Dong. Break the Dead End of Dynamic Slicing: Localizing Data and Control Omission Bug. The 33rd IEEE/ACM International Conference on Automated Software Engineering (ASE 2018), pp. 509-519.
 
+# ❗Important Notice
+If you are using __Eclipse 4.25 (2022-09)__ or later versions, __Java 17__ or newer JRE/JDK is required.
+
+For older versions of Eclipse, please refer to the [Eclipse Wiki Page](https://wiki.eclipse.org/Eclipse/Installation) for more information.
+
 # Installation
 Our debugger can be divided into two parts: trace collector and the bug inference engine. Two parts are presented in terms of an Eclipse plugin. 
 1. After you clone the git repository, you need to load the microbat repository into __eclipse__ (as the tool is manifested by Eclipse plugin). We recommend that the user should import the project through "Git perspective".
