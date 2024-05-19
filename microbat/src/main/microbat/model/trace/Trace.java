@@ -22,6 +22,7 @@ import microbat.model.Scope;
 import microbat.model.value.VarValue;
 import microbat.model.value.VirtualValue;
 import microbat.model.variable.Variable;
+import microbat.tracerecov.VariableMapper;
 import microbat.util.JavaUtil;
 import microbat.util.Settings;
 import sav.strategies.dto.AppJavaClassPath;
@@ -259,6 +260,71 @@ public class Trace {
 	 */
 	public TraceNode findDataDependency(TraceNode checkingNode, VarValue readVar) {
 		return findProducer(readVar, checkingNode);
+	}
+	
+	/**
+	 * Updated version for data dependency searching.
+	 * 
+	 * @author hongshuwang
+	 */
+	public TraceNode findRecoveredDataDependency(TraceNode checkingNode, VarValue readVar) {
+		List<TraceNode> relevantSteps = findRelevantSteps(readVar, checkingNode);
+		for (TraceNode node : relevantSteps) {
+			mapVariables(readVar, node);
+		}
+		return null;
+	}
+	
+	/**
+	 * Search for relevant steps based on the ID of the varValue.
+	 * 
+	 * Definition of a relevant step: reads the variable.
+	 * 
+	 * @author hongshuwang
+	 */
+	public List<TraceNode> findRelevantSteps(VarValue varValue, TraceNode currentNode) {
+		List<TraceNode> relevantSteps = new ArrayList<>();
+
+		String varID = Variable.truncateSimpleID(varValue.getVarID());
+		String headID = Variable.truncateSimpleID(varValue.getAliasVarID());
+		
+		int startOrder = currentNode.getOrder() - 1;
+		
+		for(int i = startOrder; i >= 1; i--) {
+			TraceNode node = this.getTraceNode(i);
+			
+			List<VarValue> variables = node.getReadVariables();
+			
+			for(VarValue variable : variables) {
+				String rVarID = Variable.truncateSimpleID(variable.getVarID());
+				String rHeadID = Variable.truncateSimpleID(variable.getAliasVarID());
+				
+				if(rVarID != null && rVarID.equals(varID)) {
+					relevantSteps.add(node);
+					break;
+				}
+				
+				if(rHeadID != null && rHeadID.equals(headID)) {
+					relevantSteps.add(node);
+					break;
+				}
+				
+				VarValue childValue = variable.findVarValue(varID, headID);
+				if(childValue != null) {
+					relevantSteps.add(node);
+					break;
+				}
+			}
+		}
+		
+		return relevantSteps;
+	}
+	
+	public void mapVariables(VarValue varValue, TraceNode node) {
+		List<String> candidateVariables = varValue.getCandidateVariables();
+		VariableMapper.mapVariables(node.getInvokingMethod(), candidateVariables);
+		
+		return;
 	}
 	
 	public List<TraceNode> findDataDependentee(TraceNode traceNode, VarValue writtenVar) {

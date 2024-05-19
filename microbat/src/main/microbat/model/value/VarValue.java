@@ -33,6 +33,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 	protected List<VarValue> parents = new ArrayList<>();
 	protected Variable variable;
 	protected List<VarValue> children = new ArrayList<>();
+	private List<String> candidateVariables = new ArrayList<>();
 	
 	/**
 	 * indicate whether this variable is a top-level variable in certain step.
@@ -548,5 +549,13 @@ public abstract class VarValue implements GraphNode, Serializable {
 	
 	public void setSuspiciousness(final double suspiciousness) {
 		this.suspiciousness = suspiciousness;
+	}
+	
+	public List<String> getCandidateVariables() {
+		return this.candidateVariables;
+	}
+	
+	public void setCandidateVariables(List<String> candidateVariables) {
+		this.candidateVariables = candidateVariables;
 	}
 }
