@@ -6,9 +6,7 @@
 	<classpathentry kind="src" path="src/behavior"/>
 	<classpathentry exported="true" kind="lib" path="lib/instrumentator.jar" sourcepath="/microbat_instrumentator"/>
 	<classpathentry exported="true" kind="lib" path="lib/mysql-connector-java-5.1.44-bin.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/asm-util-6.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/asm-tree-6.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/asm-6.0.jar" sourcepath="lib/asm_src.zip"/>
+	<classpathentry exported="true" kind="lib" path="lib/asm-9.6.jar" sourcepath="lib/asm-9.6-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/bcel-6.0.jar" sourcepath="lib/bcel-6.0-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/soot-trunk.jar" sourcepath="lib/sootclasses-trunk-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/poi-ooxml-schemas-3.11-20141221.jar"/>
