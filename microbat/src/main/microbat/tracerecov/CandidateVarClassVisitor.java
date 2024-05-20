@@ -3,7 +3,8 @@ package microbat.tracerecov;
 import org.objectweb.asm.MethodVisitor;
 
 /**
- * This class defines a class visitor with {@link CandidateVarMethodVisitor} as method visitor.
+ * This class defines a class visitor with {@link CandidateVarMethodVisitor} as
+ * method visitor.
  * 
  * @author hongshuwang
  */
@@ -12,11 +13,11 @@ public class CandidateVarClassVisitor extends AbstractClassVisitor {
 	public CandidateVarClassVisitor(String className, String methodName, String methodDescriptor) {
 		super(className, methodName, methodDescriptor);
 	}
-	
+
 	public CandidateVarClassVisitor(String className, String methodName, String methodDescriptor, boolean reset) {
 		super(className, methodName, methodDescriptor, reset);
 	}
-	
+
 	/**
 	 * Record parent class in classesOfInterest.
 	 */
@@ -29,7 +30,8 @@ public class CandidateVarClassVisitor extends AbstractClassVisitor {
 	 * Only visit specific method.
 	 */
 	@Override
-	public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+	public MethodVisitor visitMethod(int access, String name, String descriptor, String signature,
+			String[] exceptions) {
 		if (name.equals(this.methodName) && descriptor.equals(this.methodDescriptor)) {
 			if (reset) {
 				CandidateVarMethodVisitor.reset();
@@ -38,5 +40,5 @@ public class CandidateVarClassVisitor extends AbstractClassVisitor {
 		}
 		return null;
 	}
-	
+
 }

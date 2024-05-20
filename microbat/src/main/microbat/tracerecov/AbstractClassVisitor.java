@@ -8,28 +8,29 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 /**
- * This class defines an abstract class visitor that visits the specific method only.
+ * This class defines an abstract class visitor that visits the specific method
+ * only.
  * 
  * @author hongshuwang
  */
 public abstract class AbstractClassVisitor extends ClassVisitor {
-	
+
 	protected String methodName;
 	protected String methodDescriptor;
 	protected boolean reset;
 	protected Set<String> classesOfInterest;
 
 	public AbstractClassVisitor(String className, String methodName, String methodDescriptor) {
-		super(Opcodes.ASM6);
+		super(Opcodes.ASM9);
 		this.classesOfInterest = new HashSet<>();
 		this.classesOfInterest.add(className.replace('/', '.'));
 		this.methodName = methodName;
 		this.methodDescriptor = methodDescriptor;
 		this.reset = true;
 	}
-	
+
 	public AbstractClassVisitor(String className, String methodName, String methodDescriptor, boolean reset) {
-		super(Opcodes.ASM6);
+		super(Opcodes.ASM9);
 		this.classesOfInterest = new HashSet<>();
 		this.classesOfInterest.add(className.replace('/', '.'));
 		this.methodName = methodName;
@@ -38,6 +39,7 @@ public abstract class AbstractClassVisitor extends ClassVisitor {
 	}
 
 	@Override
-	public abstract MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions);
-	
+	public abstract MethodVisitor visitMethod(int access, String name, String descriptor, String signature,
+			String[] exceptions);
+
 }

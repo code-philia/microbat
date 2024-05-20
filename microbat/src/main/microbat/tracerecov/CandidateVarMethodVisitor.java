@@ -16,15 +16,15 @@ import org.objectweb.asm.Opcodes;
 public class CandidateVarMethodVisitor extends MethodVisitor {
 	private static Set<String> relevantFields = new HashSet<>();
 	private static Set<String> visitedMethods = new HashSet<>();
-	
+
 	private Set<String> classesOfInterest;
-	
+
 	public CandidateVarMethodVisitor(Set<String> classesOfInterest) {
-		super(Opcodes.ASM6, null);
+		super(Opcodes.ASM9, null);
 		this.classesOfInterest = new HashSet<>();
 		this.classesOfInterest.addAll(classesOfInterest);
 	}
-	
+
 	/**
 	 * Record visited fields.
 	 */
@@ -33,9 +33,10 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 		super.visitFieldInsn(opcode, owner, name, descriptor);
 		relevantFields.add(name);
 	}
-	
+
 	/**
-	 * Visit invoked methods in the current class and the parent class. Skip visited methods.
+	 * Visit invoked methods in the current class and the parent class. Skip visited
+	 * methods.
 	 */
 	@Override
 	public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
@@ -46,7 +47,7 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 			visitMethod(owner, name, descriptor);
 		}
 	}
-	
+
 	private void visitMethod(String owner, String methodName, String methodDescriptor) {
 		try {
 			String className = owner.replace('/', '.');
@@ -55,19 +56,20 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-    }
-	
+	}
+
 	/**
-	 * Reset relevant fields and visited methods to be an empty sets.
-	 * Consider variable v with candidate variables to be identified, this method should be called for each v.
+	 * Reset relevant fields and visited methods to be an empty sets. Consider
+	 * variable v with candidate variables to be identified, this method should be
+	 * called for each v.
 	 */
 	public static void reset() {
 		relevantFields = new HashSet<>();
 		visitedMethods = new HashSet<>();
 	}
-	
+
 	public static Set<String> getRelevantFields() {
 		return relevantFields;
 	}
-	
+
 }
