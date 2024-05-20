@@ -320,11 +320,21 @@ public class Trace {
 		return relevantSteps;
 	}
 	
+	/**
+	 * Map candidate variable to variable on trace.
+	 * 
+	 * @author hongshuwang
+	 */
 	public void mapVariables(VarValue varValue, TraceNode node) {
 		List<String> candidateVariables = varValue.getCandidateVariables();
-		VariableMapper.mapVariables(node.getInvokingMethod(), candidateVariables);
 		
-		return;
+		String returnedFieldType = VariableMapper.getReturnTypeOfCandidateVariable(node.getInvokingMethod(), candidateVariables);
+		VarValue returnedVariable = node.getWrittenVariables()
+				.stream()
+				.filter(v -> v.getType().equals(returnedFieldType))
+				.findFirst()
+				.orElse(null);
+		VariableMapper.mapVariable(returnedVariable, varValue);
 	}
 	
 	public List<TraceNode> findDataDependentee(TraceNode traceNode, VarValue writtenVar) {

@@ -2,50 +2,90 @@ package microbat.tracerecov;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
+
 import org.objectweb.asm.ClassReader;
 
+import microbat.model.value.VarValue;
+
+/**
+ * This class performs static analysis and maps candidate variables to recorded
+ * variables.
+ * 
+ * @author hongshuwang
+ */
 public class VariableMapper {
 
 	/**
-	 * Given invokingMethod, map the candidate variables.
-	 * 
-	 * @param invokingMethod
-	 * @return
+	 * Given invokingMethod, get the return type of the candidate variable.
 	 */
-	public static void mapVariables(String invokingMethod, List<String> candidateVariables) {
+	public static String getReturnTypeOfCandidateVariable(String invokingMethod, List<String> candidateVariables) {
 		if (invokingMethod == null || invokingMethod.startsWith("%")) {
-			return;
+			return null;
 		}
-		
+
 		String className = invokingMethod.split("#")[0];
 		String methodSignature = invokingMethod.split("#")[1].split("%")[0];
 		int index = methodSignature.indexOf("(");
 		String methodName = methodSignature.substring(0, index);
 		String methodDescriptor = methodSignature.substring(index);
-		
-		mapVariables(className, methodName, methodDescriptor, methodSignature, candidateVariables);
+
+		return getReturnTypeOfCandidateVariable(className, methodName, methodDescriptor, methodSignature,
+				candidateVariables);
 	}
-	
-	private static void mapVariables(String className, String methodName, String methodDescriptor, String methodSignature, List<String> candidateVariables) {
+
+	/**
+	 * Create a copy of variableOnTrace in parentVariable with value == null.
+	 */
+	public static void mapVariable(VarValue variableOnTrace, VarValue parentVariable) {
+		if (variableOnTrace == null) {
+			return;
+		}
+
+		VarValue child = variableOnTrace.clone();
+		child.setStringValue(null);
+		child.setParents(Arrays.asList(parentVariable));
+		child.setRoot(false);
+		child.setVarID(parentVariable.getVarID() + "-" + child.getVarName());
+
+		parentVariable.addChild(child);
+	}
+
+	private static String getReturnTypeOfCandidateVariable(String className, String methodName, String methodDescriptor,
+			String methodSignature, List<String> candidateVariables) {
 		// load the class
 		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream(className.replace('.', '/') + ".class");
-		
+
 		try {
 			ClassReader classReader = new ClassReader(inputStream);
-			
-			// create and accept a classVisitor
-			VarMappingClassVisitor classVisitor = new VarMappingClassVisitor(className, methodName, methodDescriptor);
-			classReader.accept(classVisitor, 0);
-			
-			String fieldName = VarMappingMethodVisitor.getReturnedField();
-			
-			System.out.println();
 
+			// create and accept a classVisitor
+			VarMappingClassVisitor classVisitor = new VarMappingClassVisitor(className, methodName, methodDescriptor,
+					candidateVariables);
+			classReader.accept(classVisitor, 0);
+
+			String typeDescriptor = VarMappingMethodVisitor.getReturnedFieldType();
+			return convertDescriptorToType(typeDescriptor);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
+		return null;
 	}
+
+	private static String convertDescriptorToType(String descriptor) {
+		if (descriptor == null) {
+			return null;
+		}
+
+		if (descriptor.startsWith("L") && descriptor.endsWith(";")) {
+			String typeName = descriptor.substring(1, descriptor.length() - 1);
+			return typeName.replace('/', '.');
+		}
+
+		throw new IllegalArgumentException("Invalid type descriptor: " + descriptor);
+	}
+
 }
