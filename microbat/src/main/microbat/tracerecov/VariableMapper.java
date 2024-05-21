@@ -38,9 +38,9 @@ public class VariableMapper {
 	/**
 	 * Create a copy of variableOnTrace in parentVariable with value == null.
 	 */
-	public static void mapVariable(VarValue variableOnTrace, VarValue parentVariable) {
-		if (variableOnTrace == null) {
-			return;
+	public static VarValue mapVariable(VarValue variableOnTrace, VarValue parentVariable) {
+		if (variableOnTrace == null || parentVariable == null) {
+			return null;
 		}
 
 		VarValue child = variableOnTrace.clone();
@@ -50,6 +50,8 @@ public class VariableMapper {
 		child.setVarID(parentVariable.getVarID() + "-" + child.getVarName());
 
 		parentVariable.addChild(child);
+		
+		return child;
 	}
 
 	private static String getReturnTypeOfCandidateVariable(String className, String methodName, String methodDescriptor,

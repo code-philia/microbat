@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 import microbat.log.Log;
+import microbat.model.trace.TraceNode;
 import microbat.model.variable.ArrayElementVar;
 import microbat.model.variable.ConditionVar;
 import microbat.model.variable.FieldVar;
@@ -34,6 +35,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 	protected Variable variable;
 	protected List<VarValue> children = new ArrayList<>();
 	private List<String> candidateVariables = new ArrayList<>();
+	private TraceNode relevantStep;
 	
 	/**
 	 * indicate whether this variable is a top-level variable in certain step.
@@ -557,5 +559,13 @@ public abstract class VarValue implements GraphNode, Serializable {
 	
 	public void setCandidateVariables(List<String> candidateVariables) {
 		this.candidateVariables = candidateVariables;
+	}
+	
+	public TraceNode getRelevantStep() {
+		return this.relevantStep;
+	}
+	
+	public void setRelevantStep(TraceNode relevantStep) {
+		this.relevantStep = relevantStep;
 	}
 }

@@ -2,11 +2,7 @@ package microbat.model.trace;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -268,9 +264,19 @@ public class Trace {
 	 * @author hongshuwang
 	 */
 	public TraceNode findRecoveredDataDependency(TraceNode checkingNode, VarValue readVar) {
-		List<TraceNode> relevantSteps = findRelevantSteps(readVar, checkingNode);
-		for (TraceNode node : relevantSteps) {
-			mapVariables(readVar, node);
+		// initialize queue
+		List<TraceNode> relevantSteps = findRelevantSteps(readVar, 1, checkingNode.getOrder() - 1);
+		if (relevantSteps == null) {
+			return null;
+		}
+		
+		// DFS
+		while (!relevantSteps.isEmpty()) {
+			TraceNode node = relevantSteps.remove(0);
+			VarValue variableMapped = mapVariables(readVar, node);
+			if (variableMapped != null) {
+				relevantSteps.addAll(findRelevantSteps(variableMapped, node.getOrder() + 1, checkingNode.getOrder() - 1));
+			}
 		}
 		return null;
 	}
@@ -282,15 +288,13 @@ public class Trace {
 	 * 
 	 * @author hongshuwang
 	 */
-	public List<TraceNode> findRelevantSteps(VarValue varValue, TraceNode currentNode) {
+	public List<TraceNode> findRelevantSteps(VarValue varValue, int fromPos, int toPos) {
 		List<TraceNode> relevantSteps = new ArrayList<>();
 
 		String varID = Variable.truncateSimpleID(varValue.getVarID());
 		String headID = Variable.truncateSimpleID(varValue.getAliasVarID());
 		
-		int startOrder = currentNode.getOrder() - 1;
-		
-		for(int i = startOrder; i >= 1; i--) {
+		for (int i = fromPos; i <= toPos; i++) {
 			TraceNode node = this.getTraceNode(i);
 			
 			List<VarValue> variables = node.getReadVariables();
@@ -325,7 +329,7 @@ public class Trace {
 	 * 
 	 * @author hongshuwang
 	 */
-	public void mapVariables(VarValue varValue, TraceNode node) {
+	public VarValue mapVariables(VarValue varValue, TraceNode node) {
 		List<String> candidateVariables = varValue.getCandidateVariables();
 		
 		String returnedFieldType = VariableMapper.getReturnTypeOfCandidateVariable(node.getInvokingMethod(), candidateVariables);
@@ -334,7 +338,12 @@ public class Trace {
 				.filter(v -> v.getType().equals(returnedFieldType))
 				.findFirst()
 				.orElse(null);
-		VariableMapper.mapVariable(returnedVariable, varValue);
+		VarValue mappedVariable = VariableMapper.mapVariable(returnedVariable, varValue);
+		// mark relevant step
+		if (mappedVariable != null) {
+			mappedVariable.setRelevantStep(node);
+		}
+		return mappedVariable;
 	}
 	
 	public List<TraceNode> findDataDependentee(TraceNode traceNode, VarValue writtenVar) {
