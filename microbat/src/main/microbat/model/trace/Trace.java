@@ -3,8 +3,10 @@ package microbat.model.trace;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -18,7 +20,7 @@ import microbat.model.Scope;
 import microbat.model.value.VarValue;
 import microbat.model.value.VirtualValue;
 import microbat.model.variable.Variable;
-import microbat.tracerecov.VariableMapper;
+import microbat.tracerecov.varmapping.VariableMapper;
 import microbat.util.JavaUtil;
 import microbat.util.Settings;
 import sav.strategies.dto.AppJavaClassPath;
@@ -263,60 +265,60 @@ public class Trace {
 	 * 
 	 * @author hongshuwang
 	 */
-	public TraceNode findRecoveredDataDependency(TraceNode checkingNode, VarValue readVar) {
-		// initialize queue
-		List<TraceNode> relevantSteps = findRelevantSteps(readVar, 1, checkingNode.getOrder() - 1);
-		if (relevantSteps == null) {
-			return null;
-		}
+	public Map<String, List<TraceNode>> findRecoveredDataDependency(TraceNode checkingNode, VarValue readVar) {
+		Set<String> varIDs = new HashSet<>();
+		varIDs.add(readVar.getAliasVarID());
 		
-		// DFS
-		while (!relevantSteps.isEmpty()) {
-			TraceNode node = relevantSteps.remove(0);
-			VarValue variableMapped = mapVariables(readVar, node);
-			if (variableMapped != null) {
-				relevantSteps.addAll(findRelevantSteps(variableMapped, node.getOrder() + 1, checkingNode.getOrder() - 1));
-			}
-		}
-		return null;
-	}
-	
-	/**
-	 * Search for relevant steps based on the ID of the varValue.
-	 * 
-	 * Definition of a relevant step: reads the variable.
-	 * 
-	 * @author hongshuwang
-	 */
-	public List<TraceNode> findRelevantSteps(VarValue varValue, int fromPos, int toPos) {
-		List<TraceNode> relevantSteps = new ArrayList<>();
-
-		String varID = Variable.truncateSimpleID(varValue.getVarID());
-		String headID = Variable.truncateSimpleID(varValue.getAliasVarID());
+		Map<String, List<TraceNode>> relevantSteps = new HashMap<>();
+		Map<String, Set<VarValue>> linkedVariables = new HashMap<>();
 		
-		for (int i = fromPos; i <= toPos; i++) {
+		int end = checkingNode.getOrder();
+		for (int i = 1; i < end; i++) {
 			TraceNode node = this.getTraceNode(i);
-			
 			List<VarValue> variables = node.getReadVariables();
 			
-			for(VarValue variable : variables) {
-				String rVarID = Variable.truncateSimpleID(variable.getVarID());
+			// add identified candidate variables
+			for (VarValue variable : variables) {
 				String rHeadID = Variable.truncateSimpleID(variable.getAliasVarID());
-				
-				if(rVarID != null && rVarID.equals(varID)) {
-					relevantSteps.add(node);
-					break;
+				if (linkedVariables.containsKey(rHeadID)) {
+					for (VarValue child : linkedVariables.get(rHeadID)) {
+						VariableMapper.mapVariable(child, variable);
+					}
 				}
-				
-				if(rHeadID != null && rHeadID.equals(headID)) {
-					relevantSteps.add(node);
-					break;
-				}
-				
-				VarValue childValue = variable.findVarValue(varID, headID);
-				if(childValue != null) {
-					relevantSteps.add(node);
-					break;
+			}
+			
+			// skip stepIn and stepOut steps
+			TraceNode previous = node.getStepOverPrevious();
+			if (!node.getInvocationChildren().isEmpty() || 
+					(previous != null && !previous.getInvocationChildren().isEmpty())) {
+				continue;
+			}
+			
+			for (VarValue variable : variables) {
+				String rHeadID = Variable.truncateSimpleID(variable.getAliasVarID());
+				for (String headID : varIDs) {	
+					// find relevant step
+					if(rHeadID != null && rHeadID.equals(headID)) {
+						// add to relevantSteps map
+						if (!relevantSteps.containsKey(rHeadID)) {
+							relevantSteps.put(rHeadID, new ArrayList<>());
+						}
+						relevantSteps.get(rHeadID).add(node);
+						
+						// variable mapping
+						VarValue variableMapped = mapVariables(readVar, node);
+						if (variableMapped != null) {
+							// map to current variable
+							varIDs.add(variableMapped.getAliasVarID());
+							// save to map to be added later
+							if (!linkedVariables.containsKey(rHeadID)) {
+								linkedVariables.put(rHeadID, new HashSet<>());
+							}
+							linkedVariables.get(rHeadID).add(variableMapped);
+						}
+						
+						break;
+					}
 				}
 			}
 		}
