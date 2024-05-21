@@ -1,4 +1,4 @@
-package microbat.tracerecov;
+package microbat.tracerecov.candidatevar;
 
 import java.io.IOException;
 import java.io.InputStream;

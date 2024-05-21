@@ -1,6 +1,8 @@
-package microbat.tracerecov;
+package microbat.tracerecov.candidatevar;
 
 import org.objectweb.asm.MethodVisitor;
+
+import microbat.tracerecov.AbstractClassVisitor;
 
 /**
  * This class defines a class visitor with {@link CandidateVarMethodVisitor} as

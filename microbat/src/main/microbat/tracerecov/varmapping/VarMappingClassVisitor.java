@@ -1,8 +1,10 @@
-package microbat.tracerecov;
+package microbat.tracerecov.varmapping;
 
 import java.util.List;
 
 import org.objectweb.asm.MethodVisitor;
+
+import microbat.tracerecov.AbstractClassVisitor;
 
 /**
  * This class defines a class visitor with {@link VarMappingMethodVisitor} as

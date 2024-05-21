@@ -1,4 +1,4 @@
-package microbat.tracerecov;
+package microbat.tracerecov.varmapping;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +41,13 @@ public class VariableMapper {
 	public static VarValue mapVariable(VarValue variableOnTrace, VarValue parentVariable) {
 		if (variableOnTrace == null || parentVariable == null) {
 			return null;
+		}
+		
+		List<VarValue> children = parentVariable.getChildren();
+		for (VarValue c : children) {
+			if (c.getAliasVarID().equals(variableOnTrace.getAliasVarID())) {
+				return null;
+			}
 		}
 
 		VarValue child = variableOnTrace.clone();

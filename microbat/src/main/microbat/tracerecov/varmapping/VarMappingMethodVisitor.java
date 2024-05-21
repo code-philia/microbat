@@ -1,4 +1,4 @@
-package microbat.tracerecov;
+package microbat.tracerecov.varmapping;
 
 import java.util.Arrays;
 import java.util.HashSet;
