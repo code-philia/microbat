@@ -44,7 +44,7 @@ public class FeedbackPathGenerator {
 			stack.push(feedBackNode);
 		}
 		
-		// explore data and control dependencies and select end node of debugging path
+		// explore data and control dependencies and select end node of debugging plan
 		DPUserFeedback tempEnd = null;
 		double maxConfidence = 0;
 		
@@ -69,17 +69,20 @@ public class FeedbackPathGenerator {
 						maxConfidence = f.getReachPossibility()*f.getPrediction()[1];
 						tempEnd = f;
 						f.setType(DPUserFeedbackType.CORRECT);
+						System.out.println("New maxConfidence: "+maxConfidence);
 					}
 					// root
 					if(f.getReachPossibility()*f.getPrediction()[0] > maxConfidence) {
 						maxConfidence = f.getReachPossibility()*f.getPrediction()[0];
 						tempEnd = f;
 						f.setType(DPUserFeedbackType.ROOT_CAUSE);
+						System.out.println("New maxConfidence: "+maxConfidence);
 					}
 				}
 			}
 			else {
 				for(DPUserFeedback f : allNextFeedbackNodes) {
+					System.out.println(curStep.getNode().getOrder()+"-->"+f.getNode().getOrder());
 					stack.push(f);
 				}
 			}

@@ -1,6 +1,7 @@
 package microbat.debugpilot;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -12,6 +13,7 @@ import microbat.debugpilot.settings.DebugPilotSettings;
 import microbat.debugpilot.userfeedback.DPUserFeedback;
 import microbat.debugpilot.userfeedback.DPUserFeedbackType;
 import microbat.decisionprediction.*;
+import microbat.decisionpredictionLLM.*;
 import microbat.handler.PreferenceParser;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
@@ -52,8 +54,6 @@ public class DebugPilotExecutor {
 		}
 		
 		System.out.println("--INFO-- In DebugPilotExecutor: ");
-		System.out.println("--INFO-- userFeedback: "+userFeedback.toString());
-		System.out.println("--INFO-- lastNode: "+userFeedback.getNode().getOrder());
 		System.out.println("--INFO-- availableFeedbacks: ");
 		for(DPUserFeedback a : availableFeedbacks) {
 			System.out.println(a.getNode().getOrder()+"  "+a.toString());
@@ -63,7 +63,7 @@ public class DebugPilotExecutor {
 		// 1. dead end with Correct
 		if (userFeedback.getType() == DPUserFeedbackType.CORRECT) {
 			FeedbackPath path = new FeedbackPath(availableFeedbacks);
-			path.getFeedbacks().stream().forEach(feedback -> feedback.getNode().confirmed = true);
+			path.getFeedbacks().stream().forEach(feedback -> feedback.setConfirmed(true));
 			this.updatePathView(path);
 			if (availableFeedbacks.size() >= 1) {
 				
@@ -75,22 +75,12 @@ public class DebugPilotExecutor {
 			}
 			return;
 		}
+
 		
+		// 2. construct debugging plan
+		int DEBUG_METHOD = 2; // 0:DebugPilot  1:model   2:GPT
 		
-		// 2. learn feedback, fine-tune the model during runtime
-		boolean learnFeedback = false;
-		if(learnFeedback) {
-			FeedbackLearner feedbackLearner = new FeedbackLearner();
-			try {
-				feedbackLearner.learnFeedback(userFeedback);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		// 3. construct debugging plan
-		boolean useDebugPilot = false;		
-		if(useDebugPilot) {
+		if(DEBUG_METHOD == 0) {
 			final Trace trace = this.traceView.getTrace();
 			final TraceNode outputNode = availableFeedbacks.get(0).getNode();
 			
@@ -131,7 +121,7 @@ public class DebugPilotExecutor {
 				}
 			});
 		}
-		else {// use DecisionPredictor
+		else if(DEBUG_METHOD == 1){// use model_predictor
 			FeedbackPathGenerator feedbackPathGenerator = new FeedbackPathGenerator();
 			FeedbackPath path = feedbackPathGenerator.generateFeedbackPath(availableFeedbacks);
 			this.updatePathView(path);
@@ -144,6 +134,29 @@ public class DebugPilotExecutor {
 				}
 			});
 		}
+		else { // use gpt_predictor
+			FeedbackPathGeneratorLLM feedbackPathGenerator = new FeedbackPathGeneratorLLM();
+			List<FeedbackPath> paths = feedbackPathGenerator.generateFeedbackPath(availableFeedbacks);
+			this.updatePathView(paths);
+			Display.getDefault().syncExec(() -> {
+				for (TraceNode nextNode : TraceUtil.findAllNextNodes(userFeedback)) {
+					if (paths.get(0).containFeedbackByNode(nextNode)) {
+						// TODO current path
+						this.pathView.focusOnNode(nextNode);
+						break;
+					}
+				}
+			});		
+		}
+	}
+	
+	public void execute(final TraceNode currentNode) {
+		FeedbackPathGeneratorLLM feedbackPathGenerator = new FeedbackPathGeneratorLLM();
+		List<FeedbackPath> paths = feedbackPathGenerator.generateFeedbackPath(currentNode);
+		this.updatePathView(paths);	
+		Display.getDefault().syncExec(() -> {
+			this.pathView.focusOnNode(currentNode);
+		});
 	}
 	
 	protected List<DPUserFeedback> collectAvailableFeedbacks(final DPUserFeedback userFeedback) {
@@ -165,6 +178,9 @@ public class DebugPilotExecutor {
 		if (feedbackPath != null) {
 			for(DPUserFeedback dpUserFeedback : feedbackPath.getFeedbacks()) {
 				if (dpUserFeedback.getNode().equals(userFeedback.getNode())) {
+					if(userFeedback.isReasonable()) {
+						userFeedback.setReason(dpUserFeedback.getReason());
+					}
 					break;
 				}
 				avaiableFeedbacks.add(dpUserFeedback);
@@ -182,7 +198,10 @@ public class DebugPilotExecutor {
 	
 	protected void updatePathView(final FeedbackPath path) {
 		this.pathView.updateFeedbackPath(path);
-
+	}
+	
+	protected void updatePathView(final List<FeedbackPath> paths) {
+		this.pathView.updateFeedbackPaths(paths);
 	}
 	
 	protected String genOmissionMessage(final int startNodeOrder, final int endNodeOrder, final DPUserFeedback prevDpUserFeedback) {

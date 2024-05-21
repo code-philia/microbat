@@ -1,0 +1,42 @@
+You are an assistant skilled in debugging and making decision about certain program execution step.
+We are conducting bug localization in Java projects. We start at where a fault happens and go back to the root cause of bug step by step. If one step is of <wrong variable> type, then we look into its data dependency which wrote or defined the wrong data; If one step is of <wrong path> type, then we look into its control dependency which decided whether to execute the current step.
+Continue this process iteratively until we find a <root cause> step (which means the code line contains a bug that leads to the happened fault) or a <correct> step (which means the variables and code are all correct and we have skipped the bug).
+I will give you the current step (with the comment "// target code"), the value of variables read in this step(in format of {type:var_type, name:var_name, value:var_value}) and the specifications of context and current step. Also we offer some information about why we look into this step in "Debugging trace" section.
+
+Function:
+```
+    public Complex add(Complex other) {
+        double newReal = 0; // target step
+        double newImaginary = this.imaginary + other.imaginary;
+        return new Complex(newReal, newImaginary);
+    }
+```
+
+Read variables:
+```
+```
+
+Specification:
+```
+Function:
+The add function is intended to create and return a new Complex object with the real part initialized to 0 and the imaginary part initialized to the sum of the original instance's imaginary part and the imaginary part of the input Complex object. However, based on the debugging trace, it seems that the newReal variable is incorrectly set to 0.0, which is causing issues in the test cases. It appears that there is a bug in the calculation of the newReal variable within the add function, which is leading to incorrect results in subsequent steps.
+
+Target step:
+The intention of the target step is to initialize the newReal variable to 0, but according to the debugging trace, it seems that this initialization is causing issues in the function's logic. The calculation of the newReal variable should be reviewed to ensure that it correctly represents the real part of the resulting Complex object. In the correct control flow, the newReal variable should be correctly calculated based on the mathematical operation intended for the addition of Complex numbers, and the value of the newReal variable should reflect this calculation.
+```
+
+Debugging trace:
+```
+ - step "assertEquals(4.0, sum.getReal(), 0.0001); " in ComplexTest#testAddition() is of "wrong variable" type,variable {type:double,name:return_from_Complex.getReal,value:0.0} is wrong. Look into its data dependency.
+ - step "return real; " in Complex#getReal() is of "wrong variable" type,variable {type:double,name:real,value:0.0} is wrong. Look into its data dependency.
+ - step "this.real = real; " in Complex#Complex() is of "wrong variable" type,variable {type:double,name:real,value:0.0} is wrong. Look into its data dependency.
+ - step "return new Complex(newReal, newImaginary); " in Complex#add() is of "wrong variable" type,variable {type:double,name:newReal,value:0.0} is wrong,variable {type:double,name:newImaginary,value:6.0} is correct. Look into its data dependency.
+```
+
+Analyze the debugging trace step by step to learn how we reached current step, compare the behavior (variable values, control flow) to the specifications to make a decision about the type of current step, you can choose:
+1.wrong variable: which means the value of some variables read in this step is wrong and we want to look into the data dependency which wrote or defined the wrong data;
+2.wrong path: which means this step should not happen and we want to look into its control dependency to inspect why current step is executed;
+3.root cause: which means we find the code of current step contains a bug;
+4.correct: which means we have reached a step where everything is right and we have over skipped the bug.
+At the same time, label each variable in "Read variables" section with "correct" or "wrong". Finally, conclude the analysis in the "reason" section.
+Organize the response into a json format. For example, if current step is of wrong variable type and the "Read variables" section contains 2 variables, you may return "{"type":"wrong variable", "variable":{"var1":"correct","var2":"wrong"}, "reason":"..."}". If "Read variables" section is "None", just return "{"type":"...","variable":{},"reason":"..."}".

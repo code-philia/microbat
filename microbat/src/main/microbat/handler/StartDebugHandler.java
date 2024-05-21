@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Display;
 
 import microbat.codeanalysis.runtime.InstrumentationExecutor;
 import microbat.codeanalysis.runtime.StepLimitException;
+import microbat.decisionpredictionLLM.Agent;
 import microbat.evaluation.junit.TestCaseAnalyzer;
 import microbat.handler.callbacks.HandlerCallbackManager;
 import microbat.instrumentation.output.RunningInfo;
@@ -35,20 +36,18 @@ import sav.common.core.utils.FileUtils;
 import sav.strategies.dto.AppJavaClassPath;
 
 public class StartDebugHandler extends AbstractHandler {
-	private final String PYTHON_ENV = "D:\\software\\Anaconda\\envs\\pytorch\\python";
-	
-	private final String PYTHON_FILE = "/microbat/resources/Predictor_Server/server.py";
-	private Process process = null;
-	
+
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-//		setUpServer();
 		
 		// Clear the DebugPilot debugging process if there are any
 		HandlerCallbackManager.getInstance().runDebugPilotTerminateCallbacks();
 		Job.getJobManager().cancel(DebugPilotHandler.JOB_FAMALY_NAME);
 		
 		// Clear the path view and program output form
-		MicroBatViews.getPathView().updateFeedbackPath(null);
+		MicroBatViews.getPathView().clearFeedbackPath();
+		
+		// Clear cache
+		Agent.clearCachedSpecifications();
 		
 		final AppJavaClassPath appClassPath = MicroBatUtil.constructClassPaths();
 		if (Settings.isRunTest) {
@@ -67,32 +66,6 @@ public class StartDebugHandler extends AbstractHandler {
 
 		this.generateTrace(appClassPath);
 		return null;
-	}
-
-	private void setUpServer() {
-		if(process != null) {
-			return;
-		}
-    	try {
-			process = Runtime.getRuntime().exec(String.join(" ", PYTHON_ENV,PYTHON_FILE));
-			InputStream inputStream = process.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println(line);
-            }
-            
-
-            BufferedReader reader2 = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            String line2;
-            while ((line2 = reader2.readLine()) != null) {
-                System.out.println(line2);
-            }
-            
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-    	System.out.println("--INFO-- Server has been successfully setup.");
 	}
 	
 	protected void generateTrace(final AppJavaClassPath appClassPath) {

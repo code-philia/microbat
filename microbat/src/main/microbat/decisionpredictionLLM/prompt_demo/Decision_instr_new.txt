@@ -1,0 +1,50 @@
+You are an assistant skilled in debugging. We are conducting bug localization in Java projects. We first build a trace model for one execution. The trace contains many steps, each step represents the execution of certain statement. We start from where a fault happens (wrong variable detected or exception thrown) and trace the control or data flow step by step backward to the root cause of the fault. 
+
+Now we are at the "current step", I will give you the following information:
+- statement executed in current step, commented with "// current step" in the context;
+- variables that are read in current step (in format of "{type:..., name:..., value:...}");
+- specification about the context;
+- debugging trace which contains previous steps we checked and every step is the data or control dependency of its last step. 
+Each section is enclosed within three backticks (```).
+
+Your task is to help me make a decision about what to do next to find the root cause. You have four options:
+[1] check_data_dependency: Some variables in the "Read Variables" are wrong. To find why it happened, we need to check their data dependency which defined or wrote them. If "Read Variables" is "None", you are not allowed to choose this option since there are no variables to trace data dependency.
+[2] check_control_dependency: Current step should not be executed. To find why it was executed, we need to check its control dependency which determines whether to execute current step.
+[3] root_cause: The statement executed in current step contains a bug which is the root cause of the fault.
+[4] stop: We have reached a step where the statement and variables are all correct. This means the fault is caused by missing a piece of code.
+
+Finish the task follow the following steps:
+- Infer if the statement commented with "// current step" is the root cause of the fault, if yes, choose "root_cause", if not, we continue to trace the data or control dependency to find root cause;
+- Infer the correctness of each variable in the "Read Variables", if any one carries wrong value, choose "check_data_dependency";
+- Infer if current step should be executed, if not, choose "check_control_dependency";
+- If not any of the above, choose "stop".
+
+You can check the context, compare the behavior to the specification and track the debugging trace to get some glues. Return a JSON object with three keys:
+- "decision": str, the option you choose, e.g. "check_data_dependency";
+- "wrong_variables": list[str], if you choose "check_data_dependency", list variable names that you want check data dependency. They must come from the "Read Variables" section which contains the variables read in current step.
+- "reason": str, show your thinking process and explain what information led you to make such decision in a short word.
+For example, given:
+Context:
+```
+	public void testAdd(){
+		assert(add(1,1) == 2); // current step
+	}
+```
+Read Variables:
+```
+{type:int,name:return_from_add,value:1}
+```
+, you may return {"decision":"check_data_dependency","wrong_variables":["return_from_add"],"reason":"..."}.
+
+And given:
+Context:
+```
+	public int add(int a, int b){
+		return a+0; // current step
+	}
+```
+Read Variables:
+```
+{type:int,name:a,value:1}
+```
+, you may return {"decision":"root_cause","wrong_variables":[],"reason":"..."}.

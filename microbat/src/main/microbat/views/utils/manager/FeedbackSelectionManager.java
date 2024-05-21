@@ -20,7 +20,7 @@ public class FeedbackSelectionManager {
 		
 	}
 	
-	public void registerYesCheckbox(final UserFeedback feedback, final Button checkbox) {
+	public void registerYesCheckbox(final UserFeedback feedback, final Button checkbox) {		
 		if (this.feedbackYesNoButtonsMap.containsKey(feedback)) {
 			this.feedbackYesNoButtonsMap.get(feedback).setYesButton(checkbox);
 		} else {
@@ -58,26 +58,40 @@ public class FeedbackSelectionManager {
 	}
 	
 	public DPUserFeedback genDpUserFeedback(final TraceNode node) {
+		boolean reasonable = true;
+//		YesNoButtonPair reasonableSelection = this.feedbackYesNoButtonsMap.get(this.genReasonableFeedbackKey());
+//		if (reasonableSelection.isNoButtonSelected()) {
+//			reasonable = false;
+//		}
+		
 		// This step is root cause
 		YesNoButtonPair rootCauseSelection = this.feedbackYesNoButtonsMap.get(this.genRootCuaseFeedbackKey());
 		if (rootCauseSelection.isYesButtonSelected()) {
-			return new DPUserFeedback(DPUserFeedbackType.ROOT_CAUSE, node);
+			DPUserFeedback feedback = new DPUserFeedback(DPUserFeedbackType.ROOT_CAUSE, node);
+			feedback.setReasonable(reasonable);
+			return feedback;
 		}
 		
 		// This step is correct
 		YesNoButtonPair correctSelection = this.feedbackYesNoButtonsMap.get(this.genCorrectFeedbackKey());
 		if (correctSelection.isYesButtonSelected()) {
-			return new DPUserFeedback(DPUserFeedbackType.CORRECT, node);
+			DPUserFeedback feedback =  new DPUserFeedback(DPUserFeedbackType.CORRECT, node);
+			feedback.setReasonable(reasonable);
+			return feedback;
 		}
 		
 		// This step should not be executed
 		YesNoButtonPair wrongPathSelection = this.feedbackYesNoButtonsMap.get(this.genWrongPathFeedbackKey());
 		if (wrongPathSelection.isNoButtonSelected()) {
-			return new DPUserFeedback(DPUserFeedbackType.WRONG_PATH, node);
+			DPUserFeedback feedback =   new DPUserFeedback(DPUserFeedbackType.WRONG_PATH, node);
+			feedback.setReasonable(reasonable);
+			return feedback;
 		}
 		
 		// This step contain wrong variable
 		DPUserFeedback dpUserFeedback = new DPUserFeedback(DPUserFeedbackType.WRONG_VARIABLE, node);
+		dpUserFeedback.setReasonable(reasonable);
+		
 		for (Map.Entry<UserFeedback, YesNoButtonPair> entry : this.feedbackYesNoButtonsMap.entrySet()) {
 			final UserFeedback feedback = entry.getKey();
 			final YesNoButtonPair buttonPair = entry.getValue();
@@ -87,6 +101,8 @@ public class FeedbackSelectionManager {
 					dpUserFeedback.addCorrectVar(feedback.getOption().getReadVar());
 				} else if (buttonPair.isNoButtonSelected()) {
 					dpUserFeedback.addWrongVar(feedback.getOption().getReadVar());
+				} else {
+					dpUserFeedback.addUnclearVar(feedback.getOption().getReadVar());
 				}
 			}			
 		}
@@ -197,6 +213,9 @@ public class FeedbackSelectionManager {
 				} else if (feedbackKey.getFeedbackType().equals(UserFeedback.WRONG_PATH)) {
 					pair.checkYesButton();
 				} else {
+//					if(feedbackKey.getOption() == null) {
+//						break;
+//					}
 					final VarValue var = feedbackKey.getOption().getReadVar();
 					if (feedback.getWrongVars().contains(var)) {
 						pair.checkNoButton();;
@@ -291,4 +310,8 @@ public class FeedbackSelectionManager {
 	protected UserFeedback genWrongPathFeedbackKey() {
 		return new UserFeedback(UserFeedback.WRONG_PATH);
 	}
+	
+//	protected UserFeedback genReasonableFeedbackKey() {
+//		return new UserFeedback(UserFeedback.REASONABLE);
+//	}
 }

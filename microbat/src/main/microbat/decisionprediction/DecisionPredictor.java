@@ -12,7 +12,6 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,13 +71,13 @@ public class DecisionPredictor {
 		// 2.0 setup connection
 		HttpURLConnection connection = setupConnection();
 
-		
 		// 2.1 send request
 		String input = "{\"source_seq\" : \""+source_seq+"\"}";
         OutputStream outputStream;
 		outputStream = connection.getOutputStream();
         outputStream.write(input.getBytes());
         outputStream.flush();
+        outputStream.close();
 
         // 2.2 get response
         BufferedReader bufferReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -127,7 +126,16 @@ public class DecisionPredictor {
         		curStep.addWrongVar(readVariables.get(i));
         	}
         }
-        System.out.println("--INFO-- Got prediction for node "+curStep.getNode().getOrder()+": "+curStep.getTypeStr()+", "+curStep.getConfidence());
+        System.out.println("--INFO-- Got prediction for node "+curStep.getNode().getOrder()+": "+curStep.getTypeStr());
+//        System.out.print("correctVar: ");
+//        for(VarValue v : curStep.getCorrectVars()) {
+//        	System.out.print(v.getVarName()+"  ");
+//        }
+//        System.out.print("\nwrongVar: ");
+//        for(VarValue v : curStep.getWrongVars()) {
+//        	System.out.print(v.getVarName()+"  ");
+//        }
+//        System.out.print("\n");
 	}
 	
 	// prepare model input

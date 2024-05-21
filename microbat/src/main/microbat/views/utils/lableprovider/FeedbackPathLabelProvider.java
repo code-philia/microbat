@@ -47,7 +47,7 @@ public class FeedbackPathLabelProvider extends ColumnLabelProvider implements IT
 	@Override
 	public Color getBackground(Object element) {
 		if (element instanceof DPUserFeedback nodeFeedbacksPair) {
-			if (nodeFeedbacksPair.getNode().confirmed) {
+			if (nodeFeedbacksPair.isConfirmed()) {
 				return new Color(Display.getCurrent(), 173, 255, 47);
 			}
 		}
@@ -56,10 +56,34 @@ public class FeedbackPathLabelProvider extends ColumnLabelProvider implements IT
 
 	@Override
 	public String getColumnText(Object element, int columnIndex) {
+//		if (element instanceof DPUserFeedback userFeedback && this.feedbacPath != null) {
+//			switch (columnIndex) {
+//			case 0:
+//				return String.valueOf(this.feedbacPath.indexOf(userFeedback));
+//			case 1:
+//				return String.valueOf(userFeedback.getNode().getOrder());
+//			case 2:
+//				switch (userFeedback.getType()) {
+//				case CORRECT:
+//					return "Correct";
+//				case ROOT_CAUSE:
+//					return "Root Cause";
+//				case WRONG_PATH:
+//					return "Wrong Branch";
+//				case WRONG_VARIABLE:
+//					return "Wrong Variable";
+//				default:
+//					throw new RuntimeException(Log.genMsg(getClass(), "Unhandled feedback type: " + userFeedback.getType()));
+//				}
+//			case 3:
+//				return String.valueOf(userFeedback.getConfidence());
+//			case 4:
+//				return userFeedback.getNode().confirmed ? "Yes" : "No";
+//			}
+//		}
+//		return null;
 		if (element instanceof DPUserFeedback userFeedback && this.feedbacPath != null) {
 			switch (columnIndex) {
-			case 0:
-				return String.valueOf(this.feedbacPath.indexOf(userFeedback));
 			case 1:
 				return String.valueOf(userFeedback.getNode().getOrder());
 			case 2:
@@ -69,16 +93,12 @@ public class FeedbackPathLabelProvider extends ColumnLabelProvider implements IT
 				case ROOT_CAUSE:
 					return "Root Cause";
 				case WRONG_PATH:
-					return "Wrong Branch";
+					return "Wrong Path";
 				case WRONG_VARIABLE:
 					return "Wrong Variable";
 				default:
 					throw new RuntimeException(Log.genMsg(getClass(), "Unhandled feedback type: " + userFeedback.getType()));
 				}
-			case 3:
-				return String.valueOf(userFeedback.getConfidence());
-			case 4:
-				return userFeedback.getNode().confirmed ? "Yes" : "No";
 			}
 		}
 		return null;

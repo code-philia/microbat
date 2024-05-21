@@ -24,9 +24,9 @@ public class ChosenVariableOption {
 	@Override
 	public String toString() {
 		return "[readVar=" + 
-				(readVar == null ? readVar : readVar.getVarName()) + 
+				(readVar == null ? readVar : readVar.getVarName()+" : "+readVar.getStringValue()) + 
 				", writtenVar=" + 
-				(writtenVar == null ? writtenVar : writtenVar.getVarName()) + "]";
+				(writtenVar == null ? writtenVar : writtenVar.getVarName()+" : "+writtenVar.getStringValue()) + "]";
 	}
 
 	public List<String> getIncludedWrongVarID(){

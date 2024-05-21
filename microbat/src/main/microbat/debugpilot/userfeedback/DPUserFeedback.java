@@ -21,6 +21,9 @@ public class DPUserFeedback {
 	protected final TraceNode node;
 	protected final Set<VarValue> correctVars;
 	protected final Set<VarValue> wrongVars;
+	protected final Set<VarValue> unclearVars;
+	protected String reason;
+	protected boolean reasonable;
 
 	private boolean confirmed;
 	private DPUserFeedback parent;
@@ -41,6 +44,9 @@ public class DPUserFeedback {
 		this.node = node;
 		this.wrongVars = new HashSet<>();
 		this.correctVars = new HashSet<>();
+		this.unclearVars = new HashSet<>();
+		this.reason = "";
+		this.reasonable = true;
 		if (wrongVars != null) {
 			this.addWrongVars(wrongVars);			
 		}
@@ -91,6 +97,15 @@ public class DPUserFeedback {
 		this.addCorrectVars(Arrays.asList(correctVars));
 	}
 	
+	public void addUnclearVars(final Collection<VarValue> unclearVars) {
+		this.unclearVars.addAll(unclearVars);
+	}
+	
+	public void addUnclearVar(final VarValue... unclearVars) {
+		this.addUnclearVars(Arrays.asList(unclearVars));
+	}
+	
+	
 	public DPUserFeedbackType getType() {
 		return type;
 	}
@@ -109,6 +124,24 @@ public class DPUserFeedback {
 			return "<DATA>";
 		}
 		return "<UNCLEAR>";
+	}
+	
+	public String getTypeStr4LLM() {
+		if(type == DPUserFeedbackType.CORRECT) {
+			return "correct";
+		}
+		else if(type == DPUserFeedbackType.ROOT_CAUSE) {
+			return "root cause";
+		}
+		else if(type == DPUserFeedbackType.WRONG_PATH) {
+			return "should not be excuted";
+//			return "wrong path";
+		}
+		else if(type == DPUserFeedbackType.WRONG_VARIABLE) {
+			return "contains wrong variable";
+//			return "wrong variable";
+		}
+		return "unclear";
 	}
 	
 	public String getTypeDesc() {
@@ -141,6 +174,10 @@ public class DPUserFeedback {
 	
 	public DPUserFeedback getParent() {
 		return parent;
+	}
+	
+	public String getReason() {
+		return reason;
 	}
 	
 	public float getConfidence() {
@@ -206,6 +243,46 @@ public class DPUserFeedback {
 		}
 	}
 	
+	public void setTypeByStr(String typeStr) {
+		if("root cause".equals(typeStr)) {
+			type = DPUserFeedbackType.ROOT_CAUSE; 
+		}
+		else if("correct".equals(typeStr)) {
+			type = DPUserFeedbackType.CORRECT;
+		}
+		else if("wrong path".equals(typeStr)) {
+			type = DPUserFeedbackType.WRONG_PATH;
+		}
+		else if("wrong variable".equals(typeStr)) {
+			type = DPUserFeedbackType.WRONG_VARIABLE;
+		}
+		else {
+			type = DPUserFeedbackType.UNCLEAR;
+		}
+	}
+	
+	public void setTypeByStrNew(String typeStr) {
+		if("root_cause".equals(typeStr)) {
+			type = DPUserFeedbackType.ROOT_CAUSE; 
+		}
+		else if("stop".equals(typeStr)) {
+			type = DPUserFeedbackType.CORRECT;
+		}
+		else if("check_control_dependency".equals(typeStr)) {
+			type = DPUserFeedbackType.WRONG_PATH;
+		}
+		else if("check_data_dependency".equals(typeStr)) {
+			type = DPUserFeedbackType.WRONG_VARIABLE;
+		}
+		else {
+			type = DPUserFeedbackType.UNCLEAR;
+		}
+	}
+	
+	public void setReason(String r) {
+		reason = r;
+	}
+	
 	public void setConfidence(float c) {
 		confidence = c;
 	}
@@ -231,6 +308,14 @@ public class DPUserFeedback {
 	
 	public void setConfirmed(boolean c) {
 		confirmed = c;
+	}
+	
+	public boolean isReasonable() {
+		return reasonable;
+	}
+	
+	public void setReasonable(boolean r) {
+		reasonable = r;
 	}
 	
 	/**
@@ -309,6 +394,7 @@ public class DPUserFeedback {
 		stringBuilder.append("]");
 		return stringBuilder.toString();
 	}
+
 	
 //	public static DPUserFeedback parseFeedbacks(final TraceNode node, final UserFeedback... feedbacks) {
 //		return DPUserFeedback.parseFeedbacks(node, Arrays.asList(feedbacks));

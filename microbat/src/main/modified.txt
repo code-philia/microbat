@@ -3,21 +3,32 @@ tregression:
 	tregression.handler.AllDefects4jHandler
 	tregression.handler.OnMutationHandler
 	tregression.handler.SeparateVersionHandler
-	mutation.MutationGenerationHandler
-	mutation.trace.MutationGeneretor
 	
+	plugin.xml
 	
 microbat:
 	microbat.DebugPilotExecutor 
 	microbat.StartDebugHandler 
-	microbat.DecisionPredictor.*
+	+ microbat.DecisionPredictor.*
 	microbat.debugpilot.userfeedback.DPUserFeedbackType
 	microbat.debugpilot.userfeedback.DPUserFeedback
 	microbat.views.PathView
-	microbat.views.utils.lableprovider
-	
+	microbat.views.utils.lableprovider.FeedbackPathLabelProvider
+	microbat.recommendation.ChosenVariableOption
 	lib/javaparser
 	lib/json
-	
+	lib/hutool-all-5.8.27
+
+microbat_trace_predication
++	microbat.mutation.handler.MutationGenerationHandler
+	microbat.mutation.trace.MutationGenerator
+	microbat.mutation.trace.MuRegressionUtils
+	microbat.mutation.mutation.mutationType
++	microbat.mutation.mutation.OperationMutationVisitor
++	microbat.mutation.mutation.ValueMutationVisitor
+
+mutation:
+	mutation.MutationVisitor
+	mutation.Mutator
 	
 //--

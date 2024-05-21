@@ -44,13 +44,19 @@ public class ReasonView extends ViewPart {
 		stringBuilder.append('\n');
 		stringBuilder.append(this.feedbackToString(feedback));
 		stringBuilder.append('\n');
-		
-		if (!node.reason.isEmpty()) {
-			stringBuilder.append('\n');
-			stringBuilder.append("Reason:\n");
-			stringBuilder.append(node.reason);
+		stringBuilder.append("Reason:\n");
+		if(feedback.getReason().isEmpty()) {
+			stringBuilder.append("No reason.");
+		}
+		else {
+			stringBuilder.append(feedback.getReason());
 		}
 		
+//		if (!node.reason.isEmpty()) {
+//			stringBuilder.append('\n');
+//			stringBuilder.append("Reason:\n");
+//			stringBuilder.append(node.reason);
+//		}
 		this.reasonText.setText(stringBuilder.toString());
 	}
 	public void refresh(final TraceNode node, final UserFeedback userFeedback) {

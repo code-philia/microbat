@@ -98,6 +98,7 @@ public class DebugPilotFeedbackView extends ViewPart {
 	/* All possible feedbacks */
 	protected TableViewer availableFeedbackViewer;
 	protected Button feedbackButton;
+	protected Button startButton;
 	protected Label giveFeedbackLabel;
 //	protected Label nextNodeLabel;
 	protected TableViewerColumn yesCheckboxColumn;
@@ -309,9 +310,9 @@ public class DebugPilotFeedbackView extends ViewPart {
 	protected void createAvaliableFeedbackView(final Composite parent) {
 		Group group = new Group(parent, SWT.NONE);
 		group.setText("Avaliable Feedbacks");
-		group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		group.setLayoutData(new GridData(SWT.LEFT, SWT.FILL, false, false));
 		
-		GridLayout gridLayout = new GridLayout(2, false);
+		GridLayout gridLayout = new GridLayout(3, false);
 		group.setLayout(gridLayout);
 		
 		this.createGiveFeedbackGroup(group);
@@ -321,7 +322,7 @@ public class DebugPilotFeedbackView extends ViewPart {
 	protected void createAvailiableFeedbacksTable(final Composite parent) {
 		SashForm variableForm = new SashForm(parent, SWT.VERTICAL);
 		GridData treeGridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		treeGridData.horizontalSpan = 2;
+		treeGridData.horizontalSpan = 3;
 		variableForm.setLayoutData(treeGridData);
 		
 //		this.availableFeedbackViewer = TableViewer.newCheckList(variableForm, SWT.H_SCROLL | SWT.V_SCROLL| SWT.FULL_SELECTION | SWT.CHECK | SWT.MULTI);
@@ -417,9 +418,28 @@ public class DebugPilotFeedbackView extends ViewPart {
 		this.giveFeedbackLabel.setAlignment(SWT.LEFT);
 		this.giveFeedbackLabel.setText("Here the possible feedback you may give: ");
 				
+		this.startButton = new Button(parent, SWT.NONE);
+		this.startButton.setText("Start");
+		this.startButton.setLayoutData(new GridData(SWT.LEFT, SWT.UP, false, false));
+		this.startButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				Job job = new Job("DebugPilot ....") {
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						DebugPilotExecutor executor = new DebugPilotExecutor();
+						executor.execute(currentNode);
+						return Status.OK_STATUS;
+					}
+
+				};
+				job.schedule();
+			}
+		});
+		
 		this.feedbackButton = new Button(parent, SWT.NONE);
 		this.feedbackButton.setText("Confirm");
-		this.feedbackButton.setLayoutData(new GridData(SWT.RIGHT, SWT.UP, true, false));
+		this.feedbackButton.setLayoutData(new GridData(SWT.LEFT, SWT.UP, false, false));
 		this.feedbackButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -581,6 +601,8 @@ public class DebugPilotFeedbackView extends ViewPart {
 			return "Is step root cause?";
 //		} else if (feedback.getFeedbackType().equals(UserFeedback.CORRECT_VARIABLE_VALUE)) {
 //			return "Correct Variable";
+//		} else if(feedback.getFeedbackType().equals(UserFeedback.REASONABLE)) {
+//			return "Is reason useful?";
 		} else {
 			return null;
 		}
@@ -588,6 +610,7 @@ public class DebugPilotFeedbackView extends ViewPart {
 	
 	protected void checkDefaultAvailableFeedbacks() {
 		final FeedbackPath path = MicroBatViews.getPathView().getFeedbackPath();
+		
 		if (path != null && path.containFeedbackByNode(this.currentNode)) {
 			DPUserFeedback feedback = path.getFeedbackByNode(this.currentNode);
 			this.feedbackSelectionManager.checkButtonBasedOnFeedback(feedback);
@@ -628,6 +651,7 @@ public class DebugPilotFeedbackView extends ViewPart {
 			availableFeedbacks.add(feedback);
 		}
 		availableFeedbacks.add(new UserFeedback(UserFeedback.CORRECT));
+//		availableFeedbacks.add(new UserFeedback(UserFeedback.REASONABLE));
 		return availableFeedbacks.toArray(new UserFeedback[0]);
 	}
 	
