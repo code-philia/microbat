@@ -6,8 +6,14 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.json.JSONObject;
+
+import microbat.model.trace.TraceNode;
+import microbat.model.value.VarValue;
 
 /**
  * This class is used to simulate execution through LLM and retrieve
@@ -18,12 +24,27 @@ import org.json.JSONObject;
 public class ExecutionSimulator {
 
 	private static String apiKey = "";
-	private static String prompt;
+	
+	private Map<String, List<TraceNode>> relevantSteps;
+	private TraceNode currentStep;
+	private VarValue var;
 
-	public ExecutionSimulator() {
+	public ExecutionSimulator(Map<String, List<TraceNode>> relevantSteps, TraceNode currentStep, VarValue var) {
+		this.relevantSteps = relevantSteps;
+		this.currentStep = currentStep;
+		this.var = var;
+	}
+	
+	public List<String> sendRequests() throws IOException {
+		List<String> responses = new ArrayList<>();
+		for (String key : relevantSteps.keySet()) {
+			String response = sendRequest(key, relevantSteps.get(key));
+			responses.add(response);
+		}
+		return responses;
 	}
 
-	public String sendRequest() throws IOException {
+	private String sendRequest(String aliasID, List<TraceNode> steps) throws IOException {
 		/* set up connection */
 		URL url = new URL(SimulationUtils.API_URL);
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -36,11 +57,11 @@ public class ExecutionSimulator {
 		/* construct request */
 		JSONObject background = new JSONObject();
 		background.put("role", "system");
-		background.put("content", SimulationUtils.REQUEST_BACKGROUND);
+		background.put("content", SimulationUtils.getBackgroundContent());
 
 		JSONObject question = new JSONObject();
 		question.put("role", "user");
-		question.put("content", this.prompt);
+		question.put("content", SimulationUtils.getQuestionContent(currentStep, var, steps, aliasID));
 
 		JSONObject request = new JSONObject();
 		request.put("model", SimulationUtils.GPT3);
