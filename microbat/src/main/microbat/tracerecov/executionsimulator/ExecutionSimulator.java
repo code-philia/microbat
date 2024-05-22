@@ -23,13 +23,7 @@ public class ExecutionSimulator {
 
 	private static String apiKey = "";
 
-	private TraceNode currentStep;
-	private VarValue var;
-
-	public ExecutionSimulator(TraceNode currentStep, VarValue var) {
-		this.currentStep = currentStep;
-		this.var = var;
-	}
+	public ExecutionSimulator() {}
 
 	public void sendRequests() throws IOException {
 		String variableID = VariableGraph.getNextNodeIDToVisit();

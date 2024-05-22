@@ -52,7 +52,20 @@ public class VarMappingMethodVisitor extends MethodVisitor {
 		fieldType = null;
 	}
 
-	public static String getReturnedFieldType() {
-		return fieldType;
+	public static String getReturnedField() {
+		return fieldName + "#" + convertDescriptorToType(fieldType);
+	}
+	
+	private static String convertDescriptorToType(String descriptor) {
+		if (descriptor == null) {
+			return null;
+		}
+
+		if (descriptor.startsWith("L") && descriptor.endsWith(";")) {
+			String typeName = descriptor.substring(1, descriptor.length() - 1);
+			return typeName.replace('/', '.');
+		}
+
+		throw new IllegalArgumentException("Invalid type descriptor: " + descriptor);
 	}
 }

@@ -19,9 +19,9 @@ public class SimulationUtilsWithCandidateVar {
 			+ "candidate variable is a variable that might have been read or written. The variable of interest "
 			+ "(VOI) is identified in each step, when we talk about candidate variables, we refer to the VOI.\n"
 			+ "In each step, the variable values ***before*** execution are given, you need to provide the value "
-			+ "of the VOI ***before and after*** the execution of each step. You should include all changed "
-			+ "candidate variables in your response. Don't return the value of variables other than the candidate "
-			+ "variables of the VOI.\n";
+			+ "of the VOI ***before*** and ****after*** the execution of each step respectively. You should include "
+			+ "all changed candidate variables in your response. Don't return the value of variables other than the "
+			+ "candidate variables of the VOI.\n";
 
 	private static final String QUESTION_SUFFIX_WITH_CANDIDATE_VAR = "Return the values of the candidate variables "
 			+ "***before and after*** the execution. Your response should be in this format without explanation: "

@@ -36,7 +36,7 @@ public class VariableGraph {
 	 */
 	public static void addRelevantStep(VarValue varValue, TraceNode step) {
 		getVar(varValue).addRelevantStep(step);
-		addCandidateVariables(varValue, step);
+		addCandidateVariables(varValue, step); // not used
 	}
 
 	/**
@@ -62,11 +62,13 @@ public class VariableGraph {
 		String invokingMethod = step.getInvokingMethod();
 
 		/* 1. Identify return type */
-		String returnedFieldType = VariableMapper.getReturnTypeOfCandidateVariable(invokingMethod);
+		String returnedField = VariableMapper.getReturnedField(invokingMethod);
+		String fieldName = returnedField.split("#")[0];
+		String fieldType = returnedField.split("#")[1];
 
 		/* 2. Find corresponding variable on trace */
 		VarValue returnedVariable = step.getWrittenVariables().stream()
-				.filter(v -> v.getType().equals(returnedFieldType)).findFirst().orElse(null);
+				.filter(v -> v.getType().equals(fieldType)).findFirst().orElse(null);
 		if (returnedVariable == null) {
 			return;
 		}
@@ -74,7 +76,7 @@ public class VariableGraph {
 
 		/* 3. Link variables */
 		VariableGraphNode parentVariable = getVar(varValue);
-		parentVariable.addChild(returnedVariable.getVarName(), variableOnTrace);
+		parentVariable.addChild(fieldName, variableOnTrace);
 		variableOnTrace.setParent(parentVariable);
 	}
 
@@ -166,7 +168,7 @@ class VariableGraphNode {
 	private VarValue varValue;
 
 	private VariableGraphNode parent;
-	private Map<String, VariableGraphNode> children;
+	private Map<VariableGraphNode, String> children;
 
 	private List<TraceNode> relevantSteps;
 	private Set<String> candidateVariables;
@@ -195,7 +197,7 @@ class VariableGraphNode {
 	}
 
 	public void addChild(String name, VariableGraphNode child) {
-		this.children.put(name, child);
+		this.children.put(child, name);
 	}
 
 	public void addSelfToParentSteps() {
@@ -210,6 +212,8 @@ class VariableGraphNode {
 
 			if (parentVar != null) {
 				VarValue child = this.varValue.clone();
+				
+				child.getVariable().setName(this.parent.children.get(this));
 				child.setStringValue(null);
 				child.setVarID(parentVar.getVarID().concat("-" + child.getVarName()));
 
@@ -219,16 +223,6 @@ class VariableGraphNode {
 					parentVar.addChild(child);
 				}
 			}
-		}
-
-		VarValue child = this.varValue.clone();
-		child.setStringValue(null);
-		child.setVarID(parent.varValue.getVarID().concat("-" + child.getVarName()));
-
-		VarValue foundChild = parent.varValue.getChildren().stream().filter(v -> v.getVarID().equals(child.getVarID()))
-				.findAny().orElse(null);
-		if (foundChild == null) {
-			parent.varValue.addChild(child);
 		}
 	}
 
