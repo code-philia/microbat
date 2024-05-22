@@ -41,7 +41,7 @@ public class VariableMapper {
 		if (variableOnTrace == null || parentVariable == null) {
 			return null;
 		}
-		
+
 		List<VarValue> children = parentVariable.getChildren();
 		for (VarValue c : children) {
 			if (c.getAliasVarID().equals(variableOnTrace.getAliasVarID())) {
@@ -56,7 +56,7 @@ public class VariableMapper {
 		child.setVarID(parentVariable.getVarID() + "-" + child.getVarName());
 
 		parentVariable.addChild(child);
-		
+
 		return child;
 	}
 

@@ -22,7 +22,7 @@ import microbat.tracerecov.VariableGraph;
 public class ExecutionSimulator {
 
 	private static String apiKey = "";
-	
+
 	private TraceNode currentStep;
 	private VarValue var;
 
@@ -30,20 +30,20 @@ public class ExecutionSimulator {
 		this.currentStep = currentStep;
 		this.var = var;
 	}
-	
+
 	public void sendRequests() throws IOException {
 		String variableID = VariableGraph.getNextNodeIDToVisit();
 		while (variableID != null) {
 			List<TraceNode> relevantSteps = VariableGraph.getRelevantSteps(variableID);
 			boolean hasChildren = VariableGraph.hasChildren(variableID);
-			
+
 			String response = this.sendRequest(variableID, relevantSteps, hasChildren);
 			if (hasChildren) {
 				SimulationUtilsWithCandidateVar.processResponse(response, variableID, relevantSteps);
 			} else {
 				SimulationUtils.processResponse(response, variableID, relevantSteps);
 			}
-			
+
 			VariableGraph.addCurrentToParentVariables();
 			variableID = VariableGraph.getNextNodeIDToVisit();
 		}
@@ -62,15 +62,13 @@ public class ExecutionSimulator {
 		/* construct request */
 		JSONObject background = new JSONObject();
 		background.put("role", "system");
-		background.put("content", hasChildren 
-				? SimulationUtilsWithCandidateVar.getBackgroundContent() 
-						: SimulationUtils.getBackgroundContent());
+		background.put("content", hasChildren ? SimulationUtilsWithCandidateVar.getBackgroundContent()
+				: SimulationUtils.getBackgroundContent());
 
 		JSONObject question = new JSONObject();
 		question.put("role", "user");
-		question.put("content", hasChildren 
-				? SimulationUtilsWithCandidateVar.getQuestionContent(aliasID, steps) 
-						: SimulationUtils.getQuestionContent(aliasID, steps));
+		question.put("content", hasChildren ? SimulationUtilsWithCandidateVar.getQuestionContent(aliasID, steps)
+				: SimulationUtils.getQuestionContent(aliasID, steps));
 
 		JSONObject request = new JSONObject();
 		request.put("model", SimulationUtils.GPT3);

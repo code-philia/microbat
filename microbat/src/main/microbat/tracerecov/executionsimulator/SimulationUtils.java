@@ -23,7 +23,7 @@ public class SimulationUtils {
 
 	/* Model constants */
 	public static final double TEMPERATURE = 0.7;
-	
+
 	/* Request content */
 	private static final String REQUEST_BACKGROUND = "In each step, the variable of interest (VOI) is "
 			+ "identified. The variable values ***before*** execution are given, you need to provide the value "
@@ -35,13 +35,12 @@ public class SimulationUtils {
 	private static final String QUESTION_SUFFIX = "Return the value of the VOI ***after*** the execution. Your "
 			+ "response should be in this format without explanation: <step_No>#<VOI_value>";
 
-	
 	/* Methods */
 
 	public static String getBackgroundContent() {
 		return REQUEST_BACKGROUND;
 	}
-	
+
 	public static String getQuestionContent(String variableID, List<TraceNode> relevantSteps) {
 		StringBuilder stringBuilder = new StringBuilder();
 
@@ -74,30 +73,29 @@ public class SimulationUtils {
 	}
 
 	/**
-	 * step_No:STEP_NO, source_code:"CODE", 
-	 * VOI:{name:"NAME", type:"TYPE", value:"VAL"},
-	 * other_variables:{name:"NAME", type:"TYPE", value:"VAL"}
+	 * step_No:STEP_NO, source_code:"CODE", VOI:{name:"NAME", type:"TYPE",
+	 * value:"VAL"}, other_variables:{name:"NAME", type:"TYPE", value:"VAL"}
 	 * {name:"NAME", type:"TYPE", value:"VAL"}...
 	 */
 	public static StringBuilder getContentForRelevantStep(TraceNode node, VarValue varValue) {
 		StringBuilder stringBuilder = new StringBuilder("step_No:");
 		stringBuilder.append(node.getOrder());
-		
+
 		stringBuilder.append(",source_code:\"");
 		int lineNo = node.getLineNumber();
 		String location = node.getBreakPoint().getFullJavaFilePath();
 		String sourceCode = getSourceCode(location, lineNo).trim();
 		stringBuilder.append(sourceCode);
-		
+
 		stringBuilder.append("\",VOI:");
 		stringBuilder.append(getContentForVar(varValue));
-		
+
 		List<VarValue> readVars = node.getReadVariables();
 		if (readVars.size() <= 1) {
 			stringBuilder.append("\n");
 			return stringBuilder;
 		}
-		
+
 		stringBuilder.append(",other_variables:");
 		for (VarValue v : readVars) {
 			if (v.getVarName().equals(varValue.getVarName())) {
@@ -109,7 +107,7 @@ public class SimulationUtils {
 		stringBuilder.append("\n");
 		return stringBuilder;
 	}
-	
+
 	private static StringBuilder getContentForVar(VarValue varValue) {
 		StringBuilder stringBuilder = new StringBuilder("{name:\"");
 		stringBuilder.append(varValue.getVarName());
@@ -120,7 +118,7 @@ public class SimulationUtils {
 		stringBuilder.append("\"}");
 		return stringBuilder;
 	}
-	
+
 	private static String getSourceCode(String filePath, int lineNumber) {
 		String line = null;
 		try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
@@ -136,7 +134,7 @@ public class SimulationUtils {
 		}
 		return null;
 	}
-	
+
 	public static void processResponse(String response, String variableID, List<TraceNode> relevantSteps) {
 		String[] lines = response.split("\n");
 		for (String line : lines) {
@@ -146,28 +144,26 @@ public class SimulationUtils {
 			}
 			int stepNo = Integer.valueOf(entries[0].trim());
 			String value = entries[1].trim();
-			
-			TraceNode step = relevantSteps.stream()
-				.filter(s -> {return s.getOrder() == stepNo;})
-				.findFirst().orElse(null);
+
+			TraceNode step = relevantSteps.stream().filter(s -> {
+				return s.getOrder() == stepNo;
+			}).findFirst().orElse(null);
 			if (step == null) {
 				continue;
 			}
-			
-			VarValue writtenVar = step.getWrittenVariables().stream()
-					.filter(v -> v.getAliasVarID().equals(variableID))
+
+			VarValue writtenVar = step.getWrittenVariables().stream().filter(v -> v.getAliasVarID().equals(variableID))
 					.findFirst().orElse(null);
 			if (writtenVar != null) {
 				continue;
 			}
-			
-			VarValue readVar = step.getReadVariables().stream()
-					.filter(v -> v.getAliasVarID().equals(variableID))
+
+			VarValue readVar = step.getReadVariables().stream().filter(v -> v.getAliasVarID().equals(variableID))
 					.findFirst().orElse(null);
 			if (readVar == null) {
 				continue;
 			}
-			
+
 			writtenVar = readVar.clone();
 			writtenVar.setStringValue(value);
 			step.addWrittenVariable(writtenVar);

@@ -7,8 +7,8 @@ import microbat.model.variable.Variable;
 import microbat.tracerecov.VariableGraph;
 
 /**
- * This class contains constants and methods used in execution simulation
- * (with candidate variables).
+ * This class contains constants and methods used in execution simulation (with
+ * candidate variables).
  * 
  * @author hongshuwang
  */
@@ -71,7 +71,7 @@ public class SimulationUtilsWithCandidateVar {
 				stringBuilder.append("\",");
 			}
 		}
-		
+
 		stringBuilder.append("The <candidate_variable_name> in your response can only take from the above names.\n");
 
 		return stringBuilder;
@@ -88,38 +88,35 @@ public class SimulationUtilsWithCandidateVar {
 			String varName = entries[1].trim();
 			String valBefore = entries[2].trim();
 			String valAfter = entries[3].trim();
-			
-			TraceNode step = relevantSteps.stream()
-				.filter(s -> {return s.getOrder() == stepNo;})
-				.findFirst().orElse(null);
+
+			TraceNode step = relevantSteps.stream().filter(s -> {
+				return s.getOrder() == stepNo;
+			}).findFirst().orElse(null);
 			if (step == null) {
 				continue;
 			}
-			
-			VarValue readVar = step.getReadVariables().stream()
-					.filter(v -> v.getAliasVarID().equals(variableID))
+
+			VarValue readVar = step.getReadVariables().stream().filter(v -> v.getAliasVarID().equals(variableID))
 					.findFirst().orElse(null);
 			if (readVar == null) {
 				continue;
 			}
-			
+
 			VarValue criticalReadVar = readVar.getAllDescedentChildren().stream()
-					.filter(v -> v.getVarName().equals(varName))
-					.findFirst().orElse(null);
+					.filter(v -> v.getVarName().equals(varName)).findFirst().orElse(null);
 			if (criticalReadVar == null) {
 				continue;
 			}
 			// set value before
 			criticalReadVar.setStringValue(valBefore);
-			
+
 			if (valBefore == valAfter || valBefore.equals(valAfter)) {
 				continue;
 			}
-			
-			VarValue writtenVar = step.getWrittenVariables().stream()
-					.filter(v -> v.getAliasVarID().equals(variableID))
+
+			VarValue writtenVar = step.getWrittenVariables().stream().filter(v -> v.getAliasVarID().equals(variableID))
 					.findFirst().orElse(null);
-			
+
 			// set value after
 			if (writtenVar == null) {
 				VarValue criticalWrittenVar = criticalReadVar.clone();
@@ -127,8 +124,7 @@ public class SimulationUtilsWithCandidateVar {
 				step.addWrittenVariable(criticalWrittenVar);
 			} else {
 				VarValue criticalWrittenVar = writtenVar.getAllDescedentChildren().stream()
-						.filter(v -> v.getVarName().equals(varName))
-						.findFirst().orElse(null);
+						.filter(v -> v.getVarName().equals(varName)).findFirst().orElse(null);
 				if (criticalWrittenVar == null) {
 					criticalWrittenVar = criticalReadVar.clone();
 					criticalWrittenVar.setStringValue(valAfter);
@@ -137,7 +133,7 @@ public class SimulationUtilsWithCandidateVar {
 					criticalWrittenVar.setStringValue(valAfter);
 				}
 			}
-			
+
 		}
 	}
 }

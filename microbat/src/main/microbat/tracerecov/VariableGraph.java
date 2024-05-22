@@ -21,9 +21,9 @@ import microbat.tracerecov.varmapping.VariableMapper;
  */
 public class VariableGraph {
 	private static Map<String, VariableGraphNode> graph = new HashMap<>();
-	
+
 	private static String lastVisitedID = null;
-	
+
 	public static void reset() {
 		graph = new HashMap<>();
 		lastVisitedID = null;
@@ -31,8 +31,8 @@ public class VariableGraph {
 
 	/**
 	 * 1. Add a relevant step of a variable to the graph.
-	 * 2. Identify and add candidate variables based on the invoked method through
-	 *    bytecode analysis.
+	 * 2. Identify and add candidate variables based on the invoked method 
+	 *    through bytecode analysis.
 	 */
 	public static void addRelevantStep(VarValue varValue, TraceNode step) {
 		getVar(varValue).addRelevantStep(step);
@@ -54,8 +54,8 @@ public class VariableGraph {
 	 * Map variable on trace to one of the candidate variables.
 	 * 
 	 * 1. Identify return type of the invoked method through bytecode analysis.
-	 * 2. Find corresponding variable on trace. If the variable is not in the graph,
-	 *    add it to the graph.
+	 * 2. Find corresponding variable on trace. If the variable is not in the 
+	 *    graph, add it to the graph.
 	 * 3. Link variable on trace to candidate variable.
 	 */
 	public static void mapVariable(VarValue varValue, TraceNode step) {
@@ -77,10 +77,10 @@ public class VariableGraph {
 		parentVariable.addChild(returnedVariable.getVarName(), variableOnTrace);
 		variableOnTrace.setParent(parentVariable);
 	}
-	
+
 	/**
-	 * If the graph hasn't been visited, return the deepest layer.
-	 * Otherwise, return the parent of the last visited node.
+	 * If the graph hasn't been visited, return the deepest layer. Otherwise, return
+	 * the parent of the last visited node.
 	 */
 	public static String getNextNodeIDToVisit() {
 		if (lastVisitedID == null) {
@@ -99,24 +99,24 @@ public class VariableGraph {
 			lastVisitedID = parentID;
 			return parentID;
 		}
-		
+
 		return null;
 	}
-	
+
 	public static void addCurrentToParentVariables() {
 		if (lastVisitedID == null) {
 			return;
 		}
 		graph.get(lastVisitedID).addSelfToParentSteps();
 	}
-	
+
 	public static List<TraceNode> getRelevantSteps(String ID) {
 		if (!containsVar(ID)) {
 			return new ArrayList<>();
 		}
 		return graph.get(ID).getRelevantSteps();
 	}
-	
+
 	public static boolean hasChildren(String ID) {
 		if (!containsVar(ID)) {
 			return false;
@@ -128,17 +128,13 @@ public class VariableGraph {
 		if (!containsVar(ID)) {
 			return new ArrayList<>();
 		}
-		return graph.get(ID).getVarValue()
-				.getAllDescedentChildren()
-				.stream()
-				.map(v -> v.getVarName())
-				.toList();
+		return graph.get(ID).getVarValue().getAllDescedentChildren().stream().map(v -> v.getVarName()).toList();
 	}
-	
+
 	public static boolean containsVar(VarValue varValue) {
 		return containsVar(getID(varValue));
 	}
-	
+
 	private static boolean containsVar(String ID) {
 		return graph.containsKey(ID);
 	}
@@ -154,7 +150,7 @@ public class VariableGraph {
 		}
 		return graph.get(ID);
 	}
-	
+
 	private static String getID(VarValue varValue) {
 		return Variable.truncateSimpleID(varValue.getAliasVarID());
 	}
@@ -201,38 +197,35 @@ class VariableGraphNode {
 	public void addChild(String name, VariableGraphNode child) {
 		this.children.put(name, child);
 	}
-	
+
 	public void addSelfToParentSteps() {
 		if (this.parent == null) {
 			return;
 		}
-		
+
 		List<TraceNode> steps = this.parent.getRelevantSteps();
 		for (TraceNode step : steps) {
 			VarValue parentVar = step.getReadVariables().stream()
-				.filter(v -> v.getAliasVarID().equals(parent.getAliasID()))
-				.findFirst().orElse(null);
-			
+					.filter(v -> v.getAliasVarID().equals(parent.getAliasID())).findFirst().orElse(null);
+
 			if (parentVar != null) {
 				VarValue child = this.varValue.clone();
 				child.setStringValue(null);
 				child.setVarID(parentVar.getVarID().concat("-" + child.getVarName()));
-				
+
 				VarValue foundChild = parentVar.getChildren().stream()
-						.filter(v -> v.getVarID().equals(child.getVarID()))
-						.findAny().orElse(null);
+						.filter(v -> v.getVarID().equals(child.getVarID())).findAny().orElse(null);
 				if (foundChild == null) {
 					parentVar.addChild(child);
 				}
 			}
 		}
-		
+
 		VarValue child = this.varValue.clone();
 		child.setStringValue(null);
 		child.setVarID(parent.varValue.getVarID().concat("-" + child.getVarName()));
-		
-		VarValue foundChild = parent.varValue.getChildren().stream()
-				.filter(v -> v.getVarID().equals(child.getVarID()))
+
+		VarValue foundChild = parent.varValue.getChildren().stream().filter(v -> v.getVarID().equals(child.getVarID()))
 				.findAny().orElse(null);
 		if (foundChild == null) {
 			parent.varValue.addChild(child);
@@ -244,25 +237,25 @@ class VariableGraphNode {
 	public String getAliasID() {
 		return this.aliasID;
 	}
-	
+
 	public VarValue getVarValue() {
 		return this.varValue;
 	}
-	
+
 	public VariableGraphNode getParent() {
 		return this.parent;
 	}
-	
+
 	public boolean hasChildren() {
 		return !this.children.isEmpty();
 	}
-	
+
 	public List<TraceNode> getRelevantSteps() {
 		return this.relevantSteps;
 	}
-	
+
 	public Set<String> getCandidateVariables() {
 		return this.candidateVariables;
 	}
-	
+
 }
