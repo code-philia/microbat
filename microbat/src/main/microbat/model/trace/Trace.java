@@ -20,7 +20,7 @@ import microbat.model.Scope;
 import microbat.model.value.VarValue;
 import microbat.model.value.VirtualValue;
 import microbat.model.variable.Variable;
-import microbat.tracerecov.varmapping.VariableMapper;
+import microbat.tracerecov.VariableGraph;
 import microbat.util.JavaUtil;
 import microbat.util.Settings;
 import sav.strategies.dto.AppJavaClassPath;
@@ -265,27 +265,13 @@ public class Trace {
 	 * 
 	 * @author hongshuwang
 	 */
-	public Map<String, List<TraceNode>> findRecoveredDataDependency(TraceNode checkingNode, VarValue readVar) {
-		Set<String> varIDs = new HashSet<>();
-		varIDs.add(readVar.getAliasVarID());
-		
-		Map<String, List<TraceNode>> relevantSteps = new HashMap<>();
-		Map<String, Set<VarValue>> linkedVariables = new HashMap<>();
+	public void findRecoveredDataDependency(TraceNode checkingNode, VarValue readVar) {
+		/* initialize graph */
+		VariableGraph.addVar(readVar);
 		
 		int end = checkingNode.getOrder();
-		for (int i = 1; i < end; i++) {
+		for (int i = 1; i <= end; i++) {
 			TraceNode node = this.getTraceNode(i);
-			List<VarValue> variables = node.getReadVariables();
-			
-			// add identified candidate variables
-			for (VarValue variable : variables) {
-				String rHeadID = Variable.truncateSimpleID(variable.getAliasVarID());
-				if (linkedVariables.containsKey(rHeadID)) {
-					for (VarValue child : linkedVariables.get(rHeadID)) {
-						VariableMapper.mapVariable(child, variable);
-					}
-				}
-			}
 			
 			// skip stepIn and stepOut steps
 			TraceNode previous = node.getStepOverPrevious();
@@ -294,58 +280,21 @@ public class Trace {
 				continue;
 			}
 			
+			List<VarValue> variables = node.getReadVariables();
 			for (VarValue variable : variables) {
-				String rHeadID = Variable.truncateSimpleID(variable.getAliasVarID());
-				for (String headID : varIDs) {	
-					// find relevant step
-					if(rHeadID != null && rHeadID.equals(headID)) {
-						// add to relevantSteps map
-						if (!relevantSteps.containsKey(rHeadID)) {
-							relevantSteps.put(rHeadID, new ArrayList<>());
-						}
-						relevantSteps.get(rHeadID).add(node);
-						
-						// variable mapping
-						VarValue variableMapped = mapVariables(readVar, node);
-						if (variableMapped != null) {
-							// map to current variable
-							varIDs.add(variableMapped.getAliasVarID());
-							// save to map to be added later
-							if (!linkedVariables.containsKey(rHeadID)) {
-								linkedVariables.put(rHeadID, new HashSet<>());
-							}
-							linkedVariables.get(rHeadID).add(variableMapped);
-						}
-						
-						break;
-					}
+				/* identify relevant steps */
+				if (VariableGraph.containsVar(variable)) {
+					VariableGraph.addRelevantStep(variable, node);
+				} else {
+					continue;
 				}
+				
+				/* variable mapping */
+				VariableGraph.mapVariable(readVar, node);
+				
+				break;
 			}
 		}
-		
-		return relevantSteps;
-	}
-	
-	/**
-	 * Map candidate variable to variable on trace.
-	 * 
-	 * @author hongshuwang
-	 */
-	public VarValue mapVariables(VarValue varValue, TraceNode node) {
-		List<String> candidateVariables = varValue.getCandidateVariables();
-		
-		String returnedFieldType = VariableMapper.getReturnTypeOfCandidateVariable(node.getInvokingMethod(), candidateVariables);
-		VarValue returnedVariable = node.getWrittenVariables()
-				.stream()
-				.filter(v -> v.getType().equals(returnedFieldType))
-				.findFirst()
-				.orElse(null);
-		VarValue mappedVariable = VariableMapper.mapVariable(returnedVariable, varValue);
-		// mark relevant step
-		if (mappedVariable != null) {
-			mappedVariable.setRelevantStep(node);
-		}
-		return mappedVariable;
 	}
 	
 	public List<TraceNode> findDataDependentee(TraceNode traceNode, VarValue writtenVar) {

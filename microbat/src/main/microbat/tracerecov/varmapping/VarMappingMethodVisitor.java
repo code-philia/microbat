@@ -2,7 +2,6 @@ package microbat.tracerecov.varmapping;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.objectweb.asm.MethodVisitor;
@@ -17,16 +16,14 @@ public class VarMappingMethodVisitor extends MethodVisitor {
 	private static String fieldType;
 
 	private int lastInstruction;
-	private List<String> candidateVariables;
 
-	public VarMappingMethodVisitor(List<String> candidateVariables) {
+	public VarMappingMethodVisitor() {
 		super(Opcodes.ASM9, null);
-		this.candidateVariables = candidateVariables;
 	}
 
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
-		if (GET_INSTRUCTIONS.contains(opcode) && candidateVariables.contains(name)) {
+		if (GET_INSTRUCTIONS.contains(opcode)) {
 			fieldName = name;
 			fieldType = descriptor;
 		}

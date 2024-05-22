@@ -1,5 +1,8 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.List;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
@@ -19,34 +22,39 @@ public class SimulationUtils {
 	public static final String GPT4O = "gpt-4o";
 
 	/* Model constants */
-	public static final double TEMPERATURE = 0.2;
-
+	public static final double TEMPERATURE = 0.7;
+	
 	/* Request content */
-	private static final String REQUEST_BACKGROUND = "When a segment of code is executed, "
-			+ "a candidate variable is a variable that might have been read or written.";
-	private static final String QUESTION_SUFFIX = "Return the values of the candidate variables "
-			+ "***after execution***. Your response should be in this format without explanation: "
-			+ "<step number>#<candidate variable>#<value>";
+	private static final String REQUEST_BACKGROUND = "In each step, the variable of interest (VOI) is "
+			+ "identified. The variable values ***before*** execution are given, you need to provide the value "
+			+ "of the VOI ***after*** the execution of each step. Don't return the value of variables other "
+			+ "than the VOI.\n"
+			+ "If the VOI is not modified ***before and after*** the execution, you shouldn't include this "
+			+ "step in your response.";
 
+	private static final String QUESTION_SUFFIX = "Return the value of the VOI ***after*** the execution. Your "
+			+ "response should be in this format without explanation: <step_No>#<VOI_value>";
+
+	
 	/* Methods */
 
 	public static String getBackgroundContent() {
 		return REQUEST_BACKGROUND;
 	}
-
-	public static String getQuestionContent(TraceNode currentStep, VarValue currentVar,
-			List<TraceNode> relevantSteps, String aliasID) {
+	
+	public static String getQuestionContent(String variableID, List<TraceNode> relevantSteps) {
 		StringBuilder stringBuilder = new StringBuilder();
 
-		stringBuilder.append(getContentForCurrentStep(currentStep, currentVar));
+		VarValue criticalVar = relevantSteps.get(0).getReadVariables().stream()
+				.filter(v -> Variable.truncateSimpleID(v.getAliasVarID()).equals(variableID)).findFirst().orElse(null);
+		String type = criticalVar.getType();
+		stringBuilder.append(getContentForVariableOfInterest(type));
 
 		stringBuilder.append("In the following steps: \n");
 		for (TraceNode step : relevantSteps) {
-			VarValue criticalVar = step.getReadVariables()
-				.stream()
-				.filter(v -> Variable.truncateSimpleID(v.getAliasVarID()).equals(aliasID))
-				.findFirst()
-				.orElse(null);
+			criticalVar = step.getReadVariables().stream()
+					.filter(v -> Variable.truncateSimpleID(v.getAliasVarID()).equals(variableID)).findFirst()
+					.orElse(null);
 			stringBuilder.append(getContentForRelevantStep(step, criticalVar));
 		}
 
@@ -56,47 +64,113 @@ public class SimulationUtils {
 	}
 
 	/**
-	 * Given step STEP_NO with signature METHOD_SIGNATURE; "VAR_NAME" has candidate
-	 * variables: <C1>;<C2>;...<Cn>;
+	 * The VOI in each of the following steps has type "TYPE".
 	 */
-	private static StringBuilder getContentForCurrentStep(TraceNode node, VarValue varValue) {
-		StringBuilder stringBuilder = new StringBuilder("Given step ");
-
-		stringBuilder.append(node.getOrder());
-		stringBuilder.append(" with signature ");
-		stringBuilder.append(node.getInvokingMethod().split("%")[0]);
-		stringBuilder.append(" \"");
-		stringBuilder.append(varValue.getVarName());
-		stringBuilder.append("\" has candidate variables: ");
-		List<String> candidateVariables = varValue.getCandidateVariables();
-		if (candidateVariables != null) {
-			for (String v : candidateVariables) {
-				stringBuilder.append("<");
-				stringBuilder.append(v);
-				stringBuilder.append(">;");
-			}
-		}
-		stringBuilder.append("\n");
-
+	private static StringBuilder getContentForVariableOfInterest(String type) {
+		StringBuilder stringBuilder = new StringBuilder("The VOI in each of the following steps has type \"");
+		stringBuilder.append(type);
+		stringBuilder.append("\".\n");
 		return stringBuilder;
 	}
 
 	/**
-	 * STEP_NO: METHOD_SIGNATURE; the candidate variable has value <VAR_VALUE>
-	 * ***before execution***
+	 * step_No:STEP_NO, source_code:"CODE", 
+	 * VOI:{name:"NAME", type:"TYPE", value:"VAL"},
+	 * other_variables:{name:"NAME", type:"TYPE", value:"VAL"}
+	 * {name:"NAME", type:"TYPE", value:"VAL"}...
 	 */
-	private static StringBuilder getContentForRelevantStep(TraceNode node, VarValue varValue) {
-		StringBuilder stringBuilder = new StringBuilder();
-
+	public static StringBuilder getContentForRelevantStep(TraceNode node, VarValue varValue) {
+		StringBuilder stringBuilder = new StringBuilder("step_No:");
 		stringBuilder.append(node.getOrder());
-		stringBuilder.append(": ");
-		stringBuilder.append(node.getInvokingMethod().split("%")[0]);
-		stringBuilder.append(" the candidate variable has value \"");
-		stringBuilder.append(varValue.getStringValue());
-		stringBuilder.append("\" ***before execution***");
-		stringBuilder.append("\n");
+		
+		stringBuilder.append(",source_code:\"");
+		int lineNo = node.getLineNumber();
+		String location = node.getBreakPoint().getFullJavaFilePath();
+		String sourceCode = getSourceCode(location, lineNo).trim();
+		stringBuilder.append(sourceCode);
+		
+		stringBuilder.append("\",VOI:");
+		stringBuilder.append(getContentForVar(varValue));
+		
+		List<VarValue> readVars = node.getReadVariables();
+		if (readVars.size() <= 1) {
+			stringBuilder.append("\n");
+			return stringBuilder;
+		}
+		
+		stringBuilder.append(",other_variables:");
+		for (VarValue v : readVars) {
+			if (v.getVarName().equals(varValue.getVarName())) {
+				continue;
+			}
+			stringBuilder.append(getContentForVar(v));
+		}
 
+		stringBuilder.append("\n");
 		return stringBuilder;
 	}
-
+	
+	private static StringBuilder getContentForVar(VarValue varValue) {
+		StringBuilder stringBuilder = new StringBuilder("{name:\"");
+		stringBuilder.append(varValue.getVarName());
+		stringBuilder.append("\",type:\"");
+		stringBuilder.append(varValue.getType());
+		stringBuilder.append("\",value:\"");
+		stringBuilder.append(varValue.getStringValue());
+		stringBuilder.append("\"}");
+		return stringBuilder;
+	}
+	
+	private static String getSourceCode(String filePath, int lineNumber) {
+		String line = null;
+		try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+			int currentLine = 0;
+			while ((line = reader.readLine()) != null) {
+				currentLine++;
+				if (currentLine == lineNumber) {
+					return line;
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static void processResponse(String response, String variableID, List<TraceNode> relevantSteps) {
+		String[] lines = response.split("\n");
+		for (String line : lines) {
+			String[] entries = line.split("#");
+			if (entries.length != 2) {
+				continue;
+			}
+			int stepNo = Integer.valueOf(entries[0].trim());
+			String value = entries[1].trim();
+			
+			TraceNode step = relevantSteps.stream()
+				.filter(s -> {return s.getOrder() == stepNo;})
+				.findFirst().orElse(null);
+			if (step == null) {
+				continue;
+			}
+			
+			VarValue writtenVar = step.getWrittenVariables().stream()
+					.filter(v -> v.getAliasVarID().equals(variableID))
+					.findFirst().orElse(null);
+			if (writtenVar != null) {
+				continue;
+			}
+			
+			VarValue readVar = step.getReadVariables().stream()
+					.filter(v -> v.getAliasVarID().equals(variableID))
+					.findFirst().orElse(null);
+			if (readVar == null) {
+				continue;
+			}
+			
+			writtenVar = readVar.clone();
+			writtenVar.setStringValue(value);
+			step.addWrittenVariable(writtenVar);
+		}
+	}
 }

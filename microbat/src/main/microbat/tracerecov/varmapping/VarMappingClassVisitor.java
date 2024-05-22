@@ -1,7 +1,5 @@
 package microbat.tracerecov.varmapping;
 
-import java.util.List;
-
 import org.objectweb.asm.MethodVisitor;
 
 import microbat.tracerecov.AbstractClassVisitor;
@@ -14,18 +12,12 @@ import microbat.tracerecov.AbstractClassVisitor;
  */
 public class VarMappingClassVisitor extends AbstractClassVisitor {
 
-	private List<String> candidateVariables;
-
-	public VarMappingClassVisitor(String className, String methodName, String methodDescriptor,
-			List<String> candidateVariables) {
+	public VarMappingClassVisitor(String className, String methodName, String methodDescriptor) {
 		super(className, methodName, methodDescriptor);
-		this.candidateVariables = candidateVariables;
 	}
 
-	public VarMappingClassVisitor(String className, String methodName, String methodDescriptor, boolean reset,
-			List<String> candidateVariables) {
+	public VarMappingClassVisitor(String className, String methodName, String methodDescriptor, boolean reset) {
 		super(className, methodName, methodDescriptor, reset);
-		this.candidateVariables = candidateVariables;
 	}
 
 	/**
@@ -38,7 +30,7 @@ public class VarMappingClassVisitor extends AbstractClassVisitor {
 			if (this.reset) {
 				VarMappingMethodVisitor.reset();
 			}
-			return new VarMappingMethodVisitor(this.candidateVariables);
+			return new VarMappingMethodVisitor();
 		}
 		return null;
 	}

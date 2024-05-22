@@ -6,14 +6,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
 import org.json.JSONObject;
 
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
+import microbat.tracerecov.VariableGraph;
 
 /**
  * This class is used to simulate execution through LLM and retrieve
@@ -25,26 +23,33 @@ public class ExecutionSimulator {
 
 	private static String apiKey = "";
 	
-	private Map<String, List<TraceNode>> relevantSteps;
 	private TraceNode currentStep;
 	private VarValue var;
 
-	public ExecutionSimulator(Map<String, List<TraceNode>> relevantSteps, TraceNode currentStep, VarValue var) {
-		this.relevantSteps = relevantSteps;
+	public ExecutionSimulator(TraceNode currentStep, VarValue var) {
 		this.currentStep = currentStep;
 		this.var = var;
 	}
 	
-	public List<String> sendRequests() throws IOException {
-		List<String> responses = new ArrayList<>();
-		for (String key : relevantSteps.keySet()) {
-			String response = sendRequest(key, relevantSteps.get(key));
-			responses.add(response);
+	public void sendRequests() throws IOException {
+		String variableID = VariableGraph.getNextNodeIDToVisit();
+		while (variableID != null) {
+			List<TraceNode> relevantSteps = VariableGraph.getRelevantSteps(variableID);
+			boolean hasChildren = VariableGraph.hasChildren(variableID);
+			
+			String response = this.sendRequest(variableID, relevantSteps, hasChildren);
+			if (hasChildren) {
+				SimulationUtilsWithCandidateVar.processResponse(response, variableID, relevantSteps);
+			} else {
+				SimulationUtils.processResponse(response, variableID, relevantSteps);
+			}
+			
+			VariableGraph.addCurrentToParentVariables();
+			variableID = VariableGraph.getNextNodeIDToVisit();
 		}
-		return responses;
 	}
 
-	private String sendRequest(String aliasID, List<TraceNode> steps) throws IOException {
+	private String sendRequest(String aliasID, List<TraceNode> steps, boolean hasChildren) throws IOException {
 		/* set up connection */
 		URL url = new URL(SimulationUtils.API_URL);
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -57,11 +62,15 @@ public class ExecutionSimulator {
 		/* construct request */
 		JSONObject background = new JSONObject();
 		background.put("role", "system");
-		background.put("content", SimulationUtils.getBackgroundContent());
+		background.put("content", hasChildren 
+				? SimulationUtilsWithCandidateVar.getBackgroundContent() 
+						: SimulationUtils.getBackgroundContent());
 
 		JSONObject question = new JSONObject();
 		question.put("role", "user");
-		question.put("content", SimulationUtils.getQuestionContent(currentStep, var, steps, aliasID));
+		question.put("content", hasChildren 
+				? SimulationUtilsWithCandidateVar.getQuestionContent(aliasID, steps) 
+						: SimulationUtils.getQuestionContent(aliasID, steps));
 
 		JSONObject request = new JSONObject();
 		request.put("model", SimulationUtils.GPT3);

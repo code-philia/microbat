@@ -20,7 +20,7 @@ public class VariableMapper {
 	/**
 	 * Given invokingMethod, get the return type of the candidate variable.
 	 */
-	public static String getReturnTypeOfCandidateVariable(String invokingMethod, List<String> candidateVariables) {
+	public static String getReturnTypeOfCandidateVariable(String invokingMethod) {
 		if (invokingMethod == null || invokingMethod.startsWith("%")) {
 			return null;
 		}
@@ -31,8 +31,7 @@ public class VariableMapper {
 		String methodName = methodSignature.substring(0, index);
 		String methodDescriptor = methodSignature.substring(index);
 
-		return getReturnTypeOfCandidateVariable(className, methodName, methodDescriptor, methodSignature,
-				candidateVariables);
+		return getReturnTypeOfCandidateVariable(className, methodName, methodDescriptor, methodSignature);
 	}
 
 	/**
@@ -62,7 +61,7 @@ public class VariableMapper {
 	}
 
 	private static String getReturnTypeOfCandidateVariable(String className, String methodName, String methodDescriptor,
-			String methodSignature, List<String> candidateVariables) {
+			String methodSignature) {
 		// load the class
 		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream(className.replace('.', '/') + ".class");
@@ -71,8 +70,7 @@ public class VariableMapper {
 			ClassReader classReader = new ClassReader(inputStream);
 
 			// create and accept a classVisitor
-			VarMappingClassVisitor classVisitor = new VarMappingClassVisitor(className, methodName, methodDescriptor,
-					candidateVariables);
+			VarMappingClassVisitor classVisitor = new VarMappingClassVisitor(className, methodName, methodDescriptor);
 			classReader.accept(classVisitor, 0);
 
 			String typeDescriptor = VarMappingMethodVisitor.getReturnedFieldType();
