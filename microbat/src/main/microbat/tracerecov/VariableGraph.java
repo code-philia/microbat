@@ -30,24 +30,25 @@ public class VariableGraph {
 	}
 
 	/**
-	 * 1. Add a relevant step of a variable to the graph.
-	 * 2. Identify and add candidate variables based on the invoked method 
+	 * 1. Identify and add candidate variables based on the invoked method 
 	 *    through bytecode analysis.
+	 * 2. If a step has candidate variables, add it to the graph.
 	 */
 	public static void addRelevantStep(VarValue varValue, TraceNode step) {
+		List<String> candidateVariables = getCandidateVariables(varValue, step);
+		if (candidateVariables == null || candidateVariables.isEmpty()) {
+			return; // don't include getters
+		}
 		getVar(varValue).addRelevantStep(step);
-		addCandidateVariables(varValue, step); // not used
 	}
 
 	/**
 	 * Identify candidate variables of the variable based on the invoked method
 	 * through bytecode analysis.
 	 */
-	private static void addCandidateVariables(VarValue varValue, TraceNode step) {
+	private static List<String> getCandidateVariables(VarValue varValue, TraceNode step) {
 		String invokingMethod = step.getInvokingMethod();
-		List<String> candidateVariables = CandidateVarRetriever.getCandidateVariables(invokingMethod);
-
-		getVar(varValue).addCandidateVariables(candidateVariables);
+		return CandidateVarRetriever.getCandidateVariables(invokingMethod);
 	}
 
 	/**
