@@ -42,15 +42,15 @@ public class FeedbackPathGeneratorLLM {
 			stack.push(feedBackNode);
 		}
 		
-		while(!stack.empty()) {
+		int step_count = 0;
+		while(!stack.empty() && step_count < 20) {
 			DPUserFeedback curStep = stack.pop();
 			// prediction for current step
-			try {
-				decisionPredictor.predictDecision(curStep);
-			} catch (Exception e) {
-				System.out.println("--ERROR-- Exception in predicting decision...");
-				e.printStackTrace();
+			boolean succeed = decisionPredictor.predictDecision(curStep);
+			if(!succeed) { // an error happened when asking gpt, keep previous debugging plan
+				return null;
 			}
+			step_count += 1;
 			
 			Set<TraceNode> allNextNodes = TraceUtil.findAllNextNodes(curStep);
 			
@@ -88,16 +88,16 @@ public class FeedbackPathGeneratorLLM {
 		DPUserFeedback feedBackNode = new DPUserFeedback(DPUserFeedbackType.UNCLEAR, currentNode);
 		stack.push(feedBackNode);
 		
-		while(!stack.empty()) {
+		int step_count = 0;
+		while(!stack.empty() && step_count < 20) {
 			DPUserFeedback curStep = stack.pop();
 			// prediction for current step
-			try {
-				decisionPredictor.predictDecision(curStep);
-			} catch (Exception e) {
-				System.out.println("--ERROR-- Exception in predicting decision...");
-				e.printStackTrace();
+			boolean succeed = decisionPredictor.predictDecision(curStep);
+			if(!succeed) { // an error happened when asking gpt, keep previous debugging plan
+				return null;
 			}
-			
+			step_count += 1;
+
 			Set<TraceNode> allNextNodes = TraceUtil.findAllNextNodes(curStep);
 			
 			// reach an end

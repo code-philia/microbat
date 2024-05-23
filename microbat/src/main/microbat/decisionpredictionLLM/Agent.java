@@ -61,7 +61,7 @@ public class Agent {
     }
     
 	public void setLogFile(String project) {
-		logFile = "D:\\history\\"+project+".log";
+		logFile = "D:\\ProgramDebugging\\history\\"+project+".log";
 	}
 	
 	public void setConfig(int choice) {
@@ -153,10 +153,6 @@ public class Agent {
                 continue;
             }
         }
-        // shut down debugpilot
-		DialogUtil.popErrorDialog("An error occured when getting reponse from LLM, please confirm again.", "Response Error");
-		HandlerCallbackManager.getInstance().runDebugPilotTerminateCallbacks();
-		Job.getJobManager().cancel(DebugPilotHandler.JOB_FAMALY_NAME);
         return "";
     }
     

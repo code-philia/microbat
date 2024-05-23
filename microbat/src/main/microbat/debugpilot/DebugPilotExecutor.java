@@ -137,11 +137,13 @@ public class DebugPilotExecutor {
 		else { // use gpt_predictor
 			FeedbackPathGeneratorLLM feedbackPathGenerator = new FeedbackPathGeneratorLLM();
 			List<FeedbackPath> paths = feedbackPathGenerator.generateFeedbackPath(availableFeedbacks);
+			if(paths == null) {
+				return;
+			}
 			this.updatePathView(paths);
 			Display.getDefault().syncExec(() -> {
 				for (TraceNode nextNode : TraceUtil.findAllNextNodes(userFeedback)) {
 					if (paths.get(0).containFeedbackByNode(nextNode)) {
-						// TODO current path
 						this.pathView.focusOnNode(nextNode);
 						break;
 					}
@@ -150,9 +152,13 @@ public class DebugPilotExecutor {
 		}
 	}
 	
+	// start with no feedback
 	public void execute(final TraceNode currentNode) {
 		FeedbackPathGeneratorLLM feedbackPathGenerator = new FeedbackPathGeneratorLLM();
 		List<FeedbackPath> paths = feedbackPathGenerator.generateFeedbackPath(currentNode);
+		if(paths == null) {
+			return;
+		}
 		this.updatePathView(paths);	
 		Display.getDefault().syncExec(() -> {
 			this.pathView.focusOnNode(currentNode);

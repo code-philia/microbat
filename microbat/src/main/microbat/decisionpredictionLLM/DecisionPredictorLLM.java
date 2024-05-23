@@ -21,18 +21,26 @@ import microbat.views.DialogUtil;
 public class DecisionPredictorLLM {
 	private int condition_result_num = 0;
 	
-	public void predictDecision(DPUserFeedback curStep) {
+	public boolean predictDecision(DPUserFeedback curStep) {
 		Agent agent = new Agent();
 //		agent.setLogFile(Settings.projectName);
 		
 		// infer specification
 		String specification = agent.infer_specification(curStep);
+		if("".equals(specification)) {
+			DialogUtil.popErrorDialog("An error occured when getting reponse from LLM, please confirm again.", "Response Error");
+			return false;
+		}
 		
 		// make decision
 		int retry_parse_failed = 3;
 		while(retry_parse_failed > 0) {
 			try { // in case parse error caused by incorrect format
 				String decision = agent.make_decision(specification,curStep);
+				if("".equals(specification)) {
+					DialogUtil.popErrorDialog("An error occured when getting reponse from LLM, please confirm again.", "Response Error");
+					return false;
+				}
 				
 				int start = decision.indexOf("{");
 				int end = decision.lastIndexOf("}");
@@ -69,7 +77,7 @@ public class DecisionPredictorLLM {
 						}
 					}
 				}
-				return;
+				return true;
 				
 			} catch(Exception e) {
 				retry_parse_failed -= 1;
@@ -78,9 +86,8 @@ public class DecisionPredictorLLM {
 		}
 		
 		//shut down debugpilot
-		DialogUtil.popErrorDialog("An error occured when parsing reponse from LLM, please confirm again.", "Response Error");
-		HandlerCallbackManager.getInstance().runDebugPilotTerminateCallbacks();
-		Job.getJobManager().cancel(DebugPilotHandler.JOB_FAMALY_NAME);
+		DialogUtil.popErrorDialog("An error occured when parsing reponse, please confirm again.", "Response Error");
+		return false;
 		
 		
 //		condition_result_num = 0;
