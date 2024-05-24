@@ -1,19 +1,12 @@
 package microbat.mutation.trace;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.eclipse.jdi.TimeoutException;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -29,12 +22,9 @@ import microbat.codeanalysis.runtime.PreCheckInformation;
 import microbat.instrumentation.output.RunningInfo;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
-import microbat.mutation.mutation.OperationMutationVisitor;
 import microbat.mutation.mutation.ControlDominatedMutationVisitor;
 import microbat.mutation.mutation.MutationType;
-import microbat.mutation.mutation.NodeIterator;
 import microbat.mutation.mutation.TraceMutationVisitor;
-import microbat.mutation.mutation.ValueMutationVisitor;
 import microbat.mutation.trace.dto.AnalysisParams;
 import microbat.mutation.trace.dto.AnalysisTestcaseParams;
 import microbat.mutation.trace.dto.BackupClassFiles;
@@ -71,31 +61,17 @@ import tregression.empiricalstudy.EmpiricalTrial;
 import tregression.empiricalstudy.Regression;
 import tregression.empiricalstudy.RegressionUtil;
 import tregression.empiricalstudy.RootCauseFinder;
-import tregression.empiricalstudy.RootCauseNode;
 import tregression.empiricalstudy.Simulator;
-import tregression.empiricalstudy.TrialGenerator1;
-import tregression.empiricalstudy.config.ProjectConfig;
 import tregression.empiricalstudy.solutionpattern.PatternIdentifier;
 import tregression.empiricalstudy.training.DED;
 import tregression.model.PairList;
 import tregression.separatesnapshots.DiffMatcher;
 import tregression.tracematch.ControlPathBasedTraceMatcher;
-import tregression.util.DebuggingTraceRecorder;
 
-public class MutationGenerator {
-	public final String mutationBaseFolder = "D:\\MutationProjects";
-	public final String tempFolder = "D:\\MutationProjects\\tmp";
-	public final String outputFolder = "D:\\MutationProjects\\data\\debuggingTrace.txt";
-	public String projectName;
-	public int validMutationNum;
-	ProjectConfig projectConfig;
-
+public class MutationGeneratorOld {
 	
-	public MutationGenerator(String projectName,ProjectConfig config) {
+	public MutationGeneratorOld() {
 		super();
-		this.projectName = projectName;
-		this.projectConfig = config;
-		this.validMutationNum = 0;
 	}
 
 	public void generateMutations(IPackageFragment pack, AnalysisParams analysisParams,
@@ -103,46 +79,26 @@ public class MutationGenerator {
 		IMutationCaseChecker checker = monitor.getMutationCaseChecker();
 		String testSourceFolder = null;
 		String projectFolder = IProjectUtils.getProjectFolder(pack.getJavaProject().getProject());
-
-		// for each package
 		for (IJavaElement javaElement : pack.getChildren()) {
-			if(validMutationNum >= 10) {
-				break;
-			}
-			
-			System.out.println("--INFO-- generate mutation for class: "+javaElement.getElementName());
 			if (javaElement instanceof IPackageFragment) {
-				// for inner package
 				generateMutations((IPackageFragment) javaElement, analysisParams, monitor);
-			}
-			else if (javaElement instanceof ICompilationUnit) {
+			} else if (javaElement instanceof ICompilationUnit) {
 				ICompilationUnit icu = (ICompilationUnit) javaElement;
 				CompilationUnit cu = JavaUtil.convertICompilationUnitToASTNode(icu);
-		        
 				List<MethodDeclaration> testingMethods = JTestUtil.findTestingMethod(cu);
 				if (testingMethods.isEmpty()) {
-					System.out.println("--INFO-- testing methods is empty...");
 					continue;
 				}
 				String className = JavaUtil.getFullNameOfCompilationUnit(cu);
-				System.out.println("--INFO-- className: "+className);
 				if (!checker.accept(className)) {
-					System.out.println("--ERROR-- not accept...");
 					continue;
 				}
-				
-				// for each method
 				for (MethodDeclaration testingMethod : testingMethods) {
-					if(validMutationNum >= 10) {
-						break;
-					}
-					
 					String methodName = testingMethod.getName().getIdentifier();
 					if (monitor.isCanceled()) {
 						return;
 					}
 					if (!checker.accept(className, methodName)) {
-						System.out.println("--ERROR-- not accept...");
 						continue;
 					}
 					AnalysisTestcaseParams tcParams = new AnalysisTestcaseParams(
@@ -156,16 +112,8 @@ public class MutationGenerator {
 						}
 						tcParams.setTestSourceFolder(testSourceFolder);
 //						collectTestcases(tcParams);
-						
-						// run correct test
-						System.out.println("--INFO-- Run correct test...");
 						TraceExecutionInfo correctTrace = executeTestcase(tcParams);
-												
-						// generate mutations and test
-						System.out.println("--INFO-- Run single testcase...");
 						runSingleTestcase(correctTrace, tcParams, monitor);
-						System.out.println("--INFO-- Single testcase finishes...");
-						
 					} catch (Throwable e) {
 						e.printStackTrace();
 						tcParams.recoverOrgMutatedClassFile();
@@ -177,10 +125,13 @@ public class MutationGenerator {
 				return;
 			}
 		}
-		System.out.println("Finish evaluation all for package: "+pack.getElementName());
+		System.out.println("Finish evaluation all!");
 	}
 	
-	// test correct version 
+	private void collectTestcases(AnalysisTestcaseParams tcParams) {
+		FileUtils.appendFile("/Users/lylytran/Projects/jfreechart-tcs.txt", tcParams.getTestcaseName() + "\n");
+	}
+	
 	public TraceExecutionInfo executeTestcase(AnalysisTestcaseParams params) {
 		AppJavaClassPath testcaseConfig = MuRegressionUtils.createProjectClassPath(params);
 		List<String> includedClassNames = AnalysisScopePreference.getIncludedLibList();
@@ -210,11 +161,8 @@ public class MutationGenerator {
 		return new TraceExecutionInfo(precheckInfo, correctTrace, executor.getTraceExecFilePath(), precheckPath);
 	}
 
-	// for a test method, generate mutations and test
 	public boolean runSingleTestcase(TraceExecutionInfo correctTrace, AnalysisTestcaseParams params,
 			IMutationExperimentMonitor monitor) throws JavaModelException {
-		
-		// 1. Generate mutants
 		if (correctTrace == null) {
 			return false;
 		}
@@ -223,182 +171,120 @@ public class MutationGenerator {
 		
 		System.out.println("mutating the tested methods of " + testCaseName);
 		List<SingleMutation> mutations = mutate(correctTrace.getTrace(), params);
-		System.out.println("mutation done for " + testCaseName+", total "+mutations.size()+" mutations.");
+		System.out.println("mutation done for " + testCaseName);
 		if (mutations.isEmpty()) {
 			System.out.println("What a pity, no proper mutants generated for " + testCaseName);
-			return false;
 		}
-		
-		// 2. Run mutants
 		System.out.println("Start executing mutants for  " + testCaseName);
-		System.out.println("=========== finding valid mutation =============");
-		int i = 1;
+		System.out.println("===========the mutation is start=================");
 		for (SingleMutation mutation : mutations) {
 			if (monitor.isCanceled()) {
 				return false;
 			}
-			System.out.println("*** run the mutation: " + i+" ***");
 			if (!checker.accept(mutation.getMutationBugId(), MutationType.valueOf(mutation.getMutationType()))) {
-				System.out.println("Not accepted mutation...");
-				i+=1;
 				continue;
 			}
 			try {
 				MutationTrace muTrace = generateMutationTrace(correctTrace.getTrace().getAppJavaClassPath(), params, mutation);
-				ICompilationUnit iunit = JavaUtil.findNonCacheICompilationUnitInProject(
-						mutation.getMutatedClass(),params.getProjectName());
+				ICompilationUnit iunit = JavaUtil.findNonCacheICompilationUnitInProject(mutation.getMutatedClass(),
+						params.getProjectName());
 				String orgFilePath = IResourceUtils.getAbsolutePathOsStr(iunit.getPath());
 				String mutationFilePath = mutation.getFile().getAbsolutePath();
 				if (muTrace != null && muTrace.isValid()) {
-					System.out.println("--INFO-- A valid mutation of type: "+mutation.getMutationType());
-					
-					validMutationNum+=1;
-					
-					System.out.println("orgFilePath: "+orgFilePath);//原文件完整路径
-					System.out.println("mutationFilePath: "+mutationFilePath);//mutated后文件完整路径
-					System.out.println("SourceFolder: "+mutation.getSourceFolder());//源文件源代码路径
-					
-					/* valid mutation, run tregression on it and fix version and record debugging trace */
-					checkRootCause(mutation, orgFilePath, mutationFilePath, muTrace.getTraceExecInfo(), correctTrace, params, monitor);					
-					monitor.reportMutationCase(params, correctTrace, muTrace, mutation);
+					checkRootCause(mutation, orgFilePath, mutationFilePath, muTrace.getTraceExecInfo(), correctTrace, params, monitor);
 				}
-				else {
-					monitor.reportMutationCase(params, correctTrace, muTrace, mutation);
-				}
+				monitor.reportMutationCase(params, correctTrace, muTrace, mutation);
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {
 				params.recoverOrgMutatedClassFile();
-				i+=1;
 			}
 		}
 		
-		System.out.println("================================================");
+		System.out.println("===========all mutation is done==================");
 		return false;
 	}
+	
+	private void checkRootCause(SingleMutation mutation, String orgFilePath, String mutationFilePath,
+			TraceExecutionInfo mutationTraceInfo, TraceExecutionInfo correctTraceInfo, AnalysisTestcaseParams params,
+			IMutationExperimentMonitor monitor) throws SimulationFailException {
+		AppJavaClassPath testCaseConfig = correctTraceInfo.getTrace().getAppJavaClassPath();
+		AppJavaClassPathWrapper.wrapAppClassPath(mutationTraceInfo.getTrace(), correctTraceInfo.getTrace(),
+				params.getBkClassFiles());
+		
+		List<String> includedClassNames = AnalysisScopePreference.getIncludedLibList();
+		List<String> excludedClassNames = AnalysisScopePreference.getExcludedLibList();
+		Trace killingMutatantTrace = mutationTraceInfo.getTrace();
+		PreCheckInformation buggyPrecheck = mutationTraceInfo.getPrecheckInfo();
+		Trace correctTrace = correctTraceInfo.getTrace();
+		PreCheckInformation correctPrecheck = correctTraceInfo.getPrecheckInfo();
 
-	private void checkRootCause(SingleMutation mutation, String originFilePath, String mutationFilePath,
-			TraceExecutionInfo mutationTraceInfo, TraceExecutionInfo correctTraceInfo, 
-			AnalysisTestcaseParams params,IMutationExperimentMonitor monitor) throws SimulationFailException {
+		DiffMatcher diffMatcher = new MuDiffMatcher(mutation.getSourceFolder(), orgFilePath, mutationFilePath);
+		diffMatcher.matchCode();
+		ControlPathBasedTraceMatcher traceMatcher = new ControlPathBasedTraceMatcher();
+		PairList pairList = traceMatcher.matchTraceNodePair(killingMutatantTrace, correctTrace, diffMatcher); 
 		
-//		AppJavaClassPath testCaseConfig = correctTraceInfo.getTrace().getAppJavaClassPath();
-//		AppJavaClassPathWrapper.wrapAppClassPath(mutationTraceInfo.getTrace(), correctTraceInfo.getTrace(),params.getBkClassFiles());
-//		List<String> includedClassNames = AnalysisScopePreference.getIncludedLibList();
-//		List<String> excludedClassNames = AnalysisScopePreference.getExcludedLibList();
-//		PreCheckInformation buggyPrecheck = mutationTraceInfo.getPrecheckInfo();
-//		PreCheckInformation correctPrecheck = correctTraceInfo.getPrecheckInfo();
-
-		String projectFolder = params.getProjectFolder();
-		String projName = params.getProjectName();
-		Path fix_path = Paths.get(projectFolder);
-		Path bug_path = Paths.get(mutationBaseFolder, params.getProjectName());
+		boolean foundRootCause = false;
+		int trialLimit = 10;
+		int trialNum = 0;
+		while (trialNum < trialLimit) {
+			trialNum++;
+			
+			Simulator simulator = new Simulator(params.getAnalysisParams().isUseSliceBreaker(), false,
+					params.getAnalysisParams().getBreakerLimit());
+			simulator.prepare(killingMutatantTrace, correctTrace, pairList, diffMatcher);
+			RootCauseFinder rootcauseFinder = new RootCauseFinder();
+			rootcauseFinder.checkRootCause(simulator.getObservedFault(), killingMutatantTrace, correctTrace, pairList, diffMatcher);
+			TraceNode rootCause = rootcauseFinder.retrieveRootCause(pairList, diffMatcher, killingMutatantTrace, correctTrace);
+			foundRootCause = (rootCause != null);
+			boolean includedClassChanged = false;
+			if (rootCause == null) {
+				System.out.println("[Search Lib Class] Cannot find the root cause, I am searching for library classes...");
+				
+				List<TraceNode> buggySteps = rootcauseFinder.getStopStepsOnBuggyTrace();
+				List<TraceNode> correctSteps = rootcauseFinder.getStopStepsOnCorrectTrace();
+				
+				List<String> newIncludedClassNames = new ArrayList<>();
+				List<String> newIncludedBuggyClassNames = RegressionUtil.identifyIncludedClassNames(buggySteps, 
+						buggyPrecheck, rootcauseFinder.getRegressionNodeList());
+				List<String> newIncludedCorrectClassNames = RegressionUtil.identifyIncludedClassNames(correctSteps, 
+						correctPrecheck, rootcauseFinder.getCorrectNodeList());
+				newIncludedClassNames.addAll(newIncludedBuggyClassNames);
+				newIncludedClassNames.addAll(newIncludedCorrectClassNames);
+				for(String name: newIncludedClassNames){
+					if(!includedClassNames.contains(name)){
+						includedClassNames.add(name);
+						includedClassChanged = true;
+					}
+				}
+			}
+			
+			/* foundRootCause || (!foundRootCause && includedClassChanged)*/
+			if(!includedClassChanged) {
+				break;
+			} else {
+				/* !foundRootCause */
+				killingMutatantTrace = generateMutatedTrace(params, mutation, testCaseConfig, buggyPrecheck,
+						includedClassNames, excludedClassNames);
+				correctTrace = generateCorrectTrace(params, testCaseConfig, correctPrecheck, includedClassNames,
+						excludedClassNames);
+				killingMutatantTrace.setAppJavaClassPath(mutationTraceInfo.getTrace().getAppJavaClassPath());
+				correctTrace.setAppJavaClassPath(correctTraceInfo.getTrace().getAppJavaClassPath());
+			}
+		}
 		
-		// Step 1: substitute original file and class with buggy file and class
-		String targetFilePath = originFilePath.replace(projectFolder,Paths.get(mutationBaseFolder,projName).toString());
-        Path sourcePath = Paths.get(mutationFilePath);
-        Path targetPath = Paths.get(targetFilePath);
-        
-		String sourceClassPath = mutationFilePath.replaceFirst("\\.java$", ".class");
-		String targetClassPath = targetFilePath.replaceFirst("\\.java$", ".class");
+		mutationTraceInfo.setTrace(killingMutatantTrace);
+		correctTraceInfo.setTrace(correctTrace);
+		if (!foundRootCause) {
+			return;
+		}
+		runSimulator(mutation, params, killingMutatantTrace, correctTrace, diffMatcher, pairList);
 		
-		Path srcClassPath = Paths.get(sourceClassPath);
-		Path tgtClassPath = Paths.get(
-				targetClassPath.replaceFirst(projectConfig.srcSourceFolder.replace("\\","\\\\"), 
-											 projectConfig.bytecodeSourceFolder.replace("\\","\\\\")));
-		
-		Path tempFilePath = Paths.get(tempFolder,targetPath.getFileName().toString());
-		Path tempClassPath = Paths.get(tempFolder,tgtClassPath.getFileName().toString());
-		
-//		System.out.println("originFilePath: "+originFilePath);
-//		System.out.println("targetFilePath: "+targetPath.toString());
-//		System.out.println("sourceClassPath: "+sourceClassPath);
-//		System.out.println("targetClassPath: "+tgtClassPath.toString());
-		
-		try {
-			Files.move(targetPath,tempFilePath,StandardCopyOption.REPLACE_EXISTING);
-			Files.move(tgtClassPath,tempClassPath,StandardCopyOption.REPLACE_EXISTING);
-            Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-            Files.copy(srcClassPath, tgtClassPath, StandardCopyOption.REPLACE_EXISTING);
-        } catch (Exception e) {
-        	System.err.println("--ERROR-- In copy file!");
-            e.printStackTrace();
-        }
-		
-		
-		// Step 2: run tregression
-		System.out.println("*******************\n* Run Tregression *\n*******************");
-		TrialGenerator1 generator1 = new TrialGenerator1();
-		List<EmpiricalTrial> trials = generator1.generateTrials(bug_path.toString(), fix_path.toString(),
-				false, false, false, 3, true, true, projectConfig, params.getTestcaseName());
-		System.out.println("--INFO-- Trails generated");
-		
-		// Step 3: Record the analysis result
-		DebuggingTraceRecorder recorder = new DebuggingTraceRecorder();
-		recorder.recordDebuggingTrace(trials, projectName, 1, outputFolder);
-		
-		System.out.println("******************* Tregression Finishes *******************");
-		
-		// Step 4: move back the correct file for next mutation
-		try {
-			Files.delete(targetPath);
-			Files.delete(tgtClassPath);
-			Files.move(tempFilePath,targetPath,StandardCopyOption.REPLACE_EXISTING);
-			Files.move(tempClassPath,tgtClassPath,StandardCopyOption.REPLACE_EXISTING);
-        } catch (Exception e) {
-        	e.printStackTrace();
-        }
-		
-		
-//		// 2: find root cause
-//		Trace buggyTrace = mutationTraceInfo.getTrace();
-//		Trace correctTrace = correctTraceInfo.getTrace();
-//		
-//		DiffMatcher diffMatcher = new DiffMatcher("1\\source", "1\\tests",bug_path.toString(),fix_path.toString());
-//		diffMatcher.matchCode();
-//		
-//		ControlPathBasedTraceMatcher traceMatcher = new ControlPathBasedTraceMatcher();
-//		PairList pairList = traceMatcher.matchTraceNodePair(buggyTrace, correctTrace, diffMatcher); 
-//			
-//		Simulator simulator = new Simulator(false, false, 0);
-//		simulator.prepare(buggyTrace, correctTrace, pairList, diffMatcher);
-//		
-//		RootCauseFinder rootcauseFinder = new RootCauseFinder();
-//		rootcauseFinder.setRootCauseBasedOnDefects4J(pairList, diffMatcher, buggyTrace, correctTrace);
-//		if(rootcauseFinder.getRealRootCaseList().isEmpty()) {
-//			System.out.println("--ERROR-- cannot find real root cause...");
-//			return;
-//		}
-//		else {
-//			System.out.println("--INFO-- found real root cause at line:");
-//			for(RootCauseNode rrc : rootcauseFinder.getRealRootCaseList()) {
-//				System.out.println(rrc.getRoot().getLineNumber());
-//			}
-//		}
-//		rootcauseFinder.checkRootCause(simulator.getObservedFault(), buggyTrace, correctTrace, pairList, diffMatcher);
-//		
-//		// 3: simulate debugging and record debugging trace
-//		System.out.println("--INFO-- start simulating debugging...");
-//		List<EmpiricalTrial> trials = simulator.detectMutatedBug(buggyTrace, correctTrace, diffMatcher, 0);
-//		System.out.println("--INFO-- finish simulating debugging, start recording debugging trace...");
-//		for (EmpiricalTrial t : trials) {
-//			t.setTestcase(params.getJunitClassName() + "#" + params.getTestMethod());
-//			t.setBuggyTrace(buggyTrace);
-//			t.setFixedTrace(correctTrace);
-//			t.setPairList(pairList);
-//			t.setDiffMatcher(diffMatcher);
-//			PatternIdentifier identifier = new PatternIdentifier();
-//			identifier.identifyPattern(t);
-//		}
-//		DebuggingTraceRecorder recorder = new DebuggingTraceRecorder();
-//		recorder.recordDebuggingTrace(trials, projectName, 1, "D:\\ProgramDebugging\\data\\mutation.txt");
-//		System.out.println("--INFO-- finish recording.");
 	}
-	
-	
-	
-	
+
 	public void runSimulator(SingleMutation mutation, AnalysisTestcaseParams params, Trace killingMutatantTrace,
 			Trace correctTrace, DiffMatcher diffMatcher, PairList pairList) throws SimulationFailException {
+		//TODO
 		Simulator simulator = new Simulator(false, false, 0);
 		simulator.prepare(killingMutatantTrace, correctTrace, pairList, diffMatcher);
 		List<EmpiricalTrial> trials = simulator.detectMutatedBug(killingMutatantTrace, correctTrace, diffMatcher, 0);
@@ -424,6 +310,7 @@ public class MutationGenerator {
 			}
 		}
 	}
+	
 	private Trace generateMutatedTrace(AnalysisTestcaseParams params, SingleMutation mutation, AppJavaClassPath testcaseConfig,
 			PreCheckInformation buggyPrecheck, List<String> includedClassNames, List<String> excludedClassNames) {
 		String traceDir = mutation.getMutationOutputFolder();
@@ -607,11 +494,8 @@ public class MutationGenerator {
 		ClassLocation cl = muLocations.isEmpty() ? staticCandidates.get(0) : muLocations.get(0);
 		String cName = cl.getClassCanonicalName();
 		String sourceFolderPath = MuRegressionUtils.getSourceFolder(cName, params.getProjectName());
-		
 		Mutator mutator = new Mutator(sourceFolderPath, params.getAnalysisOutputFolder(),
 				params.getAnalysisParams().getMuTotal());
-		
-		// other mutation type visitor
 		MutationVisitor visitor = new TraceMutationVisitor(params.getAnalysisParams().getMutationTypes());
 		Map<String, MutationResult> mutations = mutator.mutate(muLocations, visitor);
 		
@@ -621,23 +505,8 @@ public class MutationGenerator {
 			MutationResult.merge(mutations, cdMutations);
 		}
 		
-		List<ClassLocation> mutateLocations = muLocations.isEmpty()?staticCandidates:muLocations;
-		if (params.getAnalysisParams().getMutationTypes().contains(MutationType.CHANGE_ARITHMETIC_OPERATOR)
-				|| params.getAnalysisParams().getMutationTypes().contains(MutationType.CHANGE_CONDITIONALS_BOUNDARY)
-				|| params.getAnalysisParams().getMutationTypes().contains(MutationType.SWAP_OPERANDS)) {
-			visitor = new OperationMutationVisitor(params.getAnalysisParams().getMutationTypes());
-			Map<String, MutationResult> cdMutations = mutator.mutate(mutateLocations, visitor);
-			MutationResult.merge(mutations, cdMutations);
-		}
-		
-		if (params.getAnalysisParams().getMutationTypes().contains(MutationType.CHANGE_RETURN)
-				|| params.getAnalysisParams().getMutationTypes().contains(MutationType.CHANGE_LITERAL)) {
-			visitor = new ValueMutationVisitor(params.getAnalysisParams().getMutationTypes());
-			Map<String, MutationResult> cdMutations = mutator.mutate(mutateLocations, visitor);
-			MutationResult.merge(mutations, cdMutations);
-		}
-		
-		List<SingleMutation> result = SingleMutation.from(mutations, params.getJunitClassName(),params.getTestMethod());
+		List<SingleMutation> result = SingleMutation.from(mutations, params.getJunitClassName(),
+				params.getTestMethod());
 		return result;
 	}
 
@@ -655,4 +524,6 @@ public class MutationGenerator {
 			}
 		}
 	}
+
+	
 }

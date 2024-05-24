@@ -8,7 +8,12 @@ public enum MutationType {
 	REMOVE_ASSIGNMENT ("Remove Assignment"),
 	REMOVE_IF_CONDITION ("Remove If Condition"),
 	REMOVE_IF_RETURN ("Remove If Return"),
-	NEGATE_IF_CONDITION ("Negate If Condition");
+	NEGATE_IF_CONDITION ("Negate If Condition"),
+	CHANGE_ARITHMETIC_OPERATOR ("Change Arithmetic Operator"),
+	CHANGE_CONDITIONALS_BOUNDARY ("Change Conditionals Boundary"),
+	SWAP_OPERANDS ("Swap Operands"),
+	CHANGE_RETURN ("Change Return Value"),
+	CHANGE_LITERAL ("Change Certain Literal");
 	
 	private String text;
 	private MutationType(String text) {
@@ -20,6 +25,16 @@ public enum MutationType {
 	}
 	
 	public static List<MutationType> getPreferenceMutationTypes() {
-		return Arrays.asList(REMOVE_ASSIGNMENT, REMOVE_IF_BLOCK, REMOVE_IF_CONDITION, NEGATE_IF_CONDITION);
+		return Arrays.asList(
+				REMOVE_ASSIGNMENT, 
+				REMOVE_IF_BLOCK, 
+				REMOVE_IF_CONDITION, 
+				NEGATE_IF_CONDITION,
+				CHANGE_ARITHMETIC_OPERATOR,
+				CHANGE_CONDITIONALS_BOUNDARY,
+				SWAP_OPERANDS,
+				CHANGE_RETURN,
+				CHANGE_LITERAL
+				);
 	}
 }

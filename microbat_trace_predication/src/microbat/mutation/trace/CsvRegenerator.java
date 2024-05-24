@@ -13,10 +13,11 @@ import microbat.mutation.trace.report.IMutationExperimentMonitor;
 import tregression.SimulationFailException;
 import tregression.empiricalstudy.RootCauseFinder;
 import tregression.empiricalstudy.Simulator;
+import tregression.empiricalstudy.config.ProjectConfig;
 import tregression.model.PairList;
 
 public class CsvRegenerator extends MutationEvaluator {
-	private MutationGenerator generator = new MutationGenerator();
+	private MutationGeneratorOld generator = new MutationGeneratorOld();
 
 	
 	public void regenerate(MutationCase mutationCase, IMutationExperimentMonitor monitor) {

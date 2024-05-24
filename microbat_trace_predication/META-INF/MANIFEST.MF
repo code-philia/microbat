@@ -3,6 +3,12 @@ Bundle-ManifestVersion: 2
 Bundle-Name: microbat_trace_predication
 Bundle-SymbolicName: microbat_trace_predication;singleton:=true
 Bundle-Version: 1.0.0.qualifier
+Export-Package: microbat.mutation.mutation,
+ microbat.mutation.trace,
+ microbat.mutation.trace.dto,
+ microbat.mutation.trace.handlers,
+ microbat.mutation.trace.preference,
+ microbat.mutation.trace.report
 Require-Bundle: org.eclipse.ui,
  microbat;bundle-version="1.0.0",
  mutation;bundle-version="1.0.1",
@@ -25,7 +31,20 @@ Import-Package: org.apache.commons.io,
  sav.common.core.utils,
  sav.strategies.dto,
  sav.strategies.mutanbug,
- sav.strategies.vm
+ sav.strategies.vm,
+ tregression,
+ tregression.empiricalstudy,
+ tregression.empiricalstudy.config,
+ tregression.empiricalstudy.solutionpattern,
+ tregression.empiricalstudy.training,
+ tregression.io,
+ tregression.junit,
+ tregression.model,
+ tregression.separatesnapshots,
+ tregression.separatesnapshots.diff,
+ tregression.tracematch,
+ tregression.util,
+ tregression.views
 Bundle-ClassPath: lib/poi-3.11-20141221.jar,
  lib/poi-ooxml-3.11-20141221.jar,
  lib/poi-ooxml-schemas-3.11-20141221.jar,

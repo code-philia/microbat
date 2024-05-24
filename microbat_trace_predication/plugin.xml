@@ -33,6 +33,11 @@
             id="microbat_mutation_trace.commands.regenerate_csv"
             name="Regenerate csv files">
       </command>
+      <command
+            categoryId="microbat_mutation_trace.commands.category"
+            id="microbat_mutation_trace.commands.generate_mutants"
+            name="Generate Mutants">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.handlers">
@@ -51,6 +56,10 @@
       <handler
             class="microbat.mutation.trace.handlers.RegenerateCsvFilesHandler"
             commandId="microbat_mutation_trace.commands.regenerate_csv">
+      </handler>
+      <handler
+      		class="microbat.mutation.trace.handlers.GenerateMutantsHandler"
+      		commandId="microbat_mutation_trace.commands.generate_mutants">
       </handler>
    </extension>
    <extension
@@ -87,6 +96,10 @@
              <command
                    commandId="microbat_mutation_trace.commands.regenerate_csv"
                    id="microbat_mutation_trace.menus.regenerate_csv">
+             </command>
+             <command
+             	   commandId="microbat_mutation_trace.commands.generate_mutants"
+             	   id="microbat_mutation_trace.commands.generate_mutants">
              </command>
          </menu>
       </menuContribution>

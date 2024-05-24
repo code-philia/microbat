@@ -15,6 +15,7 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaModelException;
 
 import microbat.mutation.trace.MutationGenerator;
+import microbat.mutation.trace.MutationGeneratorOld;
 import microbat.mutation.trace.dto.AnalysisParams;
 import microbat.mutation.trace.preference.MutationRegressionPreference;
 import microbat.mutation.trace.preference.MutationRegressionSettings;
@@ -61,7 +62,7 @@ public class MutationGenerationHandler extends AbstractHandler {
 		AnalysisParams analysisParams = new AnalysisParams(mutationSettings);
 		MutationExperimentMonitor experimentMonitor = new MutationExperimentMonitor(monitor, targetProject,
 				analysisParams);
-		MutationGenerator mutationGenerator = new MutationGenerator();
+		MutationGeneratorOld mutationGenerator = new MutationGeneratorOld();
 		IPackageFragmentRoot testRoot = JavaUtil.findTestPackageRootInProject(targetProject);
 		if (testRoot == null) {
 			return;
