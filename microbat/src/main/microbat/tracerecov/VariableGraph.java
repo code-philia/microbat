@@ -30,18 +30,25 @@ public class VariableGraph {
 	}
 
 	/**
-	 * 1. Identify and add candidate variables based on the invoked method 
-	 *    through bytecode analysis.
+	 * 1. Identify and add candidate variables based on the invoked method through
+	 *    bytecode analysis.
 	 * 2. If a step has candidate variables, add it to the graph.
 	 */
 	public static void addRelevantStep(VarValue varValue, TraceNode step) {
+		if (step.getInvokingMethod().startsWith("%") && !(step.getStepOverPrevious() != null
+				&& !step.getStepOverPrevious().getInvocationChildren().isEmpty())) {
+			// doesn't invoke methods but reads varValue
+			getVar(varValue).addRelevantStep(step);
+			return;
+		}
+
 		List<String> candidateVariables = getCandidateVariables(varValue, step);
 		if (candidateVariables == null || candidateVariables.isEmpty()) {
-			return; // don't include getters
+			return;
 		}
 		getVar(varValue).addRelevantStep(step);
 	}
-	
+
 	/**
 	 * Return all invoking methods other than the expanded ones.
 	 */
@@ -49,7 +56,7 @@ public class VariableGraph {
 		String invokingMethod = step.getInvokingMethod();
 		String[] methods = invokingMethod.split("%");
 		List<String> validMethods = new ArrayList<String>();
-		
+
 		// get expanded method
 		TraceNode invokeParent = null;
 		if (!step.getInvocationChildren().isEmpty()) {
@@ -64,14 +71,14 @@ public class VariableGraph {
 		if (invokeParent != null) {
 			expandedMethodCall = invokeParent.getInvocationChildren().get(0).getMethodSign();
 		}
-		
+
 		for (String method : methods) {
 			if (method.equals(expandedMethodCall)) {
 				continue;
 			}
 			validMethods.add(method);
 		}
-		
+
 		return validMethods;
 	}
 
@@ -81,7 +88,7 @@ public class VariableGraph {
 	 */
 	private static List<String> getCandidateVariables(VarValue varValue, TraceNode step) {
 		List<String> candidateVariables = new ArrayList<>();
-		
+
 		List<String> methods = getValidInvokingMethods(step);
 		// filter invoking method by type
 		String type = varValue.getType();
@@ -90,30 +97,30 @@ public class VariableGraph {
 				candidateVariables.addAll(CandidateVarRetriever.getCandidateVariables(method));
 			}
 		}
-		
+
 		return candidateVariables;
 	}
 
 	/**
 	 * Map variable on trace to one of the candidate variables.
 	 * 
-	 * 1. Identify return type of the invoked method through bytecode analysis.
-	 * 2. Find corresponding variable on trace. If the variable is not in the 
-	 *    graph, add it to the graph.
+	 * 1. Identify candidate variable through bytecode analysis.
+	 * 2. Find corresponding variable on trace. If the variable is 
+	 *    not in the graph, add it to the graph.
 	 * 3. Link variable on trace to candidate variable.
 	 */
 	public static void mapVariable(VarValue varValue, TraceNode step) {
 		List<String> methods = getValidInvokingMethods(step);
-		
+
 		for (String invokingMethod : methods) {
-			/* 1. Identify return type */
+			/* 1. Identify candidate variable */
 			String returnedField = VariableMapper.getReturnedField(invokingMethod);
 			String fieldName = returnedField.split("#")[0];
 			String fieldType = returnedField.split("#")[1];
 
 			/* 2. Find corresponding variable on trace */
-			VarValue returnedVariable = step.getWrittenVariables().stream()
-					.filter(v -> v.getType().equals(fieldType)).findFirst().orElse(null);
+			VarValue returnedVariable = step.getWrittenVariables().stream().filter(v -> v.getType().equals(fieldType))
+					.findFirst().orElse(null);
 			if (returnedVariable == null) {
 				return;
 			}
@@ -258,7 +265,7 @@ class VariableGraphNode {
 
 			if (parentVar != null) {
 				VarValue child = this.varValue.clone();
-				
+
 				child.getVariable().setName(this.parent.children.get(this));
 				child.setStringValue(null);
 				child.setVarID(parentVar.getVarID().concat("-" + child.getVarName()));
