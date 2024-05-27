@@ -110,7 +110,7 @@ public class MutationGenerator {
 
 		// for each package
 		for (IJavaElement javaElement : pack.getChildren()) {
-			if(validMutationNum >= 10) {
+			if(validMutationNum >= 50) { // 每个testPackage的mutants上限
 				break;
 			}
 			
@@ -137,7 +137,7 @@ public class MutationGenerator {
 				
 				// for each method
 				for (MethodDeclaration testingMethod : testingMethods) {
-					if(validMutationNum >= 10) {
+					if(validMutationNum >= 20) { // 每个testMethod的mutants上限
 						break;
 					}
 					
