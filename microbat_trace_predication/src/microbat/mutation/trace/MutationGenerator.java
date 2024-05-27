@@ -89,13 +89,17 @@ public class MutationGenerator {
 	public String projectName;
 	public int validMutationNum;
 	ProjectConfig projectConfig;
+	public Path mutationProjectFolder;
+	public Path projectFolder;
 
 	
-	public MutationGenerator(String projectName,ProjectConfig config) {
+	public MutationGenerator(String projectName,ProjectConfig config,Path mutationProjFolder,Path projFolder) {
 		super();
 		this.projectName = projectName;
 		this.projectConfig = config;
 		this.validMutationNum = 0;
+		this.mutationProjectFolder = mutationProjFolder;
+		this.projectFolder = projFolder;
 	}
 
 	public void generateMutations(IPackageFragment pack, AnalysisParams analysisParams,
@@ -245,21 +249,70 @@ public class MutationGenerator {
 			}
 			try {
 				MutationTrace muTrace = generateMutationTrace(correctTrace.getTrace().getAppJavaClassPath(), params, mutation);
-				ICompilationUnit iunit = JavaUtil.findNonCacheICompilationUnitInProject(
-						mutation.getMutatedClass(),params.getProjectName());
+				ICompilationUnit iunit = JavaUtil.findNonCacheICompilationUnitInProject(mutation.getMutatedClass(),params.getProjectName());
 				String orgFilePath = IResourceUtils.getAbsolutePathOsStr(iunit.getPath());
 				String mutationFilePath = mutation.getFile().getAbsolutePath();
+				
 				if (muTrace != null && muTrace.isValid()) {
 					System.out.println("--INFO-- A valid mutation of type: "+mutation.getMutationType());
 					
 					validMutationNum+=1;
 					
-					System.out.println("orgFilePath: "+orgFilePath);//原文件完整路径
-					System.out.println("mutationFilePath: "+mutationFilePath);//mutated后文件完整路径
-					System.out.println("SourceFolder: "+mutation.getSourceFolder());//源文件源代码路径
+					System.out.println("--runSingleTestcase-- orgFilePath: "+orgFilePath);//原文件完整路径
+					System.out.println("--runSingleTestcase-- mutationFilePath: "+mutationFilePath);//mutated后文件完整路径
+					System.out.println("--runSingleTestcase-- SourceFolder: "+mutation.getSourceFolder());//源文件源代码路径
+					
+					// create mutationProjectFolder/1/fix and mutationProjectFolder/1/bug
+					Path fixFolder = Paths.get(mutationProjectFolder.toString(),String.valueOf(validMutationNum),"fix");
+					Path bugFolder = Paths.get(mutationProjectFolder.toString(),String.valueOf(validMutationNum),"bug");
+					Files.createDirectories(fixFolder);
+					Files.createDirectories(bugFolder);
+					
+					// copy original project to fix and bug folder
+					try {
+						Files.walk(projectFolder).forEach(source->{
+							try {
+								Path target1 = fixFolder.resolve(projectFolder.relativize(source));
+								Files.copy(source,target1,StandardCopyOption.REPLACE_EXISTING);
+								
+								Path target2 = bugFolder.resolve(projectFolder.relativize(source));
+								Files.copy(source,target2,StandardCopyOption.REPLACE_EXISTING);
+								
+							} catch(Exception e) {
+								System.err.println("--ERROR-- In copy file!");
+								e.printStackTrace();
+							}
+						});
+					} catch(Exception e) {
+						System.err.println("--ERROR-- In copy project!");
+						e.printStackTrace();
+					}
+					
+					// substitute original .java and .class file with mutated ones
+					// .java
+					String orgFilePathInBug = orgFilePath.replace(projectFolder.toString(), bugFolder.toString());
+					Files.copy(Paths.get(mutationFilePath), Paths.get(orgFilePathInBug), StandardCopyOption.REPLACE_EXISTING);
+					
+					// .class
+					String mutationClassPath = mutationFilePath.replaceFirst("\\.java$", ".class");
+					String orgClassPathInBug = orgFilePathInBug.replaceFirst("\\.java$", ".class");
+					orgClassPathInBug = orgClassPathInBug.replaceFirst(
+							projectConfig.srcSourceFolder.replace("\\","\\\\"), 
+							projectConfig.bytecodeSourceFolder.replace("\\","\\\\"));
+					
+					Files.copy(Paths.get(mutationClassPath), Paths.get(orgClassPathInBug), StandardCopyOption.REPLACE_EXISTING);
+					
+					// add failing_test in bugFolder
+					String sep = System.getProperty("file.separator");
+			        File failing_test_file = new File(bugFolder + sep + "failing_test");
+			        try (FileWriter writer = new FileWriter(failing_test_file)) {
+			            writer.write("--- "+params.getJunitClassName()+"::"+params.getTestMethod());
+			        } catch (IOException e) {
+			            e.printStackTrace();
+			        }
 					
 					/* valid mutation, run tregression on it and fix version and record debugging trace */
-					checkRootCause(mutation, orgFilePath, mutationFilePath, muTrace.getTraceExecInfo(), correctTrace, params, monitor);					
+					//checkRootCause(mutation, orgFilePath, mutationFilePath, muTrace.getTraceExecInfo(), correctTrace, params, monitor);					
 					monitor.reportMutationCase(params, correctTrace, muTrace, mutation);
 				}
 				else {
@@ -295,16 +348,18 @@ public class MutationGenerator {
 		
 		// Step 1: substitute original file and class with buggy file and class
 		String targetFilePath = originFilePath.replace(projectFolder,Paths.get(mutationBaseFolder,projName).toString());
-        Path sourcePath = Paths.get(mutationFilePath);
-        Path targetPath = Paths.get(targetFilePath);
         
-		String sourceClassPath = mutationFilePath.replaceFirst("\\.java$", ".class");
-		String targetClassPath = targetFilePath.replaceFirst("\\.java$", ".class");
+		Path sourcePath = Paths.get(mutationFilePath); //生成的mutation myclass.java
+        Path targetPath = Paths.get(targetFilePath); //  备份中正确得 myclass.java
+        
+		String sourceClassPath = mutationFilePath.replaceFirst("\\.java$", ".class"); // 生成的mutation myclass.class
+		String targetClassPath = targetFilePath.replaceFirst("\\.java$", ".class"); //  备份中正确的 myclass.class
 		
-		Path srcClassPath = Paths.get(sourceClassPath);
+		Path srcClassPath = Paths.get(sourceClassPath);// 生成的mutation myclass.class
 		Path tgtClassPath = Paths.get(
 				targetClassPath.replaceFirst(projectConfig.srcSourceFolder.replace("\\","\\\\"), 
 											 projectConfig.bytecodeSourceFolder.replace("\\","\\\\")));
+													   //  备份中正确的 myclass.class
 		
 		Path tempFilePath = Paths.get(tempFolder,targetPath.getFileName().toString());
 		Path tempClassPath = Paths.get(tempFolder,tgtClassPath.getFileName().toString());
@@ -552,6 +607,13 @@ public class MutationGenerator {
 		String mutatedClassSimpleName = ClassUtils.getSimpleName(mutation.getMutatedClass());
 		String bkOrgClassFilePath = ClassUtils.getClassFilePath(params.getAnalysisOutputFolder(),
 				mutatedClassSimpleName);
+		
+		System.out.println("--generateMutationTrace-- targetFolder: "+targetFolder);
+		System.out.println("--generateMutationTrace-- classFilePath: "+classFilePath);
+		System.out.println("--generateMutationTrace-- mutatedClassSimpleName: "+mutatedClassSimpleName);
+		System.out.println("--generateMutationTrace-- bkOrgClassFilePath: "+bkOrgClassFilePath);
+
+		
 		FileUtils.copyFile(classFilePath, bkOrgClassFilePath, true);
 		String bkMutatedClassFilePath = null;
 		try {
