@@ -271,13 +271,6 @@ public class Trace {
 		for (int i = 1; i <= end; i++) {
 			TraceNode node = this.getTraceNode(i);
 			
-			// skip stepIn and stepOut steps
-			TraceNode previous = node.getStepOverPrevious();
-			if (!node.getInvocationChildren().isEmpty() || 
-					(previous != null && !previous.getInvocationChildren().isEmpty())) {
-				continue;
-			}
-			
 			List<VarValue> variables = node.getReadVariables();
 			for (VarValue variable : variables) {
 				/* identify relevant steps */

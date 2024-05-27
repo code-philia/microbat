@@ -41,6 +41,39 @@ public class VariableGraph {
 		}
 		getVar(varValue).addRelevantStep(step);
 	}
+	
+	/**
+	 * Return all invoking methods other than the expanded ones.
+	 */
+	private static List<String> getValidInvokingMethods(TraceNode step) {
+		String invokingMethod = step.getInvokingMethod();
+		String[] methods = invokingMethod.split("%");
+		List<String> validMethods = new ArrayList<String>();
+		
+		// get expanded method
+		TraceNode invokeParent = null;
+		if (!step.getInvocationChildren().isEmpty()) {
+			invokeParent = step;
+		} else {
+			TraceNode previous = step.getStepOverPrevious();
+			if (previous != null && !previous.getInvocationChildren().isEmpty()) {
+				invokeParent = previous;
+			}
+		}
+		String expandedMethodCall = null;
+		if (invokeParent != null) {
+			expandedMethodCall = invokeParent.getInvocationChildren().get(0).getMethodSign();
+		}
+		
+		for (String method : methods) {
+			if (method.equals(expandedMethodCall)) {
+				continue;
+			}
+			validMethods.add(method);
+		}
+		
+		return validMethods;
+	}
 
 	/**
 	 * Identify candidate variables of the variable based on the invoked method
@@ -49,10 +82,9 @@ public class VariableGraph {
 	private static List<String> getCandidateVariables(VarValue varValue, TraceNode step) {
 		List<String> candidateVariables = new ArrayList<>();
 		
-		String invokingMethod = step.getInvokingMethod();
+		List<String> methods = getValidInvokingMethods(step);
 		// filter invoking method by type
 		String type = varValue.getType();
-		String[] methods = invokingMethod.split("%");
 		for (String method : methods) {
 			if (type.equals(method.split("#")[0])) {
 				candidateVariables.addAll(CandidateVarRetriever.getCandidateVariables(method));
@@ -71,25 +103,27 @@ public class VariableGraph {
 	 * 3. Link variable on trace to candidate variable.
 	 */
 	public static void mapVariable(VarValue varValue, TraceNode step) {
-		String invokingMethod = step.getInvokingMethod();
+		List<String> methods = getValidInvokingMethods(step);
+		
+		for (String invokingMethod : methods) {
+			/* 1. Identify return type */
+			String returnedField = VariableMapper.getReturnedField(invokingMethod);
+			String fieldName = returnedField.split("#")[0];
+			String fieldType = returnedField.split("#")[1];
 
-		/* 1. Identify return type */
-		String returnedField = VariableMapper.getReturnedField(invokingMethod);
-		String fieldName = returnedField.split("#")[0];
-		String fieldType = returnedField.split("#")[1];
+			/* 2. Find corresponding variable on trace */
+			VarValue returnedVariable = step.getWrittenVariables().stream()
+					.filter(v -> v.getType().equals(fieldType)).findFirst().orElse(null);
+			if (returnedVariable == null) {
+				return;
+			}
+			VariableGraphNode variableOnTrace = getVar(returnedVariable);
 
-		/* 2. Find corresponding variable on trace */
-		VarValue returnedVariable = step.getWrittenVariables().stream()
-				.filter(v -> v.getType().equals(fieldType)).findFirst().orElse(null);
-		if (returnedVariable == null) {
-			return;
+			/* 3. Link variables */
+			VariableGraphNode parentVariable = getVar(varValue);
+			parentVariable.addChild(fieldName, variableOnTrace);
+			variableOnTrace.setParent(parentVariable);
 		}
-		VariableGraphNode variableOnTrace = getVar(returnedVariable);
-
-		/* 3. Link variables */
-		VariableGraphNode parentVariable = getVar(varValue);
-		parentVariable.addChild(fieldName, variableOnTrace);
-		variableOnTrace.setParent(parentVariable);
 	}
 
 	/**
