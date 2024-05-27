@@ -47,8 +47,19 @@ public class VariableGraph {
 	 * through bytecode analysis.
 	 */
 	private static List<String> getCandidateVariables(VarValue varValue, TraceNode step) {
+		List<String> candidateVariables = new ArrayList<>();
+		
 		String invokingMethod = step.getInvokingMethod();
-		return CandidateVarRetriever.getCandidateVariables(invokingMethod);
+		// filter invoking method by type
+		String type = varValue.getType();
+		String[] methods = invokingMethod.split("%");
+		for (String method : methods) {
+			if (type.equals(method.split("#")[0])) {
+				candidateVariables.addAll(CandidateVarRetriever.getCandidateVariables(method));
+			}
+		}
+		
+		return candidateVariables;
 	}
 
 	/**
