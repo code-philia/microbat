@@ -8,12 +8,11 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
-
 import microbat.tracerecov.AbstractClassVisitor;
+import microbat.tracerecov.TraceRecovUtils;
 
 public class VarExpansionClassVisitor extends AbstractClassVisitor {
-	
+
 	private static Set<String> visitedClasses = new HashSet<String>();
 
 	private VariableSkeleton root;
@@ -49,7 +48,10 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 		if (superName == null) {
 			return;
 		}
-		classesOfInterest.add(superName.replace('/', '.'));
+		String newClassName = superName.replace('/', '.');
+		if (TraceRecovUtils.shouldBeChecked(newClassName)) {
+			classesOfInterest.add(newClassName);
+		}
 	}
 
 	@Override
@@ -73,9 +75,9 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 		if ((access & Opcodes.ACC_STATIC) == 0) {
 			VariableSkeleton child = new VariableSkeleton(descriptor, name);
 			this.root.addChild(child);
-			
-			String newClassName = getClassNameFromDescriptor(descriptor);
-			if (newClassName != null) {
+
+			String newClassName = TraceRecovUtils.getClassNameFromDescriptor(descriptor);
+			if (newClassName != null && TraceRecovUtils.shouldBeChecked(newClassName)) {
 				// expand inner field further
 				try {
 					ClassReader classReader = new ClassReader(newClassName);
@@ -85,7 +87,7 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 				}
 			}
 		}
-		
+
 		return super.visitField(access, name, descriptor, signature, value);
 	}
 
@@ -98,12 +100,5 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 	public VariableSkeleton getVariableStructure() {
 		return this.root;
 	}
-	
-	private static String getClassNameFromDescriptor(String descriptor) {
-        Type type = Type.getType(descriptor);
-        if (type.getSort() == Type.OBJECT) {
-            return type.getInternalName();
-        }
-        return null;
-    }
+
 }

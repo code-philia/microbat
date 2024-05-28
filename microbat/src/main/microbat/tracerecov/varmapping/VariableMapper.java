@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.objectweb.asm.ClassReader;
 
+import microbat.tracerecov.TraceRecovUtils;
+
 /**
  * This class performs static analysis and gets the returned variable.
  * 
@@ -30,6 +32,10 @@ public class VariableMapper {
 
 	private static String getReturnedField(String className, String methodName, String methodDescriptor,
 			String methodSignature) {
+		if (!TraceRecovUtils.shouldBeChecked(className)) {
+			return null;
+		}
+		
 		// load the class
 		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream(className.replace('.', '/') + ".class");

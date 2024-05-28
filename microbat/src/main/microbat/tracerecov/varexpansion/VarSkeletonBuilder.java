@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.objectweb.asm.ClassReader;
 
+import microbat.tracerecov.TraceRecovUtils;
+
 /**
  * This class performs static analysis and determines the structure of a
  * variable given its type.
@@ -13,6 +15,10 @@ import org.objectweb.asm.ClassReader;
 public class VarSkeletonBuilder {
 
 	public static VariableSkeleton getVariableStructure(String className) {
+		if (!TraceRecovUtils.shouldBeChecked(className)) {
+			return null;
+		}
+		
 		// load the class
 		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream(className.replace('.', '/') + ".class");

@@ -8,6 +8,8 @@ import java.util.Set;
 
 import org.objectweb.asm.ClassReader;
 
+import microbat.tracerecov.TraceRecovUtils;
+
 /**
  * This class performs static analysis and retrieves candidate variables given a
  * variable of interest.
@@ -39,6 +41,10 @@ public class CandidateVarRetriever {
 
 	private static List<String> getCandidateVariables(String className, String methodName, String methodDescriptor,
 			String methodSignature) {
+		if (!TraceRecovUtils.shouldBeChecked(className)) {
+			return null;
+		}
+		
 		// load the class
 		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream(className.replace('.', '/') + ".class");
