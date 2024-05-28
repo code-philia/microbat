@@ -73,10 +73,10 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
 		// exclude static fields
 		if ((access & Opcodes.ACC_STATIC) == 0) {
-			VariableSkeleton child = new VariableSkeleton(descriptor, name);
+			VariableSkeleton child = new VariableSkeleton(TraceRecovUtils.getTypeNameFromDescriptor(descriptor), name);
 			this.root.addChild(child);
 
-			String newClassName = TraceRecovUtils.getClassNameFromDescriptor(descriptor);
+			String newClassName = TraceRecovUtils.getValidClassNameFromDescriptor(descriptor);
 			if (newClassName != null && TraceRecovUtils.shouldBeChecked(newClassName)) {
 				// expand inner field further
 				try {
