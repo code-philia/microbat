@@ -119,7 +119,7 @@ public class GenerateMutantsHandler extends AbstractHandler{
 		// for each test package
 		for (IJavaElement element : testRoot.getChildren()) {
 			// 每个project的mutants上限
-			if (element.getElementName()!="" && element instanceof IPackageFragment && mutationGenerator.validMutationNum < 100) {
+			if (element.getElementName()!="" && element instanceof IPackageFragment && mutationGenerator.validMutationNum_proj < MutationGenerator.VALID_MU_LIMIT_PROJECT) {
 				System.out.println("--INFO-- Start generate mutations for package: "+element.getElementName());
 				mutationGenerator.generateMutations((IPackageFragment) element, analysisParams, experimentMonitor);
 			}

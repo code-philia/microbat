@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import microbat.mutation.mutation.MutationType;
 import sav.common.core.utils.ClassUtils;
 import sav.common.core.utils.FileUtils;
 import sav.common.core.utils.StringUtils;
@@ -108,6 +109,13 @@ public class SingleMutation {
 
 	public void remove() {
 		FileUtils.deleteFolder(mutatedJFile.getParentFile());
+	}
+	
+	public String toString() {
+		return    "Mutated Class: "+mutatedClass+"\n"
+				+ "Line: "+line+"\n"
+			    + "File: "+mutatedJFile.getName()+"\n"
+			    + "Mutation Type: "+mutationType;
 	}
 
 }

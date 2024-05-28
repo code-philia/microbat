@@ -83,11 +83,15 @@ import tregression.tracematch.ControlPathBasedTraceMatcher;
 import tregression.util.DebuggingTraceRecorder;
 
 public class MutationGenerator {
+	public static final int VALID_MU_LIMIT_PROJECT = 100; // mutants limit for each project
+	public static final int VALID_MU_LIMIT_METHOD = 20; // mutants limit for each method
+	
 	public final String mutationBaseFolder = "D:\\MutationProjects";
 	public final String tempFolder = "D:\\MutationProjects\\tmp";
 	public final String outputFolder = "D:\\MutationProjects\\data\\debuggingTrace.txt";
 	public String projectName;
-	public int validMutationNum;
+	public int validMutationNum_proj;
+	public int validMutationNum_method;
 	ProjectConfig projectConfig;
 	public Path mutationProjectFolder;
 	public Path projectFolder;
@@ -97,7 +101,7 @@ public class MutationGenerator {
 		super();
 		this.projectName = projectName;
 		this.projectConfig = config;
-		this.validMutationNum = 0;
+		this.validMutationNum_proj = 0;
 		this.mutationProjectFolder = mutationProjFolder;
 		this.projectFolder = projFolder;
 	}
@@ -110,10 +114,9 @@ public class MutationGenerator {
 
 		// for each package
 		for (IJavaElement javaElement : pack.getChildren()) {
-			if(validMutationNum >= 50) { // 每个testPackage的mutants上限
+			if(validMutationNum_proj >= VALID_MU_LIMIT_PROJECT) {
 				break;
 			}
-			
 			System.out.println("--INFO-- generate mutation for class: "+javaElement.getElementName());
 			if (javaElement instanceof IPackageFragment) {
 				// for inner package
@@ -135,9 +138,10 @@ public class MutationGenerator {
 					continue;
 				}
 				
+				validMutationNum_method = 0;
 				// for each method
 				for (MethodDeclaration testingMethod : testingMethods) {
-					if(validMutationNum >= 20) { // 每个testMethod的mutants上限
+					if(validMutationNum_method >= VALID_MU_LIMIT_METHOD || validMutationNum_proj >= VALID_MU_LIMIT_PROJECT) {
 						break;
 					}
 					
@@ -256,15 +260,12 @@ public class MutationGenerator {
 				if (muTrace != null && muTrace.isValid()) {
 					System.out.println("--INFO-- A valid mutation of type: "+mutation.getMutationType());
 					
-					validMutationNum+=1;
-					
-					System.out.println("--runSingleTestcase-- orgFilePath: "+orgFilePath);//原文件完整路径
-					System.out.println("--runSingleTestcase-- mutationFilePath: "+mutationFilePath);//mutated后文件完整路径
-					System.out.println("--runSingleTestcase-- SourceFolder: "+mutation.getSourceFolder());//源文件源代码路径
+					validMutationNum_proj += 1;
+					validMutationNum_method += 1;
 					
 					// create mutationProjectFolder/1/fix and mutationProjectFolder/1/bug
-					Path fixFolder = Paths.get(mutationProjectFolder.toString(),String.valueOf(validMutationNum),"fix");
-					Path bugFolder = Paths.get(mutationProjectFolder.toString(),String.valueOf(validMutationNum),"bug");
+					Path fixFolder = Paths.get(mutationProjectFolder.toString(),String.valueOf(validMutationNum_proj),"fix");
+					Path bugFolder = Paths.get(mutationProjectFolder.toString(),String.valueOf(validMutationNum_proj),"bug");
 					Files.createDirectories(fixFolder);
 					Files.createDirectories(bugFolder);
 					
@@ -310,7 +311,15 @@ public class MutationGenerator {
 			        } catch (IOException e) {
 			            e.printStackTrace();
 			        }
-					
+			        
+					// add mutation_info in bugFolder
+			        File mutation_info_file = new File(bugFolder + sep + "mutation_info");
+			        try (FileWriter writer = new FileWriter(mutation_info_file)) {
+			            writer.write(mutation.toString());
+			        } catch (IOException e) {
+			            e.printStackTrace();
+			        }
+								        
 					/* valid mutation, run tregression on it and fix version and record debugging trace */
 					//checkRootCause(mutation, orgFilePath, mutationFilePath, muTrace.getTraceExecInfo(), correctTrace, params, monitor);					
 					monitor.reportMutationCase(params, correctTrace, muTrace, mutation);
@@ -329,128 +338,6 @@ public class MutationGenerator {
 		System.out.println("================================================");
 		return false;
 	}
-
-	private void checkRootCause(SingleMutation mutation, String originFilePath, String mutationFilePath,
-			TraceExecutionInfo mutationTraceInfo, TraceExecutionInfo correctTraceInfo, 
-			AnalysisTestcaseParams params,IMutationExperimentMonitor monitor) throws SimulationFailException {
-		
-//		AppJavaClassPath testCaseConfig = correctTraceInfo.getTrace().getAppJavaClassPath();
-//		AppJavaClassPathWrapper.wrapAppClassPath(mutationTraceInfo.getTrace(), correctTraceInfo.getTrace(),params.getBkClassFiles());
-//		List<String> includedClassNames = AnalysisScopePreference.getIncludedLibList();
-//		List<String> excludedClassNames = AnalysisScopePreference.getExcludedLibList();
-//		PreCheckInformation buggyPrecheck = mutationTraceInfo.getPrecheckInfo();
-//		PreCheckInformation correctPrecheck = correctTraceInfo.getPrecheckInfo();
-
-		String projectFolder = params.getProjectFolder();
-		String projName = params.getProjectName();
-		Path fix_path = Paths.get(projectFolder);
-		Path bug_path = Paths.get(mutationBaseFolder, params.getProjectName());
-		
-		// Step 1: substitute original file and class with buggy file and class
-		String targetFilePath = originFilePath.replace(projectFolder,Paths.get(mutationBaseFolder,projName).toString());
-        
-		Path sourcePath = Paths.get(mutationFilePath); //生成的mutation myclass.java
-        Path targetPath = Paths.get(targetFilePath); //  备份中正确得 myclass.java
-        
-		String sourceClassPath = mutationFilePath.replaceFirst("\\.java$", ".class"); // 生成的mutation myclass.class
-		String targetClassPath = targetFilePath.replaceFirst("\\.java$", ".class"); //  备份中正确的 myclass.class
-		
-		Path srcClassPath = Paths.get(sourceClassPath);// 生成的mutation myclass.class
-		Path tgtClassPath = Paths.get(
-				targetClassPath.replaceFirst(projectConfig.srcSourceFolder.replace("\\","\\\\"), 
-											 projectConfig.bytecodeSourceFolder.replace("\\","\\\\")));
-													   //  备份中正确的 myclass.class
-		
-		Path tempFilePath = Paths.get(tempFolder,targetPath.getFileName().toString());
-		Path tempClassPath = Paths.get(tempFolder,tgtClassPath.getFileName().toString());
-		
-//		System.out.println("originFilePath: "+originFilePath);
-//		System.out.println("targetFilePath: "+targetPath.toString());
-//		System.out.println("sourceClassPath: "+sourceClassPath);
-//		System.out.println("targetClassPath: "+tgtClassPath.toString());
-		
-		try {
-			Files.move(targetPath,tempFilePath,StandardCopyOption.REPLACE_EXISTING);
-			Files.move(tgtClassPath,tempClassPath,StandardCopyOption.REPLACE_EXISTING);
-            Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-            Files.copy(srcClassPath, tgtClassPath, StandardCopyOption.REPLACE_EXISTING);
-        } catch (Exception e) {
-        	System.err.println("--ERROR-- In copy file!");
-            e.printStackTrace();
-        }
-		
-		
-		// Step 2: run tregression
-		System.out.println("*******************\n* Run Tregression *\n*******************");
-		TrialGenerator1 generator1 = new TrialGenerator1();
-		List<EmpiricalTrial> trials = generator1.generateTrials(bug_path.toString(), fix_path.toString(),
-				false, false, false, 3, true, true, projectConfig, params.getTestcaseName());
-		System.out.println("--INFO-- Trails generated");
-		
-		// Step 3: Record the analysis result
-		DebuggingTraceRecorder recorder = new DebuggingTraceRecorder();
-		recorder.recordDebuggingTrace(trials, projectName, 1, outputFolder);
-		
-		System.out.println("******************* Tregression Finishes *******************");
-		
-		// Step 4: move back the correct file for next mutation
-		try {
-			Files.delete(targetPath);
-			Files.delete(tgtClassPath);
-			Files.move(tempFilePath,targetPath,StandardCopyOption.REPLACE_EXISTING);
-			Files.move(tempClassPath,tgtClassPath,StandardCopyOption.REPLACE_EXISTING);
-        } catch (Exception e) {
-        	e.printStackTrace();
-        }
-		
-		
-//		// 2: find root cause
-//		Trace buggyTrace = mutationTraceInfo.getTrace();
-//		Trace correctTrace = correctTraceInfo.getTrace();
-//		
-//		DiffMatcher diffMatcher = new DiffMatcher("1\\source", "1\\tests",bug_path.toString(),fix_path.toString());
-//		diffMatcher.matchCode();
-//		
-//		ControlPathBasedTraceMatcher traceMatcher = new ControlPathBasedTraceMatcher();
-//		PairList pairList = traceMatcher.matchTraceNodePair(buggyTrace, correctTrace, diffMatcher); 
-//			
-//		Simulator simulator = new Simulator(false, false, 0);
-//		simulator.prepare(buggyTrace, correctTrace, pairList, diffMatcher);
-//		
-//		RootCauseFinder rootcauseFinder = new RootCauseFinder();
-//		rootcauseFinder.setRootCauseBasedOnDefects4J(pairList, diffMatcher, buggyTrace, correctTrace);
-//		if(rootcauseFinder.getRealRootCaseList().isEmpty()) {
-//			System.out.println("--ERROR-- cannot find real root cause...");
-//			return;
-//		}
-//		else {
-//			System.out.println("--INFO-- found real root cause at line:");
-//			for(RootCauseNode rrc : rootcauseFinder.getRealRootCaseList()) {
-//				System.out.println(rrc.getRoot().getLineNumber());
-//			}
-//		}
-//		rootcauseFinder.checkRootCause(simulator.getObservedFault(), buggyTrace, correctTrace, pairList, diffMatcher);
-//		
-//		// 3: simulate debugging and record debugging trace
-//		System.out.println("--INFO-- start simulating debugging...");
-//		List<EmpiricalTrial> trials = simulator.detectMutatedBug(buggyTrace, correctTrace, diffMatcher, 0);
-//		System.out.println("--INFO-- finish simulating debugging, start recording debugging trace...");
-//		for (EmpiricalTrial t : trials) {
-//			t.setTestcase(params.getJunitClassName() + "#" + params.getTestMethod());
-//			t.setBuggyTrace(buggyTrace);
-//			t.setFixedTrace(correctTrace);
-//			t.setPairList(pairList);
-//			t.setDiffMatcher(diffMatcher);
-//			PatternIdentifier identifier = new PatternIdentifier();
-//			identifier.identifyPattern(t);
-//		}
-//		DebuggingTraceRecorder recorder = new DebuggingTraceRecorder();
-//		recorder.recordDebuggingTrace(trials, projectName, 1, "D:\\ProgramDebugging\\data\\mutation.txt");
-//		System.out.println("--INFO-- finish recording.");
-	}
-	
-	
-	
 	
 	public void runSimulator(SingleMutation mutation, AnalysisTestcaseParams params, Trace killingMutatantTrace,
 			Trace correctTrace, DiffMatcher diffMatcher, PairList pairList) throws SimulationFailException {
@@ -608,11 +495,6 @@ public class MutationGenerator {
 		String bkOrgClassFilePath = ClassUtils.getClassFilePath(params.getAnalysisOutputFolder(),
 				mutatedClassSimpleName);
 		
-		System.out.println("--generateMutationTrace-- targetFolder: "+targetFolder);
-		System.out.println("--generateMutationTrace-- classFilePath: "+classFilePath);
-		System.out.println("--generateMutationTrace-- mutatedClassSimpleName: "+mutatedClassSimpleName);
-		System.out.println("--generateMutationTrace-- bkOrgClassFilePath: "+bkOrgClassFilePath);
-
 		
 		FileUtils.copyFile(classFilePath, bkOrgClassFilePath, true);
 		String bkMutatedClassFilePath = null;
@@ -716,5 +598,78 @@ public class MutationGenerator {
 				iterator.remove();
 			}
 		}
+	}
+	
+	private void checkRootCause(SingleMutation mutation, String originFilePath, String mutationFilePath,
+			TraceExecutionInfo mutationTraceInfo, TraceExecutionInfo correctTraceInfo, 
+			AnalysisTestcaseParams params,IMutationExperimentMonitor monitor) throws SimulationFailException {
+		
+//		AppJavaClassPath testCaseConfig = correctTraceInfo.getTrace().getAppJavaClassPath();
+//		AppJavaClassPathWrapper.wrapAppClassPath(mutationTraceInfo.getTrace(), correctTraceInfo.getTrace(),params.getBkClassFiles());
+//		List<String> includedClassNames = AnalysisScopePreference.getIncludedLibList();
+//		List<String> excludedClassNames = AnalysisScopePreference.getExcludedLibList();
+//		PreCheckInformation buggyPrecheck = mutationTraceInfo.getPrecheckInfo();
+//		PreCheckInformation correctPrecheck = correctTraceInfo.getPrecheckInfo();
+
+		String projectFolder = params.getProjectFolder();
+		String projName = params.getProjectName();
+		Path fix_path = Paths.get(projectFolder);
+		Path bug_path = Paths.get(mutationBaseFolder, params.getProjectName());
+		
+		// Step 1: substitute original file and class with buggy file and class
+		String targetFilePath = originFilePath.replace(projectFolder,Paths.get(mutationBaseFolder,projName).toString());
+        
+		Path sourcePath = Paths.get(mutationFilePath);
+        Path targetPath = Paths.get(targetFilePath);
+        
+		String sourceClassPath = mutationFilePath.replaceFirst("\\.java$", ".class");
+		String targetClassPath = targetFilePath.replaceFirst("\\.java$", ".class");
+		
+		Path srcClassPath = Paths.get(sourceClassPath);
+		Path tgtClassPath = Paths.get(
+				targetClassPath.replaceFirst(projectConfig.srcSourceFolder.replace("\\","\\\\"), 
+											 projectConfig.bytecodeSourceFolder.replace("\\","\\\\")));
+		
+		Path tempFilePath = Paths.get(tempFolder,targetPath.getFileName().toString());
+		Path tempClassPath = Paths.get(tempFolder,tgtClassPath.getFileName().toString());
+		
+//		System.out.println("originFilePath: "+originFilePath);
+//		System.out.println("targetFilePath: "+targetPath.toString());
+//		System.out.println("sourceClassPath: "+sourceClassPath);
+//		System.out.println("targetClassPath: "+tgtClassPath.toString());
+		
+		try {
+			Files.move(targetPath,tempFilePath,StandardCopyOption.REPLACE_EXISTING);
+			Files.move(tgtClassPath,tempClassPath,StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(srcClassPath, tgtClassPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+        	System.err.println("--ERROR-- In copy file!");
+            e.printStackTrace();
+        }
+		
+		
+		// Step 2: run tregression
+		System.out.println("*******************\n* Run Tregression *\n*******************");
+		TrialGenerator1 generator1 = new TrialGenerator1();
+		List<EmpiricalTrial> trials = generator1.generateTrials(bug_path.toString(), fix_path.toString(),
+				false, false, false, 3, true, true, projectConfig, params.getTestcaseName());
+		System.out.println("--INFO-- Trails generated");
+		
+		// Step 3: Record the analysis result
+		DebuggingTraceRecorder recorder = new DebuggingTraceRecorder();
+		recorder.recordDebuggingTrace(trials, projectName, 1, outputFolder);
+		
+		System.out.println("******************* Tregression Finishes *******************");
+		
+		// Step 4: move back the correct file for next mutation
+		try {
+			Files.delete(targetPath);
+			Files.delete(tgtClassPath);
+			Files.move(tempFilePath,targetPath,StandardCopyOption.REPLACE_EXISTING);
+			Files.move(tempClassPath,tgtClassPath,StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+        	e.printStackTrace();
+        }
 	}
 }

@@ -14,7 +14,7 @@ public class AnalysisParams {
 	private double[] unclearRates = { 0 };
 	private boolean isLimitTrialNum = false;
 	private int optionSearchLimit = 100;
-	private int muTotal = 10;
+	private int muTotal = 40;
 	private List<MutationType> mutationTypes;
 	private boolean useSliceBreaker = true;
 	private int breakerLimit = 3;
