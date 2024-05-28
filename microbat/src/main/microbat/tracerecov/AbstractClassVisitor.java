@@ -19,6 +19,15 @@ public abstract class AbstractClassVisitor extends ClassVisitor {
 	protected String methodDescriptor;
 	protected boolean reset;
 	protected Set<String> classesOfInterest;
+	
+	public AbstractClassVisitor(String className, boolean reset) {
+		super(Opcodes.ASM9);
+		this.classesOfInterest = new HashSet<>();
+		this.classesOfInterest.add(className.replace('/', '.'));
+		this.methodName = "";
+		this.methodDescriptor = "";
+		this.reset = reset;
+	}
 
 	public AbstractClassVisitor(String className, String methodName, String methodDescriptor) {
 		super(Opcodes.ASM9);

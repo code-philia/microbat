@@ -25,6 +25,9 @@ public class CandidateVarClassVisitor extends AbstractClassVisitor {
 	 */
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+		if (superName == null) {
+			return;
+		}
 		classesOfInterest.add(superName.replace('/', '.'));
 	}
 
