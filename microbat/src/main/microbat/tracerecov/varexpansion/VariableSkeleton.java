@@ -49,9 +49,14 @@ public class VariableSkeleton {
 		varValue.setAliasVarID(source.getAliasVarID());
 		varValue.setVarID(source.getVarID());
 		varValue.setStringValue(source.getStringValue());
-		List<VarValue> children = this.children.stream()
-				.map(v -> v.toVarValue(source.getAliasVarID(), source.getVarID(), varValue)).toList();
-		varValue.setChildren(children);
+		for (VariableSkeleton child : this.children) {
+			VarValue childVar = source.getChildren().stream().filter(c -> c.getVarName().equals(child.name)).findAny().orElse(null);
+			if (childVar == null) {
+				childVar = child.toVarValue(source.getAliasVarID(), source.getVarID(), varValue);
+			}
+			varValue.addChild(childVar);
+			childVar.setParents(Arrays.asList(varValue));
+		}
 		return varValue;
 	}
 
@@ -61,7 +66,6 @@ public class VariableSkeleton {
 		String newVarID = varID + "-" + name;
 		varValue.setAliasVarID(newAliasID);
 		varValue.setVarID(newVarID);
-		varValue.setParents(Arrays.asList(parent));
 		List<VarValue> children = this.children.stream().map(v -> v.toVarValue(newAliasID, newVarID, varValue)).toList();
 		varValue.setChildren(children);
 		return varValue;
