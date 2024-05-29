@@ -10,7 +10,6 @@ import java.util.Set;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.model.variable.Variable;
-import microbat.tracerecov.candidatevar.CandidateVarRetriever;
 import microbat.tracerecov.varmapping.VariableMapper;
 
 /**
@@ -21,84 +20,20 @@ import microbat.tracerecov.varmapping.VariableMapper;
  */
 public class VariableGraph {
 	private static Map<String, VariableGraphNode> graph = new HashMap<>();
+	private static Map<String, VariableGraphNode> unlinkedVars = new HashMap<>();
 
 	private static String lastVisitedID = null;
 
+	/* public methods */
+	
 	public static void reset() {
 		graph = new HashMap<>();
+		unlinkedVars = new HashMap<>();
 		lastVisitedID = null;
 	}
 
-	/**
-	 * 1. Identify and add candidate variables based on the invoked method through
-	 *    bytecode analysis.
-	 * 2. If a step has candidate variables, add it to the graph.
-	 */
 	public static void addRelevantStep(VarValue varValue, TraceNode step) {
-		if (step.getInvokingMethod().startsWith("%") && !(step.getStepOverPrevious() != null
-				&& !step.getStepOverPrevious().getInvocationChildren().isEmpty())) {
-			// doesn't invoke methods but reads varValue
-			getVar(varValue).addRelevantStep(step);
-			return;
-		}
-
-		List<String> candidateVariables = getCandidateVariables(varValue, step);
-		if (candidateVariables == null || candidateVariables.isEmpty()) {
-			return;
-		}
 		getVar(varValue).addRelevantStep(step);
-	}
-
-	/**
-	 * Return all invoking methods other than the expanded ones.
-	 */
-	private static List<String> getValidInvokingMethods(TraceNode step) {
-		String invokingMethod = step.getInvokingMethod();
-		String[] methods = invokingMethod.split("%");
-		List<String> validMethods = new ArrayList<String>();
-
-		// get expanded method
-		TraceNode invokeParent = null;
-		if (!step.getInvocationChildren().isEmpty()) {
-			invokeParent = step;
-		} else {
-			TraceNode previous = step.getStepOverPrevious();
-			if (previous != null && !previous.getInvocationChildren().isEmpty()) {
-				invokeParent = previous;
-			}
-		}
-		String expandedMethodCall = null;
-		if (invokeParent != null) {
-			expandedMethodCall = invokeParent.getInvocationChildren().get(0).getMethodSign();
-		}
-
-		for (String method : methods) {
-			if (method.equals(expandedMethodCall)) {
-				continue;
-			}
-			validMethods.add(method);
-		}
-
-		return validMethods;
-	}
-
-	/**
-	 * Identify candidate variables of the variable based on the invoked method
-	 * through bytecode analysis.
-	 */
-	private static List<String> getCandidateVariables(VarValue varValue, TraceNode step) {
-		List<String> candidateVariables = new ArrayList<>();
-
-		List<String> methods = getValidInvokingMethods(step);
-		// filter invoking method by type
-		String type = varValue.getType();
-		for (String method : methods) {
-			if (type.equals(method.split("#")[0])) {
-				candidateVariables.addAll(CandidateVarRetriever.getCandidateVariables(method));
-			}
-		}
-
-		return candidateVariables;
 	}
 
 	/**
@@ -190,12 +125,47 @@ public class VariableGraph {
 		return containsVar(getID(varValue));
 	}
 
-	private static boolean containsVar(String ID) {
-		return graph.containsKey(ID);
-	}
-
 	public static void addVar(VarValue varValue) {
 		graph.put(getID(varValue), new VariableGraphNode(varValue));
+	}
+	
+	/* private methods */
+	
+	/**
+	 * Return all invoking methods other than the expanded ones.
+	 */
+	private static List<String> getValidInvokingMethods(TraceNode step) {
+		String invokingMethod = step.getInvokingMethod();
+		String[] methods = invokingMethod.split("%");
+		List<String> validMethods = new ArrayList<String>();
+
+		// get expanded method
+		TraceNode invokeParent = null;
+		if (!step.getInvocationChildren().isEmpty()) {
+			invokeParent = step;
+		} else {
+			TraceNode previous = step.getStepOverPrevious();
+			if (previous != null && !previous.getInvocationChildren().isEmpty()) {
+				invokeParent = previous;
+			}
+		}
+		String expandedMethodCall = null;
+		if (invokeParent != null) {
+			expandedMethodCall = invokeParent.getInvocationChildren().get(0).getMethodSign();
+		}
+
+		for (String method : methods) {
+			if (method.equals(expandedMethodCall)) {
+				continue;
+			}
+			validMethods.add(method);
+		}
+
+		return validMethods;
+	}
+	
+	private static boolean containsVar(String ID) {
+		return graph.containsKey(ID);
 	}
 
 	private static VariableGraphNode getVar(VarValue varValue) {
