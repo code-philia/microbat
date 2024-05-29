@@ -1,11 +1,8 @@
 package microbat.instrumentation.instr;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 import org.apache.bcel.classfile.JavaClass;
@@ -52,8 +49,6 @@ import org.apache.bcel.generic.ReturnInstruction;
 import org.apache.bcel.generic.SWAP;
 import org.apache.bcel.generic.TargetLostException;
 import org.apache.bcel.generic.Type;
-import org.apache.bcel.util.InstructionFinder;
-
 import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentLogger;
@@ -224,14 +219,8 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 			return false;
 		}
 		
-		boolean injectedCode = injectCodeTempVars(insnList, constPool, methodGen);
-		
 		/* fill up missing variables in localVariableTable */
 		LocalVariableSupporter.fillUpVariableTable(methodGen, method, constPool);
-		/* update method */
-		if (injectedCode) {
-			method = methodGen.getMethod();
-		}
 		List<LineInstructionInfo> lineInsnInfos = LineInstructionInfo.buildLineInstructionInfos(classGen, constPool,
 				methodGen, method, isAppClass, insnList);
 		int startLine = Integer.MAX_VALUE;
@@ -324,66 +313,6 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		injectCodeInitTracer(methodGen, constPool, startLine, endLine, isAppClass, classNameVar,
 				methodSigVar, isMainMethod, tracerVar);
 		return true;
-	}
-	
-	private boolean injectCodeTempVars(InstructionList insnList, ConstantPoolGen constPool, MethodGen methodGen) {
-		Random nameGenerator = new Random(0);
-		boolean injectedCode = false;
-		
-		InstructionFinder instructionFinder = new InstructionFinder(insnList);
-		/* primitive constants wrapped into composite types */
-		String constantWrappingPattern = "(DCONST|FCONST|ICONST|LCONST|LDC2_W|LDC_W|LDC|BIPUSH) INVOKESTATIC";
-		Iterator<InstructionHandle[]> constantWrappingIterator = instructionFinder.search(constantWrappingPattern);
-		while (constantWrappingIterator.hasNext()) {
-			// assume each pair contains 2 instructions
-			InstructionHandle[] pair = constantWrappingIterator.next();
-			InstructionHandle wrapConstHandle = pair[1];
-			InvokeInstruction invokeInstruction = (InvokeInstruction) wrapConstHandle.getInstruction();
-			if (!invokeInstruction.getMethodName(constPool).equals("valueOf")) {
-				continue;
-			}
-			
-			// Stack: ..., wrappedObject
-			InstructionList newInsns = new InstructionList();
-			/* Note: 
-			 * Java doesn't allow variable name to start with #, 
-			 * a special character is an indication of a temp var. */
-			LocalVariableGen tempVar = methodGen.addLocalVariable(
-					"#temp_" + String.valueOf(nameGenerator.nextInt()), Type.OBJECT, null, null);
-			newInsns.append(new ASTORE(tempVar.getIndex())); // Stack: ...
-			newInsns.append(new ALOAD(tempVar.getIndex())); // Stack: ..., wrappedObject
-			
-			insertInsnHandler(insnList, newInsns, wrapConstHandle.getNext());
-			newInsns.dispose();
-			
-			injectedCode = true;
-		}
-		
-		/* composite types defined without constructors */
-		String altInitializePattern = "LDC INVOKEVIRTUAL";
-		Iterator<InstructionHandle[]> altInitializeIterator = instructionFinder.search(altInitializePattern);
-		while (altInitializeIterator.hasNext()) {
-			// assume each pair contains 2 instructions
-			InstructionHandle[] pair = altInitializeIterator.next();
-			InstructionHandle initializeHandle = pair[0];
-			
-			// Stack: ..., initializedObj
-			InstructionList newInsns = new InstructionList();
-			/* Note: 
-			 * Java doesn't allow variable name to start with #, 
-			 * a special character is an indication of a temp var. */
-			LocalVariableGen tempVar = methodGen.addLocalVariable(
-					"#temp_" + String.valueOf(nameGenerator.nextInt()), Type.OBJECT, null, null);
-			newInsns.append(new ASTORE(tempVar.getIndex())); // Stack: ...
-			newInsns.append(new ALOAD(tempVar.getIndex())); // Stack: ..., initializedObj
-			
-			insertInsnHandler(insnList, newInsns, initializeHandle.getNext());
-			newInsns.dispose();
-			
-			injectedCode = true;
-		}
-		
-		return injectedCode;
 	}
 
 	private void injectCodeTracerExit(InstructionHandle exitInsHandle, InstructionList insnList, 
