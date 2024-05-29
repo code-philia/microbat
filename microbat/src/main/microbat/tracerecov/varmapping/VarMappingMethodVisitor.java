@@ -7,6 +7,8 @@ import java.util.Set;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import microbat.tracerecov.TraceRecovUtils;
+
 public class VarMappingMethodVisitor extends MethodVisitor {
 
 	private final static Set<Integer> GET_INSTRUCTIONS = new HashSet<>(
@@ -53,19 +55,7 @@ public class VarMappingMethodVisitor extends MethodVisitor {
 	}
 
 	public static String getReturnedField() {
-		return fieldName + "#" + convertDescriptorToType(fieldType);
+		return fieldName + "#" + TraceRecovUtils.getTypeNameFromDescriptor(fieldType);
 	}
-	
-	private static String convertDescriptorToType(String descriptor) {
-		if (descriptor == null) {
-			return null;
-		}
 
-		if (descriptor.startsWith("L") && descriptor.endsWith(";")) {
-			String typeName = descriptor.substring(1, descriptor.length() - 1);
-			return typeName.replace('/', '.');
-		}
-
-		throw new IllegalArgumentException("Invalid type descriptor: " + descriptor);
-	}
 }

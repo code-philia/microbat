@@ -39,6 +39,9 @@ public class TraceRecovUtils {
 	}
 
 	public static String getTypeNameFromDescriptor(String descriptor) {
+		if (descriptor == null) {
+			return "null";
+		}
 		Type type = Type.getType(descriptor);
 		return getReadableTypeName(type);
 	}
