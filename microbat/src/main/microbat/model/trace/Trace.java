@@ -259,16 +259,18 @@ public class Trace {
 	}
 	
 	/**
-	 * Updated version for data dependency searching.
-	 * 
 	 * @author hongshuwang
 	 */
-	public void findRecoveredDataDependency(TraceNode checkingNode, VarValue readVar) {
+	public void recoverDataDependency(TraceNode checkingNode, VarValue readVar) {
 		/* initialize graph */
 		VariableGraph.addVar(readVar);
 		
+		/* determine the scope of recovery */
+		TraceNode scopeStart = findDataDependency(checkingNode, readVar);
+		int start = scopeStart.getOrder();
 		int end = checkingNode.getOrder();
-		for (int i = 1; i <= end; i++) {
+		
+		for (int i = start; i <= end; i++) {
 			TraceNode node = this.getTraceNode(i);
 			
 			List<VarValue> variables = node.getReadVariables();
@@ -281,7 +283,7 @@ public class Trace {
 				}
 				
 				/* variable mapping */
-				VariableGraph.mapVariable(readVar, node);
+				VariableGraph.mapVariable(variable, readVar, node);
 				
 				break;
 			}

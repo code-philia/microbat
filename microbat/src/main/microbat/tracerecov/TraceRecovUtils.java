@@ -18,7 +18,7 @@ public class TraceRecovUtils {
 	}
 
 	public static boolean isString(String className) {
-		return className != null && className.equals("java.lang.String");
+		return className != null && (className.equals("java.lang.String") || className.equals("String"));
 	}
 
 	public static boolean isArray(String className) {
