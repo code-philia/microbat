@@ -62,8 +62,8 @@ public class VariableSkeleton {
 
 	private VarValue toVarValue(String aliasID, String varID, VarValue parent) {
 		VarValue varValue = this.createVarValue(this.name, this.type, false);
-		String newAliasID = aliasID + "-" + name;
-		String newVarID = varID + "-" + name;
+		String newAliasID = aliasID + "." + name;
+		String newVarID = varID + "." + name;
 		varValue.setAliasVarID(newAliasID);
 		varValue.setVarID(newVarID);
 		List<VarValue> children = this.children.stream().map(v -> v.toVarValue(newAliasID, newVarID, varValue)).toList();
@@ -73,11 +73,12 @@ public class VariableSkeleton {
 
 	private VarValue createVarValue(String name, String type, boolean isRoot) {
 		Variable variable = new FieldVar(false, name, type, type);
+		String stringValue = "<?>";
 		VarValue varValue = null;
 		if (TraceRecovUtils.isString(type)) {
-			varValue = new StringValue(null, isRoot, variable);
+			varValue = new StringValue(stringValue, isRoot, variable);
 		} else if (TraceRecovUtils.isPrimitiveType(type)) {
-			varValue = new PrimitiveValue(null, isRoot, variable);
+			varValue = new PrimitiveValue(stringValue, isRoot, variable);
 		} else if (TraceRecovUtils.isArray(type)) {
 			varValue = new ArrayValue(false, isRoot, variable);
 		} else {
