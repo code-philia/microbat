@@ -54,51 +54,68 @@ public class VariableGraph {
 	 *    not in the graph, add it to the graph.
 	 * 3. Link variable on trace to candidate variable.
 	 */
-	public static void mapVariable(VarValue varValue, VarValue parentVar, TraceNode step) {
+	public static void mapVariable(VarValue parentVar, TraceNode step) {
 		List<String> methods = getValidInvokingMethods(step);
+
+		VarValue returnedVariable = null;
 
 		for (String invokingMethod : methods) {
 			/* 1. Identify candidate variable */
 			String returnedField = VariableMapper.getReturnedField(invokingMethod);
-			String fieldName = returnedField.split("#")[0];
-			String fieldType = returnedField.split("#")[1];
+			if (returnedField != null) {
+				String fieldName = returnedField.split("#")[0];
+				String fieldType = returnedField.split("#")[1];
 
-			if (fieldName.equals("null") && fieldType.equals("null")) {
-				/* No candidate variable, record other variables as relevant variables */
-				List<VariableGraphNode> relevantVariables = new ArrayList<>();
+				if (TraceRecovUtils.isCompositeType(fieldType)) {
+					/* 2. Find corresponding variable on trace */
+					returnedVariable = step.getWrittenVariables().stream().filter(v -> v.getType().equals(fieldType))
+							.findFirst().orElse(null);
+					if (returnedVariable != null) {
+						VariableGraphNode variableOnTrace = getVar(returnedVariable);
 
-				Function<? super VarValue, ? extends VariableGraphNode> converter = v -> {
-					String type = v.getType();
-					if (TraceRecovUtils.isPrimitiveType(type) || TraceRecovUtils.isString(type)
-							|| TraceRecovUtils.isArray(type)) {
-						return null;
+						/* 3. Link variables */
+						VariableGraphNode parentVariable = getVar(parentVar);
+						parentVariable.addChild(fieldName, variableOnTrace);
+						variableOnTrace.setParent(parentVariable);
 					}
-					return getVar(v);
-				};
-				relevantVariables.addAll(step.getWrittenVariables().stream().map(converter).toList());
-				relevantVariables.addAll(step.getReadVariables().stream().map(converter).toList());
-				
-				VariableGraphNode currentVariable = getVar(varValue);
-				currentVariable.addRelevantVariables(step, relevantVariables);
-				relevantVariables.stream().forEach(v -> {
-					if (v != null) {
-						v.addRelevantVariable(step, currentVariable);
-					}
-				});
-			} else {
-				/* 2. Find corresponding variable on trace */
-				VarValue returnedVariable = step.getWrittenVariables().stream()
-						.filter(v -> v.getType().equals(fieldType)).findFirst().orElse(null);
-				if (returnedVariable == null) {
-					return;
 				}
-				VariableGraphNode variableOnTrace = getVar(returnedVariable);
-
-				/* 3. Link variables */
-				VariableGraphNode parentVariable = getVar(parentVar);
-				parentVariable.addChild(fieldName, variableOnTrace);
-				variableOnTrace.setParent(parentVariable);
 			}
+			
+			/* record other variables as relevant variables */
+			List<VariableGraphNode> relevantVariables = new ArrayList<>();
+
+			Function<? super VarValue, ? extends VariableGraphNode> converter = v -> {
+				String type = v.getType();
+				if (TraceRecovUtils.isPrimitiveType(type) || TraceRecovUtils.isString(type)
+						|| TraceRecovUtils.isArray(type) || v == null
+						|| v.getAliasVarID().equals(parentVar.getAliasVarID())) {
+					return null;
+				}
+				return getVar(v);
+			};
+			relevantVariables.addAll(step.getWrittenVariables().stream().map(converter).toList());
+			relevantVariables.addAll(step.getReadVariables().stream().map(converter).toList());
+
+			if (returnedVariable != null) {
+				int i = 0;
+				while (i < relevantVariables.size()) {
+					VariableGraphNode v = relevantVariables.get(i);
+					if (v != null && v.getAliasID().equals(returnedVariable.getAliasVarID())) {
+						relevantVariables.remove(v);
+						break;
+					} else {
+						i++;
+					}
+				}
+			}
+
+			VariableGraphNode currentVariable = getVar(parentVar);
+			relevantVariables.stream().forEach(v -> {
+				if (v != null) {
+					currentVariable.addRelevantVariable(step, v);
+					v.addRelevantVariable(step, currentVariable);
+				}
+			});
 		}
 	}
 
@@ -254,7 +271,7 @@ class VariableGraphNode {
 	}
 
 	public void addRelevantVariable(TraceNode step, VariableGraphNode relevantVar) {
-		if (relevantVar == null || relevantVar.getAliasID().equals(this.getAliasID())) {
+		if (relevantVar == null || relevantVar.equals(this) || relevantVar.getAliasID().equals(this.getAliasID())) {
 			return;
 		}
 

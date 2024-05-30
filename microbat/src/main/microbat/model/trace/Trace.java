@@ -283,7 +283,7 @@ public class Trace {
 				}
 				
 				/* variable mapping */
-				VariableGraph.mapVariable(variable, readVar, node);
+				VariableGraph.mapVariable(variable, node);
 				
 				break;
 			}
