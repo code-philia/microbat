@@ -37,10 +37,7 @@ public class VariableGraph {
 		// OR step without expandable method calls
 		if ((step.getInvokingMethod().startsWith("%") && !(step.getStepOverPrevious() != null
 				&& !step.getStepOverPrevious().getInvocationChildren().isEmpty())) || isStepToConsider(step)) {
-			List<VarValue> variables = new ArrayList<>();
-			variables.addAll(step.getReadVariables());
-			variables.addAll(step.getWrittenVariables());
-			for (VarValue var : variables) {
+			for (VarValue var : step.getReadVariables()) {
 				if (TraceRecovUtils.isComposite(var.getType())) {
 					getVar(var).addRelevantStep(step);
 				}
@@ -61,10 +58,8 @@ public class VariableGraph {
 			return;
 		}
 
-		List<VarValue> variables = new ArrayList<>();
-		variables.addAll(step.getReadVariables());
-		variables.addAll(step.getWrittenVariables());
-		
+		List<VarValue> variables = step.getReadVariables();
+
 		List<String> methods = getValidInvokingMethods(step);
 
 		VarValue returnedVariable = null;
@@ -75,7 +70,7 @@ public class VariableGraph {
 			if (parentVar == null) {
 				continue;
 			}
-			
+
 			/* 1. Identify candidate variable */
 			String returnedField = VariableMapper.getReturnedField(invokingMethod);
 			if (returnedField != null) {
@@ -176,7 +171,7 @@ public class VariableGraph {
 					}
 					varNode2.addChild(nameBuilder.toString(), varNode1);
 					varNode1.setParent(varNode2);
-					
+
 					varNode2.removeRelevantStep(step);
 					varNode1.removeRelevantStep(step);
 					break;
@@ -198,7 +193,7 @@ public class VariableGraph {
 					}
 					varNode1.addChild(nameBuilder.toString(), varNode2);
 					varNode2.setParent(varNode1);
-					
+
 					varNode1.removeRelevantStep(step);
 					varNode2.removeRelevantStep(step);
 					break;

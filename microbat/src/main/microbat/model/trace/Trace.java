@@ -273,11 +273,7 @@ public class Trace {
 		for (int i = start; i <= end; i++) {
 			TraceNode node = this.getTraceNode(i);
 			
-			List<VarValue> variables = new ArrayList<>();
-			variables.addAll(node.getReadVariables());
-			variables.addAll(node.getWrittenVariables());
-			
-			VarValue varInGraph = variables.stream()
+			VarValue varInGraph = node.getReadVariables().stream()
 					.filter(v -> VariableGraph.containsVar(v))
 					.findAny().orElse(null);
 			if (varInGraph != null) {
