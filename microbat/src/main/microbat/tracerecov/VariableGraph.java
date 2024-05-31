@@ -32,16 +32,19 @@ public class VariableGraph {
 		lastVisitedID = null;
 	}
 
-	public static void addRelevantStep(VarValue varValue, TraceNode step) {
-		if (step.getInvokingMethod().startsWith("%") && !(step.getStepOverPrevious() != null
-				&& !step.getStepOverPrevious().getInvocationChildren().isEmpty())) {
-			// doesn't invoke methods but reads varValue
-			getVar(varValue).addRelevantStep(step);
-			return;
-		}
-
-		if (isStepToConsider(step)) {
-			getVar(varValue).addRelevantStep(step);
+	public static void addRelevantStep(TraceNode step) {
+		// doesn't invoke methods but reads varValue
+		// OR step without expandable method calls
+		if ((step.getInvokingMethod().startsWith("%") && !(step.getStepOverPrevious() != null
+				&& !step.getStepOverPrevious().getInvocationChildren().isEmpty())) || isStepToConsider(step)) {
+			List<VarValue> variables = new ArrayList<>();
+			variables.addAll(step.getReadVariables());
+			variables.addAll(step.getWrittenVariables());
+			for (VarValue var : variables) {
+				if (TraceRecovUtils.isComposite(var.getType())) {
+					getVar(var).addRelevantStep(step);
+				}
+			}
 		}
 	}
 
@@ -53,16 +56,26 @@ public class VariableGraph {
 	 *    not in the graph, add it to the graph.
 	 * 3. Link variable on trace to candidate variable.
 	 */
-	public static void mapVariable(VarValue parentVar, TraceNode step) {
+	public static void mapVariable(TraceNode step) {
 		if (!isStepToConsider(step)) {
 			return;
 		}
 
+		List<VarValue> variables = new ArrayList<>();
+		variables.addAll(step.getReadVariables());
+		variables.addAll(step.getWrittenVariables());
+		
 		List<String> methods = getValidInvokingMethods(step);
 
 		VarValue returnedVariable = null;
 
 		for (String invokingMethod : methods) {
+			String type = invokingMethod.split("#")[0];
+			VarValue parentVar = variables.stream().filter(v -> v.getType().equals(type)).findFirst().orElse(null);
+			if (parentVar == null) {
+				continue;
+			}
+			
 			/* 1. Identify candidate variable */
 			String returnedField = VariableMapper.getReturnedField(invokingMethod);
 			if (returnedField != null) {
@@ -81,8 +94,8 @@ public class VariableGraph {
 						parentVariable.addChild(fieldName, variableOnTrace);
 						variableOnTrace.setParent(parentVariable);
 
-						for (VarValue readVar : step.getReadVariables()) {
-							getVar(readVar).removeRelevantStep(step);
+						for (VarValue var : variables) {
+							getVar(var).removeRelevantStep(step);
 						}
 						linkageSteps.add(step);
 					}
@@ -92,9 +105,9 @@ public class VariableGraph {
 
 		/* record current step as potential linkage step */
 		if (!methods.isEmpty() && returnedVariable == null && !linkageSteps.contains(step)) {
-			for (VarValue readVar : step.getReadVariables()) {
-				if (!containsVar(readVar) && TraceRecovUtils.isComposite(readVar.getType())) {
-					addVar(readVar);
+			for (VarValue var : variables) {
+				if (!containsVar(var) && TraceRecovUtils.isComposite(var.getType())) {
+					addVar(var);
 				}
 			}
 			potentialLinkageSteps.add(step);

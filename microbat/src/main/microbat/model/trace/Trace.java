@@ -273,19 +273,21 @@ public class Trace {
 		for (int i = start; i <= end; i++) {
 			TraceNode node = this.getTraceNode(i);
 			
-			List<VarValue> variables = node.getReadVariables();
-			for (VarValue variable : variables) {
+			List<VarValue> variables = new ArrayList<>();
+			variables.addAll(node.getReadVariables());
+			variables.addAll(node.getWrittenVariables());
+			
+			VarValue varInGraph = variables.stream()
+					.filter(v -> VariableGraph.containsVar(v))
+					.findAny().orElse(null);
+			if (varInGraph != null) {
 				/* identify relevant steps */
-				if (VariableGraph.containsVar(variable)) {
-					VariableGraph.addRelevantStep(variable, node);
-				} else {
-					continue;
-				}
+				VariableGraph.addRelevantStep(node);
 				
 				/* variable mapping */
-				VariableGraph.mapVariable(variable, node);
-				
-				break;
+				VariableGraph.mapVariable(node);
+			} else {
+				continue;
 			}
 		}
 	}
