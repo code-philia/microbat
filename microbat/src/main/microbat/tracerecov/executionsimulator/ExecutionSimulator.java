@@ -10,7 +10,6 @@ import java.util.List;
 import org.json.JSONObject;
 
 import microbat.model.trace.TraceNode;
-import microbat.model.value.VarValue;
 import microbat.tracerecov.VariableGraph;
 
 /**
@@ -23,18 +22,19 @@ public class ExecutionSimulator {
 
 	private static String apiKey = "";
 
-	public ExecutionSimulator() {}
-	
+	public ExecutionSimulator() {
+	}
+
 	public void recoverLinkageSteps() throws IOException {
 		List<TraceNode> steps = VariableGraph.getPotentialLinkageSteps();
 		String background = LinkageEstimationUtils.getBackgroundContent();
 		String content = LinkageEstimationUtils.getQuestionContent(steps);
 		System.out.println(background);
 		System.out.println(content);
-		
+
 		String response = sendRequest(background, content);
 		System.out.println(response);
-		
+
 		LinkageEstimationUtils.processResponse(response, steps);
 	}
 
@@ -48,23 +48,23 @@ public class ExecutionSimulator {
 					String content = SimulationUtilsWithCandidateVar.getQuestionContent(variableID, relevantSteps);
 					System.out.println(background);
 					System.out.println(content);
-					
+
 					String response = this.sendRequest(background, content);
 					System.out.println(response);
-					
+
 					SimulationUtilsWithCandidateVar.processResponse(response, variableID, relevantSteps);
 				} else {
 					String background = SimulationUtils.getBackgroundContent();
 					String content = SimulationUtils.getQuestionContent(variableID, relevantSteps);
 					System.out.println(background);
 					System.out.println(content);
-					
+
 					String response = this.sendRequest(background, content);
 					System.out.println(response);
 					SimulationUtils.processResponse(response, variableID, relevantSteps);
 				}
 			}
-			
+
 			VariableGraph.addCurrentToParentVariables();
 			variableID = VariableGraph.getNextNodeIDToVisit();
 		}
