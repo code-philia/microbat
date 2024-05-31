@@ -105,11 +105,6 @@ public class VariableGraph {
 
 		/* record current step as potential linkage step */
 		if (!methods.isEmpty() && returnedVariable == null && !linkageSteps.contains(step)) {
-			for (VarValue var : variables) {
-				if (!containsVar(var) && TraceRecovUtils.isComposite(var.getType())) {
-					addVar(var);
-				}
-			}
 			potentialLinkageSteps.add(step);
 		}
 	}
@@ -150,7 +145,7 @@ public class VariableGraph {
 		graph.get(lastVisitedID).addSelfToParentSteps();
 	}
 
-	public static void linkVariables(VarValue var1, VarValue var2, String field1, String field2) {
+	public static void linkVariables(TraceNode step, VarValue var1, VarValue var2, String field1, String field2) {
 		if (!containsVar(var1) || !containsVar(var2)) {
 			return;
 		}
@@ -181,6 +176,9 @@ public class VariableGraph {
 					}
 					varNode2.addChild(nameBuilder.toString(), varNode1);
 					varNode1.setParent(varNode2);
+					
+					varNode2.removeRelevantStep(step);
+					varNode1.removeRelevantStep(step);
 					break;
 				} else {
 					varNode2 = field;
@@ -200,6 +198,9 @@ public class VariableGraph {
 					}
 					varNode1.addChild(nameBuilder.toString(), varNode2);
 					varNode2.setParent(varNode1);
+					
+					varNode1.removeRelevantStep(step);
+					varNode2.removeRelevantStep(step);
 					break;
 				} else {
 					varNode1 = field;
