@@ -1,5 +1,8 @@
 package microbat.tracerecov;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -96,4 +99,19 @@ public class TraceRecovUtils {
 		}
 	}
 
+	public static String getSourceCode(String filePath, int lineNumber) {
+		String line = null;
+		try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+			int currentLine = 0;
+			while ((line = reader.readLine()) != null) {
+				currentLine++;
+				if (currentLine == lineNumber) {
+					return line;
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 }

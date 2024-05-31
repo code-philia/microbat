@@ -24,28 +24,55 @@ public class ExecutionSimulator {
 	private static String apiKey = "";
 
 	public ExecutionSimulator() {}
+	
+	public void recoverLinkageSteps() throws IOException {
+		List<TraceNode> steps = VariableGraph.getPotentialLinkageSteps();
+		String background = LinkageEstimationUtils.getBackgroundContent();
+		String content = LinkageEstimationUtils.getQuestionContent(steps);
+		System.out.println(background);
+		System.out.println(content);
+		
+		String response = sendRequest(background, content);
+		System.out.println(response);
+		
+		LinkageEstimationUtils.processResponse(response, steps);
+	}
 
 	public void sendRequests() throws IOException {
 		String variableID = VariableGraph.getNextNodeIDToVisit();
 		while (variableID != null) {
 			List<TraceNode> relevantSteps = VariableGraph.getRelevantSteps(variableID);
-			boolean hasChildren = VariableGraph.hasChildren(variableID);
-
-			String response = this.sendRequest(variableID, relevantSteps, hasChildren);
-			if (hasChildren) {
-				SimulationUtilsWithCandidateVar.processResponse(response, variableID, relevantSteps);
-			} else {
-				SimulationUtils.processResponse(response, variableID, relevantSteps);
+			if (!relevantSteps.isEmpty()) {
+				if (VariableGraph.hasChildren(variableID)) {
+					String background = SimulationUtilsWithCandidateVar.getBackgroundContent();
+					String content = SimulationUtilsWithCandidateVar.getQuestionContent(variableID, relevantSteps);
+					System.out.println(background);
+					System.out.println(content);
+					
+					String response = this.sendRequest(background, content);
+					System.out.println(response);
+					
+					SimulationUtilsWithCandidateVar.processResponse(response, variableID, relevantSteps);
+				} else {
+					String background = SimulationUtils.getBackgroundContent();
+					String content = SimulationUtils.getQuestionContent(variableID, relevantSteps);
+					System.out.println(background);
+					System.out.println(content);
+					
+					String response = this.sendRequest(background, content);
+					System.out.println(response);
+					SimulationUtils.processResponse(response, variableID, relevantSteps);
+				}
 			}
-
+			
 			VariableGraph.addCurrentToParentVariables();
 			variableID = VariableGraph.getNextNodeIDToVisit();
 		}
 	}
 
-	private String sendRequest(String aliasID, List<TraceNode> steps, boolean hasChildren) throws IOException {
+	private String sendRequest(String backgroundContent, String questionContent) throws IOException {
 		/* set up connection */
-		URL url = new URL(SimulationUtils.API_URL);
+		URL url = new URL(SimulatorConstants.API_URL);
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
 		connection.setRequestMethod("POST");
@@ -56,18 +83,16 @@ public class ExecutionSimulator {
 		/* construct request */
 		JSONObject background = new JSONObject();
 		background.put("role", "system");
-		background.put("content", hasChildren ? SimulationUtilsWithCandidateVar.getBackgroundContent()
-				: SimulationUtils.getBackgroundContent());
+		background.put("content", backgroundContent);
 
 		JSONObject question = new JSONObject();
 		question.put("role", "user");
-		question.put("content", hasChildren ? SimulationUtilsWithCandidateVar.getQuestionContent(aliasID, steps)
-				: SimulationUtils.getQuestionContent(aliasID, steps));
+		question.put("content", questionContent);
 
 		JSONObject request = new JSONObject();
-		request.put("model", SimulationUtils.GPT3);
+		request.put("model", SimulatorConstants.GPT4O);
 		request.put("messages", new org.json.JSONArray().put(background).put(question));
-		request.put("temperature", SimulationUtils.TEMPERATURE);
+		request.put("temperature", SimulatorConstants.TEMPERATURE);
 
 		/* send request */
 		try (OutputStream os = connection.getOutputStream()) {

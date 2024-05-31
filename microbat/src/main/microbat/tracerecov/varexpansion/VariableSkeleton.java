@@ -59,6 +59,33 @@ public class VariableSkeleton {
 		}
 		return varValue;
 	}
+	
+	/**
+	 * parent: TYPE:{CHILDREN}
+	 * child: TYPE NAME:{CHILDREN}
+	 */
+	@Override
+	public String toString() {
+		StringBuilder stringBuilder = new StringBuilder(this.type);
+		
+		if (this.parent != null) {
+			stringBuilder.append(" ");
+			stringBuilder.append(this.name);
+		}
+		
+		if (this.children.isEmpty()) {
+			return stringBuilder.toString();
+		}
+		
+		stringBuilder.append(":{");
+		for (VariableSkeleton child : this.children) {
+			stringBuilder.append(child.toString());
+			stringBuilder.append(";");
+		}
+		stringBuilder.append("}");
+		
+		return stringBuilder.toString();
+	}
 
 	private VarValue toVarValue(String aliasID, String varID, VarValue parent) {
 		VarValue varValue = this.createVarValue(this.name, this.type, false);

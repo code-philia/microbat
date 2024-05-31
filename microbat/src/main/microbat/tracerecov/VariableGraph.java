@@ -6,8 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.model.variable.Variable;
@@ -21,13 +19,16 @@ import microbat.tracerecov.varmapping.VariableMapper;
  */
 public class VariableGraph {
 	private static Map<String, VariableGraphNode> graph = new HashMap<>();
-
+	private static Set<TraceNode> linkageSteps = new HashSet<>();
+	private static List<TraceNode> potentialLinkageSteps = new ArrayList<>();
 	private static String lastVisitedID = null;
 
 	/* public methods */
 
 	public static void reset() {
 		graph = new HashMap<>();
+		linkageSteps = new HashSet<>();
+		potentialLinkageSteps = new ArrayList<>();
 		lastVisitedID = null;
 	}
 
@@ -39,11 +40,9 @@ public class VariableGraph {
 			return;
 		}
 
-		if (!step.getInvocationChildren().isEmpty() || (step.getStepOverPrevious() != null
-				&& !step.getStepOverPrevious().getInvocationChildren().isEmpty())) {
-			return;
+		if (isStepToConsider(step)) {
+			getVar(varValue).addRelevantStep(step);
 		}
-		getVar(varValue).addRelevantStep(step);
 	}
 
 	/**
@@ -55,6 +54,10 @@ public class VariableGraph {
 	 * 3. Link variable on trace to candidate variable.
 	 */
 	public static void mapVariable(VarValue parentVar, TraceNode step) {
+		if (!isStepToConsider(step)) {
+			return;
+		}
+		
 		List<String> methods = getValidInvokingMethods(step);
 
 		VarValue returnedVariable = null;
@@ -77,46 +80,26 @@ public class VariableGraph {
 						VariableGraphNode parentVariable = getVar(parentVar);
 						parentVariable.addChild(fieldName, variableOnTrace);
 						variableOnTrace.setParent(parentVariable);
+
+						linkageSteps.add(step);
 					}
 				}
 			}
-			
-			/* record other variables as relevant variables */
-			List<VariableGraphNode> relevantVariables = new ArrayList<>();
-
-			Function<? super VarValue, ? extends VariableGraphNode> converter = v -> {
-				String type = v.getType();
-				if (TraceRecovUtils.isPrimitiveType(type) || TraceRecovUtils.isString(type)
-						|| TraceRecovUtils.isArray(type) || v == null
-						|| v.getAliasVarID().equals(parentVar.getAliasVarID())) {
-					return null;
-				}
-				return getVar(v);
-			};
-			relevantVariables.addAll(step.getWrittenVariables().stream().map(converter).toList());
-			relevantVariables.addAll(step.getReadVariables().stream().map(converter).toList());
-
-			if (returnedVariable != null) {
-				int i = 0;
-				while (i < relevantVariables.size()) {
-					VariableGraphNode v = relevantVariables.get(i);
-					if (v != null && v.getAliasID().equals(returnedVariable.getAliasVarID())) {
-						relevantVariables.remove(v);
-						break;
-					} else {
-						i++;
-					}
-				}
-			}
-
-			VariableGraphNode currentVariable = getVar(parentVar);
-			relevantVariables.stream().forEach(v -> {
-				if (v != null) {
-					currentVariable.addRelevantVariable(step, v);
-					v.addRelevantVariable(step, currentVariable);
-				}
-			});
 		}
+
+		/* record current step as potential linkage step */
+		if (!methods.isEmpty() && returnedVariable == null && !linkageSteps.contains(step)) {
+			for (VarValue readVar : step.getReadVariables()) {
+				if (!containsVar(readVar)) {
+					addVar(readVar);
+				}
+			}
+			potentialLinkageSteps.add(step);
+		}
+	}
+	
+	public static List<TraceNode> getPotentialLinkageSteps() {
+		return potentialLinkageSteps;
 	}
 
 	/**
@@ -150,6 +133,64 @@ public class VariableGraph {
 		}
 		graph.get(lastVisitedID).addSelfToParentSteps();
 	}
+	
+	public static void linkVariables(VarValue var1, VarValue var2, String field1, String field2) {
+		if (!containsVar(var1) || !containsVar(var2)) {
+			return;
+		}
+		
+		VariableGraphNode varNode1 = getVar(var1);
+		VariableGraphNode varNode2 = getVar(var2);
+		String[] fields1 = field1.split("\\.");
+		String[] fields2 = field2.split("\\.");
+		
+		if (fields1.length > 1 && fields2.length > 1) {
+			return;
+		}
+		if (fields1[0] == fields2[0] || fields1[0].equals(fields2[0])) {
+			return;
+		}
+		
+		if (fields1.length == 1) {
+			for (int i = 1; i < fields2.length; i++) {
+				VariableGraphNode field = varNode2.getFieldWithName(fields2[i]);
+				if (field == null) {
+					StringBuilder nameBuilder = new StringBuilder();
+					while (i < fields2.length) {
+						nameBuilder.append(fields2[i]);
+						if (i < fields2.length - 1) {
+							nameBuilder.append(".");
+						}
+						i++;
+					}
+					varNode2.addChild(nameBuilder.toString(), varNode1);
+					varNode1.setParent(varNode2);
+					break;
+				} else {
+					varNode2 = field;
+				}
+			}
+		} else if (fields2.length == 1) {
+			for (int i = 1; i < fields1.length; i++) {
+				VariableGraphNode field = varNode1.getFieldWithName(fields1[i]);
+				if (field == null) {
+					StringBuilder nameBuilder = new StringBuilder();
+					while (i < fields1.length) {
+						nameBuilder.append(fields1[i]);
+						if (i < fields1.length - 1) {
+							nameBuilder.append(".");
+						}
+						i++;
+					}
+					varNode1.addChild(nameBuilder.toString(), varNode2);
+					varNode2.setParent(varNode1);
+					break;
+				} else {
+					varNode1 = field;
+				}
+			}
+		}
+	}
 
 	public static List<TraceNode> getRelevantSteps(String ID) {
 		if (!containsVar(ID)) {
@@ -181,6 +222,11 @@ public class VariableGraph {
 	}
 
 	/* private methods */
+	
+	private static boolean isStepToConsider(TraceNode step) {
+		return step.getInvocationChildren().isEmpty()
+				&& (step.getStepOverPrevious() == null || step.getStepOverPrevious().getInvocationChildren().isEmpty());
+	}
 
 	/**
 	 * Return all invoking methods other than the expanded ones.
@@ -245,7 +291,6 @@ class VariableGraphNode {
 	private Map<VariableGraphNode, String> children;
 
 	private List<TraceNode> relevantSteps;
-	private Map<VariableGraphNode, Set<TraceNode>> relevantVariables;
 
 	public VariableGraphNode(VarValue varValue) {
 		this.aliasID = varValue.getAliasVarID();
@@ -253,7 +298,6 @@ class VariableGraphNode {
 		this.parent = null;
 		this.children = new HashMap<>();
 		this.relevantSteps = new ArrayList<>();
-		this.relevantVariables = new HashMap<>();
 	}
 
 	/* setters */
@@ -268,26 +312,6 @@ class VariableGraphNode {
 
 	public void addChild(String name, VariableGraphNode child) {
 		this.children.put(child, name);
-	}
-
-	public void addRelevantVariable(TraceNode step, VariableGraphNode relevantVar) {
-		if (relevantVar == null || relevantVar.equals(this) || relevantVar.getAliasID().equals(this.getAliasID())) {
-			return;
-		}
-
-		if (!this.relevantVariables.containsKey(relevantVar)) {
-			this.relevantVariables.put(relevantVar, new HashSet<>());
-		}
-		this.relevantVariables.get(relevantVar).add(step);
-	}
-
-	public void addRelevantVariables(TraceNode step, List<VariableGraphNode> relevantVars) {
-		for (VariableGraphNode v : relevantVars) {
-			if (!this.relevantVariables.containsKey(v)) {
-				this.relevantVariables.put(v, new HashSet<>());
-			}
-			this.relevantVariables.get(v).add(step);
-		}
 	}
 
 	public void addSelfToParentSteps() {
@@ -336,6 +360,24 @@ class VariableGraphNode {
 
 	public List<TraceNode> getRelevantSteps() {
 		return this.relevantSteps;
+	}
+	
+	public VariableGraphNode getFieldWithName(String name) {
+		if (name.contains("[") && name.contains("]")) {
+			String arrayName = name.split("\\[")[0];
+			for (VariableGraphNode key : children.keySet()) {
+				if (children.get(key).equals(arrayName)) {
+					return key;
+				}
+			}
+		} else {
+			for (VariableGraphNode key : children.keySet()) {
+				if (children.get(key).equals(name)) {
+					return key;
+				}
+			}
+		}
+		return null;
 	}
 
 }

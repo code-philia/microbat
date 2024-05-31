@@ -15,15 +15,6 @@ import microbat.model.variable.Variable;
  */
 public class SimulationUtils {
 
-	/* ChatGPT API */
-	public static final String API_URL = "https://api.openai.com/v1/chat/completions";
-	public static final String GPT3 = "gpt-3.5-turbo";
-	public static final String GPT4 = "gpt-4-turbo";
-	public static final String GPT4O = "gpt-4o";
-
-	/* Model constants */
-	public static final double TEMPERATURE = 0.7;
-
 	/* Request content */
 	private static final String REQUEST_BACKGROUND = "In each step, the variable of interest (VOI) is "
 			+ "identified. The variable values ***before*** execution are given, you need to provide the value "
