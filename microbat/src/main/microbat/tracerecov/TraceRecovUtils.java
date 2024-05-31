@@ -23,6 +23,10 @@ public class TraceRecovUtils {
 	public static boolean isString(String className) {
 		return className != null && (className.equals("java.lang.String") || className.equals("String"));
 	}
+	
+	public static boolean isComposite(String className) {
+		return !isPrimitiveType(className) && !isString(className);
+	}
 
 	public static boolean isArray(String className) {
 		return className.endsWith("[]");
