@@ -159,8 +159,9 @@ public class InstrumentationExecutor {
 			
 			DependencyRecoveryInfo dataFlowInfo = collectLibraryCalls(precheckInfomation);
 			
-			RunningInfo rInfo = execute(precheckInfomation);
-			return rInfo;
+//			RunningInfo rInfo = execute(precheckInfomation);
+//			return rInfo;
+			return null;
 		} catch (SavException e1) {
 			e1.printStackTrace();
 		}
@@ -226,7 +227,8 @@ public class InstrumentationExecutor {
 	public DependencyRecoveryInfo collectLibraryCalls(PreCheckInformation info) {
 		try {
 			agentRunner.addAgentParam(AgentParams.OPT_EXPECTED_STEP, info.getStepNum());
-			agentRunner.recoverDependency(null);
+			String filePath = TraceAgentRunner.getlibCallsPath();
+			agentRunner.recoverDependency(filePath);
 			return agentRunner.getDependencyRecoveryInfo();
 		} catch (SavException e1) {
 			e1.printStackTrace();

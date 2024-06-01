@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -45,9 +46,17 @@ public class TraceAgentRunner extends AgentVmRunner {
 	
 	private List<Trace> traces;
 
+	public static String projectName;
+	public static String projectID;
+	private static String libCallsBasePath = "D:\\TraceRecov\\libCalls";
+
 	public TraceAgentRunner(String agentJar, VMConfiguration vmConfig) {
 		super(agentJar, AgentConstants.AGENT_OPTION_SEPARATOR, AgentConstants.AGENT_PARAMS_SEPARATOR);
 		this.setConfig(vmConfig);
+	}
+
+	public static String getlibCallsPath() {
+		return Paths.get(libCallsBasePath, projectName + projectID + ".txt").toString();
 	}
 
 	@Override
