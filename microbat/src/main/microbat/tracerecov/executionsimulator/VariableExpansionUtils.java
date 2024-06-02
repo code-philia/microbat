@@ -1,8 +1,10 @@
 package microbat.tracerecov.executionsimulator;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import microbat.model.trace.TraceNode;
@@ -67,7 +69,38 @@ public class VariableExpansionUtils {
 		return question.toString();
 	}
 
-	public static void processResponse(String response) {
-		new JSONObject(response);
+	public static VariableSkeleton processResponse(VarValue selectedVariable, String response) {
+		int begin = response.indexOf("{");
+		int end = response.lastIndexOf("}");
+		response = response.substring(begin, end + 1);
+		
+		VariableSkeleton newSkeleton = new VariableSkeleton(selectedVariable.getType(), selectedVariable.getVarName());
+		JSONObject variable = new JSONObject(response);
+		processResponseRecur(variable, newSkeleton);
+		
+		return newSkeleton;
+	}
+	
+	private static void processResponseRecur(JSONObject jsonObject, VariableSkeleton parent) {
+		Iterator<String> keys = jsonObject.keys();
+		while (keys.hasNext()) {
+			String key = keys.next();
+			
+			String varName = key.split(":")[0].trim();
+			String varType = key.split(":")[1].trim();
+			VariableSkeleton child = new VariableSkeleton(varType, varName);
+			parent.addChild(child);
+			
+			Object value = jsonObject.get(key);
+			if (value instanceof JSONArray) {
+				// search inner layers
+				JSONArray jsonArray = (JSONArray) value;
+				jsonArray.forEach(o -> {
+					if (o instanceof JSONObject) {
+						processResponseRecur(jsonObject, child);
+					}
+				});
+			}
+		}
 	}
 }

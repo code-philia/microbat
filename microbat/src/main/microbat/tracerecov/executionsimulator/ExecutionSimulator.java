@@ -27,7 +27,7 @@ public class ExecutionSimulator {
 	public ExecutionSimulator() {
 	}
 	
-	public void expandVariable(VarValue selectedVar, List<VariableSkeleton> variableSkeletons, TraceNode step) throws IOException {
+	public VariableSkeleton expandVariable(VarValue selectedVar, List<VariableSkeleton> variableSkeletons, TraceNode step) throws IOException {
 		String background = VariableExpansionUtils.getBackgroundContent();
 		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step);
 		System.out.println(background);
@@ -35,6 +35,8 @@ public class ExecutionSimulator {
 
 		String response = sendRequest(background, content);
 		System.out.println(response);
+		
+		return VariableExpansionUtils.processResponse(selectedVar, response);
 	}
 
 	public void recoverLinkageSteps() throws IOException {
