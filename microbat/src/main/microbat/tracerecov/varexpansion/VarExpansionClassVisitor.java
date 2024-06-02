@@ -13,21 +13,27 @@ import microbat.tracerecov.TraceRecovUtils;
 
 public class VarExpansionClassVisitor extends AbstractClassVisitor {
 
+	private static final int MAX_LAYER = 2;
+
 	private static Set<String> visitedClasses = new HashSet<String>();
 
 	private VariableSkeleton root;
 	private String className;
+	private int layer;
+
+	public VarExpansionClassVisitor(String className) {
+		this(className, false);
+	}
 
 	public VarExpansionClassVisitor(String className, boolean reset) {
-		super(className, reset);
-		if (reset) {
-			visitedClasses = new HashSet<String>();
-		}
-		this.root = new VariableSkeleton(className);
-		this.className = className.replace('/', '.');
+		this(className, new VariableSkeleton(className), reset);
 	}
 
 	public VarExpansionClassVisitor(String className, VariableSkeleton root, boolean reset) {
+		this(className, root, reset, 1);
+	}
+
+	public VarExpansionClassVisitor(String className, VariableSkeleton root, boolean reset, int layer) {
 		super(className, reset);
 		if (reset) {
 			visitedClasses = new HashSet<String>();
@@ -38,6 +44,7 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 			this.root = root;
 		}
 		this.className = className.replace('/', '.');
+		this.layer = layer;
 	}
 
 	/**
@@ -58,10 +65,10 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 	public void visitEnd() {
 		visitedClasses.add(this.className);
 		for (String className : classesOfInterest) {
-			if (!visitedClasses.contains(className)) {
+			if (!visitedClasses.contains(className) && layer < MAX_LAYER) {
 				try {
 					ClassReader classReader = new ClassReader(className);
-					classReader.accept(new VarExpansionClassVisitor(className, this.root, false), 0);
+					classReader.accept(new VarExpansionClassVisitor(className, this.root, false, layer + 1), 0);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -77,11 +84,12 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 			this.root.addChild(child);
 
 			String newClassName = TraceRecovUtils.getValidClassNameFromDescriptor(descriptor);
-			if (newClassName != null && TraceRecovUtils.shouldBeChecked(newClassName)) {
+			if (newClassName != null && TraceRecovUtils.shouldBeChecked(newClassName)
+					&& !visitedClasses.contains(className) && layer < MAX_LAYER) {
 				// expand inner field further
 				try {
 					ClassReader classReader = new ClassReader(newClassName);
-					classReader.accept(new VarExpansionClassVisitor(newClassName, child, false), 0);
+					classReader.accept(new VarExpansionClassVisitor(newClassName, child, false, layer + 1), 0);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

@@ -59,9 +59,9 @@ public class VariableGraph {
 	 * 3. Link variable on trace to candidate variable.
 	 */
 	public static void mapVariable(TraceNode step) {
-		if (!isStepToConsider(step)) {
-			return;
-		}
+//		if (!isStepToConsider(step)) {
+//			return;
+//		}
 
 //		List<VarValue> variables = step.getReadVariables();
 //

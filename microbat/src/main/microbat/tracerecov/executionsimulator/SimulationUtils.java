@@ -35,16 +35,27 @@ public class SimulationUtils {
 	public static String getQuestionContent(String variableID, List<TraceNode> relevantSteps) {
 		StringBuilder stringBuilder = new StringBuilder();
 
-		VarValue criticalVar = relevantSteps.get(0).getReadVariables().stream()
-				.filter(v -> Variable.truncateSimpleID(v.getAliasVarID()).equals(variableID)).findFirst().orElse(null);
-		String type = criticalVar.getType();
-		stringBuilder.append(getContentForVariableOfInterest(type));
+		VarValue criticalVar = null;
+		int i = 0;
+		while (criticalVar == null && i < relevantSteps.size()) {
+			criticalVar = relevantSteps.get(i).getReadVariables().stream()
+					.filter(v -> Variable.truncateSimpleID(v.getAliasVarID()).equals(variableID)).findFirst()
+					.orElse(null);
+			i++;
+		}
+		if (criticalVar != null) {
+			String type = criticalVar.getType();
+			stringBuilder.append(getContentForVariableOfInterest(type));
+		}
 
 		stringBuilder.append("In the following steps: \n");
 		for (TraceNode step : relevantSteps) {
 			criticalVar = step.getReadVariables().stream()
 					.filter(v -> Variable.truncateSimpleID(v.getAliasVarID()).equals(variableID)).findFirst()
 					.orElse(null);
+			if (criticalVar == null) {
+				continue;
+			}
 			stringBuilder.append(getContentForRelevantStep(step, criticalVar));
 		}
 

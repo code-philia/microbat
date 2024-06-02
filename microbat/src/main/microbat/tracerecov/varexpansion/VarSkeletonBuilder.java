@@ -32,7 +32,8 @@ public class VarSkeletonBuilder {
 			
 			return classVisitor.getVariableStructure();
 		} catch (IOException e) {
-			e.printStackTrace();
+			// do nothing
+//			e.printStackTrace();
 		}
 		
 		return null;
