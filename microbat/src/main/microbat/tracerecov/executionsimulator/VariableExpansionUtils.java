@@ -1,6 +1,5 @@
 package microbat.tracerecov.executionsimulator;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -8,33 +7,68 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import microbat.model.trace.TraceNode;
+import microbat.model.value.ArrayValue;
+import microbat.model.value.PrimitiveValue;
+import microbat.model.value.ReferenceValue;
+import microbat.model.value.StringValue;
 import microbat.model.value.VarValue;
+import microbat.model.variable.FieldVar;
+import microbat.model.variable.Variable;
 import microbat.tracerecov.TraceRecovUtils;
-import microbat.tracerecov.VariableGraph;
 import microbat.tracerecov.varexpansion.VariableSkeleton;
 
 public class VariableExpansionUtils {
 	/* Request content */
 
-	private static final String VAR_EXPAND_BACKGROUND = "<Background>\n"
-			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \n"
-			+ "\n" + "<Example>\n" + "Class Name: java.util.HashMap<HashMap, ArrayList>\n" + "Structure: {\n"
-			+ "	java.util.HashMap$Node[] table;\n" + "	java.util.Set entrySet;\n" + "	int size;\n"
-			+ "	int modCount;\n" + "	int threshold;\n" + "	float loadFactor;\n" + "	java.util.Set keySet;\n"
-			+ "	java.util.Collection values;\n" + "}\n" + "\n" + "Given “map.toString()” has output value:\n"
-			+ "{{k1=1, k2=2} = [v1, v2], {kA=100, kB=200} = [vA, vB]}\n" + "\n" + "We can summarize the structure as \n"
-			+ "Here is the given structure converted to JSON format (every variable shall strictly have a Java type, followed by its value):\n"
-			+ "{\n" + "  \"map: java.util.HashMap<HashMap, ArrayList>\": {\n" + "    \"key[1]: HashMap\": {\n"
-			+ "      {\n" + "        \"key[1]: java.lang.String\": \"k1\",\n"
-			+ "        \"key[2]: java.lang.String\": \"k2\",\n" + "        \"value[1]: java.lang.Integer\": 1,\n"
-			+ "        \"value[2]: java.lang.Integer\": 2,\n" + "        \"size: int\": 2	\n" + "      }\n"
-			+ "    },\n" + "    \"key[2]: java.util.HashMap\": {\n" + "      \"map\": {\n"
-			+ "        \"key[1]: java.lang.String\": \"kA\",\n" + "        \"key[2]: java.lang.String\": \"kB\",\n"
-			+ "        \"value[1]: java.lang.Integer\": 100,\n" + "        \"value[2]: java.lang.Integer\": 200,\n"
-			+ "         \"size: int\": 2\n" + "      }\n" + "    }\n" + "  },\n"
-			+ "  \"value[1]: java.util.ArrayList<String>\": [\"v1\", \"v2\"],\n"
-			+ "  \"value[2]: java.util.ArrayList<String>\": [\"vA\", \"vB\"],\n" + "  \"size\": 2\n" + "}\n"
-			+ "<Question>";
+	private static final String VAR_EXPAND_BACKGROUND = "<Background>\r\n"
+			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \r\n"
+			+ "\r\n"
+			+ "<Example>\r\n"
+			+ "Class Name: java.util.HashMap<HashMap, ArrayList>\r\n"
+			+ "Structure: {\r\n"
+			+ "	java.util.HashMap$Node[] table;\r\n"
+			+ "	java.util.Set entrySet;\r\n"
+			+ "	int size;\r\n"
+			+ "	int modCount;\r\n"
+			+ "	int threshold;\r\n"
+			+ "	float loadFactor;\r\n"
+			+ "	java.util.Set keySet;\r\n"
+			+ "	java.util.Collection values;\r\n"
+			+ "}\r\n"
+			+ "\r\n"
+			+ "Given “map.toString()” has output value:\r\n"
+			+ "{{k1=1, k2=2} = [v1, v2], {kA=100, kB=200} = [vA, vB]}\r\n"
+			+ "\r\n"
+			+ "We can summarize the structure as \r\n"
+			+ "Here is the given structure converted to JSON format (every variable shall strictly have a Java type, followed by its value):\r\n"
+			+ "{\r\n"
+			+ "  \"map: java.util.HashMap<HashMap, ArrayList>\": {\r\n"
+			+ "    \"key[1]: HashMap\": {\r\n"
+			+ "      {\r\n"
+			+ "        \"key[1]: java.lang.String\": \"k1\",\r\n"
+			+ "        \"key[2]: java.lang.String\": \"k2\",\r\n"
+			+ "        \"value[1]: java.lang.Integer\": 1,\r\n"
+			+ "        \"value[2]: java.lang.Integer\": 2,\r\n"
+			+ "        \"size: int\": 2	\r\n"
+			+ "      }\r\n"
+			+ "    },\r\n"
+			+ "    \"key[2]: java.util.HashMap\": {\r\n"
+			+ "      \"map\": {\r\n"
+			+ "        \"key[1]: java.lang.String\": \"kA\",\r\n"
+			+ "        \"key[2]: java.lang.String\": \"kB\",\r\n"
+			+ "        \"value[1]: java.lang.Integer\": 100,\r\n"
+			+ "        \"value[2]: java.lang.Integer\": 200,\r\n"
+			+ "         \"size: int\": 2\r\n"
+			+ "       }\r\n"
+			+ "     },\r\n"
+			+ "     \"value[1]: java.util.ArrayList<String>\": [\"v1\", \"v2\"],\r\n"
+			+ "     \"value[2]: java.util.ArrayList<String>\": [\"vA\", \"vB\"],\r\n"
+			+ "     \"size\": 2\r\n"
+			+ "  },\r\n"
+			+ " }\r\n"
+			+ "\r\n"
+			+ "<Question>\r\n"
+			+ "";
 
 	/* Methods */
 
@@ -47,7 +81,7 @@ public class VariableExpansionUtils {
 		StringBuilder question = new StringBuilder("Given the following data structure:\n");
 
 		for (VariableSkeleton v : variableSkeletons) {
-			question.append(v.toString());
+			question.append(v.toString() + " ");
 		}
 
 		question.append("with the input value of executing \"");
@@ -55,9 +89,17 @@ public class VariableExpansionUtils {
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
 		String sourceCode = TraceRecovUtils.getSourceCode(location, lineNo).trim();
-		question.append(sourceCode);
+		question.append(sourceCode + "\", ");
 		question.append("we have the value of *" + selectedVariable.getVarName() + "* of type ");
-		question.append(selectedVariable.getType());
+		
+		
+		//TODO to remove it if we have runtime variable type
+		String type = selectedVariable.getType();
+		if(type.equals("java.util.List")) {
+			type = "java.util.LinkedList";
+		}
+		
+		question.append(type);
 		
 		question.append(": \"");
 		question.append(selectedVariable.getStringValue());
@@ -69,38 +111,67 @@ public class VariableExpansionUtils {
 		return question.toString();
 	}
 
-	public static VariableSkeleton processResponse(VarValue selectedVariable, String response) {
+	public static void processResponse(VarValue selectedVariable, String response) {
 		int begin = response.indexOf("{");
 		int end = response.lastIndexOf("}");
 		response = response.substring(begin, end + 1);
 		
-		VariableSkeleton newSkeleton = new VariableSkeleton(selectedVariable.getType(), selectedVariable.getVarName());
 		JSONObject variable = new JSONObject(response);
-		processResponseRecur(variable, newSkeleton);
+		processResponseRecur(true, variable, selectedVariable);
 		
-		return newSkeleton;
 	}
 	
-	private static void processResponseRecur(JSONObject jsonObject, VariableSkeleton parent) {
+	private static void processResponseRecur(boolean isRoot, JSONObject jsonObject, VarValue selectedVariable) {
+		
+
 		Iterator<String> keys = jsonObject.keys();
 		while (keys.hasNext()) {
 			String key = keys.next();
 			
-			String varName = key.split(":")[0].trim();
-			String varType = key.split(":")[1].trim();
-			VariableSkeleton child = new VariableSkeleton(varType, varName);
-			parent.addChild(child);
-			
-			Object value = jsonObject.get(key);
-			if (value instanceof JSONArray) {
-				// search inner layers
-				JSONArray jsonArray = (JSONArray) value;
-				jsonArray.forEach(o -> {
-					if (o instanceof JSONObject) {
-						processResponseRecur(jsonObject, child);
-					}
-				});
+			if(isRoot) {
+				Object value = jsonObject.get(key);
+				if(value instanceof JSONObject) {
+					processResponseRecur(false, (JSONObject)value, selectedVariable);
+				}
+				break;
+			}
+			else {
+				String varName = key.split(":")[0].trim();
+				String varType = key.split(":")[1].trim();
+				
+				Variable var = new FieldVar(false, varName, varType, varType);
+				var.setVarID(Variable.concanateFieldVarID(selectedVariable.getVarID(), varName));
+				
+				Object value = jsonObject.get(key);
+				VarValue varValue = null;
+				
+				if (value instanceof JSONArray) {
+					varValue = new ArrayValue(false, false, var);
+					varValue.setStringValue(String.valueOf(value));
+					
+					//TODO Hongshu deal with JSON Array
+					System.currentTimeMillis();
+				}
+				else if(value instanceof JSONObject) {
+					varValue = new ReferenceValue(false, false, var);
+					varValue.setStringValue(String.valueOf(value));
+					
+					processResponseRecur(false, (JSONObject)value, varValue);
+				}
+				else if(value instanceof String){
+					varValue = new StringValue(String.valueOf(value), false, var);
+				}
+				else if(value instanceof Integer){
+					varValue = new PrimitiveValue(String.valueOf(value), false, var);
+				}
+				
+				if(varValue != null) {
+					
+					selectedVariable.addChild(varValue);
+					varValue.addParent(selectedVariable);					
+				}
 			}
 		}
+		
 	}
 }
