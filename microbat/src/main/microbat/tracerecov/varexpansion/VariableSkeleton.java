@@ -60,6 +60,10 @@ public class VariableSkeleton {
 		return varValue;
 	}
 	
+	public String getType() {
+		return this.type;
+	}
+	
 	/**
 	 * parent: TYPE:{CHILDREN}
 	 * child: TYPE NAME:{CHILDREN}

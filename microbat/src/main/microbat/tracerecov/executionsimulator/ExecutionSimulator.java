@@ -10,7 +10,9 @@ import java.util.List;
 import org.json.JSONObject;
 
 import microbat.model.trace.TraceNode;
+import microbat.model.value.VarValue;
 import microbat.tracerecov.VariableGraph;
+import microbat.tracerecov.varexpansion.VariableSkeleton;
 
 /**
  * This class is used to simulate execution through LLM and retrieve
@@ -23,6 +25,16 @@ public class ExecutionSimulator {
 	private static String apiKey = "";
 
 	public ExecutionSimulator() {
+	}
+	
+	public void expandVariable(VarValue selectedVar, List<VariableSkeleton> variableSkeletons, TraceNode step) throws IOException {
+		String background = VariableExpansionUtils.getBackgroundContent();
+		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step);
+		System.out.println(background);
+		System.out.println(content);
+
+		String response = sendRequest(background, content);
+		System.out.println(response);
 	}
 
 	public void recoverLinkageSteps() throws IOException {
