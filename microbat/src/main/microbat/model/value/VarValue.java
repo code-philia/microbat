@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Set;
 
 import microbat.log.Log;
-import microbat.model.trace.TraceNode;
 import microbat.model.variable.ArrayElementVar;
 import microbat.model.variable.ConditionVar;
 import microbat.model.variable.FieldVar;
