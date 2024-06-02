@@ -22,6 +22,7 @@ public class VariableSkeleton {
 
 	private String type;
 	private String name;
+	private String value;
 	private VariableSkeleton parent;
 	private List<VariableSkeleton> children;
 
@@ -39,12 +40,41 @@ public class VariableSkeleton {
 		this.children = new ArrayList<>();
 	}
 
+	public String getValue() {
+		return value;
+	}
+	
+	public void setValue(String value) {
+		this.value = value;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public VariableSkeleton getParent() {
+		return parent;
+	}
+
+	public void setParent(VariableSkeleton parent) {
+		this.parent = parent;
+	}
+
+	public void setType(String type) {
+		this.type = type;
+	}
+
 	public void addChild(VariableSkeleton child) {
 		this.children.add(child);
 		child.parent = this;
 	}
 
 	public VarValue toVarValue(VarValue source) {
+		
 		VarValue varValue = this.createVarValue(source.getVarName(), source.getType(), source.isRoot());
 		varValue.setAliasVarID(source.getAliasVarID());
 		varValue.setVarID(source.getVarID());
@@ -53,6 +83,9 @@ public class VariableSkeleton {
 			VarValue childVar = source.getChildren().stream().filter(c -> c.getVarName().equals(child.name)).findAny().orElse(null);
 			if (childVar == null) {
 				childVar = child.toVarValue(source.getAliasVarID(), source.getVarID(), varValue);
+				
+				//TODO Hongshu
+				childVar.setStringValue(child.value);
 			}
 			varValue.addChild(childVar);
 			childVar.setParents(Arrays.asList(varValue));
