@@ -256,7 +256,7 @@ public class InstrumentationExecutor {
 			}
 			
 			if(!node.getInvocationChildren().isEmpty() && 
-					node.getReadVariables().isEmpty()) {
+					node.getReadVariables().isEmpty() && node.getDeclaringCompilationUnitName() != null) {
 				//check AST completeness
 				CompilationUnit cu = JavaUtil.findCompilationUnitInProject(
 						node.getDeclaringCompilationUnitName(), appPath);
@@ -289,6 +289,10 @@ public class InstrumentationExecutor {
 	
 	public static void attachFullPathInfo(BreakPoint point, AppJavaClassPath appClassPath, 
 			Map<String, String> classNameMap, Map<String, String> pathMap){
+		
+		if(point.getDeclaringCompilationUnitName() == null)
+			return;
+		
 		String relativePath = point.getDeclaringCompilationUnitName().replace(".", File.separator) + ".java";
 		List<String> candidateSourceFolders = appClassPath.getAllSourceFolders();
 		for(String candidateSourceFolder: candidateSourceFolders){
