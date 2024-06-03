@@ -46,7 +46,7 @@ public class VariableGraph {
 			variables.addAll(step.getWrittenVariables());
 
 			for (VarValue var : variables) {
-				if (TraceRecovUtils.isComposite(var.getType()) && !var.getVarName().equals("this")) {
+				if (!TraceRecovUtils.isPrimitiveType(var.getType()) && !var.getVarName().equals("this")) {
 					getVar(var).addRelevantStep(step);
 					System.out.println("Relevant Variable: " + var.getType() + " " + var.getVarName());
 				}
@@ -241,13 +241,13 @@ public class VariableGraph {
 	public static void addVar(VarValue varValue) {
 		graph.put(getID(varValue), new VariableGraphNode(varValue));
 	}
-
-	/* private methods */
-
-	private static boolean isStepToConsider(TraceNode step) {
+	
+	public static boolean isStepToConsider(TraceNode step) {
 		return step.getInvocationChildren().isEmpty()
 				&& (step.getStepOverPrevious() == null || step.getStepOverPrevious().getInvocationChildren().isEmpty());
 	}
+
+	/* private methods */
 
 	/**
 	 * Return all invoking methods other than the expanded ones.

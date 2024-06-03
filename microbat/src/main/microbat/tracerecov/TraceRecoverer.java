@@ -1,13 +1,22 @@
 package microbat.tracerecov;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
+import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 
 public class TraceRecoverer {
+
+	private ExecutionSimulator executionSimulator;
+
+	public TraceRecoverer() {
+		this.executionSimulator = new ExecutionSimulator();
+	}
+
 	/**
 	 * @author hongshuwang
 	 */
@@ -46,10 +55,14 @@ public class TraceRecoverer {
 		return null;
 	}
 
+	/**
+	 * Build a variable graph. Identify relevant steps and alias relationships in
+	 * this process.
+	 */
 	private List<VarValue> parseParentVariables(Trace trace, TraceNode currentStep, VarValue targetVar,
 			VarValue rootVar) {
-		
-		System.out.println("***Relevant Steps Identification***");
+
+		System.out.println("***Relevant Steps***");
 
 		/* initialize graph */
 		VariableGraph.reset();
@@ -78,11 +91,17 @@ public class TraceRecoverer {
 
 			VarValue varInGraph = variables.stream().filter(v -> VariableGraph.containsVar(v)).findAny().orElse(null);
 			if (varInGraph != null) {
-				/* identify relevant steps */
+				/* relevant steps identification */
 				VariableGraph.addRelevantStep(step);
 
-				/* variable mapping */
-				VariableGraph.mapVariable(step);
+				/* alias inferencing */
+				if (VariableGraph.isStepToConsider(step)) {
+					try {
+						this.executionSimulator.inferenceAliasRelations(step, rootVar);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 			} else {
 				continue;
 			}

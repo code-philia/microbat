@@ -15,6 +15,7 @@ import microbat.model.value.VarValue;
 import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
 import microbat.tracerecov.TraceRecovUtils;
+import microbat.tracerecov.VariableOfInterest;
 import microbat.tracerecov.varexpansion.VariableSkeleton;
 
 public class VariableExpansionUtils {
@@ -83,16 +84,6 @@ public class VariableExpansionUtils {
 		for (VariableSkeleton v : variableSkeletons) {
 			question.append(v.toString() + " ");
 		}
-		
-		//TODO to remove it if we have runtime variable type
-//		if(selectedVariable.getType().equals("java.util.List")) {
-//			question.append("java.util.LinkedList:{"
-//					+ "int size;"
-//					+ "java.util.LinkedList$Node first;"
-//					+ "java.util.LinkedList$Node last;"
-//					+ "int modCount;"
-//					+ "}");
-//		}
 
 		question.append("with the input value of executing \"");
 		
@@ -133,9 +124,9 @@ public class VariableExpansionUtils {
 		response = response.substring(begin, end + 1);
 		
 		JSONObject variable = new JSONObject(response);
+		VariableOfInterest.setVariableOfInterest(variable);
 		
 		processResponseRecur(true, variable, selectedVariable);
-		
 	}
 	
 	private static void processResponseRecur(boolean isRoot, JSONObject jsonObject, VarValue selectedVariable) {
