@@ -38,13 +38,17 @@ public class VariableGraph {
 		if ((step.getInvokingMethod().startsWith("%") && !(step.getStepOverPrevious() != null
 				&& !step.getStepOverPrevious().getInvocationChildren().isEmpty())) || isStepToConsider(step)) {
 
+			System.out.println();
+			System.out.println("Relevant Step: " + step.getOrder());
+			
 			List<VarValue> variables = new ArrayList<>();
 			variables.addAll(step.getReadVariables());
 			variables.addAll(step.getWrittenVariables());
 
 			for (VarValue var : variables) {
-				if (TraceRecovUtils.isComposite(var.getType())) {
+				if (!TraceRecovUtils.isPrimitiveType(var.getType()) && !var.getVarName().equals("this")) {
 					getVar(var).addRelevantStep(step);
+					System.out.println("Relevant Variable: " + var.getType() + " " + var.getVarName());
 				}
 			}
 		}
@@ -59,9 +63,9 @@ public class VariableGraph {
 	 * 3. Link variable on trace to candidate variable.
 	 */
 	public static void mapVariable(TraceNode step) {
-//		if (!isStepToConsider(step)) {
-//			return;
-//		}
+		if (!isStepToConsider(step)) {
+			return;
+		}
 
 //		List<VarValue> variables = step.getReadVariables();
 //
@@ -237,13 +241,13 @@ public class VariableGraph {
 	public static void addVar(VarValue varValue) {
 		graph.put(getID(varValue), new VariableGraphNode(varValue));
 	}
-
-	/* private methods */
-
-	private static boolean isStepToConsider(TraceNode step) {
+	
+	public static boolean isStepToConsider(TraceNode step) {
 		return step.getInvocationChildren().isEmpty()
 				&& (step.getStepOverPrevious() == null || step.getStepOverPrevious().getInvocationChildren().isEmpty());
 	}
+
+	/* private methods */
 
 	/**
 	 * Return all invoking methods other than the expanded ones.

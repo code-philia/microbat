@@ -8,6 +8,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import microbat.model.trace.TraceNode;
@@ -27,26 +28,50 @@ public class ExecutionSimulator {
 
 	public ExecutionSimulator() {
 	}
-	
-	public void expandVariable(VarValue selectedVar, List<VariableSkeleton> variableSkeletons, TraceNode step) throws IOException {
+
+	public void expandVariable(VarValue selectedVar, List<VariableSkeleton> variableSkeletons, TraceNode step)
+			throws IOException {
+		System.out.println("***Variable Expansion***");
+		System.out.println();
+
 		String background = VariableExpansionUtils.getBackgroundContent();
 		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step);
 		System.out.println(background);
 		System.out.println(content);
-		
-		for(int i=0; i<2; i++) {
+
+		for (int i = 0; i < 2; i++) {
 			try {
 				String response = sendRequest(background, content);
 				System.out.println(i + "th try with GPT to generate response as " + response);
 				VariableExpansionUtils.processResponse(selectedVar, response);
 				break;
-			}
-			catch(org.json.JSONException e){
+			} catch (org.json.JSONException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
+	public void inferenceAliasRelations(TraceNode step, VarValue rootVar) throws IOException {
+		System.out.println("***Alias Inferencing***");
+		System.out.println();
+
+		String content = AliasInferenceUtils.getQuestionContent(step, rootVar);
+		System.out.println(content);
+
+		for (int i = 0; i < 2; i++) {
+			try {
+				String response = sendRequest(null, content);
+				System.out.println(i + "th try with GPT to generate response as " + response);
+				// TODO: process response
+//				AliasInferenceUtils.processResponse(response);
+				break;
+			} catch (org.json.JSONException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	// TODO: Not Used
 	public void recoverLinkageSteps() throws IOException {
 		List<TraceNode> steps = VariableGraph.getPotentialLinkageSteps();
 		String background = LinkageEstimationUtils.getBackgroundContent();
@@ -103,17 +128,26 @@ public class ExecutionSimulator {
 		connection.setDoOutput(true);
 
 		/* construct request */
-		JSONObject background = new JSONObject();
-		background.put("role", "system");
-		background.put("content", backgroundContent);
+		JSONObject background = null;
+		if (backgroundContent != null) {
+			background = new JSONObject();
+			background.put("role", "system");
+			background.put("content", backgroundContent);
+		}
 
 		JSONObject question = new JSONObject();
 		question.put("role", "user");
 		question.put("content", questionContent);
 
+		JSONArray messages = new JSONArray();
+		if (backgroundContent != null) {
+			messages.put(background);
+		}
+		messages.put(question);
+
 		JSONObject request = new JSONObject();
 		request.put("model", SimulatorConstants.GPT4O);
-		request.put("messages", new org.json.JSONArray().put(background).put(question));
+		request.put("messages", messages);
 		request.put("temperature", SimulatorConstants.TEMPERATURE);
 
 		/* send request */
