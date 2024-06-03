@@ -18,7 +18,6 @@ import microbat.model.Scope;
 import microbat.model.value.VarValue;
 import microbat.model.value.VirtualValue;
 import microbat.model.variable.Variable;
-import microbat.tracerecov.VariableGraph;
 import microbat.util.JavaUtil;
 import microbat.util.Settings;
 import sav.strategies.dto.AppJavaClassPath;
@@ -30,7 +29,7 @@ import sav.strategies.dto.AppJavaClassPath;
  */
 public class Trace {
 	
-	private int observingIndex = -1;
+	private int observingIndex = -1; 
 	private AppJavaClassPath appJavaClassPath;
 	private List<String> includedLibraryClasses = new ArrayList<>();
 	private List<String> excludedLibraryClasses = new ArrayList<>();
@@ -256,40 +255,6 @@ public class Trace {
 	 */
 	public TraceNode findDataDependency(TraceNode checkingNode, VarValue readVar) {
 		return findProducer(readVar, checkingNode);
-	}
-	
-	/**
-	 * @author hongshuwang
-	 */
-	public void recoverDataDependency(TraceNode checkingNode, VarValue readVar) {
-		/* initialize graph */
-		VariableGraph.addVar(readVar);
-		
-		/* determine the scope of recovery */
-		TraceNode scopeStart = findDataDependency(checkingNode, readVar);
-		int start = scopeStart.getOrder();
-		int end = checkingNode.getOrder();
-		
-		for (int i = start; i <= end; i++) {
-			TraceNode node = this.getTraceNode(i);
-			
-			List<VarValue> variables = new ArrayList<>();
-			variables.addAll(node.getReadVariables());
-			variables.addAll(node.getWrittenVariables());
-			
-			VarValue varInGraph = variables.stream()
-					.filter(v -> VariableGraph.containsVar(v))
-					.findAny().orElse(null);
-			if (varInGraph != null) {
-				/* identify relevant steps */
-				VariableGraph.addRelevantStep(node);
-				
-				/* variable mapping */
-				VariableGraph.mapVariable(node);
-			} else {
-				continue;
-			}
-		}
 	}
 	
 	public List<TraceNode> findDataDependentee(TraceNode traceNode, VarValue writtenVar) {
