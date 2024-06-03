@@ -48,6 +48,8 @@ public class TraceRecoverer {
 
 	private List<VarValue> parseParentVariables(Trace trace, TraceNode currentStep, VarValue targetVar,
 			VarValue rootVar) {
+		
+		System.out.println("***Relevant Steps Identification***");
 
 		/* initialize graph */
 		VariableGraph.reset();
