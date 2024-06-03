@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+
 import org.json.JSONObject;
 
 import microbat.model.trace.TraceNode;
@@ -32,11 +33,18 @@ public class ExecutionSimulator {
 		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step);
 		System.out.println(background);
 		System.out.println(content);
-
-		String response = sendRequest(background, content);
-		System.out.println(response);
 		
-		VariableExpansionUtils.processResponse(selectedVar, response);
+		for(int i=0; i<2; i++) {
+			try {
+				String response = sendRequest(background, content);
+				System.out.println(i + "th try with GPT to generate response as " + response);
+				VariableExpansionUtils.processResponse(selectedVar, response);
+				break;
+			}
+			catch(org.json.JSONException e){
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public void recoverLinkageSteps() throws IOException {
