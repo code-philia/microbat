@@ -27,7 +27,7 @@ public class CandidateVarRetriever {
 	 */
 	public static List<String> getCandidateVariables(String invokingMethod) {
 		if (invokingMethod == null || invokingMethod.startsWith("%")) {
-			return null;
+			return new ArrayList<>();
 		}
 
 		String className = invokingMethod.split("#")[0];
@@ -42,7 +42,7 @@ public class CandidateVarRetriever {
 	private static List<String> getCandidateVariables(String className, String methodName, String methodDescriptor,
 			String methodSignature) {
 		if (!TraceRecovUtils.shouldBeChecked(className)) {
-			return null;
+			return new ArrayList<>();
 		}
 		
 		// load the class
@@ -63,7 +63,7 @@ public class CandidateVarRetriever {
 			e.printStackTrace();
 		}
 
-		return null;
+		return new ArrayList<>();
 	}
 
 }

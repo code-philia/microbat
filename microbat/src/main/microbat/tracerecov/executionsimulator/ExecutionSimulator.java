@@ -14,6 +14,7 @@ import org.json.JSONObject;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.VariableGraph;
+import microbat.tracerecov.candidatevar.CandidateVarRetriever;
 import microbat.tracerecov.varexpansion.VariableSkeleton;
 
 /**
@@ -175,19 +176,22 @@ public class ExecutionSimulator {
 	}
 
 	public boolean inferDefinition(TraceNode step, VarValue parentVar, VarValue targetVar) {
-		
-		
-		String methodSig = step.getMethodSign();
-		
-		boolean checkByteCodeDefinition = false;
-		// TODO Hongshu
-		if(checkByteCodeDefinition) {
-			return true;
+		String parentType = parentVar.getType();
+		String[] invokingMethods = step.getInvokingMethod().split("%");
+		// check each invoking method whose invoking object 
+		// has the same type as the parentVar
+		for (String methodSig : invokingMethods) {
+			if (!parentType.equals(methodSig.split("#")[0])) {
+				continue;
+			}
+			boolean checkByteCodeDefinition = CandidateVarRetriever
+					.getCandidateVariables(methodSig).contains(targetVar.getVarName());
+			if(checkByteCodeDefinition) {
+				return true;
+			}
 		}
 		
-		
 		// TODO ask GPT
-		
 		return false;
 	}
 }

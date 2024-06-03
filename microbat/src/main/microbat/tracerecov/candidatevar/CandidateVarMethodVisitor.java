@@ -31,7 +31,9 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 	@Override
 	public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
 		super.visitFieldInsn(opcode, owner, name, descriptor);
-		relevantFields.add(name);
+		if (opcode == Opcodes.PUTFIELD || opcode == Opcodes.PUTSTATIC) {
+			relevantFields.add(name);
+		}
 	}
 
 	/**
