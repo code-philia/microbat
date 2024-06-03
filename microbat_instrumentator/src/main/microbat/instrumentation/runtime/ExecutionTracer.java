@@ -152,6 +152,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		} else if (PrimitiveUtils.isPrimitive(var.getType())) {
 			varValue = new PrimitiveValue(getStringValue(value, null), isRoot, var);
 		} else if (var.getType().endsWith("[]")) {
+			if(value != null) {
+				var.setType(value.getClass().getTypeName());				
+			}
 			/* array */
 			ArrayValue arrVal = new ArrayValue(value == null, isRoot, var);
 			arrVal.setComponentType(var.getType().substring(0, var.getType().length() - 2)); // 2 = "[]".length
@@ -177,6 +180,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				}
 			}
 		} else {
+			if(value != null) {
+				var.setType(value.getClass().getTypeName());				
+			}
 			ReferenceValue refVal = new ReferenceValue(value == null, TraceUtils.getUniqueId(value), isRoot, var);
 			varValue = refVal;
 			// varValue.setStringValue(getStringValue(value, var.getType()));
