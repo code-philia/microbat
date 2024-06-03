@@ -157,7 +157,9 @@ public class VariableExpansionUtils {
 				String varType = key.split(":")[1].trim();
 				
 				Variable var = new FieldVar(false, varName, varType, varType);
-				var.setVarID(Variable.concanateFieldVarID(selectedVariable.getVarID(), varName));
+				
+				String headAddress = selectedVariable.getAliasVarID().equals("0") ? selectedVariable.getVarID() : selectedVariable.getAliasVarID();
+				var.setVarID(Variable.concanateFieldVarID(headAddress, varName));
 				
 				Object value = jsonObject.get(key);
 				VarValue varValue = null;
@@ -199,7 +201,11 @@ public class VariableExpansionUtils {
 		for (Object value : values) {
 			String varName = selectedVariable.getVarName().concat("[" + index + "]");
 			String varType = "";
-			String varID = Variable.concanateFieldVarID(selectedVariable.getVarID(), varName);
+			
+			String headAddress = selectedVariable.getAliasVarID().equals("0") ? selectedVariable.getVarID() : selectedVariable.getAliasVarID();
+			String varID = Variable.concanateFieldVarID(headAddress, varName);
+			
+//			String varID = Variable.concanateFieldVarID(selectedVariable.getAliasVarID(), varName);
 			
 			Variable var = new FieldVar(false, varName, varType, varType);
 			var.setVarID(varID);
