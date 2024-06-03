@@ -20,7 +20,8 @@ import microbat.tracerecov.varexpansion.VariableSkeleton;
 public class VariableExpansionUtils {
 	/* Request content */
 
-	private static final String VAR_EXPAND_BACKGROUND = "<Background>\r\n"
+	private static final String VAR_EXPAND_BACKGROUND = 
+			"<Background>\r\n"
 			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \r\n"
 			+ "\r\n"
 			+ "<Example>\r\n"
@@ -43,26 +44,26 @@ public class VariableExpansionUtils {
 			+ "Here is the given structure converted to JSON format (every variable shall strictly have a Java type, followed by its value):\r\n"
 			+ "{\r\n"
 			+ "  \"map: java.util.HashMap<HashMap, ArrayList>\": {\r\n"
-			+ "    \"key[1]: HashMap\": {\r\n"
+			+ "    \"key[0]: HashMap\": {\r\n"
 			+ "      {\r\n"
-			+ "        \"key[1]: java.lang.String\": \"k1\",\r\n"
-			+ "        \"key[2]: java.lang.String\": \"k2\",\r\n"
-			+ "        \"value[1]: java.lang.Integer\": 1,\r\n"
-			+ "        \"value[2]: java.lang.Integer\": 2,\r\n"
+			+ "        \"key[0]: java.lang.String\": \"k1\",\r\n"
+			+ "        \"key[1]: java.lang.String\": \"k2\",\r\n"
+			+ "        \"value[0]: java.lang.Integer\": 1,\r\n"
+			+ "        \"value[1]: java.lang.Integer\": 2,\r\n"
 			+ "        \"size: int\": 2	\r\n"
 			+ "      }\r\n"
 			+ "    },\r\n"
-			+ "    \"key[2]: java.util.HashMap\": {\r\n"
+			+ "    \"key[1]: java.util.HashMap\": {\r\n"
 			+ "      \"map\": {\r\n"
-			+ "        \"key[1]: java.lang.String\": \"kA\",\r\n"
-			+ "        \"key[2]: java.lang.String\": \"kB\",\r\n"
-			+ "        \"value[1]: java.lang.Integer\": 100,\r\n"
-			+ "        \"value[2]: java.lang.Integer\": 200,\r\n"
+			+ "        \"key[0]: java.lang.String\": \"kA\",\r\n"
+			+ "        \"key[1]: java.lang.String\": \"kB\",\r\n"
+			+ "        \"value[0]: java.lang.Integer\": 100,\r\n"
+			+ "        \"value[1]: java.lang.Integer\": 200,\r\n"
 			+ "         \"size: int\": 2\r\n"
 			+ "       }\r\n"
 			+ "     },\r\n"
-			+ "     \"value[1]: java.util.ArrayList<String>\": [\"v1\", \"v2\"],\r\n"
-			+ "     \"value[2]: java.util.ArrayList<String>\": [\"vA\", \"vB\"],\r\n"
+			+ "     \"value[0]: java.util.ArrayList<String>\": [\"v1\", \"v2\"],\r\n"
+			+ "     \"value[1]: java.util.ArrayList<String>\": [\"vA\", \"vB\"],\r\n"
 			+ "     \"size\": 2\r\n"
 			+ "  },\r\n"
 			+ " }\r\n"
@@ -115,7 +116,10 @@ public class VariableExpansionUtils {
 		question.append("\"");
 		
 		question.append(", strictly return in JSON format for *" + selectedVariable.getVarName()
-				+ "* as the above example, each key must has a value. The JSON object must start with variable *" + selectedVariable.getVarName() + "* as the root. Do not include explanation in your response.\n");
+				+ "* as the above example, each key must has a value and a type. "
+				+ "The JSON object must start with variable *" + selectedVariable.getVarName() + "* as the root. Do not include explanation in your response.\n");
+		
+		question.append("You must follow the JSON format as \"var_name:var_type\": var_value. ");
 
 		return question.toString();
 	}
@@ -129,6 +133,7 @@ public class VariableExpansionUtils {
 		response = response.substring(begin, end + 1);
 		
 		JSONObject variable = new JSONObject(response);
+		
 		processResponseRecur(true, variable, selectedVariable);
 		
 	}
