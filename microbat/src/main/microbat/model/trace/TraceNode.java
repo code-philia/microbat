@@ -57,7 +57,6 @@ public class TraceNode{
 	
 //	private Map<TraceNode, List<String>> dataDominators = new HashMap<>();
 //	private Map<TraceNode, List<String>> dataDominatees = new HashMap<>();
-	
 	private TraceNode controlDominator;
 	private List<TraceNode> controlDominatees = new ArrayList<>();
 	
@@ -95,6 +94,17 @@ public class TraceNode{
 	private String bytecode;
 	
 	private transient double sliceBreakerProbability = 0;
+	
+	// Utility binding
+	private ConcurrentTraceNode boundTraceNode;
+	
+	public void setBoundTraceNode(ConcurrentTraceNode boundNode) {
+		this.boundTraceNode = boundNode;
+	}
+	
+	public ConcurrentTraceNode getBound() {
+		return this.boundTraceNode;
+	}
 	
 	/**
 	 * the first element of the pair is the read variable list, the second element is the 
@@ -169,6 +179,9 @@ public class TraceNode{
 //		}
 //		
 //		return dataDominator;
+		if (this.boundTraceNode != null) {
+			return this.boundTraceNode.getDataDominator(readVar);
+		}
 		
 		return this.trace.findDataDependency(this, readVar);
 	}
@@ -269,6 +282,8 @@ public class TraceNode{
 			return false;
 		TraceNode other = (TraceNode) obj;
 		if (order != other.order)
+			return false;
+		if (trace.getThreadId() != other.getTrace().getThreadId())
 			return false;
 		return true;
 	}
@@ -492,7 +507,7 @@ public class TraceNode{
 	public Map<TraceNode, VarValue> getDataDominators() {
 		Map<TraceNode, VarValue> dataDominators = new HashMap<>();
 		for(VarValue readVar: this.getReadVariables()){
-			TraceNode dominator = this.trace.findDataDependency(this, readVar);
+			TraceNode dominator = this.getDataDominator(readVar);
 			if(dominator != null){
 				dataDominators.put(dominator, readVar);
 			}
@@ -503,8 +518,12 @@ public class TraceNode{
 
 	public Map<TraceNode, VarValue> getDataDominatee() {
 		Map<TraceNode, VarValue> dataDominatees = new HashMap<>();
+		Trace trace = this.trace;
+		if (this.getBound() != null) {
+			trace = this.getBound().getConcurrentTrace();
+		}
 		for(VarValue writtenVar: this.getWrittenVariables()){
-			List<TraceNode> dominatees = this.trace.findDataDependentee(this, writtenVar);
+			List<TraceNode> dominatees = trace.findDataDependentee(this, writtenVar);
 			for(TraceNode dominatee: dominatees){
 				dataDominatees.put(dominatee, writtenVar);
 			}

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import microbat.instrumentation.filter.GlobalFilterChecker;
+import microbat.instrumentation.instr.aggreplay.TimeoutThread;
 import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.instrumentation.runtime.IExecutionTracer;
 
@@ -76,12 +77,37 @@ public abstract class Agent {
 		});
 	}
 
+	public static void _forceProgramStop(String programMsg) {
+		String currentThreadName = Thread.currentThread().getName();
+		assert(currentThreadName.equals(TimeoutThread.ID));
+		Agent.programMsg = programMsg;
+		for (IExecutionTracer tracer: ExecutionTracer.getAllThreadStore()) {
+			if (tracer instanceof ExecutionTracer) {
+				ExecutionTracer executionTracer = (ExecutionTracer) tracer;
+				executionTracer.setLock();
+			}
+		}
+		ExecutionTracer.getMainThreadStore().lock();
+		try {
+			Thread.sleep(100L);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		stop();
+		ExecutionTracer.getMainThreadStore().unLock();
+		Runtime.getRuntime().exit(1); // force program to exit to avoid getting stuck by background running threads.
+	}
+	
 	/**
 	 * This method will be instrumented at the end of main() method.
 	 * @param programMsg
 	 */
 	public static void _exitProgram(String programMsg) {
-		if(Thread.currentThread().getName().equals("main")) {
+		// this is necessary to handle exitProgram called in test case 
+		if (!ExecutionTracer.isRecordingOrStarted() && !ExecutionTracer.isShutdown()) return;
+		String currentThreadName = Thread.currentThread().getName();
+		if(currentThreadName.equals("main") || currentThreadName.equals(TimeoutThread.ID)) {
 			ExecutionTracer.getMainThreadStore().lock();
 			Agent.programMsg = programMsg;
 			

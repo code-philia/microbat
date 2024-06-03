@@ -63,7 +63,7 @@ public class JarPackageTool {
 			.append("microbat");
 		vmRunner.startAndWaitUntilStop(cmd.toCollection());	
 		cmd.clear();
-		
+	
 		/* export instrumentor.jar */
 		cmd.append(TestConfiguration.getJavaHome() + "/bin/jar")
 			.append("cfm")

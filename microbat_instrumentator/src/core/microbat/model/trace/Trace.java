@@ -1,7 +1,9 @@
 package microbat.model.trace;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +17,7 @@ import microbat.codeanalysis.bytecode.CFG;
 import microbat.codeanalysis.bytecode.CFGConstructor;
 import microbat.codeanalysis.bytecode.CFGNode;
 import microbat.codeanalysis.bytecode.MethodFinderByLine;
+import microbat.instrumentation.model.id.ThreadId;
 import microbat.model.BreakPoint;
 import microbat.model.ClassLocation;
 import microbat.model.ControlScope;
@@ -37,7 +40,50 @@ public class Trace {
 	private long threadId;
 	private boolean isMain;
 	private String threadName;
-
+	private ThreadId innerThreadId;
+	private long memoryUsed = -1;
+	/**
+	 * Used to detect deadlocks
+	 */
+	private List<Long> acquiredLocks = null;
+	private Long acquiringLock = null;
+	
+	public void setMemoryUsed(long memoryUsed) {
+		this.memoryUsed = memoryUsed;
+	}
+	
+	public long getMemoryUsed() {
+		return this.memoryUsed;
+	}
+	
+	public Long getAcquiringLock() {
+		if (this.acquiringLock == null) {
+			return -1L;
+		}
+		return this.acquiringLock;
+	}
+	
+	public List<Long> getAcquiredLocks() {
+		return this.acquiredLocks;
+	}
+	
+	public void setAcquiredLocks(Collection<Long> values) {
+		this.acquiredLocks = new LinkedList<Long>(values);
+	}
+	
+	public void setAcquiringLock(Long value) {
+		this.acquiringLock = value;
+	}
+	
+	
+	public ThreadId getInnerThreadId() {
+		return innerThreadId;
+	}
+	
+	public void setInnerThreadId(ThreadId threadId) {
+		this.innerThreadId = threadId;
+	}
+	
 	/**
 	 * This variable is to trace whether the variables in different lines are the same
 	 * local variable.
@@ -414,8 +460,9 @@ public class Trace {
 		this.includedLibraryClasses = includedLibraryClasses;
 	}
 
+	// TODO(Gab): Remove the botch Linked list (used cause of an unknown concurrent access bug)
 	public List<String> getExcludedLibraryClasses() {
-		return CollectionUtils.nullToEmpty(excludedLibraryClasses);
+		return new LinkedList<>(CollectionUtils.nullToEmpty(excludedLibraryClasses));
 	}
 
 	public void setExcludedLibraryClasses(List<String> excludedLibraryClasses) {

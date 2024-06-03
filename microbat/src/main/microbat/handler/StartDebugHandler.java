@@ -1,5 +1,6 @@
 package microbat.handler;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.swt.widgets.Display;
 
+import microbat.agent.AggrePlaySharedVarRunner;
 import microbat.behavior.Behavior;
 import microbat.behavior.BehaviorData;
 import microbat.behavior.BehaviorReader;
@@ -60,7 +62,9 @@ public class StartDebugHandler extends AbstractHandler {
 		});
 	}
 	
+	
 	public Object execute(ExecutionEvent event) throws ExecutionException {
+
 		final AppJavaClassPath appClassPath = MicroBatUtil.constructClassPaths();
 		if (Settings.isRunTest) {
 			appClassPath.setOptionalTestClass(Settings.launchClass);
@@ -68,6 +72,7 @@ public class StartDebugHandler extends AbstractHandler {
 			appClassPath.setLaunchClass(TestCaseAnalyzer.TEST_RUNNER);
 			appClassPath.setTestCodePath(MicroBatUtil.getSourceFolder(Settings.launchClass, Settings.projectName));
 		}
+
 		List<String> srcFolders = MicroBatUtil.getSourceFolders(Settings.projectName);
 		appClassPath.setSourceCodePath(appClassPath.getTestCodePath());
 		for (String srcFolder : srcFolders) {

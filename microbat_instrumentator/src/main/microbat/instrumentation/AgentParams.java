@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import microbat.instrumentation.filter.CodeRangeEntry;
+import microbat.instrumentation.instr.aggreplay.ReplayMode;
 import microbat.instrumentation.instr.instruction.info.EntryPoint;
 import microbat.instrumentation.utils.FileUtils;
 import microbat.sql.TraceRecorder;
@@ -24,11 +25,15 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_WORKING_DIR = CommonParams.OPT_WORKING_DIR;
 	public static final String OPT_LOG = CommonParams.OPT_LOG;
 	
+	public static final String OPT_SHARED_DETECTION = "detect_share";
+	public static final String OPT_CONC_RECORD = "record_conc";
+	public static final String OPT_CONC_REPLAY = "replay_conc";
 	public static final String OPT_PRECHECK = "precheck";
 	public static final String OPT_ENTRY_POINT = "entry_point";
 	public static final String OPT_LAUNCH_CLASS = "launch_class";
 	public static final String OPT_JAVA_HOME = "java_home";
 	public static final String OPT_DUMP_FILE = "dump_file_path";
+	public static final String OPT_CONC_RECORD_DUMP = "conc_dump_file_path";
 	public static final String OPT_TCP_PORT = "tcp_port";
 	public static final String OPT_INCLUDES = "includes";
 	public static final String OPT_EXCLUDES = "excludes";
@@ -43,10 +48,15 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_CODE_RANGE = "code_range";
 	public static final String OPT_TRACE_RECORDER = "trace_recorder";
 	public static final String OPT_RUN_ID = "run_id";
+	public static final String MEASURE_MEM = "measure_mem";
+	public static final String TIMEOUT = "time_out"; // the timeout of instrumentation.
+	public static final String REPLAY_MODE = "replay_mode";
 	
+	private long timeOut = 100000L;
+	private ReplayMode replayMode = ReplayMode.AGGR;
 	private boolean precheck;
 	private EntryPoint entryPoint;
-	
+	private String concDumpFile;
 	private String javaHome;
 	private String launchClass;
 	private int tcpPort = -1;
@@ -68,6 +78,7 @@ public class AgentParams extends CommonParams {
 		super(cmd);
 		precheck = cmd.getBoolean(OPT_PRECHECK, false);
 		String entryPointStr = cmd.getString(OPT_ENTRY_POINT);
+		replayMode = cmd.getReplayMode(REPLAY_MODE);
 		if (entryPointStr != null) {
 			int idx = entryPointStr.lastIndexOf(".");
 			String mainClass = entryPointStr.substring(0, idx);
@@ -75,7 +86,9 @@ public class AgentParams extends CommonParams {
 			EntryPoint entryPoint = new EntryPoint(mainClass, mainMethod);
 			this.entryPoint = entryPoint;
 		}
-		
+		if (cmd.getString(TIMEOUT) != null) {
+			this.timeOut = Long.parseLong(cmd.getString(TIMEOUT));
+		}
 		setJavaHome(cmd.getString(OPT_JAVA_HOME));
 		setWorkingDirectory(cmd.getString(OPT_WORKING_DIR));
 
@@ -87,6 +100,7 @@ public class AgentParams extends CommonParams {
 		
 		tcpPort = cmd.getInt(OPT_TCP_PORT, -1);
 		dumpFile = cmd.getString(OPT_DUMP_FILE);
+		concDumpFile = cmd.getString(OPT_CONC_RECORD_DUMP);
 		includesExpression = getFilterExpression(cmd, OPT_INCLUDES_FILE, OPT_INCLUDES);
 		excludesExpression = getFilterExpression(cmd, OPT_EXCLUDES_FILE, OPT_EXCLUDES);
 		variableLayer = cmd.getInt(OPT_VARIABLE_LAYER, 2);
@@ -127,6 +141,10 @@ public class AgentParams extends CommonParams {
 		return expression;
 	}
 	
+	public long getTimeOut() {
+		return this.timeOut;
+	}
+	
 	public EntryPoint getEntryPoint() {
 		return entryPoint;
 	}
@@ -151,12 +169,20 @@ public class AgentParams extends CommonParams {
 		this.launchClass = launchClass;
 	}
 	
+	public ReplayMode getReplayMode() {
+		return replayMode;
+	}
+	
 	public int getTcpPort() {
 		return tcpPort;
 	}
 
 	public String getDumpFile() {
 		return dumpFile;
+	}
+	
+	public String getConcDumpFile() {
+		return concDumpFile;
 	}
 
 	public String getExcludesExpression() {

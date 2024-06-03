@@ -2,13 +2,16 @@ package microbat.util;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Stack;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
+import fj.P;
 import microbat.Activator;
 import microbat.handler.CheckingState;
+import microbat.instrumentation.instr.aggreplay.ReplayMode;
 import microbat.model.UserInterestedVariables;
 import microbat.model.trace.PotentialCorrectPatternList;
 import microbat.preference.MicrobatPreference;
@@ -19,11 +22,20 @@ public class Settings {
 	public static String launchClass;
 	public static String testMethod;
 	
+	/**
+	 * Used to indicate the dump file used for record and replay.
+	 * If the dump file is not provided, a temp file is used.
+	 */
+	public static Optional<String> concurrentDumpFile = Optional.empty();
+	
 	public static boolean isRecordSnapshot;
 	public static boolean isApplyAdvancedInspector;
 	public static boolean isRunTest;
 	public static boolean isRunWtihDebugMode;
 	public static int stepLimit;
+	public static long timeLimit;
+	public static ReplayMode replayMode;
+	public static boolean isForce3Or4;
 	
 	private static Integer variableLayer;
 	
@@ -54,6 +66,7 @@ public class Settings {
 	static{
 		if(Activator.getDefault() != null){
 			try{
+				replayMode = ReplayMode.parse(Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.REPLAY_MODE));	
 				projectName = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.TARGET_PORJECT);
 				launchClass = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.LANUCH_CLASS);
 				testMethod = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.TEST_METHOD);
@@ -67,6 +80,16 @@ public class Settings {
 				stepLimit = Integer.valueOf(limitNumString);
 				if(stepLimit == 0){
 					stepLimit = 5000;
+				}
+				String timeLimitString = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.TIMEOUT);
+				try {
+					timeLimit = Long.valueOf(timeLimitString);
+				} catch (NumberFormatException except) {
+					
+				}
+		
+				if (timeLimit == 0) {
+					timeLimit = 10000L;
 				}
 				String varLayerString = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.VARIABLE_LAYER);
 				variableLayer = Integer.valueOf(varLayerString);
@@ -120,5 +143,6 @@ public class Settings {
 	public static HashMap<String, ICompilationUnit> iCompilationUnitMap = new HashMap<>();
 	public static boolean enableLoopInference = true;
 	public static boolean supportConcurrentTrace;
+	public static boolean supportAggrePlayTrace;
 	
 }

@@ -1,6 +1,10 @@
 package microbat.codeanalysis.runtime;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -33,6 +38,7 @@ import microbat.preference.ExecutionRangePreference;
 import microbat.preference.MicrobatPreference;
 import microbat.sql.DBSettings;
 import microbat.sql.DbService;
+import microbat.trace.FileTraceReader;
 import microbat.util.JavaUtil;
 import microbat.util.MinimumASTNodeFinder;
 import microbat.util.Settings;
@@ -49,6 +55,7 @@ public class InstrumentationExecutor {
 	private String traceExecFilePath;
 	private TraceAgentRunner agentRunner;
 	private long timeout = VMRunner.NO_TIME_OUT;
+	private boolean isForceJunit3Or4 = false;
 	
 	private List<String> includeLibs = Collections.emptyList();
 	private List<String> excludeLibs = Collections.emptyList();
@@ -66,6 +73,11 @@ public class InstrumentationExecutor {
 		this.includeLibs = includeLibs;
 		this.excludeLibs = excludeLibs;
 		
+		agentRunner = createTraceAgentRunner();
+	}
+	
+	public void setIsForceJunit3Or4(boolean isForceJunit3Or4) {
+		this.isForceJunit3Or4 = isForceJunit3Or4;
 		agentRunner = createTraceAgentRunner();
 	}
 	
@@ -92,6 +104,11 @@ public class InstrumentationExecutor {
 		if (appPath.getOptionalTestClass() != null) {
 			config.addProgramArgs(appPath.getOptionalTestClass());
 			config.addProgramArgs(appPath.getOptionalTestMethod());
+			// force the test runner to run only 3 or 4 -> skip the check
+			if (this.isForceJunit3Or4) {
+				config.addProgramArgs("forceJunit3Or4");
+			}
+			
 			agentRunner.addAgentParam(AgentParams.OPT_LAUNCH_CLASS, appPath.getOptionalTestClass());
 		} else {
 			agentRunner.addAgentParam(AgentParams.OPT_ENTRY_POINT,
@@ -117,7 +134,8 @@ public class InstrumentationExecutor {
 		agentRunner.setTimeout(timeout);
 		// FIXME Xuezhi [2]
 		List<CodeRangeEntry> entries = ExecutionRangePreference.getCodeRangeEntrys();
-		agentRunner.addAgentParams(AgentParams.OPT_CODE_RANGE, entries); 
+		agentRunner.addAgentParams(AgentParams.OPT_CODE_RANGE, entries);
+		agentRunner.addAgentParam(AgentParams.TIMEOUT, Settings.timeLimit + "");
 		return agentRunner;
 	}
 	
@@ -164,6 +182,123 @@ public class InstrumentationExecutor {
 		return null;
 	}
 	
+	public RunningInfo runCounter() throws StepLimitException {
+		try {
+			agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
+			agentRunner.getConfig().setPort(9000);
+			
+			System.out.println("precheck..");
+			agentRunner.precheck(null);
+			PrecheckInfo info = agentRunner.getPrecheckInfo();
+			System.out.println(info);
+			PreCheckInformation precheckInfomation = new PreCheckInformation(info.getThreadNum(), info.getStepTotal(),
+					info.isOverLong(), new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), info.getLoadedClasses());
+			precheckInfomation.setPassTest(agentRunner.isTestSuccessful());
+			this.setPrecheckInfo(precheckInfomation);
+		} catch (SavException e1) {
+			e1.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	public String runMemoryMeasureMent(String dumpFile) {
+
+		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
+		agentRunner.addAgentParam(AgentParams.OPT_DUMP_FILE, dumpFile);
+		agentRunner.getConfig().setPort(9000);
+		agentRunner.addAgentParam(AgentParams.MEASURE_MEM, true);
+		try {
+			agentRunner.startAndWaitUntilStop(agentRunner.getConfig());
+		} catch (SavException e) {
+			e.printStackTrace();
+		}
+		agentRunner.removeAgentParam(AgentParams.OPT_DUMP_FILE);
+		agentRunner.removeAgentParam(AgentParams.MEASURE_MEM);
+		
+		return agentRunner.getProccessError();	
+	}
+	
+	
+	public String runSharedVariable(String dumpFile, int stepLimit) {
+		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
+		agentRunner.getConfig().setPort(9000);
+		agentRunner.addAgentParam(AgentParams.OPT_DUMP_FILE, dumpFile);
+		agentRunner.addAgentParam(AgentParams.OPT_STEP_LIMIT, stepLimit);
+		agentRunner.addAgentParam(AgentParams.OPT_SHARED_DETECTION, true);
+		String result = "";
+		try {
+			agentRunner.sharedDetection();
+			result = agentRunner.getProccessError();
+		} catch (SavException e) {
+			// TODO Auto-generated catch block
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			result = pw.toString();
+		} finally {
+			
+		}
+		agentRunner.removeAgentParam(AgentParams.OPT_SHARED_DETECTION);
+		return result;
+	}
+	
+	/**
+	 * 
+	 * @param dumpFile
+	 * @param concDumpFile
+	 * @param stepLimit
+	 */
+	public String runRecordConc(String dumpFile, String concDumpFile, int stepLimit) {
+		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
+		agentRunner.getConfig().setPort(9000);
+		agentRunner.addAgentParam(AgentParams.OPT_STEP_LIMIT, stepLimit);
+		String result;
+		try {
+			agentRunner.concReplay(AgentParams.OPT_CONC_RECORD, concDumpFile, dumpFile);
+			String processError = agentRunner.getProccessError();
+			result = processError;
+		} catch (SavException e) {
+			StringWriter s = new StringWriter();
+			PrintWriter p = new PrintWriter(s);
+			e.printStackTrace(p);
+			result = s.toString();
+		}
+		return result;
+	}
+	
+	public String getProcessError() {
+		return this.agentRunner.getProccessError();
+	}
+	
+	
+	public RunningInfo runReplayTracer(String concFile, String outputFile, int stepLimit) {
+		agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
+		System.out.println("Debug " + agentRunner.getConfig().isDebug());
+		agentRunner.getConfig().setPort(9000);
+		agentRunner.addAgentParam(AgentParams.OPT_STEP_LIMIT, stepLimit);
+		agentRunner.addAgentParam(AgentParams.OPT_TRACE_RECORDER, "FILE");
+		agentRunner.addAgentParam(AgentParams.REPLAY_MODE, Settings.replayMode.toString());
+		try {
+			agentRunner.concReplay(AgentParams.OPT_CONC_REPLAY, concFile, outputFile);
+		} catch (SavException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		agentRunner.removeAgentParam(AgentParams.REPLAY_MODE);
+		FileTraceReader fileTraceReader = new FileTraceReader();
+		RunningInfo result = fileTraceReader.read(null, outputFile);
+		for (Trace trace : result.getTraceList()) {
+			trace.setAppJavaClassPath(appPath);
+			appendMissingInfo(trace, appPath);
+		}
+		return result;
+	}
+	
+	public void interrupt() {
+		agentRunner.stopRunning();
+	}
+	
 	public PreCheckInformation runPrecheck(String dumpFile, int stepLimit) {
 		try {
 			/* test stepLimit */
@@ -198,7 +333,8 @@ public class InstrumentationExecutor {
 			RunningInfo result = agentRunner.getRunningInfo();
 //			System.out.println(result);
 			System.out.println("isExpectedStepsMet? " + result.isExpectedStepsMet());
-			System.out.println("trace length: " + result.getMainTrace() == null ? "0" : result.getMainTrace().size());
+			int size = result.getMainTrace() == null ? 0 : result.getMainTrace().size();
+			System.out.println("trace length: " + size);
 			System.out.println("isTestSuccessful? " + agentRunner.isTestSuccessful());
 			System.out.println("testFailureMessage: " + agentRunner.getTestFailureMessage());
 			System.out.println("finish!");
@@ -208,7 +344,10 @@ public class InstrumentationExecutor {
 			trace.setAppJavaClassPath(appPath);
 //			trace.setMultiThread(info.getThreadNum()!=1);
 			
-			appendMissingInfo(trace, appPath);
+//			appendMissingInfo(trace, appPath);
+			for (Trace trace1 : result.getTraceList()) {
+				appendMissingInfo(trace1, appPath);
+			}
 			trace.setConstructTime((int) (System.currentTimeMillis() - start));
 			
 			return result;

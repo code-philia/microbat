@@ -3,8 +3,10 @@ package microbat.instrumentation.instr.instruction.info;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.LineNumberTable;
@@ -43,11 +45,30 @@ public class LineInstructionInfo {
 	protected List<RWInstructionInfo> rwInsructionInfo;
 	protected List<InstructionHandle> invokeInsns;
 	protected List<InstructionHandle> returnInsns;
+	protected List<InstructionHandle> newInsns;
+	protected List<InstructionHandle> newArrayInsns;
+	protected List<InstructionHandle> monitorEnterInsnsHandles;
+	protected List<InstructionHandle> monitorExitInsnsHandles;
 	private List<InstructionHandle> exitInsns; 
 	private boolean hasExceptionTarget;
 	
 	public LineInstructionInfo() {
 		// 
+	}
+	
+	private void initialiseMonitorInstructions(List<InstructionHandle> lineInsns) {
+		this.monitorEnterInsnsHandles = new LinkedList<>();
+		this.monitorExitInsnsHandles = new LinkedList<>();
+		for (InstructionHandle handle : lineInsns) {
+			if (handle.getInstruction().getOpcode() == Const.MONITORENTER) {
+				monitorEnterInsnsHandles.add(handle);
+			}
+			if (handle.getInstruction().getOpcode() == Const.MONITOREXIT) {
+				monitorExitInsnsHandles.add(handle);
+			}
+		}
+		
+		
 	}
 	
 	public LineInstructionInfo(String locId, ConstantPoolGen constPool, Method method, MethodGen methodGen, Set<InstructionHandle> exceptionTargets, LineNumberGen lineGen, CFG cfg,
@@ -62,12 +83,28 @@ public class LineInstructionInfo {
 		rwInsructionInfo = extractRWInstructions(locId, isAppClass);
 		invokeInsns = extractInvokeInstructions(lineInsns);
 		returnInsns = extractReturnInstructions(lineInsns);
+		newInsns = extractNewInstructions(lineInsns);
 		exitInsns = extractExitInsns(cfg, lineInsns);
+		newArrayInsns = extractNewArrayInstruction(lineInsns);
+		initialiseMonitorInstructions(lineInsns);
 		for (InstructionHandle insn : lineInsns) {
 			if (exceptionTargets.remove(insn)) {
 				hasExceptionTarget = true;
 			}
 		}
+	}
+	
+	private boolean isNewArrayInsn(InstructionHandle insnHandle) {
+		int opcode = insnHandle.getInstruction().getOpcode();
+		return opcode == Const.ANEWARRAY
+				|| opcode == Const.MULTIANEWARRAY
+				||  opcode == Const.NEWARRAY;
+	}
+	
+	private List<InstructionHandle> extractNewArrayInstruction(List<InstructionHandle> insns) {
+		return insns.stream()
+				.filter(v -> isNewArrayInsn(v))
+				.collect(Collectors.toList());
 	}
 	
 	public List<InstructionHandle> getInstructionsOnLine(){
@@ -85,6 +122,14 @@ public class LineInstructionInfo {
 			}
 		}
 		return list;
+	}
+	
+	public List<InstructionHandle> getMonitorEnterInstructionHandles() {
+		return this.monitorEnterInsnsHandles;
+	}
+	
+	public List<InstructionHandle> getMonitorExitInstructionHandles() {
+		return this.monitorExitInsnsHandles;
 	}
 
 	public List<RWInstructionInfo> getRWInstructions() {
@@ -209,6 +254,14 @@ public class LineInstructionInfo {
 		return invokeInsns;
 	}
 	
+	public List<InstructionHandle> getNewInstructions() {
+		return newInsns;
+	}
+	
+	public List<InstructionHandle> getNewArrayInstructions() {
+		return newArrayInsns;
+	}
+	
 	public static List<InstructionHandle> findCorrespondingInstructions(InstructionList list, LineNumberTable lineTable,
 			int lineNumber) {
 		List<InstructionHandle> correspondingInstructions = new ArrayList<>();
@@ -224,7 +277,7 @@ public class LineInstructionInfo {
 	}
 	
 	protected static List<InstructionHandle> extractInvokeInstructions(List<InstructionHandle> insns) {
-		List<InstructionHandle> invokeInsns = new ArrayList<>(3);
+		List<InstructionHandle> invokeInsns = new ArrayList<>();
 		for (InstructionHandle insnHandler : insns) {
 			Instruction insn = insnHandler.getInstruction();
 			if (insn instanceof InvokeInstruction) {
@@ -236,6 +289,17 @@ public class LineInstructionInfo {
 //			}
 		}
 		return invokeInsns;
+	}
+	
+	protected List<InstructionHandle> extractNewInstructions(List<InstructionHandle> lineInsns) {
+		List<InstructionHandle> newInsns = new LinkedList<>();
+		for (InstructionHandle insnHandle : lineInsns) {
+			Instruction insn = insnHandle.getInstruction();
+			if (insn.getOpcode() == Const.NEW) {
+				newInsns.add(insnHandle);
+			}
+		}
+		return newInsns;
 	}
 	
 	protected List<InstructionHandle> extractReturnInstructions(List<InstructionHandle> lineInsns) {

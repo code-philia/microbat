@@ -19,6 +19,11 @@ public class TraceTransformer extends AbstractTransformer implements ClassFileTr
 		instrumenter = new TraceInstrumenter(params);
 	}
 	
+
+    public TraceTransformer(TraceInstrumenter instr) {
+    	this.instrumenter = instr;
+    }
+	
 	@Override
 	protected byte[] doTransform(ClassLoader loader, String classFName, Class<?> classBeingRedefined,
 			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {

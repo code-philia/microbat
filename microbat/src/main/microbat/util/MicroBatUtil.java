@@ -37,6 +37,14 @@ public class MicroBatUtil {
 	private static Logger log = LoggerFactory.getLogger(MicroBatUtil.class);
 	private MicroBatUtil(){}
 	
+	public static boolean checkTestResult(String msg) {
+		int sIdx = msg.indexOf(";");
+		if (sIdx < 0 || msg.length() < sIdx) {
+			return false;
+		}
+		return Boolean.valueOf(msg.substring(0, sIdx));
+	}
+	
 	public static String getProjectPath(String projectName){
 		IWorkspaceRoot myWorkspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 		IProject iProject = myWorkspaceRoot.getProject(projectName);

@@ -9,11 +9,13 @@ import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.instr.SystemClassTransformer;
+import microbat.instrumentation.instr.aggreplay.TimeoutThread;
 
 public class PrecheckAgent extends Agent{
 	private AgentParams agentParams;
 	private PrecheckTransformer precheckTransformer;
 	private Instrumentation instrumentation;
+	private TimeoutThread timeoutThread = new TimeoutThread();
 
 	public PrecheckAgent(CommandLine cmd, Instrumentation instrumentation) {
 		this.agentParams = AgentParams.initFrom(cmd); 
@@ -22,6 +24,7 @@ public class PrecheckAgent extends Agent{
 	}
 	
 	public void startup0(long vmStartupTime, long agentPreStartup) {
+		timeoutThread.start();
 		GlobalFilterChecker.setup(agentParams.initAppClassPath(), agentParams.getIncludesExpression(),
 				agentParams.getExcludesExpression());
 		TraceMeasurement.setStepLimit(agentParams.getStepLimit());

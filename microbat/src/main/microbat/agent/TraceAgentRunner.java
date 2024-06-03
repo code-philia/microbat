@@ -17,6 +17,7 @@ import microbat.instrumentation.precheck.PrecheckInfo;
 import microbat.model.trace.Trace;
 import microbat.preference.DatabasePreference;
 import microbat.trace.Reader;
+import microbat.util.MicroBatUtil;
 import sav.common.core.SavException;
 import sav.common.core.SavRtException;
 import sav.common.core.utils.CollectionBuilder;
@@ -42,6 +43,10 @@ public class TraceAgentRunner extends AgentVmRunner {
 	
 	private List<Trace> traces;
 
+	public void stopRunning() {
+		super.stop();
+	}
+	
 	public TraceAgentRunner(String agentJar, VMConfiguration vmConfig) {
 		super(agentJar, AgentConstants.AGENT_OPTION_SEPARATOR, AgentConstants.AGENT_PARAMS_SEPARATOR);
 		this.setConfig(vmConfig);
@@ -54,6 +59,31 @@ public class TraceAgentRunner extends AgentVmRunner {
 		builder.appendIf("-XX:+UseG1GC", enableSettingHeapSize);
 		super.buildVmOption(builder, config);
 	}
+	 
+	public boolean sharedDetection() throws SavException {
+		addAgentParam(AgentParams.OPT_SHARED_DETECTION, true);
+		super.startAndWaitUntilStop(getConfig());
+		removeAgentParam(AgentParams.OPT_SHARED_DETECTION);
+		return true;
+	}
+	
+	/**
+	 * Method used for running the individual concurrent modes.
+	 * @param mode
+	 * @param concDumpFile The path to the conc dump
+	 * @param dumpFile The dump file
+	 * @throws SavException 
+	 */
+	public void concReplay(String mode, String concDumpFile, String dumpFile) throws SavException {
+		addAgentParam(mode, true);
+		addAgentParam(AgentParams.OPT_CONC_RECORD_DUMP, concDumpFile);
+		addAgentParam(AgentParams.OPT_DUMP_FILE, dumpFile);
+		super.startAndWaitUntilStop(getConfig());
+		removeAgentParam(mode);
+		removeAgentParam(AgentParams.OPT_DUMP_FILE);
+		removeAgentParam(AgentParams.OPT_CONC_RECORD_DUMP);
+	}
+	
 
 	public boolean precheck(String filePath) throws SavException {
 		isPrecheckMode = true;
@@ -279,8 +309,12 @@ public class TraceAgentRunner extends AgentVmRunner {
 			unknownTestResult = true;
 			return;
 		}
+		isTestSuccessful = MicroBatUtil.checkTestResult(msg);
 		int sIdx = msg.indexOf(";");
-		isTestSuccessful = Boolean.valueOf(msg.substring(0, sIdx));
+		if (sIdx < 0 || msg.length() < sIdx) {
+			unknownTestResult = true;
+			return;
+		}
 		testFailureMessage = msg.substring(sIdx + 1, msg.length());
 	}
 

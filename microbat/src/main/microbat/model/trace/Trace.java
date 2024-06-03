@@ -1,8 +1,10 @@
 package microbat.model.trace;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -12,6 +14,7 @@ import org.eclipse.jdt.core.dom.CatchClause;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
 import microbat.codeanalysis.ast.LocalVariableScopes;
+import microbat.instrumentation.model.id.ThreadId;
 import microbat.model.AttributionVar;
 import microbat.model.BreakPoint;
 import microbat.model.Scope;
@@ -36,6 +39,51 @@ public class Trace {
 	private boolean isMain;
 	private String threadName;
 	private String id;
+	private ThreadId innerThreadId;
+	private long memoryUsed = -1;
+
+	public void setMemoryUsed(long memoryUsed) {
+		this.memoryUsed = memoryUsed;
+	}
+	
+	public long getMemoryUsed() {
+		return this.memoryUsed;
+	}
+	
+	/**
+	 * Used to detect deadlocks
+	 */
+	private List<Long> acquiredLocks = null;
+	private Long acquiringLock = null;
+	
+	public Long getAcquiringLock() {
+		return this.acquiringLock;
+	}
+	
+	public List<Long> getAcquiredLocks() {
+		return this.acquiredLocks;
+	}
+	
+	public void setAcquiredLocks(Collection<Long> values) {
+		this.acquiredLocks = new LinkedList<Long>(values);
+	}
+	
+	public void setAcquiringLock(Long value) {
+		this.acquiringLock = value;
+	}
+	
+	/**
+	 * Getter for inner thread id. Representation of a
+	 * thread id using parent counter.
+	 * @return
+	 */
+	public ThreadId getInnerThreadId() {
+		return innerThreadId;
+	}
+	
+	public void setInnerThreadId(ThreadId threadId) {
+		this.innerThreadId = threadId;
+	}
 	
 	/**
 	 * This variable is to trace whether the variables in different lines are the same
@@ -254,6 +302,9 @@ public class Trace {
 	 * @return
 	 */
 	public TraceNode findDataDependency(TraceNode checkingNode, VarValue readVar) {
+		if (checkingNode.getBound() != null) {
+			return checkingNode.getBound().getDataDominator(readVar);
+		}
 		return findProducer(readVar, checkingNode);
 	}
 	

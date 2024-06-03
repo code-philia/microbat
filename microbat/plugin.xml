@@ -132,6 +132,22 @@
             id="microbat.command.RestoreTrace"
             name="Restore Trace">
       </command>
+      <command
+            defaultHandler="microbat.handler.ConcurrentRecordHandler"
+            id="microbat.command.conc.record"
+            name="Concurrent Record">
+      </command>
+      <command
+            defaultHandler="microbat.handler.ConcurrentReplayHandler"
+            id="microbat.command.conc.replay"
+            name="Concurrent Replay">
+      </command>
+      <command
+            defaultHandler="microbat.handler.ReplayExperimentHandler"
+            description="Need to run record before running the experiment"
+            id="microbat.command.replayExperiment"
+            name="Run replay experiment">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.menus">
@@ -194,6 +210,19 @@
                   label="Restore Trace"
                   style="push">
             </command>
+            <menu
+                  label="Concurrent Programs">
+               <command
+                     commandId="microbat.command.conc.record"
+                     label="Record"
+                     style="push">
+               </command>
+               <command
+                     commandId="microbat.command.conc.replay"
+                     label="Replay"
+                     style="push">
+               </command>
+            </menu>
          </menu>
       </menuContribution>
       <menuContribution

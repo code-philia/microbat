@@ -5,6 +5,10 @@ import java.lang.instrument.Instrumentation;
 import microbat.instrumentation.AgentParams.LogType;
 import microbat.instrumentation.cfgcoverage.CoverageAgent;
 import microbat.instrumentation.cfgcoverage.CoverageAgentParams;
+import microbat.instrumentation.instr.aggreplay.agents.AggrePlayReplayAgent;
+import microbat.instrumentation.instr.aggreplay.agents.SharedVariableAgent;
+import microbat.instrumentation.instr.aggreplay.agents.RNRRecordingAgent;
+import microbat.instrumentation.precheck.MemoryMeasurementAgent;
 import microbat.instrumentation.precheck.PrecheckAgent;
 
 /**
@@ -26,6 +30,18 @@ public class AgentFactory {
 			agent.setInstrumentation(inst);
 		} else if (cmd.getBoolean(AgentParams.OPT_PRECHECK, false)) {
 			agent = new PrecheckAgent(cmd, inst);
+			agent.setInstrumentation(inst);
+		} else if (cmd.getBoolean(AgentParams.OPT_SHARED_DETECTION, false)) {
+			agent = SharedVariableAgent.getAgent(cmd);
+			agent.setInstrumentation(inst);
+		} else if (cmd.getBoolean(AgentParams.OPT_CONC_RECORD, false)) {
+			agent = RNRRecordingAgent.getAttached(cmd);
+			agent.setInstrumentation(inst);
+		} else if (cmd.getBoolean(AgentParams.OPT_CONC_REPLAY, false)) { 
+			agent = AggrePlayReplayAgent.getAttached(cmd);
+			agent.setInstrumentation(inst);
+		} else if (cmd.getBoolean(AgentParams.MEASURE_MEM, false)) {
+			agent = MemoryMeasurementAgent.getMeasurementAgent(cmd);
 			agent.setInstrumentation(inst);
 		} else {
 			agent = new TraceAgent(cmd);

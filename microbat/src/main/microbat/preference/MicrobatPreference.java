@@ -21,7 +21,9 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
+import java_cup.internal_error;
 import microbat.Activator;
+import microbat.instrumentation.instr.aggreplay.ReplayMode;
 import microbat.util.SWTFactory;
 import microbat.util.Settings;
 
@@ -50,6 +52,7 @@ public class MicrobatPreference extends PreferencePage implements
 		this.defaultRecordSnapshot = Activator.getDefault().getPreferenceStore().getString(RECORD_SNAPSHORT);
 		this.defaultRunWithDebugMode = Activator.getDefault().getPreferenceStore().getString(RUN_WITH_DEBUG_MODE);
 		this.defaultAdvancedDetailInspector = Activator.getDefault().getPreferenceStore().getString(APPLY_ADVANCE_INSPECTOR);
+		this.defaultTimeoutLong = Long.parseLong(Activator.getDefault().getPreferenceStore().getString(TIMEOUT));
 		this.defaultStepLimit = getStepLimit();
 		this.defaultRunTest = Activator.getDefault().getPreferenceStore().getString(RUN_TEST);
 		this.defaultVariableLayer = getVariableValue();
@@ -57,6 +60,7 @@ public class MicrobatPreference extends PreferencePage implements
 		this.defaultApplyRecodingOptimization = Activator.getDefault().getPreferenceStore().getString(RECORDING_OPTIMIZATION);
 		this.defaultEnableMethodSplitting = Activator.getDefault().getPreferenceStore().getBoolean(REQUIRE_METHOD_SPLITTING);
 		this.defaultRunWithDebugMode = Activator.getDefault().getPreferenceStore().getString(RUN_WITH_DEBUG_MODE);
+		this.defaultReplayMode = ReplayMode.parse(Activator.getDefault().getPreferenceStore().getString(REPLAY_MODE));
 	}
 
 	public static String getStepLimit() {
@@ -85,7 +89,10 @@ public class MicrobatPreference extends PreferencePage implements
 	public static final String RECORDING_OPTIMIZATION = "recording_optimization";
 	public static final String REQUIRE_METHOD_SPLITTING = "enableMethodSplitting";
 	public static final String SUPPORT_CONCURRENT_TRACE = "supportConcurrentTrace";
+	public static final String AGGREPLAY_CONCURRENT_RECORDING = "aggrePlayConcurrentRecording";
 	public static final String RUN_WITH_DEBUG_MODE = "runWithDebugMode";
+	public static final String TIMEOUT = "timeOut";
+	public static final String REPLAY_MODE = "replay_mode";
 	
 	private Combo projectCombo;
 	private Text lanuchClassText;
@@ -94,6 +101,7 @@ public class MicrobatPreference extends PreferencePage implements
 	private Text lineNumberText;
 	private Text stepLimitText;
 	private Text variableLayerText;
+	private Text timeOutText;
 	private Button recordSnapshotButton;
 	private Button supportConcurrentTraceButton;
 	private Button recordingOptimizationButton;
@@ -102,6 +110,7 @@ public class MicrobatPreference extends PreferencePage implements
 	private Button runWithDebugModeButton;
 	private Button enableMethodSplittingButton;
 	private Text java7HomePathText;
+	private Combo replayModeSelectorCombo;
 	
 	private String defaultTargetProject = "";
 	private String defaultLanuchClass = "";
@@ -117,6 +126,8 @@ public class MicrobatPreference extends PreferencePage implements
 	private String defaultJava7HomePath;
 	private String defaultApplyRecodingOptimization;
 	private String defaultRunWithDebugMode = "false";
+	private Long defaultTimeoutLong = 10000L;
+	private ReplayMode defaultReplayMode = ReplayMode.AGGR;
 	private boolean defaultEnableMethodSplitting;
 	
 	@Override
@@ -181,6 +192,19 @@ public class MicrobatPreference extends PreferencePage implements
 		variableLayerText.setLayoutData(variableLayerTextData);
 		variableLayerText.setToolTipText("how many layers of variable children does the debugger need to retrieve, -1 means infinite.");
 		
+		Label timeOutLabel = new Label(settingGroup, SWT.NONE);
+		timeOutLabel.setText("Timeout: ");
+		
+		
+		GridData timeOutLayerTextData = new GridData(SWT.FILL, SWT.FILL, true, false);
+		timeOutLayerTextData.horizontalSpan = 2;
+		timeOutText = new Text(settingGroup, SWT.BORDER);
+		timeOutText.setText(this.defaultTimeoutLong + "");
+		timeOutText.setLayoutData(variableLayerTextData);
+		timeOutText.setToolTipText("How long do you want the timeout, -1 means infinite.");
+		
+		
+		
 		supportConcurrentTraceButton = new Button(settingGroup, SWT.CHECK);
 		supportConcurrentTraceButton.setText("Support concurrent trace");
 		GridData supportConcurrentTraceButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
@@ -223,6 +247,26 @@ public class MicrobatPreference extends PreferencePage implements
 		
 		enableMethodSplittingButton = SWTFactory.createCheckbox(settingGroup, "Enable method splitting function", 2);
 		enableMethodSplittingButton.setSelection(this.defaultEnableMethodSplitting);
+		
+		createReplaySelector(parent);
+	}
+
+	
+	private void createReplaySelector(Composite parent) {
+		Label replaySelectorLabel = new Label(parent, SWT.BORDER);
+		replaySelectorLabel.setText("Select replay mode");
+		replaySelectorLabel.setToolTipText("Strict - Chance of deadlock when sync methods used");
+		this.replayModeSelectorCombo = new Combo(parent, SWT.BORDER);
+		ReplayMode[] replayModes = ReplayMode.values();
+		String[] dataStrings = new String[replayModes.length];
+		for (int i = 0; i < dataStrings.length; ++i) {
+			dataStrings[i] = replayModes[i].toString();
+		}
+		replayModeSelectorCombo.setItems(dataStrings);
+		replayModeSelectorCombo.setText(defaultReplayMode.toString());
+		GridData comboData = new GridData(SWT.FILL, SWT.FILL, true, false);
+		comboData.horizontalSpan = 2;
+		this.replayModeSelectorCombo.setLayoutData(comboData);
 	}
 	
 	private void createSeedStatementGroup(Composite parent){
@@ -284,6 +328,7 @@ public class MicrobatPreference extends PreferencePage implements
 		preferences.put(TARGET_PORJECT, this.projectCombo.getText());
 		preferences.put(LANUCH_CLASS, this.lanuchClassText.getText());
 		preferences.put(TEST_METHOD, this.testMethodText.getText());
+		preferences.put(TIMEOUT, this.timeOutText.getText());
 //		preferences.put(CLASS_NAME, this.classNameText.getText());
 //		preferences.put(LINE_NUMBER, this.lineNumberText.getText());
 		preferences.put(RECORD_SNAPSHORT, String.valueOf(this.recordSnapshotButton.getSelection()));
@@ -296,10 +341,12 @@ public class MicrobatPreference extends PreferencePage implements
 		preferences.putBoolean(REQUIRE_METHOD_SPLITTING, this.enableMethodSplittingButton.getSelection());
 		preferences.put(SUPPORT_CONCURRENT_TRACE, String.valueOf(this.supportConcurrentTraceButton.getSelection()));
 		preferences.put(RUN_WITH_DEBUG_MODE, String.valueOf(this.runWithDebugModeButton.getSelection()));
+		preferences.put(REPLAY_MODE, this.replayModeSelectorCombo.getText());
 		
 		Activator.getDefault().getPreferenceStore().putValue(TARGET_PORJECT, this.projectCombo.getText());
 		Activator.getDefault().getPreferenceStore().putValue(LANUCH_CLASS, this.lanuchClassText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(TEST_METHOD, this.testMethodText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(TIMEOUT, timeOutText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(CLASS_NAME, this.classNameText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(LINE_NUMBER, this.lineNumberText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(RECORD_SNAPSHORT, String.valueOf(this.recordSnapshotButton.getSelection()));
@@ -312,7 +359,7 @@ public class MicrobatPreference extends PreferencePage implements
 		Activator.getDefault().getPreferenceStore().putValue(REQUIRE_METHOD_SPLITTING, String.valueOf(this.enableMethodSplittingButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(SUPPORT_CONCURRENT_TRACE, String.valueOf(this.supportConcurrentTraceButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(RUN_WITH_DEBUG_MODE, String.valueOf(this.runWithDebugModeButton.getSelection()));
-		
+		Activator.getDefault().getPreferenceStore().putValue(REPLAY_MODE, this.replayModeSelectorCombo.getText());
 		confirmChanges();
 		
 		return true;
@@ -323,6 +370,7 @@ public class MicrobatPreference extends PreferencePage implements
 		Settings.projectName = this.projectCombo.getText();
 		Settings.launchClass = this.lanuchClassText.getText();
 		Settings.testMethod = this.testMethodText.getText();
+		Settings.timeLimit = Long.parseLong(this.timeOutText.getText());
 //		Settings.buggyClassName = this.classNameText.getText();
 //		Settings.buggyLineNumber = this.lineNumberText.getText();
 		Settings.isRecordSnapshot = this.recordSnapshotButton.getSelection();
@@ -333,6 +381,7 @@ public class MicrobatPreference extends PreferencePage implements
 		Settings.applyLibraryOptimization = this.recordingOptimizationButton.getSelection();
 		Settings.supportConcurrentTrace = this.supportConcurrentTraceButton.getSelection();
 		Settings.isRunWtihDebugMode = this.runWithDebugModeButton.getSelection();
+		Settings.replayMode = ReplayMode.parse(this.replayModeSelectorCombo.getText());
 	}
 	
 	private String[] getProjectsInWorkspace(){
