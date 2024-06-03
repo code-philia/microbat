@@ -1,5 +1,7 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -7,6 +9,7 @@ import org.json.JSONObject;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.TraceRecovUtils;
+import microbat.tracerecov.VariableGraph;
 import microbat.tracerecov.VariableOfInterest;
 
 /**
@@ -29,8 +32,10 @@ public class AliasInferenceUtils {
 		JSONObject typeStructure = VariableOfInterest.getVariableOfInterestForAliasInferencing(rootVar.getAliasVarID());
 		String jsonString = typeStructure.toString();
 
-		/* read variables */
-		List<VarValue> readVariables = step.getReadVariables();
+		/* variables */
+		List<VarValue> variables = new ArrayList<>();
+		variables.addAll(step.getReadVariables());
+		variables.addAll(step.getWrittenVariables());
 
 		StringBuilder question = new StringBuilder("Given the data structure of ");
 		question.append(varType);
@@ -46,7 +51,7 @@ public class AliasInferenceUtils {
 		question.append(sourceCode);
 		question.append("`, ");
 
-		for (VarValue v : readVariables) {
+		for (VarValue v : variables) {
 			if (v.getVarName() != null && v.getVarName().equals("this")) {
 				continue;
 			}
@@ -58,7 +63,7 @@ public class AliasInferenceUtils {
 		}
 
 		question.append("\nWe know that ");
-		for (VarValue v : readVariables) {
+		for (VarValue v : variables) {
 			if (v.getVarName() != null && v.getVarName().equals("this")) {
 				continue;
 			}
@@ -70,14 +75,70 @@ public class AliasInferenceUtils {
 		}
 
 		question.append(
-				"Please infer the Java heap address of the given object by filling in &?& with the provided memory addresses only. If you are not sure, please keep &?&\n"
-				+ "\n"
-				+ "The provided JSON key has format: “var_name:var_type &heap_address&”.\n"
-				+ "Your response should be in JSON format, where key is the variable name with format: “var_name1.var_name2.var_name3” and value is the changed heap address with format: \"&...&\".\n"
-				+ "\n"
-				+ "To get the key in your response, extract the variable names in the provided JSON. Do not include type or address in your keys.\n"
-				+ "Do not include explanation in your response.");
+				"Please infer the Java heap address of the given object by filling in &?& with the *provided memory addresses only*. Do not make up address. If you are not sure, please keep &?&\n"
+						+ "\n" + "The provided JSON key has format: “var_name:var_type &heap_address&”.\n"
+						+ "Your response should be in JSON format, where key is the variable name with format: “var_name1.var_name2.var_name3” and value is the changed heap address with format: \"&...&\".\n"
+						+ "\n"
+						+ "To get the key in your response, extract the variable names in the provided JSON. Do not include type or address in your keys.");
 
 		return question.toString();
+	}
+
+	public static void processResponse(String response, VarValue rootVar, TraceNode step) {
+		int begin = response.indexOf("{");
+		int end = response.lastIndexOf("}");
+		response = response.substring(begin, end + 1);
+
+		JSONObject jsonObject = new JSONObject(response);
+
+		Iterator<String> keys = jsonObject.keys();
+		while (keys.hasNext()) {
+			String key = keys.next();
+			String address = jsonObject.get(key).toString();
+			if (address == null || address.contains("?") || !address.contains("&")) {
+				continue;
+			}
+			begin = address.indexOf("&");
+			end = address.lastIndexOf("&");
+			address = address.substring(begin + 1, end);
+			
+			// get valid addresses
+			List<VarValue> variables = new ArrayList<>();
+			variables.addAll(step.getReadVariables());
+			variables.addAll(step.getWrittenVariables());
+			List<String> validAddresses = variables.stream().map(v -> v.getAliasVarID()).toList();
+			
+			if (!VariableGraph.containsVar(address) && !validAddresses.contains(address)) {
+				// invalid address
+				continue;
+			}
+
+			// search for variable
+			String[] fields = key.split("\\.");
+			if (!fields[0].trim().equals(rootVar.getVarName())) {
+				continue;
+			}
+			VarValue innerVar = rootVar;
+			for (int i = 1; i < fields.length; i++) {
+				List<VarValue> children = innerVar.getChildren();
+				boolean childIsFound = false;
+				for (VarValue child : children) {
+					if (child.getVarName().equals(fields[i])) {
+						innerVar = child;
+						childIsFound = true;
+						break;
+					}
+				}
+				if (!childIsFound) {
+					break;
+				}
+			}
+
+			// update address
+			if (innerVar != null) {
+				innerVar.setAliasVarID(address);
+				VariableGraph.addVar(innerVar);
+			}
+		}
 	}
 }

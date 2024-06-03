@@ -62,8 +62,7 @@ public class ExecutionSimulator {
 			try {
 				String response = sendRequest(null, content);
 				System.out.println(i + "th try with GPT to generate response as " + response);
-				// TODO: process response
-//				AliasInferenceUtils.processResponse(response);
+				AliasInferenceUtils.processResponse(response, rootVar, step);
 				break;
 			} catch (org.json.JSONException e) {
 				e.printStackTrace();

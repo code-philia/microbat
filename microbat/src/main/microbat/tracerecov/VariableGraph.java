@@ -19,7 +19,6 @@ import microbat.tracerecov.varmapping.VariableMapper;
  */
 public class VariableGraph {
 	private static Map<String, VariableGraphNode> graph = new HashMap<>();
-	private static Set<TraceNode> linkageSteps = new HashSet<>();
 	private static List<TraceNode> potentialLinkageSteps = new ArrayList<>();
 	private static String lastVisitedID = null;
 
@@ -27,7 +26,6 @@ public class VariableGraph {
 
 	public static void reset() {
 		graph = new HashMap<>();
-		linkageSteps = new HashSet<>();
 		potentialLinkageSteps = new ArrayList<>();
 		lastVisitedID = null;
 	}
@@ -282,7 +280,7 @@ public class VariableGraph {
 		return validMethods;
 	}
 
-	private static boolean containsVar(String ID) {
+	public static boolean containsVar(String ID) {
 		return graph.containsKey(ID);
 	}
 

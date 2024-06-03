@@ -2,7 +2,9 @@ package microbat.tracerecov;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
@@ -26,14 +28,14 @@ public class TraceRecoverer {
 		/**
 		 * we might start with the root variable
 		 */
-		for (VarValue parent : parents) {
-			List<TraceNode> candidateSteps = parseCandidateReadingSteps(trace, parent);
-			for (TraceNode step : candidateSteps) {
-				if (isWritingTarget(step)) {
-					step.addWrittenVariable(targetVar);
-				}
-			}
-		}
+//		for (VarValue parent : parents) {
+//			List<TraceNode> candidateSteps = parseCandidateReadingSteps(trace, parent);
+//			for (TraceNode step : candidateSteps) {
+//				if (isWritingTarget(step)) {
+//					step.addWrittenVariable(targetVar);
+//				}
+//			}
+//		}
 
 //		/* 3. Execution Simulation */
 //		/*
@@ -95,7 +97,9 @@ public class TraceRecoverer {
 				VariableGraph.addRelevantStep(step);
 
 				/* alias inferencing */
-				if (VariableGraph.isStepToConsider(step)) {
+				List<String> validAddresses = variables.stream().map(v -> v.getAliasVarID()).toList();
+				Set<String> validAddressSet = new HashSet<>(validAddresses);
+				if (VariableGraph.isStepToConsider(step) && validAddressSet.size() > 1) {
 					try {
 						this.executionSimulator.inferenceAliasRelations(step, rootVar);
 					} catch (IOException e) {
