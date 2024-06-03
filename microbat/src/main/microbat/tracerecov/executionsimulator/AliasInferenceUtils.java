@@ -17,6 +17,7 @@ import microbat.tracerecov.VariableOfInterest;
  */
 public class AliasInferenceUtils {
 
+	
 	public static String getQuestionContent(TraceNode step, VarValue rootVar) {
 		/* source code */
 		int lineNo = step.getLineNumber();
@@ -84,6 +85,13 @@ public class AliasInferenceUtils {
 		return question.toString();
 	}
 
+	
+	/**
+	 * alias inference 
+	 * @param response
+	 * @param rootVar
+	 * @param step
+	 */
 	public static void processResponse(String response, VarValue rootVar, TraceNode step) {
 		int begin = response.indexOf("{");
 		int end = response.lastIndexOf("}");
@@ -108,10 +116,11 @@ public class AliasInferenceUtils {
 			variables.addAll(step.getWrittenVariables());
 			List<String> validAddresses = variables.stream().map(v -> v.getAliasVarID()).toList();
 			
-			if (!VariableGraph.containsVar(address) && !validAddresses.contains(address)) {
-				// invalid address
-				continue;
-			}
+			//TODO change here
+//			if (!VariableGraph.containsVar(address) && !validAddresses.contains(address)) {
+//				// invalid address
+//				continue;
+//			}
 
 			// search for variable
 			String[] fields = key.split("\\.");
@@ -137,7 +146,8 @@ public class AliasInferenceUtils {
 			// update address
 			if (innerVar != null) {
 				innerVar.setAliasVarID(address);
-				VariableGraph.addVar(innerVar);
+				//TODO change here
+//				VariableGraph.addVar(innerVar);
 			}
 		}
 	}

@@ -46,8 +46,8 @@ public class SimulationUtilsWithCandidateVar {
 		}
 		if (criticalVar != null) {
 			String type = criticalVar.getType();
-			List<String> candidateVariables = VariableGraph.getCandidateVariables(variableID);
-			stringBuilder.append(getContentForVariableOfInterest(type, candidateVariables));
+//			List<String> candidateVariables = VariableGraph.getCandidateVariables(variableID);
+//			stringBuilder.append(getContentForVariableOfInterest(type, candidateVariables));
 		}
 
 		stringBuilder.append("In the following steps: \n");

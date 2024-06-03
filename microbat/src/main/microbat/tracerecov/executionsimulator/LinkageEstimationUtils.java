@@ -149,7 +149,7 @@ public class LinkageEstimationUtils {
 			if (varValue1 == null || varValue2 == null) {
 				continue;
 			}
-			VariableGraph.linkVariables(step, varValue1, varValue2, var1, var2);
+//			VariableGraph.linkVariables(step, varValue1, varValue2, var1, var2);
 		}
 	}
 
