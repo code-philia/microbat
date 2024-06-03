@@ -176,6 +176,69 @@ public class ExecutionSimulator {
 	}
 
 	public boolean inferDefinition(TraceNode step, VarValue parentVar, VarValue targetVar) {
+		
+		
+		boolean complication = estimateComplication(step, parentVar, targetVar);
+		
+		if(!complication) {
+			boolean def = inferDefinitionByProgramAnalysis(step, parentVar, targetVar);
+			return def;
+		}
+		else {
+			boolean def = false;
+			try {
+				def = inferDefinitionByLLM(step, parentVar, targetVar);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return def;
+		}
+		
+		
+	}
+
+	private boolean estimateComplication(TraceNode step, VarValue parentVar, VarValue targetVar) {
+		/**
+		 * TODO Hongshu
+		 * 
+		 * we only care about deterministic flow
+		 * 
+		 * must-analysis
+		 * 
+		 * guranratee write: 1. 2.
+		 * 
+		 * guranratee no-write 1. 2
+		 * 
+		 */
+		
+		
+		return false;
+	}
+
+	private boolean inferDefinitionByLLM(TraceNode step, VarValue parentVar, VarValue targetVar) throws IOException {
+		System.out.println("***Variable Expansion***");
+		System.out.println();
+
+		String background = DefinitionInferenceUtils.getBackgroundContent();
+		String content = DefinitionInferenceUtils.getQuestionContent(step);
+		System.out.println(background);
+		System.out.println(content);
+
+		for (int i = 0; i < 2; i++) {
+			try {
+				String response = sendRequest(background, content);
+				System.out.println(i + "th try with GPT to generate response as " + response);
+				DefinitionInferenceUtils.processResponse(targetVar, response);
+				break;
+			} catch (org.json.JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return false;
+	}
+
+	private boolean inferDefinitionByProgramAnalysis(TraceNode step, VarValue parentVar, VarValue targetVar) {
 		String parentType = parentVar.getType();
 		String[] invokingMethods = step.getInvokingMethod().split("%");
 		// check each invoking method whose invoking object 
@@ -191,7 +254,6 @@ public class ExecutionSimulator {
 			}
 		}
 		
-		// TODO ask GPT
 		return false;
 	}
 }
