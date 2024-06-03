@@ -66,9 +66,7 @@ public class VariableExpansionUtils {
 			+ "     \"size\": 2\r\n"
 			+ "  },\r\n"
 			+ " }\r\n"
-			+ "\r\n"
-			+ "<Question>\r\n"
-			+ "";
+			+ "\r\n";
 
 	/* Methods */
 
@@ -78,11 +76,22 @@ public class VariableExpansionUtils {
 
 	public static String getQuestionContent(VarValue selectedVariable, List<VariableSkeleton> variableSkeletons,
 			TraceNode step) {
-		StringBuilder question = new StringBuilder("Given the following data structure:\n");
+		StringBuilder question = new StringBuilder("<Question>\n"
+				+ "Given the following data structure:\n");
 
 		for (VariableSkeleton v : variableSkeletons) {
 			question.append(v.toString() + " ");
 		}
+		
+		//TODO to remove it if we have runtime variable type
+//		if(selectedVariable.getType().equals("java.util.List")) {
+//			question.append("java.util.LinkedList:{"
+//					+ "int size;"
+//					+ "java.util.LinkedList$Node first;"
+//					+ "java.util.LinkedList$Node last;"
+//					+ "int modCount;"
+//					+ "}");
+//		}
 
 		question.append("with the input value of executing \"");
 		
@@ -105,12 +114,15 @@ public class VariableExpansionUtils {
 		question.append(selectedVariable.getStringValue());
 		question.append("\"");
 		
-		question.append(", strictly show me the JSON format of *" + selectedVariable.getVarName()
-				+ "* as the above example.\n" + "No explanation is needed, just return the result.\n");
+		question.append(", strictly return in JSON format for *" + selectedVariable.getVarName()
+				+ "* as the above example, each key must has a value. The JSON object must start with variable *" + selectedVariable.getVarName() + "* as the root. Do not include explanation in your response.\n");
 
 		return question.toString();
 	}
 
+	/**
+	 * Recursively parse JSON into the input VarValue.
+	 */
 	public static void processResponse(VarValue selectedVariable, String response) {
 		int begin = response.indexOf("{");
 		int end = response.lastIndexOf("}");
@@ -122,16 +134,16 @@ public class VariableExpansionUtils {
 	}
 	
 	private static void processResponseRecur(boolean isRoot, JSONObject jsonObject, VarValue selectedVariable) {
-		
-
 		Iterator<String> keys = jsonObject.keys();
 		while (keys.hasNext()) {
 			String key = keys.next();
 			
 			if(isRoot) {
 				Object value = jsonObject.get(key);
-				if(value instanceof JSONObject) {
-					processResponseRecur(false, (JSONObject)value, selectedVariable);
+				if (value instanceof JSONObject) {
+					processResponseRecur(false, (JSONObject) value, selectedVariable);
+				} else if (value instanceof JSONArray) {
+					processResponseRecur((JSONArray) value, selectedVariable);
 				}
 				break;
 			}
@@ -149,8 +161,7 @@ public class VariableExpansionUtils {
 					varValue = new ArrayValue(false, false, var);
 					varValue.setStringValue(String.valueOf(value));
 					
-					//TODO Hongshu deal with JSON Array
-					System.currentTimeMillis();
+					processResponseRecur((JSONArray) value, varValue);
 				}
 				else if(value instanceof JSONObject) {
 					varValue = new ReferenceValue(false, false, var);
@@ -164,14 +175,66 @@ public class VariableExpansionUtils {
 				else if(value instanceof Integer){
 					varValue = new PrimitiveValue(String.valueOf(value), false, var);
 				}
+				else if (value == null) {
+					varValue = new ReferenceValue(true, false, var);
+				}
 				
 				if(varValue != null) {
-					
 					selectedVariable.addChild(varValue);
 					varValue.addParent(selectedVariable);					
 				}
 			}
 		}
+	}
+	
+	private static void processResponseRecur(JSONArray jsonArray, VarValue selectedVariable) {
+		int index = 0;
+		List<Object> values = jsonArray.toList();
 		
+		for (Object value : values) {
+			String varName = selectedVariable.getVarName().concat("[" + index + "]");
+			String varType = "";
+			String varID = Variable.concanateFieldVarID(selectedVariable.getVarID(), varName);
+			
+			Variable var = new FieldVar(false, varName, varType, varType);
+			var.setVarID(varID);
+			
+			VarValue varValue = null;
+			
+			if (value instanceof JSONArray) {
+				varValue = new ArrayValue(false, false, var);
+				varValue.setStringValue(String.valueOf(value));
+				
+				processResponseRecur((JSONArray) value, varValue);
+			}
+			else if(value instanceof JSONObject) {
+				varValue = new ReferenceValue(false, false, var);
+				varValue.setStringValue(String.valueOf(value));
+				
+				processResponseRecur(false, (JSONObject)value, varValue);
+			}
+			else if(value instanceof String){
+				varType = value.getClass().toString();
+				var.setType(varType);
+				
+				varValue = new StringValue(String.valueOf(value), false, var);
+			}
+			else if(value instanceof Integer){
+				varType = value.getClass().toString();
+				var.setType(varType);
+				
+				varValue = new PrimitiveValue(String.valueOf(value), false, var);
+			}
+			else if (value == null) {
+				varValue = new ReferenceValue(true, false, var);
+			}
+			
+			if(varValue != null) {
+				selectedVariable.addChild(varValue);
+				varValue.addParent(selectedVariable);					
+			}
+			
+			index++;
+		};
 	}
 }
