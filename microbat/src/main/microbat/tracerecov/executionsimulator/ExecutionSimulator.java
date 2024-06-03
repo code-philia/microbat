@@ -71,50 +71,50 @@ public class ExecutionSimulator {
 	}
 
 	// TODO: Not Used
-	public void recoverLinkageSteps() throws IOException {
-		List<TraceNode> steps = VariableGraph.getPotentialLinkageSteps();
-		String background = LinkageEstimationUtils.getBackgroundContent();
-		String content = LinkageEstimationUtils.getQuestionContent(steps);
-		System.out.println(background);
-		System.out.println(content);
+//	public void recoverLinkageSteps() throws IOException {
+//		List<TraceNode> steps = VariableGraph.getPotentialLinkageSteps();
+//		String background = LinkageEstimationUtils.getBackgroundContent();
+//		String content = LinkageEstimationUtils.getQuestionContent(steps);
+//		System.out.println(background);
+//		System.out.println(content);
+//
+//		String response = sendRequest(background, content);
+//		System.out.println(response);
+//
+//		LinkageEstimationUtils.processResponse(response, steps);
+//	}
 
-		String response = sendRequest(background, content);
-		System.out.println(response);
-
-		LinkageEstimationUtils.processResponse(response, steps);
-	}
-
-	public void sendRequests() throws IOException {
-		String variableID = VariableGraph.getNextNodeIDToVisit();
-		while (variableID != null) {
-			List<TraceNode> relevantSteps = VariableGraph.getRelevantSteps(variableID);
-			if (!relevantSteps.isEmpty()) {
-				if (VariableGraph.hasChildren(variableID)) {
-					String background = SimulationUtilsWithCandidateVar.getBackgroundContent();
-					String content = SimulationUtilsWithCandidateVar.getQuestionContent(variableID, relevantSteps);
-					System.out.println(background);
-					System.out.println(content);
-
-					String response = this.sendRequest(background, content);
-					System.out.println(response);
-
-					SimulationUtilsWithCandidateVar.processResponse(response, variableID, relevantSteps);
-				} else {
-					String background = SimulationUtils.getBackgroundContent();
-					String content = SimulationUtils.getQuestionContent(variableID, relevantSteps);
-					System.out.println(background);
-					System.out.println(content);
-
-					String response = this.sendRequest(background, content);
-					System.out.println(response);
-					SimulationUtils.processResponse(response, variableID, relevantSteps);
-				}
-			}
-
-			VariableGraph.addCurrentToParentVariables();
-			variableID = VariableGraph.getNextNodeIDToVisit();
-		}
-	}
+//	public void sendRequests() throws IOException {
+//		String variableID = VariableGraph.getNextNodeIDToVisit();
+//		while (variableID != null) {
+//			List<TraceNode> relevantSteps = VariableGraph.getRelevantSteps(variableID);
+//			if (!relevantSteps.isEmpty()) {
+//				if (VariableGraph.hasChildren(variableID)) {
+//					String background = SimulationUtilsWithCandidateVar.getBackgroundContent();
+//					String content = SimulationUtilsWithCandidateVar.getQuestionContent(variableID, relevantSteps);
+//					System.out.println(background);
+//					System.out.println(content);
+//
+//					String response = this.sendRequest(background, content);
+//					System.out.println(response);
+//
+//					SimulationUtilsWithCandidateVar.processResponse(response, variableID, relevantSteps);
+//				} else {
+//					String background = SimulationUtils.getBackgroundContent();
+//					String content = SimulationUtils.getQuestionContent(variableID, relevantSteps);
+//					System.out.println(background);
+//					System.out.println(content);
+//
+//					String response = this.sendRequest(background, content);
+//					System.out.println(response);
+//					SimulationUtils.processResponse(response, variableID, relevantSteps);
+//				}
+//			}
+//
+//			VariableGraph.addCurrentToParentVariables();
+//			variableID = VariableGraph.getNextNodeIDToVisit();
+//		}
+//	}
 
 	private String sendRequest(String backgroundContent, String questionContent) throws IOException {
 		/* set up connection */
@@ -172,5 +172,22 @@ public class ExecutionSimulator {
 		} else {
 			throw new RuntimeException("Failed : HTTP error code : " + responseCode);
 		}
+	}
+
+	public boolean inferDefinition(TraceNode step, VarValue parentVar, VarValue targetVar) {
+		
+		
+		String methodSig = step.getMethodSign();
+		
+		boolean checkByteCodeDefinition = false;
+		// TODO Hongshu
+		if(checkByteCodeDefinition) {
+			return true;
+		}
+		
+		
+		// TODO ask GPT
+		
+		return false;
 	}
 }
