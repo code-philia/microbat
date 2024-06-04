@@ -1,5 +1,8 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.util.List;
+import java.util.Set;
+
 import org.json.JSONObject;
 
 import microbat.model.trace.TraceNode;
@@ -20,7 +23,7 @@ public class DefinitionInferenceUtils {
 		return DEFINITION_INFERENCE_BACKGROUND;
 	}
 
-	public static String getQuestionContent(TraceNode step, VarValue rootVar, VarValue targetVar) {
+	public static String getQuestionContent(TraceNode step, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
 		/* source code */
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
@@ -33,6 +36,9 @@ public class DefinitionInferenceUtils {
 		/* type structure */
 		JSONObject typeStructure = VariableOfInterest.getVariableOfInterestForDefinitionInferencing();
 		String jsonString = typeStructure.toString();
+		
+		/* all variables */
+		Set<VarValue> variablesInStep = step.getAllVariables();
 
 		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n```");
 		question.append(sourceCode);
@@ -48,11 +54,31 @@ public class DefinitionInferenceUtils {
 			question.append("\",");
 		}
 
-		question.append("we know that `");
-		question.append(rootVarName);
-		question.append("` has the following structure:\n");
+		question.append("we know that `" + rootVarName + "` has the following structure:\n");
 		question.append(jsonString);
-		question.append("\nThis variable has a field called `");
+		question.append("\n");
+		
+		boolean isFirstVar = true;
+		for (VarValue var : variablesInStep) {
+			VarValue criticalVariable = criticalVariables.stream().filter(v -> var.getAliasVarID().equals(v.getAliasVarID())).findFirst().orElse(null);
+			if (criticalVariable == null) {
+				continue;
+			}
+			int splitIndex = criticalVariable.getVarID().indexOf(".");
+			if (splitIndex < 0) {
+				continue;
+			}
+			String cascadeFieldName = rootVar.getVarName() + criticalVariable.getVarID().substring(splitIndex);
+			
+			question.append(isFirstVar ? "where\n`" : "`");
+			question.append(var.getVarName());
+			question.append("` refers to `");
+			question.append(cascadeFieldName);
+			question.append("`,\n");
+			isFirstVar = false;
+		}
+		
+		question.append("`" + rootVarName + "` has a field called `");
 		question.append(targetVarName);
 		question.append("`, does the code change the value of this field?"
 				+ "\nIn your response, return T for true and F for false. Do not include explanation.");

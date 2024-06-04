@@ -2,6 +2,7 @@ package microbat.tracerecov.executionsimulator;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,7 +29,7 @@ public class AliasInferenceUtils {
 		return ALIAS_INFERENCE_BACKGROUND;
 	}
 
-	public static String getQuestionContent(TraceNode step, VarValue rootVar) {
+	public static String getQuestionContent(TraceNode step, VarValue rootVar, List<VarValue> criticalVariables) {
 		/* source code */
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
@@ -46,10 +47,10 @@ public class AliasInferenceUtils {
 
 		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n```");
 		question.append(sourceCode);
-		question.append("```\n");
+		question.append("```");
 
 		for (VarValue var : variablesInStep) {
-			question.append("`");
+			question.append("\n`");
 			question.append(var.getVarName());
 			question.append("` is of type `");
 			question.append(var.getType());
@@ -58,12 +59,33 @@ public class AliasInferenceUtils {
 			question.append("\",");
 		}
 
-		question.append("We know that `");
+		question.append("\nWe know that `");
 		question.append(rootVarName);
 		question.append("` has the following structure:\n");
 		question.append(jsonString);
 		question.append("\n");
-		question.append("List all the fields that have the same memory address as variables other than`");
+		
+		boolean isFirstVar = true;
+		for (VarValue var : variablesInStep) {
+			VarValue criticalVariable = criticalVariables.stream().filter(v -> var.getAliasVarID().equals(v.getAliasVarID())).findFirst().orElse(null);
+			if (criticalVariable == null) {
+				continue;
+			}
+			int splitIndex = criticalVariable.getVarID().indexOf(".");
+			if (splitIndex < 0) {
+				continue;
+			}
+			String cascadeFieldName = rootVar.getVarName() + criticalVariable.getVarID().substring(splitIndex);
+			
+			question.append(isFirstVar ? "where\n`" : "`");
+			question.append(var.getVarName());
+			question.append("` refers to `");
+			question.append(cascadeFieldName);
+			question.append("`,\n");
+			isFirstVar = false;
+		}
+		
+		question.append("List all the fields that have the same memory address as variables other than `");
 		question.append(rootVarName);
 		question.append("`.\nIf a field is an element in an array, use “array_name[element_index]” as its name.\n"
 				+ "Your response should be a JSON with field_name as keys and variable_name as values, where "
@@ -119,7 +141,7 @@ public class AliasInferenceUtils {
 		field = rootVar.getAllDescedentChildren().stream().filter(child -> {
 			String childID = child.getVarID();
 			String cascadeFieldName = childID.substring(childID.indexOf("."));
-			return cascadeFieldName.contains(fName);
+			return cascadeFieldName.endsWith(fName);
 		}).findFirst().orElse(null);
 
 		return field;

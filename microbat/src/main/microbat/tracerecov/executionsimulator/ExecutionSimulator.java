@@ -59,12 +59,13 @@ public class ExecutionSimulator {
 	/**
 	 * Return a map with key: written_field, value: variable_on_trace
 	 */
-	public Map<VarValue, VarValue> inferenceAliasRelations(TraceNode step, VarValue rootVar) throws IOException {
+	public Map<VarValue, VarValue> inferenceAliasRelations(TraceNode step, VarValue rootVar, List<VarValue> criticalVariables) throws IOException {
+		System.out.println();
 		System.out.println("***Alias Inferencing***");
 		System.out.println();
 
 		String background = AliasInferenceUtils.getBackgroundContent();
-		String content = AliasInferenceUtils.getQuestionContent(step, rootVar);
+		String content = AliasInferenceUtils.getQuestionContent(step, rootVar, criticalVariables);
 		System.out.println(background);
 		System.out.println(content);
 
@@ -185,7 +186,7 @@ public class ExecutionSimulator {
 		}
 	}
 
-	public boolean inferDefinition(TraceNode step, VarValue parentVar, VarValue targetVar) {
+	public boolean inferDefinition(TraceNode step, VarValue parentVar, VarValue targetVar, List<VarValue> criticalVariables) {
 		
 		WriteStatus complication = null;
 		String targetFieldName = targetVar.getVarName();
@@ -208,7 +209,7 @@ public class ExecutionSimulator {
 		else {
 			boolean def = false;
 			try {
-				def = inferDefinitionByLLM(step, parentVar, targetVar);
+				def = inferDefinitionByLLM(step, parentVar, targetVar, criticalVariables);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -250,12 +251,13 @@ public class ExecutionSimulator {
 		return WriteStatus.NO_GUARANTEE;
 	}
 
-	private boolean inferDefinitionByLLM(TraceNode step, VarValue parentVar, VarValue targetVar) throws IOException {
+	private boolean inferDefinitionByLLM(TraceNode step, VarValue parentVar, VarValue targetVar, List<VarValue> criticalVariables) throws IOException {
+		System.out.println();
 		System.out.println("***Definition Inference***");
 		System.out.println();
 
 		String background = DefinitionInferenceUtils.getBackgroundContent();
-		String content = DefinitionInferenceUtils.getQuestionContent(step, parentVar, targetVar);
+		String content = DefinitionInferenceUtils.getQuestionContent(step, parentVar, targetVar, criticalVariables);
 		System.out.println(background);
 		System.out.println(content);
 

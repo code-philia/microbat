@@ -86,8 +86,7 @@ public class TraceRecoverer {
 				if (variablesInStep.size() > 1) {
 					try {
 						
-						// TODO: include relationship between variables
-						Map<VarValue, VarValue> fieldsWithAddressRecovered = inferAddress(rootVar, step);
+						Map<VarValue, VarValue> fieldsWithAddressRecovered = inferAddress(rootVar, step, criticalVariables);
 						for (VarValue writtenField : fieldsWithAddressRecovered.keySet()) {
 							
 							String writtenFieldID = writtenField.getVarID();
@@ -110,8 +109,7 @@ public class TraceRecoverer {
 				}
 				
 				// INFER DEFINITION STEP
-				// TODO: include relationship between variables
-				boolean def = parseDefiningStep(rootVar, targetVar, step);
+				boolean def = parseDefiningStep(rootVar, targetVar, step, criticalVariables);
 				if (def && !step.getWrittenVariables().contains(rootVar)) {
 					step.getWrittenVariables().add(rootVar);
 				}
@@ -218,12 +216,12 @@ public class TraceRecoverer {
 	/**
 	 * Return a map with key: written_field, value: variable_on_trace
 	 */
-	private Map<VarValue, VarValue> inferAddress(VarValue variable, TraceNode step) throws IOException {
-		return this.executionSimulator.inferenceAliasRelations(step, variable);
+	private Map<VarValue, VarValue> inferAddress(VarValue variable, TraceNode step, List<VarValue> criticalVariables) throws IOException {
+		return this.executionSimulator.inferenceAliasRelations(step, variable, criticalVariables);
 	}
 
-	private boolean parseDefiningStep(VarValue parentVar, VarValue targetVar, TraceNode step) {
-		return this.executionSimulator.inferDefinition(step, parentVar, targetVar);
+	private boolean parseDefiningStep(VarValue parentVar, VarValue targetVar, TraceNode step, List<VarValue> criticalVariables) {
+		return this.executionSimulator.inferDefinition(step, parentVar, targetVar, criticalVariables);
 	}
 
 	private List<VarValue> createQueue(VarValue targetVar, VarValue rootVar) {
