@@ -1,8 +1,8 @@
 package microbat.tracerecov.executionsimulator;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.json.JSONObject;
@@ -72,8 +72,11 @@ public class AliasInferenceUtils {
 		return question.toString();
 	}
 
-	public static Set<VarValue> processResponse(String response, VarValue rootVar, TraceNode step) {
-		Set<VarValue> fieldsWithAddressRecovered = new HashSet<>();
+	/**
+	 * Return a map with key: written_field, value: variable_on_trace
+	 */
+	public static Map<VarValue, VarValue> processResponse(String response, VarValue rootVar, TraceNode step) {
+		Map<VarValue, VarValue> fieldsWithAddressRecovered = new HashMap<>();
 
 		int begin = response.indexOf("{");
 		int end = response.lastIndexOf("}");
@@ -92,17 +95,12 @@ public class AliasInferenceUtils {
 			/* update memory address in rootVar */
 			VarValue variableOnTrace = variablesInStep.stream().filter(v -> v.getVarName().equals(variableName)).findFirst()
 					.orElse(null);
-			VarValue candidateVariable = searchForField(fieldName, rootVar);
-			if (variableOnTrace == null || candidateVariable == null) {
+			VarValue writtenField = searchForField(fieldName, rootVar);
+			if (variableOnTrace == null || writtenField == null) {
 				continue;
 			}
-			// TODO: if candidate variable exists, remove it from rootVar
-			VarValue child = variableOnTrace.clone();
-			child.setParents(new ArrayList<>());
-			child.clearValue();
-			rootVar.linkAchild(child);
 
-			fieldsWithAddressRecovered.add(child);
+			fieldsWithAddressRecovered.put(writtenField, variableOnTrace);
 		}
 
 		return fieldsWithAddressRecovered;

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import microbat.model.trace.Trace;
@@ -81,14 +82,28 @@ public class TraceRecoverer {
 			boolean isRelevantStep = variablesInStep.stream().anyMatch(v -> variablesToCheck.contains(v.getAliasVarID()));
 			if (isRelevantStep && step.isCallingAPI()) {
 				
-				// if there are some other variables, INFER ADDERSS
+				// INFER ADDERSS if there are some other variables
 				if (variablesInStep.size() > 1) {
 					try {
-						// add relevant fields to the set (to be checked later)
 						
 						// TODO: include relationship between variables
-						Set<String> fieldsWithAddressRecovered = inferAddress(rootVar, step);
-						variablesToCheck.addAll(fieldsWithAddressRecovered);
+						Map<VarValue, VarValue> fieldsWithAddressRecovered = inferAddress(rootVar, step);
+						for (VarValue writtenField : fieldsWithAddressRecovered.keySet()) {
+							
+							String writtenFieldID = writtenField.getVarID();
+							boolean isCriticalVariable = criticalVariables.stream()
+									.anyMatch(v -> v.getVarID().equals(writtenFieldID));
+							
+							if (isCriticalVariable) {
+								// add critical variable to the set (to be checked later)
+								VarValue variableOnTrace = fieldsWithAddressRecovered.get(writtenField);
+								String aliasIdOfLinkedVar = variableOnTrace.getAliasVarID();
+								variablesToCheck.add(aliasIdOfLinkedVar);
+								
+								// link address
+								writtenField.setAliasVarID(aliasIdOfLinkedVar);
+							}
+						}
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -200,13 +215,11 @@ public class TraceRecoverer {
 		return scopeStart;
 	}
 
-	private Set<String> inferAddress(VarValue variable, TraceNode step) throws IOException {
-		Set<VarValue> variables = this.executionSimulator.inferenceAliasRelations(step, variable);
-		Set<String> ids = new HashSet<>();
-		for (VarValue v : variables) {
-			ids.add(v.getAliasVarID());
-		}
-		return ids;
+	/**
+	 * Return a map with key: written_field, value: variable_on_trace
+	 */
+	private Map<VarValue, VarValue> inferAddress(VarValue variable, TraceNode step) throws IOException {
+		return this.executionSimulator.inferenceAliasRelations(step, variable);
 	}
 
 	private boolean parseDefiningStep(VarValue parentVar, VarValue targetVar, TraceNode step) {
@@ -230,7 +243,9 @@ public class TraceRecoverer {
 		}
 		
 		List<VarValue> list0 = new ArrayList<VarValue>();
-		for(int i=list.size()-1; i>=1; i--) {
+		// modified by hongshu
+		// Add target var to list: the address of target var should also be inferred
+		for(int i=list.size()-1; i>=0; i--) {
 			list0.add(list.get(i));
 		}
 		

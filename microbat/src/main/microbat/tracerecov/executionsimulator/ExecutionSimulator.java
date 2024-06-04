@@ -6,10 +6,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
-
+import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -57,7 +56,10 @@ public class ExecutionSimulator {
 		}
 	}
 
-	public Set<VarValue> inferenceAliasRelations(TraceNode step, VarValue rootVar) throws IOException {
+	/**
+	 * Return a map with key: written_field, value: variable_on_trace
+	 */
+	public Map<VarValue, VarValue> inferenceAliasRelations(TraceNode step, VarValue rootVar) throws IOException {
 		System.out.println("***Alias Inferencing***");
 		System.out.println();
 
@@ -76,7 +78,7 @@ public class ExecutionSimulator {
 			}
 		}
 		
-		return new HashSet<>();
+		return new HashMap<>();
 	}
 
 	// TODO: Not Used
