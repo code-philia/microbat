@@ -39,11 +39,12 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 		super.visitFieldInsn(opcode, owner, name, descriptor);
 
 		if (name.equals(this.fieldName) && isPutInstruction(opcode)) {
+			visitedTargetField = true;
+			
 			if (!reachedControlBranch) {
 				// field written before reaching control branch
 				guaranteeWrite = true;
 				guaranteeNoWrite = false;
-				visitedTargetField = true;
 			} else {
 				// TODO: field written after reaching control branch
 			}
@@ -101,9 +102,7 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 
 	public static boolean guaranteeNoWrite() {
 		// TODO: implement a more complex version for guaranteeNoWrite
-		if (!visitedTargetField) {
-			guaranteeNoWrite = true;
-		}
+		guaranteeNoWrite = !visitedTargetField;
 		return guaranteeNoWrite;
 	}
 }
