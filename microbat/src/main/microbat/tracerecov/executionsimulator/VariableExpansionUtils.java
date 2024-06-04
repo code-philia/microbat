@@ -16,6 +16,7 @@ import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.VariableOfInterest;
+import microbat.tracerecov.varexpansion.VarSkeletonBuilder;
 import microbat.tracerecov.varexpansion.VariableSkeleton;
 
 public class VariableExpansionUtils {
@@ -78,34 +79,38 @@ public class VariableExpansionUtils {
 
 	public static String getQuestionContent(VarValue selectedVariable, List<VariableSkeleton> variableSkeletons,
 			TraceNode step) {
+		
+		/* source code */
+		int lineNo = step.getLineNumber();
+		String location = step.getBreakPoint().getFullJavaFilePath();
+		String sourceCode = TraceRecovUtils.getSourceCode(location, lineNo).trim();
+		
+		/* type of selected variable */
+		String type = selectedVariable.getType();
+		// assume var layer == 1, then only elementArray will be recorded in ArrayList
+		if (!selectedVariable.getChildren().isEmpty()) {
+			VarValue child = selectedVariable.getChildren().get(0);
+			String childType = child.getType();
+			if (childType.contains("[]")) {
+				childType = childType.substring(0, childType.length() - 2); // remove [] at the end
+			}
+			type = type.concat("<" + childType + ">");
+		}
+		
 		StringBuilder question = new StringBuilder("<Question>\n"
 				+ "Given the following data structure:\n");
 
 		for (VariableSkeleton v : variableSkeletons) {
-			question.append(v.toString() + " ");
+			question.append(v.toString() + "\n");
 		}
 
 		question.append("with the input value of executing \"");
-		
-		int lineNo = step.getLineNumber();
-		String location = step.getBreakPoint().getFullJavaFilePath();
-		String sourceCode = TraceRecovUtils.getSourceCode(location, lineNo).trim();
 		question.append(sourceCode + "\", ");
 		question.append("we have the value of *" + selectedVariable.getVarName() + "* of type ");
-		
-		
-		//TODO to remove it if we have runtime variable type
-		String type = selectedVariable.getType();
-		if(type.equals("java.util.List")) {
-			type = "java.util.LinkedList";
-		}
-		
 		question.append(type);
-		
 		question.append(": \"");
 		question.append(selectedVariable.getStringValue());
 		question.append("\"");
-		
 		question.append(", strictly return in JSON format for *" + selectedVariable.getVarName()
 				+ "* as the above example, each key must has a value and a type. "
 				+ "The JSON object must start with variable *" + selectedVariable.getVarName() + "* as the root. Do not include explanation in your response.\n");
