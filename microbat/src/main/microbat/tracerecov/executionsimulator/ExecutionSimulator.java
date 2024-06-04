@@ -184,10 +184,12 @@ public class ExecutionSimulator {
 		
 		WriteStatus complication = estimateComplication(step, parentVar, targetVar);
 		
-		if(complication == WriteStatus.NO_GUARANTEE) {
+		if(complication == WriteStatus.GUARANTEE_WRITE) {
 			// TODO: difference between estimateComplication and inferDefinitionByProgramAnalysis?
-			boolean def = inferDefinitionByProgramAnalysis(step, parentVar, targetVar);
-			return def;
+			return true;
+		}
+		else if(complication == WriteStatus.GUARANTEE_NO_WRITE) {
+			return false;
 		}
 		else {
 			boolean def = false;
