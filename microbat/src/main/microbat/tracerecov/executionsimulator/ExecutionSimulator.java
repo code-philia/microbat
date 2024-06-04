@@ -180,8 +180,14 @@ public class ExecutionSimulator {
 
 	public boolean inferDefinition(TraceNode step, VarValue parentVar, VarValue targetVar) {
 		
-		
-		WriteStatus complication = estimateComplication(step, parentVar, targetVar);
+		WriteStatus complication = null;
+		String targetFieldName = targetVar.getVarName();
+		if (targetFieldName.contains("[") || targetFieldName.contains("]")) {
+			// always query LLM for elements in array
+			complication = WriteStatus.NO_GUARANTEE;
+		} else {
+			complication = estimateComplication(step, parentVar, targetVar);
+		}
 		
 		System.out.println(step.getInvokingMethod());
 		System.out.println(complication);
@@ -204,8 +210,6 @@ public class ExecutionSimulator {
 	}
 
 	/**
-	 * TODO Hongshu
-	 * 
 	 * we only care about deterministic flow
 	 * 
 	 * must-analysis
