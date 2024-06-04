@@ -142,11 +142,9 @@ public class LinkageEstimationUtils {
 			String varName1 = fields1[0];
 			String varName2 = fields2[0];
 
-			ArrayList<VarValue> stepVars = new ArrayList<>();
-			stepVars.addAll(step.getReadVariables());
-			stepVars.addAll(step.getWrittenVariables());
-			VarValue varValue1 = stepVars.stream().filter(v -> v.getVarName().equals(varName1)).findAny().orElse(null);
-			VarValue varValue2 = stepVars.stream().filter(v -> v.getVarName().equals(varName2)).findAny().orElse(null);
+			Set<VarValue> variablesInStep = step.getAllVariables();
+			VarValue varValue1 = variablesInStep.stream().filter(v -> v.getVarName().equals(varName1)).findAny().orElse(null);
+			VarValue varValue2 = variablesInStep.stream().filter(v -> v.getVarName().equals(varName2)).findAny().orElse(null);
 			if (varValue1 == null || varValue2 == null) {
 				continue;
 			}

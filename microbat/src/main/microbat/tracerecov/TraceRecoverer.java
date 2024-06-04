@@ -38,11 +38,8 @@ public class TraceRecoverer {
 	 */
 	public void recoverDataDependency(Trace trace, TraceNode currentStep, VarValue targetVar, VarValue rootVar) {
 		
-//		/**
-//		 * the first element is rootVar, and the last one is the direct parent of the targetVar. 
-//		 */
-//		List<VarValue> criticalVariables = createQueue(targetVar, rootVar);
-//		
+		
+
 //		for(VarValue criticalVar: criticalVariables) {
 //			
 //			if(criticalVar.getAliasVarID() == null || 
@@ -60,6 +57,10 @@ public class TraceRecoverer {
 //			}
 //		}
 		
+		/**
+		 * the first element is rootVar, and the last one is the direct parent of the targetVar. 
+		 */
+		List<VarValue> criticalVariables = createQueue(targetVar, rootVar);
 		
 		Set<String> variablesToCheck = new HashSet<>();
 		variablesToCheck.add(rootVar.getAliasVarID());
@@ -74,35 +75,30 @@ public class TraceRecoverer {
 		for (int i = start; i <= end; i++) {
 			TraceNode step = trace.getTraceNode(i);
 
-			List<VarValue> variables = new ArrayList<>();
-			variables.addAll(step.getReadVariables());
-			variables.addAll(step.getWrittenVariables());
+			Set<VarValue> variablesInStep = step.getAllVariables();
 			
 			// only check steps containing recovered fields in rootVar AND calling API
-			boolean isRelevantStep = variables.stream().anyMatch(v -> variablesToCheck.contains(v.getAliasVarID()));
+			boolean isRelevantStep = variablesInStep.stream().anyMatch(v -> variablesToCheck.contains(v.getAliasVarID()));
 			if (isRelevantStep && step.isCallingAPI()) {
+				
 				// if there are some other variables, INFER ADDERSS
-				if (variables.size() > 1) {
+				if (variablesInStep.size() > 1) {
 					try {
 						// add relevant fields to the set (to be checked later)
-						// TODO: change rootVar to be variable at this step
+						
+						// TODO: include relationship between variables
 						Set<String> fieldsWithAddressRecovered = inferAddress(rootVar, step);
 						variablesToCheck.addAll(fieldsWithAddressRecovered);
-						
-						// TODO: expand field with recovered address via LLM
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}
 				
 				// INFER DEFINITION STEP
-				if (step.isCallingAPI()) {
-					// TODO: change rootVar to be variable at this step
-					// TODO: include relationship between variables
-					boolean def = parseDefiningStep(rootVar, targetVar, step);
-					if (def && !step.getWrittenVariables().contains(rootVar)) {
-							step.getWrittenVariables().add(rootVar);
-					}
+				// TODO: include relationship between variables
+				boolean def = parseDefiningStep(rootVar, targetVar, step);
+				if (def && !step.getWrittenVariables().contains(rootVar)) {
+					step.getWrittenVariables().add(rootVar);
 				}
 				
 			}

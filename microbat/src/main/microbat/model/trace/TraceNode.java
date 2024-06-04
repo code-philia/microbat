@@ -597,6 +597,13 @@ public class TraceNode implements Comparator<TraceNode> {
 	public void addWrittenVariable(VarValue var){
 		this.writtenVariables.add(var);
 	}
+	
+	public Set<VarValue> getAllVariables() {
+		Set<VarValue> variablesInStep = new HashSet<>();
+		variablesInStep.addAll(this.getReadVariables());
+		variablesInStep.addAll(this.getWrittenVariables());
+		return variablesInStep;
+	}
 
 	public Double getSuspicousScore(AttributionVar var) {
 		return this.suspicousScoreMap.get(var);

@@ -6,6 +6,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
+ * This class records the full structure of variable of interest.
+ * 
  * @author hongshuwang
  */
 public class VariableOfInterest {

@@ -35,9 +35,7 @@ public class AliasInferenceUtils {
 		String sourceCode = TraceRecovUtils.getSourceCode(location, lineNo).trim();
 
 		/* all variables */
-		Set<VarValue> variables = new HashSet<>();
-		variables.addAll(step.getReadVariables());
-		variables.addAll(step.getWrittenVariables());
+		Set<VarValue> variablesInStep = step.getAllVariables();
 
 		/* variable properties */
 		String rootVarName = rootVar.getVarName();
@@ -50,7 +48,7 @@ public class AliasInferenceUtils {
 		question.append(sourceCode);
 		question.append("```\n");
 
-		for (VarValue var : variables) {
+		for (VarValue var : variablesInStep) {
 			question.append("`");
 			question.append(var.getVarName());
 			question.append("` is of type `");
@@ -89,12 +87,10 @@ public class AliasInferenceUtils {
 			String variableName = (String) inferences.getString(fieldName);
 
 			/* all variables */
-			Set<VarValue> variables = new HashSet<>();
-			variables.addAll(step.getReadVariables());
-			variables.addAll(step.getWrittenVariables());
+			Set<VarValue> variablesInStep = step.getAllVariables();
 
 			/* update memory address in rootVar */
-			VarValue variableOnTrace = variables.stream().filter(v -> v.getVarName().equals(variableName)).findFirst()
+			VarValue variableOnTrace = variablesInStep.stream().filter(v -> v.getVarName().equals(variableName)).findFirst()
 					.orElse(null);
 			VarValue candidateVariable = searchForField(fieldName, rootVar);
 			if (variableOnTrace == null || candidateVariable == null) {
