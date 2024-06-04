@@ -6,7 +6,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -55,23 +57,26 @@ public class ExecutionSimulator {
 		}
 	}
 
-	public void inferenceAliasRelations(TraceNode step, VarValue rootVar) throws IOException {
+	public Set<VarValue> inferenceAliasRelations(TraceNode step, VarValue rootVar) throws IOException {
 		System.out.println("***Alias Inferencing***");
 		System.out.println();
 
+		String background = AliasInferenceUtils.getBackgroundContent();
 		String content = AliasInferenceUtils.getQuestionContent(step, rootVar);
+		System.out.println(background);
 		System.out.println(content);
 
 		for (int i = 0; i < 2; i++) {
 			try {
 				String response = sendRequest(null, content);
 				System.out.println(i + "th try with GPT to generate response as " + response);
-				AliasInferenceUtils.processResponse(response, rootVar, step);
-				break;
+				return AliasInferenceUtils.processResponse(response, rootVar, step);
 			} catch (org.json.JSONException e) {
 				e.printStackTrace();
 			}
 		}
+		
+		return new HashSet<>();
 	}
 
 	// TODO: Not Used

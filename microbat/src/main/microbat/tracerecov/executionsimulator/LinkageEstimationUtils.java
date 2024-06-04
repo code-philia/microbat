@@ -13,6 +13,7 @@ import microbat.tracerecov.varexpansion.VarSkeletonBuilder;
 import microbat.tracerecov.varexpansion.VariableSkeleton;
 
 /**
+ * Not Used
  * @author hongshuwang
  */
 public class LinkageEstimationUtils {

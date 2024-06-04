@@ -550,4 +550,11 @@ public abstract class VarValue implements GraphNode, Serializable {
 		this.suspiciousness = suspiciousness;
 	}
 	
+	public void clearValue() {
+		this.stringValue = "";
+		for (VarValue child : this.children) {
+			child.clearValue();
+		}
+	}
+	
 }

@@ -1,7 +1,10 @@
 package microbat.tracerecov;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
@@ -35,28 +38,29 @@ public class TraceRecoverer {
 	 */
 	public void recoverDataDependency(Trace trace, TraceNode currentStep, VarValue targetVar, VarValue rootVar) {
 		
+//		/**
+//		 * the first element is rootVar, and the last one is the direct parent of the targetVar. 
+//		 */
+//		List<VarValue> criticalVariables = createQueue(targetVar, rootVar);
+//		
+//		for(VarValue criticalVar: criticalVariables) {
+//			
+//			if(criticalVar.getAliasVarID() == null || 
+//					criticalVar.getAliasVarID().equals("") || 
+//					criticalVar.getAliasVarID().equals("0")) {
+////				 inferAddress(rootVar, trace, currentStep);
+//			}
+//			
+//			List<TraceNode> definitingSteps = parseDefiningStep(criticalVar, targetVar, trace, currentStep);
+//			
+//			for(TraceNode step: definitingSteps) {
+//				if(!step.getWrittenVariables().contains(criticalVar)) {
+//					step.getWrittenVariables().add(criticalVar);
+//				}
+//			}
+//		}
 		
-		/**
-		 * the first element is rootVar, and the last one is the direct parent of the targetVar. 
-		 */
-		List<VarValue> criticalVariables = createQueue(targetVar, rootVar);
-		
-		for(VarValue criticalVar: criticalVariables) {
-			
-			if(criticalVar.getAliasVarID() == null || 
-					criticalVar.getAliasVarID().equals("") || 
-					criticalVar.getAliasVarID().equals("0")) {
-				inferAddress(trace, rootVar, criticalVar);
-			}
-			
-			List<TraceNode> definitingSteps = parseDefiningStep(criticalVar, targetVar, trace, currentStep);
-			
-			for(TraceNode step: definitingSteps) {
-				if(!step.getWrittenVariables().contains(criticalVar)) {
-					step.getWrittenVariables().add(criticalVar);
-				}
-			}
-		}
+		inferAddress(rootVar, trace, currentStep);
 		
 		
 //		System.out.println("***Relevant Steps***");
@@ -137,16 +141,8 @@ public class TraceRecoverer {
 //		}
 
 	}
-
-	private void inferAddress(Trace trace, VarValue rootVar, VarValue criticalVar) {
-		// TODO Auto-generated method stub
-		System.currentTimeMillis();
-	}
-
-	private List<TraceNode> parseDefiningStep(VarValue parentVar, VarValue targetVar, Trace trace, TraceNode currentStep) {
-		
-		List<TraceNode> definingSteps = new ArrayList<TraceNode>();
-		
+	
+	private TraceNode determineScopeOfSearching(VarValue parentVar, Trace trace, TraceNode currentStep) {
 		// search for data dominator of parentVar (skip return steps TODO: test more scenarios)
 		VarValue lastWrittenVariable = null;
 		TraceNode scopeStart = currentStep;
@@ -155,17 +151,57 @@ public class TraceRecoverer {
 			if(scopeStart == null) {
 				break;
 			}
-			
-			lastWrittenVariable = scopeStart.getWrittenVariables().stream()
-					.filter(v -> v.getVarName() != null && !v.getVarName().contains("#")).findFirst().orElse(null);
-		}
 		
+			lastWrittenVariable = scopeStart.getWrittenVariables().stream().filter(v -> v.getVarName() != null && !v.getVarName().contains("#")).findFirst().orElse(null);
+		}
+		return scopeStart;
+	}
+
+	private void inferAddress(VarValue rootVar, Trace trace, TraceNode currentStep) {
+		// set of variables
+		// initially contains rootVar only
+		Set<VarValue> variablesToCheck = new HashSet<>();
+		variablesToCheck.add(rootVar);
+		
+		// determine scope of searching
+		TraceNode scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
+		if(scopeStart == null) return;
+		int start = scopeStart.getOrder();
+		int end = currentStep.getOrder();
+
+		// iterate through steps in scope, infer address and add relevant variables to the set
+		for (int i = start; i <= end; i++) {
+			TraceNode step = trace.getTraceNode(i);
+
+			List<VarValue> variables = new ArrayList<>();
+			variables.addAll(step.getReadVariables());
+			variables.addAll(step.getWrittenVariables());
+			
+			boolean isRelevantStep = variables.stream().anyMatch(v -> variablesToCheck.contains(v));
+			if (isRelevantStep && variables.size() > 1) {
+				try {
+					// add relevant fields to the set (to be checked later)
+					Set<VarValue> fieldsWithAddressRecovered = this.executionSimulator
+							.inferenceAliasRelations(step, rootVar);
+					variablesToCheck.addAll(fieldsWithAddressRecovered);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	private List<TraceNode> parseDefiningStep(VarValue parentVar, VarValue targetVar, Trace trace, TraceNode currentStep) {
+		
+		List<TraceNode> definingSteps = new ArrayList<TraceNode>();
+		
+		TraceNode scopeStart = determineScopeOfSearching(parentVar, trace, currentStep);
 		if(scopeStart == null) return definingSteps;
 
 		int start = scopeStart.getOrder();
 		int end = currentStep.getOrder();
 
-		/* build variable graph */
+		/* find defining steps */
 		for (int i = start; i <= end; i++) {
 			TraceNode step = trace.getTraceNode(i);
 
