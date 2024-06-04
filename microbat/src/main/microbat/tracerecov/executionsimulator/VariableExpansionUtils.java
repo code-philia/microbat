@@ -187,16 +187,16 @@ public class VariableExpansionUtils {
 	
 	private static void processResponseRecur(JSONArray jsonArray, VarValue selectedVariable) {
 		int index = 0;
-		List<Object> values = jsonArray.toList();
+		Iterator<Object> iterator = jsonArray.iterator();
 		
-		for (Object value : values) {
+		while (iterator.hasNext()) {
+			Object value = iterator.next();
+			
 			String varName = selectedVariable.getVarName().concat("[" + index + "]");
 			String varType = "";
 			
 			String headAddress = selectedVariable.getAliasVarID().equals("0") ? selectedVariable.getVarID() : selectedVariable.getAliasVarID();
 			String varID = Variable.concanateFieldVarID(headAddress, varName);
-			
-//			String varID = Variable.concanateFieldVarID(selectedVariable.getAliasVarID(), varName);
 			
 			Variable var = new FieldVar(false, varName, varType, varType);
 			var.setVarID(varID);
