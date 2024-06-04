@@ -147,6 +147,7 @@ public class TraceRecoverer {
 		
 		List<TraceNode> definingSteps = new ArrayList<TraceNode>();
 		
+		// search for data dominator of parentVar (skip return steps TODO: test more scenarios)
 		VarValue lastWrittenVariable = null;
 		TraceNode scopeStart = currentStep;
 		while (lastWrittenVariable == null) {

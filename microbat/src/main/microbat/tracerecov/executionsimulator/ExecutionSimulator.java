@@ -13,8 +13,9 @@ import org.json.JSONObject;
 
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
-import microbat.tracerecov.VariableGraph;
-import microbat.tracerecov.candidatevar.CandidateVarRetriever;
+import microbat.tracerecov.candidatevar.CandidateVarVerificationException;
+import microbat.tracerecov.candidatevar.CandidateVarVerifier;
+import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
 import microbat.tracerecov.varexpansion.VariableSkeleton;
 
 /**
@@ -178,9 +179,10 @@ public class ExecutionSimulator {
 	public boolean inferDefinition(TraceNode step, VarValue parentVar, VarValue targetVar) {
 		
 		
-		boolean complication = estimateComplication(step, parentVar, targetVar);
+		WriteStatus complication = estimateComplication(step, parentVar, targetVar);
 		
-		if(!complication) {
+		if(complication == WriteStatus.NO_GUARANTEE) {
+			// TODO: difference between estimateComplication and inferDefinitionByProgramAnalysis?
 			boolean def = inferDefinitionByProgramAnalysis(step, parentVar, targetVar);
 			return def;
 		}
@@ -193,26 +195,42 @@ public class ExecutionSimulator {
 			}
 			return def;
 		}
-		
-		
 	}
 
-	private boolean estimateComplication(TraceNode step, VarValue parentVar, VarValue targetVar) {
-		/**
-		 * TODO Hongshu
-		 * 
-		 * we only care about deterministic flow
-		 * 
-		 * must-analysis
-		 * 
-		 * guranratee write: 1. 2.
-		 * 
-		 * guranratee no-write 1. 2
-		 * 
-		 */
+	/**
+	 * TODO Hongshu
+	 * 
+	 * we only care about deterministic flow
+	 * 
+	 * must-analysis
+	 * 
+	 * guranratee write: 1. 2.
+	 * 
+	 * guranratee no-write 1. 2
+	 * 
+	 */
+	private WriteStatus estimateComplication(TraceNode step, VarValue parentVar, VarValue targetVar) {
 		
+		String[] invokingMethods = step.getInvokingMethod().split("%");
 		
-		return false;
+		for (String methodSig : invokingMethods) {
+			if (!methodSig.contains("#")) {
+				continue;
+			}
+			CandidateVarVerifier candidateVarVerifier;
+			try {
+				candidateVarVerifier = new CandidateVarVerifier(parentVar.getType());
+				// TODO: change to field name with path
+				WriteStatus writeStatus = candidateVarVerifier.verifyCandidateVariable(methodSig, targetVar.getVarName());
+				if (writeStatus != WriteStatus.NO_GUARANTEE) {
+					return writeStatus;
+				}
+			} catch (CandidateVarVerificationException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return WriteStatus.NO_GUARANTEE;
 	}
 
 	private boolean inferDefinitionByLLM(TraceNode step, VarValue parentVar, VarValue targetVar) throws IOException {
@@ -239,20 +257,6 @@ public class ExecutionSimulator {
 	}
 
 	private boolean inferDefinitionByProgramAnalysis(TraceNode step, VarValue parentVar, VarValue targetVar) {
-		String parentType = parentVar.getType();
-		String[] invokingMethods = step.getInvokingMethod().split("%");
-		// check each invoking method whose invoking object 
-		// has the same type as the parentVar
-		for (String methodSig : invokingMethods) {
-			if (!parentType.equals(methodSig.split("#")[0])) {
-				continue;
-			}
-			boolean checkByteCodeDefinition = CandidateVarRetriever
-					.getCandidateVariables(methodSig).contains(targetVar.getVarName());
-			if(checkByteCodeDefinition) {
-				return true;
-			}
-		}
 		
 		return false;
 	}

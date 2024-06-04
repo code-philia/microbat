@@ -12,12 +12,17 @@ import microbat.tracerecov.AbstractClassVisitor;
  */
 public class CandidateVarClassVisitor extends AbstractClassVisitor {
 
-	public CandidateVarClassVisitor(String className, String methodName, String methodDescriptor) {
+	private String fieldName;
+
+	public CandidateVarClassVisitor(String className, String methodName, String methodDescriptor, String fieldName) {
 		super(className, methodName, methodDescriptor);
+		this.fieldName = fieldName;
 	}
 
-	public CandidateVarClassVisitor(String className, String methodName, String methodDescriptor, boolean reset) {
+	public CandidateVarClassVisitor(String className, String methodName, String methodDescriptor, String fieldName,
+			boolean reset) {
 		super(className, methodName, methodDescriptor, reset);
+		this.fieldName = fieldName;
 	}
 
 	/**
@@ -41,7 +46,7 @@ public class CandidateVarClassVisitor extends AbstractClassVisitor {
 			if (reset) {
 				CandidateVarMethodVisitor.reset();
 			}
-			return new CandidateVarMethodVisitor(classesOfInterest);
+			return new CandidateVarMethodVisitor(classesOfInterest, fieldName);
 		}
 		return null;
 	}
