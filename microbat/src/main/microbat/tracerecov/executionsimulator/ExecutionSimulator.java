@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -184,8 +183,10 @@ public class ExecutionSimulator {
 		
 		WriteStatus complication = estimateComplication(step, parentVar, targetVar);
 		
+		System.out.println(step.getInvokingMethod());
+		System.out.println(complication);
+		
 		if(complication == WriteStatus.GUARANTEE_WRITE) {
-			// TODO: difference between estimateComplication and inferDefinitionByProgramAnalysis?
 			return true;
 		}
 		else if(complication == WriteStatus.GUARANTEE_NO_WRITE) {
@@ -239,11 +240,11 @@ public class ExecutionSimulator {
 	}
 
 	private boolean inferDefinitionByLLM(TraceNode step, VarValue parentVar, VarValue targetVar) throws IOException {
-		System.out.println("***Variable Expansion***");
+		System.out.println("***Definition Inference***");
 		System.out.println();
 
 		String background = DefinitionInferenceUtils.getBackgroundContent();
-		String content = DefinitionInferenceUtils.getQuestionContent(step);
+		String content = DefinitionInferenceUtils.getQuestionContent(step, parentVar, targetVar);
 		System.out.println(background);
 		System.out.println(content);
 
@@ -251,17 +252,11 @@ public class ExecutionSimulator {
 			try {
 				String response = sendRequest(background, content);
 				System.out.println(i + "th try with GPT to generate response as " + response);
-				DefinitionInferenceUtils.processResponse(targetVar, response);
-				break;
+				return DefinitionInferenceUtils.isModified(response);
 			} catch (org.json.JSONException e) {
 				e.printStackTrace();
 			}
 		}
-		
-		return false;
-	}
-
-	private boolean inferDefinitionByProgramAnalysis(TraceNode step, VarValue parentVar, VarValue targetVar) {
 		
 		return false;
 	}

@@ -64,10 +64,6 @@ public class CandidateVarVerifier {
 		boolean guaranteeWrite = CandidateVarMethodVisitor.guaranteeWrite();
 		boolean guaranteeNoWrite = CandidateVarMethodVisitor.guaranteeNoWrite();
 
-		System.out.println();
-		System.out.println(methodName);
-		System.out.println(guaranteeWrite);
-
 		return guaranteeWrite ? WriteStatus.GUARANTEE_WRITE
 				: guaranteeNoWrite ? WriteStatus.GUARANTEE_NO_WRITE : WriteStatus.NO_GUARANTEE;
 	}
