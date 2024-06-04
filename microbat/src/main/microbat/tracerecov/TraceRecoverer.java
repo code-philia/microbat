@@ -60,7 +60,54 @@ public class TraceRecoverer {
 //			}
 //		}
 		
-		inferAddress(rootVar, trace, currentStep);
+		
+		Set<String> variablesToCheck = new HashSet<>();
+		variablesToCheck.add(rootVar.getAliasVarID());
+		
+		// determine scope of searching
+		TraceNode scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
+		if(scopeStart == null) return;
+		int start = scopeStart.getOrder();
+		int end = currentStep.getOrder();
+		
+		// iterate through steps in scope, infer address and add relevant variables to the set
+		for (int i = start; i <= end; i++) {
+			TraceNode step = trace.getTraceNode(i);
+
+			List<VarValue> variables = new ArrayList<>();
+			variables.addAll(step.getReadVariables());
+			variables.addAll(step.getWrittenVariables());
+			
+			// only check steps containing recovered fields in rootVar AND calling API
+			boolean isRelevantStep = variables.stream().anyMatch(v -> variablesToCheck.contains(v.getAliasVarID()));
+			if (isRelevantStep && step.isCallingAPI()) {
+				// if there are some other variables, INFER ADDERSS
+				if (variables.size() > 1) {
+					try {
+						// add relevant fields to the set (to be checked later)
+						// TODO: change rootVar to be variable at this step
+						Set<String> fieldsWithAddressRecovered = inferAddress(rootVar, step);
+						variablesToCheck.addAll(fieldsWithAddressRecovered);
+						
+						// TODO: expand field with recovered address via LLM
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				
+				// INFER DEFINITION STEP
+				if (step.isCallingAPI()) {
+					// TODO: change rootVar to be variable at this step
+					// TODO: include relationship between variables
+					boolean def = parseDefiningStep(rootVar, targetVar, step);
+					if (def && !step.getWrittenVariables().contains(rootVar)) {
+							step.getWrittenVariables().add(rootVar);
+					}
+				}
+				
+			}
+		}
+		
 		
 		
 //		System.out.println("***Relevant Steps***");
@@ -115,9 +162,9 @@ public class TraceRecoverer {
 //		return null;
 		
 
-		/**
-		 * we might start with the root variable
-		 */
+//		/**
+//		 * we might start with the root variable
+//		 */
 //		for (VarValue parent : parents) {
 //			List<TraceNode> candidateSteps = parseCandidateReadingSteps(trace, parent);
 //			for (TraceNode step : candidateSteps) {
@@ -157,92 +204,17 @@ public class TraceRecoverer {
 		return scopeStart;
 	}
 
-	private void inferAddress(VarValue rootVar, Trace trace, TraceNode currentStep) {
-		// set of variables
-		// initially contains rootVar only
-		Set<VarValue> variablesToCheck = new HashSet<>();
-		variablesToCheck.add(rootVar);
-		
-		// determine scope of searching
-		TraceNode scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
-		if(scopeStart == null) return;
-		int start = scopeStart.getOrder();
-		int end = currentStep.getOrder();
-
-		// iterate through steps in scope, infer address and add relevant variables to the set
-		for (int i = start; i <= end; i++) {
-			TraceNode step = trace.getTraceNode(i);
-
-			List<VarValue> variables = new ArrayList<>();
-			variables.addAll(step.getReadVariables());
-			variables.addAll(step.getWrittenVariables());
-			
-			boolean isRelevantStep = variables.stream().anyMatch(v -> variablesToCheck.contains(v));
-			if (isRelevantStep && variables.size() > 1) {
-				try {
-					// add relevant fields to the set (to be checked later)
-					Set<VarValue> fieldsWithAddressRecovered = this.executionSimulator
-							.inferenceAliasRelations(step, rootVar);
-					variablesToCheck.addAll(fieldsWithAddressRecovered);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
+	private Set<String> inferAddress(VarValue variable, TraceNode step) throws IOException {
+		Set<VarValue> variables = this.executionSimulator.inferenceAliasRelations(step, variable);
+		Set<String> ids = new HashSet<>();
+		for (VarValue v : variables) {
+			ids.add(v.getAliasVarID());
 		}
+		return ids;
 	}
 
-	private List<TraceNode> parseDefiningStep(VarValue parentVar, VarValue targetVar, Trace trace, TraceNode currentStep) {
-		
-		List<TraceNode> definingSteps = new ArrayList<TraceNode>();
-		
-		TraceNode scopeStart = determineScopeOfSearching(parentVar, trace, currentStep);
-		if(scopeStart == null) return definingSteps;
-
-		int start = scopeStart.getOrder();
-		int end = currentStep.getOrder();
-
-		/* find defining steps */
-		for (int i = start; i <= end; i++) {
-			TraceNode step = trace.getTraceNode(i);
-
-			List<VarValue> variables = new ArrayList<>();
-			variables.addAll(step.getReadVariables());
-			variables.addAll(step.getWrittenVariables());
-
-			/**
-			 * if {@code step} has a written/read variable equal to {@code parentVar}
-			 */
-//			VarValue var = variables.stream().filter(v -> variables.contains(v).findAny().orElse(null);
-			if (variables.contains(parentVar)) {
-				
-				if(step.isCallingAPI()) {
-					
-					boolean def = this.executionSimulator.inferDefinition(step, parentVar, targetVar);
-					if(def) {
-						definingSteps.add(step);
-					}
-					
-//					this.executionSimulator.inferenceAliasRelations(step, parentVar);
-				}
-				
-				
-//				/* relevant steps identification */
-//				VariableGraph.addRelevantStep(step);
-//
-//				/* alias inferencing */
-//				List<String> validAddresses = variables.stream().map(v -> v.getAliasVarID()).toList();
-//				Set<String> validAddressSet = new HashSet<>(validAddresses);
-//				if (VariableGraph.isStepToConsider(step) && validAddressSet.size() > 1) {
-//					try {
-//						this.executionSimulator.inferenceAliasRelations(step, rootVar);
-//					} catch (IOException e) {
-//						e.printStackTrace();
-//					}
-//				}
-			} 
-		}
-
-		return definingSteps;
+	private boolean parseDefiningStep(VarValue parentVar, VarValue targetVar, TraceNode step) {
+		return this.executionSimulator.inferDefinition(step, parentVar, targetVar);
 	}
 
 	private List<VarValue> createQueue(VarValue targetVar, VarValue rootVar) {
