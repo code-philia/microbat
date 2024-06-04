@@ -155,9 +155,23 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			if(value != null) {
 				var.setType(value.getClass().getTypeName());				
 			}
+			
 			/* array */
 			ArrayValue arrVal = new ArrayValue(value == null, isRoot, var);
-			arrVal.setComponentType(var.getType().substring(0, var.getType().length() - 2)); // 2 = "[]".length
+			
+			// get component type (author: hongshu)
+			// TODO: get the closest common parent for all items
+			String componentType = var.getType().substring(0, var.getType().length() - 2); // 2 = "[]".length
+			Object[] array = (Object[]) value;
+			for (Object item : array) {
+				if (item != null) {
+					componentType = item.getClass().getTypeName();
+					break;
+				}
+			}
+			arrVal.setComponentType(componentType);
+			var.setType(componentType + "[]");
+			
 			varValue = arrVal;
 			// varValue.setStringValue(getStringValue(value, arrVal.getComponentType()));
 			varValue.setStringValue(getStringValue(value, var.getType()));
@@ -181,7 +195,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			}
 		} else {
 			if(value != null) {
-				var.setType(value.getClass().getTypeName());				
+				var.setType(value.getClass().getTypeName());
 			}
 			ReferenceValue refVal = new ReferenceValue(value == null, TraceUtils.getUniqueId(value), isRoot, var);
 			varValue = refVal;
