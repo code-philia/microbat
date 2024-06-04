@@ -19,6 +19,7 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 	private static boolean guaranteeNoWrite = false;
 	private static Set<String> visitedMethods = new HashSet<>();
 	private static boolean reachedControlBranch = false;
+	private static boolean visitedTargetField = false;
 
 	private String fieldName;
 	private Set<String> classesOfInterest;
@@ -38,6 +39,8 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 		super.visitFieldInsn(opcode, owner, name, descriptor);
 
 		if (name.equals(this.fieldName) && isPutInstruction(opcode)) {
+			visitedTargetField = true;
+			
 			if (!reachedControlBranch) {
 				// field written before reaching control branch
 				guaranteeWrite = true;
@@ -90,6 +93,7 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 		guaranteeNoWrite = false;
 		visitedMethods = new HashSet<>();
 		reachedControlBranch = false;
+		visitedTargetField = false;
 	}
 
 	public static boolean guaranteeWrite() {
@@ -97,6 +101,8 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 	}
 
 	public static boolean guaranteeNoWrite() {
+		// TODO: implement a more complex version for guaranteeNoWrite
+		guaranteeNoWrite = !visitedTargetField;
 		return guaranteeNoWrite;
 	}
 }

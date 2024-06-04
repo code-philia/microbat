@@ -12,8 +12,10 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import microbat.Activator;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
+import microbat.preference.MicrobatPreference;
 import microbat.tracerecov.candidatevar.CandidateVarVerificationException;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
@@ -27,7 +29,7 @@ import microbat.tracerecov.varexpansion.VariableSkeleton;
  */
 public class ExecutionSimulator {
 
-	private static String apiKey = "";
+	private static String apiKey = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.API_KEY);
 
 	public ExecutionSimulator() {
 	}
