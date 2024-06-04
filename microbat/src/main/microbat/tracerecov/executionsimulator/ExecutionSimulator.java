@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -204,9 +205,9 @@ public class ExecutionSimulator {
 	 * 
 	 * must-analysis
 	 * 
-	 * guranratee write: 1. 2.
+	 * guarantee write: 1. 2.
 	 * 
-	 * guranratee no-write 1. 2
+	 * guarantee no-write 1. 2
 	 * 
 	 */
 	private WriteStatus estimateComplication(TraceNode step, VarValue parentVar, VarValue targetVar) {
