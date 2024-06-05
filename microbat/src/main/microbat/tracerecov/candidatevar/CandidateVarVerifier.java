@@ -23,7 +23,7 @@ public class CandidateVarVerifier {
 
 	public CandidateVarVerifier(String className) throws CandidateVarVerificationException {
 		if (!TraceRecovUtils.shouldBeChecked(className)) {
-			throw new CandidateVarVerificationException("class:" + className + "shouldn't be checked");
+			throw new CandidateVarVerificationException("class:" + className + " shouldn't be checked");
 		}
 		this.className = className;
 		this.classReader = this.loadClass(className);
