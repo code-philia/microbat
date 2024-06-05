@@ -162,14 +162,17 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			// get component type (author: hongshu)
 			// TODO: get the closest common parent for all items
 			String componentType = var.getType().substring(0, var.getType().length() - 2); // 2 = "[]".length
-			Object[] array = (Object[]) value;
-			for (Object item : array) {
-				if (item != null) {
-					componentType = item.getClass().getTypeName();
-					break;
+			if (componentType.equals("java.lang.Object")) {
+				Object[] array = (Object[]) value;
+				for (Object item : array) {
+					if (item != null) {
+						componentType = item.getClass().getTypeName();
+						break;
+					}
 				}
+				arrVal.setComponentType(componentType);
 			}
-			arrVal.setComponentType(componentType);
+			
 			var.setType(componentType + "[]");
 			
 			varValue = arrVal;
