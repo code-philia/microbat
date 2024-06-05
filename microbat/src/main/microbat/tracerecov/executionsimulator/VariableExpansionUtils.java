@@ -115,7 +115,7 @@ public class VariableExpansionUtils {
 				+ "* as the above example, each key must has a value and a type. "
 				+ "The JSON object must start with variable *" + selectedVariable.getVarName() + "* as the root. Do not include explanation in your response.\n");
 		
-		question.append("You must follow the JSON format as \"var_name:var_type\": var_value. ");
+		question.append("You must follow the JSON format as \"var_name:var_type\": var_value. Do not include duplicate keys.");
 
 		return question.toString();
 	}
