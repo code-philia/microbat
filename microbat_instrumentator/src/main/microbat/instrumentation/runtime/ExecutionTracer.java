@@ -11,6 +11,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.LocalVariable;
@@ -313,7 +315,123 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				}
 			}
 			else {
-				value = String.valueOf(obj);// obj.toString();				
+				value = String.valueOf(obj);// obj.toString();	
+				
+				if(isClassNameAndObjectId(value)) {
+					value = parseFields(obj);
+				}
+			}
+			
+			long t2 = System.currentTimeMillis();
+			if(t2-t1 > 1000) {
+				stringValueBlackList.add(obj.getClass());
+			}
+			
+			return value;
+		} catch (Throwable t) {
+			return null;
+		}
+	}
+	
+	private String parseFields(Object obj) {
+		
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("{");
+		
+		// Get the class of the object
+        Class<?> objClass = obj.getClass();
+
+        // Iterate through all fields of the class, including private fields
+        while (objClass != null) {
+            Field[] fields = objClass.getDeclaredFields();
+            for (Field field : fields) {
+                field.setAccessible(true); // Make private fields accessible
+                
+                buffer.append(field.getName() + "=");
+                
+                try {
+                    // Get and print the value of the field
+                    Object value = field.get(obj);
+                    
+                    String valString = getStringValue(value);
+                    
+                    buffer.append(valString + ", ");
+                    
+                } catch (IllegalAccessException e) {
+                    System.out.println("Unable to access field: " + field.getName());
+                }
+            }
+            objClass = objClass.getSuperclass();
+        }
+        
+        
+        buffer.append("}");
+        
+        return buffer.toString();
+	}
+	
+	
+	private String getStringValue(final Object obj) {
+		try {
+			if (obj == null) {
+				return "null";
+			}
+
+			// if (FilterChecker.isCustomizedToStringClass(obj.getClass().getName())) {
+			// java.lang.reflect.Method toStringMethod = null;
+			// for (java.lang.reflect.Method method : obj.getClass().getDeclaredMethods()) {
+			// if (method.getName().equals(TraceInstrumenter.NEW_TO_STRING_METHOD)) {
+			// toStringMethod = method;
+			// break;
+			// }
+			// }
+			// if (toStringMethod != null) {
+			// return (String) toStringMethod.invoke(obj);
+			// }
+			// }
+
+			if (avoidProxyToString && isProxyClass(obj.getClass())) {
+				return obj.getClass().getName();
+			}
+
+			if(stringValueBlackList.contains(obj.getClass())) {
+				return "$unknown (estimated as too cost to have its value)";
+			}
+			
+			long t1 = System.currentTimeMillis();
+			String value = "";
+			
+			if (obj != null && obj.getClass().isArray()) {
+				
+				if(obj instanceof int[]) {
+					value = Arrays.toString((int[])(obj));
+				}
+				else if(obj instanceof double[]) {
+					value = Arrays.toString((double[])(obj));
+				}
+				else if(obj instanceof short[]) {
+					value = Arrays.toString((short[])(obj));
+				}
+				else if(obj instanceof long[]) {
+					value = Arrays.toString((long[])(obj));			}
+				else if(obj instanceof char[]) {
+					value = Arrays.toString((char[])(obj));
+				}
+				else if(obj instanceof byte[]) {
+					value = Arrays.toString((byte[])(obj));
+				}
+				else if(obj instanceof float[]) {
+					value = Arrays.toString((float[])(obj));
+				}
+				else if(obj instanceof boolean[]) {
+					value = Arrays.toString((Object[])(obj));
+				}
+				else if(obj instanceof Object[]) {
+					value = Arrays.toString((Object[])(obj));
+				}
+			}
+			else {
+				value = String.valueOf(obj);// obj.toString();	
 			}
 			
 			long t2 = System.currentTimeMillis();
@@ -326,6 +444,19 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			return null;
 		}
 	}
+
+	public boolean isClassNameAndObjectId(String input) {
+        // Regular expression pattern for ClassName@ObjectId
+        String regex = "^[a-z]+\\.[a-z]+(\\.[a-z]+)*\\.[A-Z][a-zA-Z]*\\$[A-Z][a-zA-Z]*@[0-9a-fA-F]+$";
+
+        // Compile the pattern
+        Pattern pattern = Pattern.compile(regex);
+
+        // Create a matcher for the input string
+        Matcher matcher = pattern.matcher(input);
+
+        return matcher.matches();
+    }
 
 	private boolean isProxyClass(Class<? extends Object> clazz) {
 		if (Proxy.isProxyClass(clazz)) {
