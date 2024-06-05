@@ -186,7 +186,7 @@ public class ExecutionSimulator {
 		}
 	}
 
-	public boolean inferDefinition(TraceNode step, VarValue parentVar, VarValue targetVar, List<VarValue> criticalVariables) {
+	public boolean inferDefinition(TraceNode step, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
 		
 		WriteStatus complication = null;
 		String targetFieldName = targetVar.getVarName();
@@ -194,7 +194,22 @@ public class ExecutionSimulator {
 			// always query LLM for elements in array
 			complication = WriteStatus.NO_GUARANTEE;
 		} else {
-			complication = estimateComplication(step, parentVar, targetVar);
+			VarValue ancestorVarOnTrace = null;
+			for (VarValue readVarInStep : step.getReadVariables()) {
+				String aliasID = readVarInStep.getAliasVarID();
+				VarValue criticalAncestor = criticalVariables.stream()
+						.filter(criticalVar -> aliasID.equals(criticalVar.getAliasVarID())).findFirst().orElse(null);
+				
+				if (criticalAncestor != null) {
+					ancestorVarOnTrace = readVarInStep;
+					break;
+				}
+			}
+			if (ancestorVarOnTrace == null) {
+				complication = WriteStatus.NO_GUARANTEE;
+			} else {
+				complication = estimateComplication(step, ancestorVarOnTrace, targetVar);
+			}
 		}
 		
 		System.out.println(step.getInvokingMethod());
@@ -209,7 +224,7 @@ public class ExecutionSimulator {
 		else {
 			boolean def = false;
 			try {
-				def = inferDefinitionByLLM(step, parentVar, targetVar, criticalVariables);
+				def = inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -251,13 +266,13 @@ public class ExecutionSimulator {
 		return WriteStatus.NO_GUARANTEE;
 	}
 
-	private boolean inferDefinitionByLLM(TraceNode step, VarValue parentVar, VarValue targetVar, List<VarValue> criticalVariables) throws IOException {
+	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) throws IOException {
 		System.out.println();
 		System.out.println("***Definition Inference***");
 		System.out.println();
 
 		String background = DefinitionInferenceUtils.getBackgroundContent();
-		String content = DefinitionInferenceUtils.getQuestionContent(step, parentVar, targetVar, criticalVariables);
+		String content = DefinitionInferenceUtils.getQuestionContent(step, rootVar, targetVar, criticalVariables);
 		System.out.println(background);
 		System.out.println(content);
 
