@@ -91,8 +91,8 @@ public class TraceRecoverer {
 				
 				// INFER DEFINITION STEP
 				boolean def = parseDefiningStep(rootVar, targetVar, step, criticalVariables);
-				if (def && !step.getWrittenVariables().contains(rootVar)) {
-					step.getWrittenVariables().add(rootVar);
+				if (def && !step.getWrittenVariables().contains(targetVar)) {
+					step.getWrittenVariables().add(targetVar);
 				}
 				
 			}
