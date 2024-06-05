@@ -16,6 +16,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import microbat.log.Log;
 import microbat.model.variable.ArrayElementVar;
 import microbat.model.variable.ConditionVar;
@@ -555,6 +558,53 @@ public abstract class VarValue implements GraphNode, Serializable {
 		for (VarValue child : this.children) {
 			child.clearValue();
 		}
+	}
+	
+	public JSONObject toJSON() {
+		JSONObject jsonObject = new JSONObject();
+		String key = this.getVarName() + ":" + this.getType();
+		
+		if (this instanceof PrimitiveValue || this.getChildren() == null || this.getChildren().isEmpty()) {
+			jsonObject.put(key, this.getStringValue());
+			return jsonObject;
+		} else if (this instanceof ArrayValue) {
+			jsonObject.put(key, getChildrenJSONArrayRecur());
+			return jsonObject;
+		} else if (this instanceof ReferenceValue) {
+			jsonObject.put(key, getChildrenJSONObjectRecur());
+		}
+		
+		return jsonObject;
+	}
+	
+	private JSONObject getChildrenJSONObjectRecur() {
+		JSONObject childrenJSON = new JSONObject();
+		for (VarValue child : this.getChildren()) {
+			String key = child.getVarName() + ":" + child.getType();
+			
+			if (child instanceof PrimitiveValue || child.getChildren() == null || child.getChildren().isEmpty()) {
+				childrenJSON.put(key, child.getStringValue());
+			} else if (child instanceof ArrayValue) {
+				childrenJSON.put(key, child.getChildrenJSONArrayRecur());
+			} else if (child instanceof ReferenceValue) {
+				childrenJSON.put(key, child.getChildrenJSONObjectRecur());
+			}
+		}
+		return childrenJSON;
+	}
+	
+	private JSONArray getChildrenJSONArrayRecur() {
+		JSONArray childrenJSONArray = new JSONArray();
+		for (VarValue child : this.getChildren()) {
+			if (child instanceof PrimitiveValue || child.getChildren() == null || child.getChildren().isEmpty()) {
+				childrenJSONArray.put(child.getStringValue());
+			} else if (child instanceof ArrayValue) {
+				childrenJSONArray.put(child.getChildrenJSONArrayRecur());
+			} else if (child instanceof ReferenceValue) {
+				childrenJSONArray.put(child.getChildrenJSONObjectRecur());
+			}
+		}
+		return childrenJSONArray;
 	}
 	
 }

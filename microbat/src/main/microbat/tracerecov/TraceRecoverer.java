@@ -39,25 +39,6 @@ public class TraceRecoverer {
 	 */
 	public void recoverDataDependency(Trace trace, TraceNode currentStep, VarValue targetVar, VarValue rootVar) {
 		
-		
-
-//		for(VarValue criticalVar: criticalVariables) {
-//			
-//			if(criticalVar.getAliasVarID() == null || 
-//					criticalVar.getAliasVarID().equals("") || 
-//					criticalVar.getAliasVarID().equals("0")) {
-////				 inferAddress(rootVar, trace, currentStep);
-//			}
-//			
-//			List<TraceNode> definitingSteps = parseDefiningStep(criticalVar, targetVar, trace, currentStep);
-//			
-//			for(TraceNode step: definitingSteps) {
-//				if(!step.getWrittenVariables().contains(criticalVar)) {
-//					step.getWrittenVariables().add(criticalVar);
-//				}
-//			}
-//		}
-		
 		/**
 		 * the first element is rootVar, and the last one is the direct parent of the targetVar. 
 		 */
@@ -116,85 +97,6 @@ public class TraceRecoverer {
 				
 			}
 		}
-		
-		
-		
-//		System.out.println("***Relevant Steps***");
-//
-//		/* initialize graph */
-//		
-//		
-//		VariableGraph.reset();
-//		VariableGraph.addVar(rootVar);
-//
-//		/** determine the scope of recovery */
-//		// search for last written step other than a return step
-//		VarValue lastWrittenVariable = null;
-//		TraceNode scopeStart = currentStep;
-//		while (lastWrittenVariable == null) {
-//			scopeStart = trace.findDataDependency(scopeStart, rootVar);
-//			lastWrittenVariable = scopeStart.getWrittenVariables().stream()
-//					.filter(v -> v.getVarName() != null && !v.getVarName().contains("#")).findFirst().orElse(null);
-//		}
-//
-//		int start = scopeStart.getOrder();
-//		int end = currentStep.getOrder();
-//
-//		/* build variable graph */
-//		for (int i = start; i <= end; i++) {
-//			TraceNode step = trace.getTraceNode(i);
-//
-//			List<VarValue> variables = new ArrayList<>();
-//			variables.addAll(step.getReadVariables());
-//			variables.addAll(step.getWrittenVariables());
-//
-//			VarValue varInGraph = variables.stream().filter(v -> VariableGraph.containsVar(v)).findAny().orElse(null);
-//			if (varInGraph != null) {
-//				/* relevant steps identification */
-//				VariableGraph.addRelevantStep(step);
-//
-//				/* alias inferencing */
-//				List<String> validAddresses = variables.stream().map(v -> v.getAliasVarID()).toList();
-//				Set<String> validAddressSet = new HashSet<>(validAddresses);
-//				if (VariableGraph.isStepToConsider(step) && validAddressSet.size() > 1) {
-//					try {
-//						this.executionSimulator.inferenceAliasRelations(step, rootVar);
-//					} catch (IOException e) {
-//						e.printStackTrace();
-//					}
-//				}
-//			} else {
-//				continue;
-//			}
-//		}
-//
-//		return null;
-		
-
-//		/**
-//		 * we might start with the root variable
-//		 */
-//		for (VarValue parent : parents) {
-//			List<TraceNode> candidateSteps = parseCandidateReadingSteps(trace, parent);
-//			for (TraceNode step : candidateSteps) {
-//				if (isWritingTarget(step)) {
-//					step.addWrittenVariable(targetVar);
-//				}
-//			}
-//		}
-
-//		/* 3. Execution Simulation */
-//		/*
-//		 * Identify additional linking steps and simulate execution by calling LLM
-//		 * model.
-//		 */
-//		try {
-//			
-//			executionSimulator.recoverLinkageSteps();
-//			executionSimulator.sendRequests();
-//		} catch (IOException ioException) {
-//			ioException.printStackTrace();
-//		}
 
 	}
 	

@@ -34,8 +34,7 @@ public class DefinitionInferenceUtils {
 		String targetVarName = targetVar.getVarName();
 
 		/* type structure */
-		JSONObject typeStructure = VariableOfInterest.getVariableOfInterestForDefinitionInferencing();
-		String jsonString = typeStructure.toString();
+		String jsonString = rootVar.toJSON().toString();
 		
 		/* all variables */
 		Set<VarValue> variablesInStep = step.getAllVariables();

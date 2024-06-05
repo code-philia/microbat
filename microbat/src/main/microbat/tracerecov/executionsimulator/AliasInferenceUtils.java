@@ -42,8 +42,7 @@ public class AliasInferenceUtils {
 		String rootVarName = rootVar.getVarName();
 
 		/* type structure */
-		JSONObject typeStructure = VariableOfInterest.getVariableOfInterestForDefinitionInferencing();
-		String jsonString = typeStructure.toString();
+		String jsonString = rootVar.toJSON().toString();
 
 		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n```");
 		question.append(sourceCode);
