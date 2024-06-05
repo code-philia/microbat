@@ -85,13 +85,16 @@ public class AliasInferenceUtils {
 			isFirstVar = false;
 		}
 		
-		question.append("List all the fields that have the same memory address as variables other than `");
-		question.append(rootVarName);
-		question.append("`.\nIf a field is an element in an array, use “array_name[element_index]” as its name.\n"
-				+ "Your response should be a JSON with field_name as keys and variable_name as values."
-				+ "\ne.g. \"variable1.field1.field2\":\"variable2\" is a valid key-value pair,"
-				+ "\n\"variable1.field1.field2\":\"variable2.field3\" is invalid."
-				+ "\nDo not include explanation.");
+		question.append("List all the fields in `" + rootVarName + "` that have the same memory address as variables at this step.");
+
+		question.append("\nYour response should be a JSON with field_name as keys and variable_name as values.\n"
+				+ "If a field is an element in an array, use “array_name[element_index]” as its name.\n"
+				+ "\n"
+				+ "Key format: \"layer1_var.layer2_var.field\"\n"
+				+ "Value format: \"variable_name\"\n"
+				+ "\n"
+				+ "In your response, strictly follow this format. If a key value pair does not follow the specified format, "
+				+ "do not include it in your response. Do not include explanation. Do not include duplicate pairs.");
 
 		return question.toString();
 	}
