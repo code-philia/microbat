@@ -13,27 +13,22 @@ import microbat.tracerecov.AbstractClassVisitor;
 public class CandidateVarClassVisitor extends AbstractClassVisitor {
 
 	private String fieldName;
+	private int layer;
 
 	public CandidateVarClassVisitor(String className, String methodName, String methodDescriptor, String fieldName) {
-		super(className, methodName, methodDescriptor);
-		this.fieldName = fieldName;
+		this(className, methodName, methodDescriptor, fieldName, true);
 	}
 
 	public CandidateVarClassVisitor(String className, String methodName, String methodDescriptor, String fieldName,
 			boolean reset) {
-		super(className, methodName, methodDescriptor, reset);
-		this.fieldName = fieldName;
+		this(className, methodName, methodDescriptor, fieldName, 1, reset);
 	}
 
-	/**
-	 * Record parent class in classesOfInterest.
-	 */
-	@Override
-	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-		if (superName == null) {
-			return;
-		}
-		classesOfInterest.add(superName.replace('/', '.'));
+	public CandidateVarClassVisitor(String className, String methodName, String methodDescriptor, String fieldName,
+			int layer, boolean reset) {
+		super(className, methodName, methodDescriptor, reset);
+		this.fieldName = fieldName;
+		this.layer = layer;
 	}
 
 	/**
@@ -46,7 +41,7 @@ public class CandidateVarClassVisitor extends AbstractClassVisitor {
 			if (reset) {
 				CandidateVarMethodVisitor.reset();
 			}
-			return new CandidateVarMethodVisitor(classesOfInterest, fieldName);
+			return new CandidateVarMethodVisitor(fieldName, layer);
 		}
 		return null;
 	}

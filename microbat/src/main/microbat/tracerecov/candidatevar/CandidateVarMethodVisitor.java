@@ -9,26 +9,28 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
+
 /**
  * This class checks whether a field is visited by a method call.
  * 
  * @author hongshuwang
  */
 public class CandidateVarMethodVisitor extends MethodVisitor {
-	private static boolean guaranteeWrite = false;
-	private static boolean guaranteeNoWrite = false;
+	private static final int MAX_LAYER = 3;
+
+	private static WriteStatus writeStatus = WriteStatus.NO_GUARANTEE;
 	private static Set<String> visitedMethods = new HashSet<>();
 	private static boolean reachedControlBranch = false;
 	private static boolean visitedTargetField = false;
 
 	private String fieldName;
-	private Set<String> classesOfInterest;
+	private int layer;
 
-	public CandidateVarMethodVisitor(Set<String> classesOfInterest, String fieldName) {
+	public CandidateVarMethodVisitor(String fieldName, int layer) {
 		super(Opcodes.ASM9, null);
 		this.fieldName = fieldName;
-		this.classesOfInterest = new HashSet<>();
-		this.classesOfInterest.addAll(classesOfInterest);
+		this.layer = layer;
 	}
 
 	/**
@@ -40,11 +42,9 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 
 		if (name.equals(this.fieldName) && isPutInstruction(opcode)) {
 			visitedTargetField = true;
-			
 			if (!reachedControlBranch) {
 				// field written before reaching control branch
-				guaranteeWrite = true;
-				guaranteeNoWrite = false;
+				writeStatus = WriteStatus.GUARANTEE_WRITE;
 			} else {
 				// TODO: field written after reaching control branch
 			}
@@ -70,8 +70,7 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 	public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
 		super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
 		String methodKey = owner + "." + name + descriptor;
-		String className = owner.split("\\$")[0].replace('/', '.');
-		if (classesOfInterest.contains(className) && !visitedMethods.contains(methodKey)) {
+		if (!visitedMethods.contains(methodKey)) {
 			visitedMethods.add(methodKey);
 			visitMethod(owner, name, descriptor);
 		}
@@ -79,30 +78,31 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 
 	private void visitMethod(String owner, String methodName, String methodDescriptor) {
 		try {
-			String className = owner.replace('/', '.');
-			ClassReader classReader = new ClassReader(className);
-			classReader.accept(new CandidateVarClassVisitor(className, methodName, methodDescriptor, fieldName, false),
-					0);
+			if (layer < MAX_LAYER && writeStatus == WriteStatus.NO_GUARANTEE) {
+				String className = owner.replace('/', '.');
+				ClassReader classReader = new ClassReader(className);
+				classReader.accept(new CandidateVarClassVisitor(className, methodName, methodDescriptor, fieldName,
+						layer + 1, false), 0);
+			}
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	public static void reset() {
-		guaranteeWrite = false;
-		guaranteeNoWrite = false;
+		writeStatus = WriteStatus.NO_GUARANTEE;
 		visitedMethods = new HashSet<>();
 		reachedControlBranch = false;
 		visitedTargetField = false;
 	}
 
-	public static boolean guaranteeWrite() {
-		return guaranteeWrite;
-	}
-
-	public static boolean guaranteeNoWrite() {
+	public static WriteStatus getWriteStatus() {
 		// TODO: implement a more complex version for guaranteeNoWrite
-		guaranteeNoWrite = !visitedTargetField;
-		return guaranteeNoWrite;
+		if (writeStatus == WriteStatus.NO_GUARANTEE && !visitedTargetField) {
+			writeStatus = WriteStatus.GUARANTEE_NO_WRITE;
+		}
+
+		return writeStatus;
 	}
 }

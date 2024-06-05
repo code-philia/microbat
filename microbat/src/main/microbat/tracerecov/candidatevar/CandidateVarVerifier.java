@@ -61,11 +61,7 @@ public class CandidateVarVerifier {
 				fieldName);
 		classReader.accept(classVisitor, 0);
 
-		boolean guaranteeWrite = CandidateVarMethodVisitor.guaranteeWrite();
-		boolean guaranteeNoWrite = CandidateVarMethodVisitor.guaranteeNoWrite();
-
-		return guaranteeWrite ? WriteStatus.GUARANTEE_WRITE
-				: guaranteeNoWrite ? WriteStatus.GUARANTEE_NO_WRITE : WriteStatus.NO_GUARANTEE;
+		return CandidateVarMethodVisitor.getWriteStatus();
 	}
 
 }
