@@ -88,8 +88,9 @@ public class AliasInferenceUtils {
 		question.append("List all the fields that have the same memory address as variables other than `");
 		question.append(rootVarName);
 		question.append("`.\nIf a field is an element in an array, use “array_name[element_index]” as its name.\n"
-				+ "Your response should be a JSON with field_name as keys and variable_name as values, where "
-				+ "field_name has format: v1.v2.v3, and field_name must include all the parent fields.\nDo not include explanation.");
+				+ "Your response should be a JSON with field_name as keys and variable_name as values. "
+				+ "e.g. \"variable1.field1.field2\":\"variable2\" is a valid key-value pair"
+				+ "\nDo not include explanation.");
 
 		return question.toString();
 	}
