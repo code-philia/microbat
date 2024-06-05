@@ -18,6 +18,7 @@ import microbat.model.Scope;
 import microbat.model.value.VarValue;
 import microbat.model.value.VirtualValue;
 import microbat.model.variable.Variable;
+import microbat.tracerecov.TraceRecoverer;
 import microbat.util.JavaUtil;
 import microbat.util.Settings;
 import sav.strategies.dto.AppJavaClassPath;
@@ -254,7 +255,26 @@ public class Trace {
 	 * @return
 	 */
 	public TraceNode findDataDependency(TraceNode checkingNode, VarValue readVar) {
-		return findProducer(readVar, checkingNode);
+		
+		TraceNode dataDominator = findProducer(readVar, checkingNode);
+		
+		if(dataDominator == null && 
+				!checkingNode.getRecoveredDataDependency().contains(readVar)) {
+			// find parent node
+			VarValue rootVar = readVar;
+			while (!checkingNode.getReadVariables().contains(rootVar)) {
+				rootVar = rootVar.getParents().get(0); // TODO: multiple parents?
+			}
+			
+			new TraceRecoverer().
+				recoverDataDependency(checkingNode, readVar, rootVar);
+			
+			checkingNode.addRecoveredDataDependency(readVar);
+			
+			dataDominator = findProducer(readVar, checkingNode);
+		}
+		
+		return dataDominator;
 	}
 	
 	public List<TraceNode> findDataDependentee(TraceNode traceNode, VarValue writtenVar) {

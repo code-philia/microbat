@@ -52,6 +52,8 @@ public class TraceNode implements Comparator<TraceNode> {
 	
 	private Map<AttributionVar, Double> suspicousScoreMap = new HashMap<>();
 	
+	private Set<VarValue> recoveredDataDependency = new HashSet<>();
+	
 	private int checkTime = -1;
 	
 	private BreakPoint breakPoint;
@@ -1413,5 +1415,17 @@ public class TraceNode implements Comparator<TraceNode> {
 	
 	public double getCorrectness() {
 		return this.correctness;
+	}
+
+	public Set<VarValue> getRecoveredDataDependency() {
+		return recoveredDataDependency;
+	}
+
+	public void setRecoveredDataDependency(Set<VarValue> recoveredDataDependency) {
+		this.recoveredDataDependency = recoveredDataDependency;
+	}
+	
+	public void addRecoveredDataDependency(VarValue value) {
+		this.recoveredDataDependency.add(value);
 	}
 }

@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import microbat.preference.MicrobatPreference;
 import microbat.tracerecov.candidatevar.CandidateVarVerificationException;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
+import microbat.tracerecov.varexpansion.VarSkeletonBuilder;
 import microbat.tracerecov.varexpansion.VariableSkeleton;
 
 /**
@@ -34,10 +36,34 @@ public class ExecutionSimulator {
 	public ExecutionSimulator() {
 	}
 
-	public void expandVariable(VarValue selectedVar, List<VariableSkeleton> variableSkeletons, TraceNode step)
+	public void expandVariable(VarValue selectedVar, TraceNode step)
 			throws IOException {
+		
+		if(selectedVar.isExpanded()) {
+			return;
+		}
+		
 		System.out.println("***Variable Expansion***");
 		System.out.println();
+		
+		List<VariableSkeleton> variableSkeletons = new ArrayList<>();
+
+		/*
+		 * Expand the selected variable.
+		 */
+		VariableSkeleton parentSkeleton = VarSkeletonBuilder.getVariableStructure(selectedVar.getType());
+		variableSkeletons.add(parentSkeleton);
+
+		// assume var layer == 1, then only elementArray will be recorded in ArrayList
+		if (!selectedVar.getChildren().isEmpty()) {
+			VarValue child = selectedVar.getChildren().get(0);
+			String childType = child.getType();
+			if (childType.contains("[]")) {
+				childType = childType.substring(0, childType.length() - 2); // remove [] at the end
+			}
+			VariableSkeleton childSkeleton = VarSkeletonBuilder.getVariableStructure(childType);
+			variableSkeletons.add(childSkeleton);
+		}
 
 		String background = VariableExpansionUtils.getBackgroundContent();
 		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step);

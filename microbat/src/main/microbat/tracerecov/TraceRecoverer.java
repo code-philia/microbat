@@ -37,7 +37,9 @@ public class TraceRecoverer {
 	 * Build a variable graph. Identify relevant steps and alias relationships in
 	 * this process.
 	 */
-	public void recoverDataDependency(Trace trace, TraceNode currentStep, VarValue targetVar, VarValue rootVar) {
+	public void recoverDataDependency(TraceNode currentStep, VarValue targetVar, VarValue rootVar) {
+		
+		Trace trace = currentStep.getTrace();
 		
 		/**
 		 * the first element is rootVar, and the last one is the direct parent of the targetVar. 
@@ -105,7 +107,10 @@ public class TraceRecoverer {
 		VarValue lastWrittenVariable = null;
 		TraceNode scopeStart = currentStep;
 		while (lastWrittenVariable == null) {
-			scopeStart = trace.findDataDependency(scopeStart, parentVar);
+			
+			scopeStart = trace.findProducer(parentVar, scopeStart);
+			
+//			scopeStart = trace.findDataDependency(scopeStart, parentVar);
 			if(scopeStart == null) {
 				break;
 			}
