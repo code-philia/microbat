@@ -935,10 +935,10 @@ public class Trace {
 					return node;
 				}
 				
-				VarValue childValue = writtenValue.findVarValue(varID, headID);
-				if(childValue != null) {
-					return node;
-				}
+//				VarValue childValue = writtenValue.findVarValue(varID, headID);
+//				if(childValue != null) {
+//					return node;
+//				}
 				
 			}
 		}
