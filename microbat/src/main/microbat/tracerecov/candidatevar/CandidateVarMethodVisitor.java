@@ -21,16 +21,17 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 
 	private static WriteStatus writeStatus = WriteStatus.NO_GUARANTEE;
 	private static Set<String> visitedMethods = new HashSet<>();
-	private static boolean reachedControlBranch = false;
 	private static boolean visitedTargetField = false;
 
 	private String fieldName;
 	private int layer;
-
+	private boolean reachedControlBranch;
+	
 	public CandidateVarMethodVisitor(String fieldName, int layer) {
 		super(Opcodes.ASM9, null);
 		this.fieldName = fieldName;
 		this.layer = layer;
+		this.reachedControlBranch = false;
 	}
 
 	/**
@@ -78,7 +79,7 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 
 	private void visitMethod(String owner, String methodName, String methodDescriptor) {
 		try {
-			if (layer < MAX_LAYER && writeStatus == WriteStatus.NO_GUARANTEE) {
+			if (layer < MAX_LAYER && writeStatus == WriteStatus.NO_GUARANTEE && !reachedControlBranch) {
 				String className = owner.replace('/', '.');
 				ClassReader classReader = new ClassReader(className);
 				classReader.accept(new CandidateVarClassVisitor(className, methodName, methodDescriptor, fieldName,
@@ -93,7 +94,6 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 	public static void reset() {
 		writeStatus = WriteStatus.NO_GUARANTEE;
 		visitedMethods = new HashSet<>();
-		reachedControlBranch = false;
 		visitedTargetField = false;
 	}
 
