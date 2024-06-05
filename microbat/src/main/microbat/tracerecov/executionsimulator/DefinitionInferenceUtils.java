@@ -59,7 +59,10 @@ public class DefinitionInferenceUtils {
 		
 		boolean isFirstVar = true;
 		for (VarValue var : variablesInStep) {
-			VarValue criticalVariable = criticalVariables.stream().filter(v -> var.getAliasVarID().equals(v.getAliasVarID())).findFirst().orElse(null);
+			VarValue criticalVariable = null;
+			if (var.getAliasVarID() != null) {
+				criticalVariable = criticalVariables.stream().filter(v -> var.getAliasVarID().equals(v.getAliasVarID())).findFirst().orElse(null);
+			}
 			if (criticalVariable == null) {
 				continue;
 			}
