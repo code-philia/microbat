@@ -101,8 +101,12 @@ public class VariableExpansionUtils {
 				+ "Given the following data structure:\n");
 
 		for (VariableSkeleton v : variableSkeletons) {
-			question.append(v.toString() + "\n");
+			if(v != null) {
+				question.append(v.toString() + "\n");				
+			}
 		}
+		
+		System.currentTimeMillis();
 
 		question.append("with the input value of executing \"");
 		question.append(sourceCode + "\", ");
