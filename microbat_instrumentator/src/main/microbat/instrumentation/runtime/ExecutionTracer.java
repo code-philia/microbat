@@ -171,9 +171,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 						break;
 					}
 				}
-				arrVal.setComponentType(componentType);
 			}
 			
+			arrVal.setComponentType(componentType);
 			var.setType(componentType + "[]");
 			
 			varValue = arrVal;
@@ -258,18 +258,6 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			if (obj == null) {
 				return "null";
 			}
-
-//			String simpleType = null;
-//			if (obj != null && obj.getClass().isArray()) {
-//				simpleType = type.substring(0, type.indexOf("[]"));
-//			}
-
-//			if (simpleType != null) {
-//				if (simpleType.equals("char")) {
-//					char[] charArray = (char[]) obj;
-//					return String.valueOf(charArray);
-//				}
-//			}
 
 			// if (FilterChecker.isCustomizedToStringClass(obj.getClass().getName())) {
 			// java.lang.reflect.Method toStringMethod = null;
