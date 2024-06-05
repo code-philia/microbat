@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -258,17 +259,17 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				return "null";
 			}
 
-			String simpleType = null;
-			if (type != null && type.contains("[]")) {
-				simpleType = type.substring(0, type.indexOf("[]"));
-			}
+//			String simpleType = null;
+//			if (obj != null && obj.getClass().isArray()) {
+//				simpleType = type.substring(0, type.indexOf("[]"));
+//			}
 
-			if (simpleType != null) {
-				if (simpleType.equals("char")) {
-					char[] charArray = (char[]) obj;
-					return String.valueOf(charArray);
-				}
-			}
+//			if (simpleType != null) {
+//				if (simpleType.equals("char")) {
+//					char[] charArray = (char[]) obj;
+//					return String.valueOf(charArray);
+//				}
+//			}
 
 			// if (FilterChecker.isCustomizedToStringClass(obj.getClass().getName())) {
 			// java.lang.reflect.Method toStringMethod = null;
@@ -292,7 +293,41 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			}
 			
 			long t1 = System.currentTimeMillis();
-			String value = String.valueOf(obj);// obj.toString();
+			String value = "";
+			
+			if (obj != null && obj.getClass().isArray()) {
+				
+				if(obj instanceof int[]) {
+					value = Arrays.toString((int[])(obj));
+				}
+				else if(obj instanceof double[]) {
+					value = Arrays.toString((double[])(obj));
+				}
+				else if(obj instanceof short[]) {
+					value = Arrays.toString((short[])(obj));
+				}
+				else if(obj instanceof long[]) {
+					value = Arrays.toString((long[])(obj));			}
+				else if(obj instanceof char[]) {
+					value = Arrays.toString((char[])(obj));
+				}
+				else if(obj instanceof byte[]) {
+					value = Arrays.toString((byte[])(obj));
+				}
+				else if(obj instanceof float[]) {
+					value = Arrays.toString((float[])(obj));
+				}
+				else if(obj instanceof boolean[]) {
+					value = Arrays.toString((Object[])(obj));
+				}
+				else if(obj instanceof Object[]) {
+					value = Arrays.toString((Object[])(obj));
+				}
+			}
+			else {
+				value = String.valueOf(obj);// obj.toString();				
+			}
+			
 			long t2 = System.currentTimeMillis();
 			if(t2-t1 > 500) {
 				stringValueBlackList.add(obj.getClass());
