@@ -55,6 +55,7 @@ public class TraceRecoverer {
 		int start = scopeStart.getOrder();
 		int end = currentStep.getOrder();
 		
+		// FORWARD ITERATION
 		// iterate through steps in scope, infer address and add relevant variables to the set
 		for (int i = start; i <= end; i++) {
 			TraceNode step = trace.getTraceNode(i);
@@ -91,6 +92,25 @@ public class TraceRecoverer {
 					}
 				}
 				
+			}
+		}
+		
+		// update scope of searching
+		scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
+		if(scopeStart == null) return;
+		start = scopeStart.getOrder();
+		
+		// BACKWARD ITERATION
+		// iterate through steps in scope, infer definition
+		for (int i = end; i > start; i--) {
+			TraceNode step = trace.getTraceNode(i);
+			
+			Set<VarValue> variablesInStep = step.getAllVariables();
+			
+			// only check steps containing recovered fields in rootVar AND calling API
+			boolean isRelevantStep = variablesInStep.stream().anyMatch(v -> variablesToCheck.contains(v.getAliasVarID()));
+			if (isRelevantStep && step.isCallingAPI()) {
+				
 				// INFER DEFINITION STEP
 				boolean def = parseDefiningStep(rootVar, targetVar, step, criticalVariables);
 				if (def && !step.getWrittenVariables().contains(targetVar)) {
@@ -109,8 +129,6 @@ public class TraceRecoverer {
 		while (lastWrittenVariable == null) {
 			
 			scopeStart = trace.findProducer(parentVar, scopeStart);
-			
-//			scopeStart = trace.findDataDependency(scopeStart, parentVar);
 			if(scopeStart == null) {
 				break;
 			}
