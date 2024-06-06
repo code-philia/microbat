@@ -9,6 +9,6 @@ public class SimulatorConstants {
 	public static final String GPT4O = "gpt-4o";
 
 	/* Model constants */
-	public static final double TEMPERATURE = 0;
+	public static final double TEMPERATURE = 0.7;
 
 }
