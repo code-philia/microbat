@@ -22,14 +22,16 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 	private static WriteStatus writeStatus = WriteStatus.NO_GUARANTEE;
 	private static Set<String> visitedMethods = new HashSet<>();
 	private static boolean visitedTargetField = false;
+	private static boolean isAbstractOrInterface;
 
 	private String fieldName;
 	private int layer;
 	private boolean reachedControlBranch;
 	
-	public CandidateVarMethodVisitor(String fieldName, int layer) {
+	public CandidateVarMethodVisitor(String fieldName, boolean isAbstractOrInterface, int layer) {
 		super(Opcodes.ASM9, null);
 		this.fieldName = fieldName;
+		CandidateVarMethodVisitor.isAbstractOrInterface = isAbstractOrInterface;
 		this.layer = layer;
 		this.reachedControlBranch = false;
 	}
@@ -99,10 +101,15 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 
 	public static WriteStatus getWriteStatus() {
 		// TODO: implement a more complex version for guaranteeNoWrite
+		if (isAbstractOrInterface) {
+			return WriteStatus.NO_GUARANTEE;
+		}
+		
 		if (writeStatus == WriteStatus.NO_GUARANTEE && !visitedTargetField) {
-			writeStatus = WriteStatus.GUARANTEE_NO_WRITE;
+			return WriteStatus.GUARANTEE_NO_WRITE;
 		}
 
 		return writeStatus;
 	}
+	
 }

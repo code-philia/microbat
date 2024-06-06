@@ -1,7 +1,6 @@
 package microbat.tracerecov.candidatevar;
 
 import org.objectweb.asm.MethodVisitor;
-
 import microbat.tracerecov.AbstractClassVisitor;
 
 /**
@@ -41,7 +40,7 @@ public class CandidateVarClassVisitor extends AbstractClassVisitor {
 			if (reset) {
 				CandidateVarMethodVisitor.reset();
 			}
-			return new CandidateVarMethodVisitor(fieldName, layer);
+			return new CandidateVarMethodVisitor(fieldName, isAbstractOrInterface, layer);
 		}
 		return null;
 	}
