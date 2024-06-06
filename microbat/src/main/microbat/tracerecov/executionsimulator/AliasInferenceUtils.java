@@ -144,13 +144,16 @@ public class AliasInferenceUtils {
 			return field;
 		}
 
-		String fName = fieldName.substring(fieldName.indexOf("."));
-		field = rootVar.getAllDescedentChildren().stream().filter(child -> {
-			String childID = child.getVarID();
-			String cascadeFieldName = childID.substring(childID.indexOf("."));
-			return cascadeFieldName.endsWith(fName);
-		}).findFirst().orElse(null);
-
+		int splitIndex = fieldName.indexOf(".");
+		if (splitIndex >= 0) {
+			String fName = fieldName.substring(fieldName.indexOf("."));
+			field = rootVar.getAllDescedentChildren().stream().filter(child -> {
+				String childID = child.getVarID();
+				String cascadeFieldName = childID.substring(childID.indexOf("."));
+				return cascadeFieldName.endsWith(fName);
+			}).findFirst().orElse(null);
+		}
+		
 		return field;
 	}
 
