@@ -55,6 +55,8 @@ public class TraceRecoverer {
 		int start = scopeStart.getOrder();
 		int end = currentStep.getOrder();
 		
+		List<Integer> relevantSteps = new ArrayList<>();
+		
 		// FORWARD ITERATION
 		// iterate through steps in scope, infer address and add relevant variables to the set
 		for (int i = start; i <= end; i++) {
@@ -65,6 +67,8 @@ public class TraceRecoverer {
 			// only check steps containing recovered fields in rootVar AND calling API
 			boolean isRelevantStep = variablesInStep.stream().anyMatch(v -> variablesToCheck.contains(v.getAliasVarID()));
 			if (isRelevantStep && step.isCallingAPI()) {
+				
+				relevantSteps.add(i);
 				
 				// INFER ADDERSS if there are some other variables
 				if (variablesInStep.size() > 1) {
@@ -100,24 +104,19 @@ public class TraceRecoverer {
 		if(scopeStart == null) return;
 		start = scopeStart.getOrder();
 		
+		int endIndex = relevantSteps.size() - 2; // skip the last step (self)
+		
 		// BACKWARD ITERATION
 		// iterate through steps in scope, infer definition
-		for (int i = end - 1; i >= start; i--) {
-			TraceNode step = trace.getTraceNode(i);
+		for (int i = endIndex; i >= 0; i--) {
+			int stepOrder = relevantSteps.get(i);
+			TraceNode step = trace.getTraceNode(stepOrder);
 			
-			Set<VarValue> variablesInStep = step.getAllVariables();
-			
-			// only check steps containing recovered fields in rootVar AND calling API
-			boolean isRelevantStep = variablesInStep.stream().anyMatch(v -> variablesToCheck.contains(v.getAliasVarID()));
-			if (isRelevantStep && step.isCallingAPI()) {
-				
-				// INFER DEFINITION STEP
-				boolean def = parseDefiningStep(rootVar, targetVar, step, criticalVariables);
-				if (def && !step.getWrittenVariables().contains(targetVar)) {
-					step.getWrittenVariables().add(targetVar);
-					break;
-				}
-				
+			// INFER DEFINITION STEP
+			boolean def = parseDefiningStep(rootVar, targetVar, step, criticalVariables);
+			if (def && !step.getWrittenVariables().contains(targetVar)) {
+				step.getWrittenVariables().add(targetVar);
+				break;
 			}
 		}
 
