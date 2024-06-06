@@ -115,6 +115,7 @@ public class TraceRecoverer {
 				boolean def = parseDefiningStep(rootVar, targetVar, step, criticalVariables);
 				if (def && !step.getWrittenVariables().contains(targetVar)) {
 					step.getWrittenVariables().add(targetVar);
+					break;
 				}
 				
 			}
