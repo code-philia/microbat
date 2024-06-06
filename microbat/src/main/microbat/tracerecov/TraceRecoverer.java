@@ -102,7 +102,7 @@ public class TraceRecoverer {
 		
 		// BACKWARD ITERATION
 		// iterate through steps in scope, infer definition
-		for (int i = end; i > start; i--) {
+		for (int i = end - 1; i >= start; i--) {
 			TraceNode step = trace.getTraceNode(i);
 			
 			Set<VarValue> variablesInStep = step.getAllVariables();
