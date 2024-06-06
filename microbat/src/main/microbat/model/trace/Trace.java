@@ -258,8 +258,9 @@ public class Trace {
 		
 		TraceNode dataDominator = findProducer(readVar, checkingNode);
 		
-		if(dataDominator == null && 
-				!checkingNode.getRecoveredDataDependency().contains(readVar)) {
+		if(Settings.isEnableGPTInference) {
+//		if(dataDominator == null && 
+//				!checkingNode.getRecoveredDataDependency().contains(readVar)) {
 			// find parent node
 			VarValue rootVar = readVar;
 			while (!checkingNode.getReadVariables().contains(rootVar)) {
@@ -267,14 +268,15 @@ public class Trace {
 			}
 			
 			// recover one child only
-			if (!rootVar.isRecoveryPerformed()) {
-				new TraceRecoverer().recoverDataDependency(checkingNode, readVar, rootVar);
+//			if (!rootVar.isRecoveryPerformed()) {
+			new TraceRecoverer().recoverDataDependency(checkingNode, readVar, rootVar);
 			
-				checkingNode.addRecoveredDataDependency(readVar);
-				rootVar.setRecoveryPerformed(true);
+			checkingNode.addRecoveredDataDependency(readVar);
+			rootVar.setRecoveryPerformed(true);
 			
-				dataDominator = findProducer(readVar, checkingNode);
-			}
+			dataDominator = findProducer(readVar, checkingNode);
+//			}
+//		}
 		}
 		
 		return dataDominator;

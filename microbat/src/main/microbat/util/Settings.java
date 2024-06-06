@@ -29,6 +29,8 @@ public class Settings {
 	
 	private static Integer variableLayer;
 	
+	public static boolean isEnableGPTInference = false;
+	
 	/**
 	 * We divide the library code into two categories: the interesting ones (e.g., 
 	 * those in java.util.*) and the normal ones. We only capture the data and control
