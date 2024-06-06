@@ -64,12 +64,18 @@ public class VariableExpansionUtils {
 			+ "         \"size: int\": 2\r\n"
 			+ "       }\r\n"
 			+ "     },\r\n"
-			+ "     \"value[0]: java.util.ArrayList<String>\": [\"v1\", \"v2\"],\r\n"
-			+ "     \"value[1]: java.util.ArrayList<String>\": [\"vA\", \"vB\"],\r\n"
-			+ "     \"size\": 2\r\n"
+			+ "     \"value[0]: java.util.ArrayList<String>\": { \r\n"
+			+ "\"elementData: java.lang.Object[]\": [ \"v1\", \"v2\"], \r\n"
+			+ "  \"size: int\": 2 \r\n"
+			+ "       }, \r\n"
+			+ "      \"value[1]: java.util.ArrayList<String>\": { \r\n"
+			+ "\"elementData: java.lang.Object[]\": [ \"vA\", \"vB\"], \r\n"
+			+ "  \"size: int\": 2 \r\n"
+			+ "       },\r\n"
+			+ "      \"size\": 2\r\n"
 			+ "  },\r\n"
 			+ " }\r\n"
-			+ "\r\n";
+			+ "";
 
 	/* Methods */
 
@@ -120,7 +126,8 @@ public class VariableExpansionUtils {
 				+ "The JSON object must start with variable *" + selectedVariable.getVarName() + "* as the root. Do not include explanation in your response.\n");
 		
 		question.append("You must follow the JSON format as \"var_name:var_type\": var_value. "
-				+ "Do not include duplicate keys. You can only include ***up to 3 layers of keys***, ignore deeper layers.");
+				+ "Do not include duplicate keys. You can only include ***up to 3 layers of keys***, ignore deeper layers. "
+				+ "");
 
 		return question.toString();
 	}
@@ -183,7 +190,7 @@ public class VariableExpansionUtils {
 				else if(value instanceof Integer){
 					varValue = new PrimitiveValue(String.valueOf(value), false, var);
 				}
-				else if (value == null) {
+				else if (value == JSONObject.NULL) {
 					varValue = new ReferenceValue(true, false, var);
 				}
 				
