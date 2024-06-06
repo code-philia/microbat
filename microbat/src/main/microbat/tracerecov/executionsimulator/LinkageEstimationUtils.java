@@ -58,7 +58,7 @@ public class LinkageEstimationUtils {
 		}
 
 		for (String type : types) {
-			VariableSkeleton var = VarSkeletonBuilder.getVariableStructure(type);
+			VariableSkeleton var = VarSkeletonBuilder.getVariableStructure(type, null);
 			if (var != null) {
 				dataStructures.append(var.toString());
 				dataStructures.append("\n");
