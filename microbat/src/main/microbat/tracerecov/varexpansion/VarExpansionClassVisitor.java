@@ -1,6 +1,7 @@
 package microbat.tracerecov.varexpansion;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,6 +11,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import microbat.tracerecov.AbstractClassVisitor;
 import microbat.tracerecov.TraceRecovUtils;
+import sav.strategies.dto.AppJavaClassPath;
 
 public class VarExpansionClassVisitor extends AbstractClassVisitor {
 
@@ -20,7 +22,13 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 	private VariableSkeleton root;
 	private String className;
 	private int layer;
+	private AppJavaClassPath appJavaClassPath;
 
+	public VarExpansionClassVisitor(AppJavaClassPath appJavaClassPath, String className2, boolean b) {
+		this(className2, new VariableSkeleton(className2), b);
+		this.appJavaClassPath = appJavaClassPath;
+	}
+	
 	public VarExpansionClassVisitor(String className) {
 		this(className, false);
 	}
@@ -47,6 +55,7 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 		this.layer = layer;
 	}
 
+
 	/**
 	 * Record parent class in classesOfInterest.
 	 */
@@ -67,7 +76,17 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 		for (String className : classesOfInterest) {
 			if (!visitedClasses.contains(className) && layer < MAX_LAYER) {
 				try {
-					ClassReader classReader = new ClassReader(className);
+					
+					// load the class
+					ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+					InputStream inputStream = classLoader.getResourceAsStream(className.replace('.', '/') + ".class");
+
+					if(inputStream == null) {
+						ClassLoader classLoader2 = appJavaClassPath.getClassLoader();
+						inputStream = classLoader2.getResourceAsStream(className.replace('.', '/') + ".class");
+					}
+					
+					ClassReader classReader = new ClassReader(inputStream);
 					classReader.accept(new VarExpansionClassVisitor(className, this.root, false, layer + 1), 0);
 				} catch (IOException e) {
 					e.printStackTrace();

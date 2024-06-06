@@ -51,9 +51,9 @@ public class ExecutionSimulator {
 		/*
 		 * Expand the selected variable.
 		 */
-		VariableSkeleton parentSkeleton = VarSkeletonBuilder.getVariableStructure(selectedVar.getType());
-		variableSkeletons.add(parentSkeleton);
-
+		VariableSkeleton parentSkeleton = VarSkeletonBuilder.getVariableStructure(selectedVar.getType(), step.getTrace().getAppJavaClassPath());
+			variableSkeletons.add(parentSkeleton);
+			
 		// assume var layer == 1, then only elementArray will be recorded in ArrayList
 		if (!selectedVar.getChildren().isEmpty()) {
 			VarValue child = selectedVar.getChildren().get(0);
@@ -61,7 +61,7 @@ public class ExecutionSimulator {
 			if (childType.contains("[]")) {
 				childType = childType.substring(0, childType.length() - 2); // remove [] at the end
 			}
-			VariableSkeleton childSkeleton = VarSkeletonBuilder.getVariableStructure(childType);
+			VariableSkeleton childSkeleton = VarSkeletonBuilder.getVariableStructure(childType, step.getTrace().getAppJavaClassPath());
 			variableSkeletons.add(childSkeleton);
 		}
 
