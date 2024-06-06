@@ -27,6 +27,10 @@ public class TraceRecovUtils {
 	public static boolean isArray(String className) {
 		return className.endsWith("[]");
 	}
+	
+	public static boolean isIterator(String className) {
+		return className.endsWith("Itr") && className.contains("$");
+	}
 
 	public static boolean shouldBeChecked(String className) {
 		if (className == null || isPrimitiveType(className) || isString(className)
