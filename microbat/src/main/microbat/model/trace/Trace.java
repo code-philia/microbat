@@ -18,6 +18,7 @@ import microbat.model.Scope;
 import microbat.model.value.VarValue;
 import microbat.model.value.VirtualValue;
 import microbat.model.variable.Variable;
+import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.TraceRecoverer;
 import microbat.util.JavaUtil;
 import microbat.util.Settings;
@@ -259,24 +260,25 @@ public class Trace {
 		TraceNode dataDominator = findProducer(readVar, checkingNode);
 		
 		if(Settings.isEnableGPTInference) {
-//		if(dataDominator == null && 
-//				!checkingNode.getRecoveredDataDependency().contains(readVar)) {
-			// find parent node
-			VarValue rootVar = readVar;
-			while (!checkingNode.getReadVariables().contains(rootVar)) {
-				rootVar = rootVar.getParents().get(0); // TODO: multiple parents?
+			
+			if(dataDominator == null && 
+					!checkingNode.getRecoveredDataDependency().contains(readVar)) {
+				// find parent node
+				VarValue rootVar = readVar;
+				while (!checkingNode.getReadVariables().contains(rootVar)) {
+					rootVar = rootVar.getParents().get(0); // TODO: multiple parents?
+				}
+				
+				if (TraceRecovUtils.shouldBeChecked(rootVar.getType())) {
+					new TraceRecoverer().recoverDataDependency(checkingNode, readVar, rootVar);
+					
+					checkingNode.addRecoveredDataDependency(readVar);
+					rootVar.setRecoveryPerformed(true);
+			
+					dataDominator = findProducer(readVar, checkingNode);
+				}
 			}
-			
-			// recover one child only
-//			if (!rootVar.isRecoveryPerformed()) {
-			new TraceRecoverer().recoverDataDependency(checkingNode, readVar, rootVar);
-			
-			checkingNode.addRecoveredDataDependency(readVar);
-			rootVar.setRecoveryPerformed(true);
-			
-			dataDominator = findProducer(readVar, checkingNode);
-//			}
-//		}
+					
 		}
 		
 		return dataDominator;

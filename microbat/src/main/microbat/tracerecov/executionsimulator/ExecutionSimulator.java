@@ -17,6 +17,7 @@ import microbat.Activator;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.preference.MicrobatPreference;
+import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.candidatevar.CandidateVarVerificationException;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
@@ -232,12 +233,13 @@ public class ExecutionSimulator {
 				}
 			}
 			if (ancestorVarOnTrace == null) {
-				complication = WriteStatus.NO_GUARANTEE;
-			} else {
+				complication = WriteStatus.GUARANTEE_NO_WRITE;
+			} else if (TraceRecovUtils.shouldBeChecked(ancestorVarOnTrace.getType())) {
 				complication = estimateComplication(step, ancestorVarOnTrace, targetVar);
 			}
 		}
 		
+		System.out.println(targetVar.getVarName());
 		System.out.println(step.getInvokingMethod());
 		System.out.println(complication);
 		
