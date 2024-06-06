@@ -38,6 +38,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 	protected List<VarValue> children = new ArrayList<>();
 	
 	private boolean isExpanded = false;
+	private boolean isRecoveryPerformed = false;
 	
 	/**
 	 * indicate whether this variable is a top-level variable in certain step.
@@ -615,6 +616,14 @@ public abstract class VarValue implements GraphNode, Serializable {
 
 	public void setExpanded(boolean isExpanded) {
 		this.isExpanded = isExpanded;
+	}
+
+	public boolean isRecoveryPerformed() {
+		return isRecoveryPerformed;
+	}
+
+	public void setRecoveryPerformed(boolean isRecoveryPerformed) {
+		this.isRecoveryPerformed = isRecoveryPerformed;
 	}
 	
 }

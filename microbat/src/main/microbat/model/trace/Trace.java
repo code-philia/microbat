@@ -266,12 +266,15 @@ public class Trace {
 				rootVar = rootVar.getParents().get(0); // TODO: multiple parents?
 			}
 			
-			new TraceRecoverer().
-				recoverDataDependency(checkingNode, readVar, rootVar);
+			// recover one child only
+			if (!rootVar.isRecoveryPerformed()) {
+				new TraceRecoverer().recoverDataDependency(checkingNode, readVar, rootVar);
 			
-			checkingNode.addRecoveredDataDependency(readVar);
+				checkingNode.addRecoveredDataDependency(readVar);
+				rootVar.setRecoveryPerformed(true);
 			
-			dataDominator = findProducer(readVar, checkingNode);
+				dataDominator = findProducer(readVar, checkingNode);
+			}
 		}
 		
 		return dataDominator;
