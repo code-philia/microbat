@@ -2,6 +2,7 @@ package microbat.tracerecov.candidatevar;
 
 import java.io.IOException;
 import java.io.InputStream;
+
 import org.objectweb.asm.ClassReader;
 
 import microbat.tracerecov.TraceRecovUtils;
@@ -46,22 +47,38 @@ public class CandidateVarVerifier {
 			throw new CandidateVarVerificationException("invalid invoking method: " + invokingMethod);
 		}
 
+		String declaredType = invokingMethod.split("#")[0];
 		String methodSignature = invokingMethod.split("#")[1].split("%")[0];
 		int index = methodSignature.indexOf("(");
 		String methodName = methodSignature.substring(0, index);
 		String methodDescriptor = methodSignature.substring(index);
 
-		return verifyCandidateVariable(methodName, methodDescriptor, methodSignature, fieldName);
+		return verifyCandidateVariable(declaredType, methodName, methodDescriptor, methodSignature, fieldName);
 	}
 
-	private WriteStatus verifyCandidateVariable(String methodName, String methodDescriptor, String methodSignature,
+	private WriteStatus verifyCandidateVariable(String declaredType, String methodName, String methodDescriptor,
+			String methodSignature,
 			String fieldName) {
 		// create and accept a classVisitor
 		CandidateVarClassVisitor classVisitor = new CandidateVarClassVisitor(className, methodName, methodDescriptor,
 				fieldName);
 		classReader.accept(classVisitor, 0);
 
-		return CandidateVarMethodVisitor.getWriteStatus();
+		WriteStatus writeStatus = CandidateVarMethodVisitor.getWriteStatus();
+
+		if (writeStatus == WriteStatus.NO_GUARANTEE) {
+			ClassReader declaredTypeClassReader;
+			try {
+				declaredTypeClassReader = this.loadClass(declaredType);
+				classVisitor = new CandidateVarClassVisitor(declaredType, methodName, methodDescriptor, fieldName);
+				declaredTypeClassReader.accept(classVisitor, 0);
+				writeStatus = CandidateVarMethodVisitor.getWriteStatus();
+			} catch (CandidateVarVerificationException e) {
+				e.printStackTrace();
+			}
+		}
+
+		return writeStatus;
 	}
 
 }

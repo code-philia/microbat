@@ -23,6 +23,7 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 	private static Set<String> visitedMethods = new HashSet<>();
 	private static boolean visitedTargetField = false;
 	private static boolean isAbstractOrInterface;
+	private static boolean isMethodVisited;
 
 	private String fieldName;
 	private int layer;
@@ -36,6 +37,13 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 		this.reachedControlBranch = false;
 	}
 
+	@Override
+	public void visitCode() {
+		super.visitCode();
+		isMethodVisited = true;
+	}
+
+
 	/**
 	 * Check put field instructions
 	 */
@@ -43,13 +51,16 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 	public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
 		super.visitFieldInsn(opcode, owner, name, descriptor);
 
-		if (name.equals(this.fieldName) && isPutInstruction(opcode)) {
+
+		if (name.equals(this.fieldName)) {
 			visitedTargetField = true;
-			if (!reachedControlBranch) {
-				// field written before reaching control branch
-				writeStatus = WriteStatus.GUARANTEE_WRITE;
-			} else {
-				// TODO: field written after reaching control branch
+			if (isPutInstruction(opcode)) {
+				if (!reachedControlBranch) {
+					// field written before reaching control branch
+					writeStatus = WriteStatus.GUARANTEE_WRITE;
+				} else {
+					// TODO: field written after reaching control branch
+				}
 			}
 		}
 	}
@@ -97,11 +108,16 @@ public class CandidateVarMethodVisitor extends MethodVisitor {
 		writeStatus = WriteStatus.NO_GUARANTEE;
 		visitedMethods = new HashSet<>();
 		visitedTargetField = false;
+		isMethodVisited = false;
 	}
 
 	public static WriteStatus getWriteStatus() {
 		// TODO: implement a more complex version for guaranteeNoWrite
-		if (isAbstractOrInterface) {
+		if (writeStatus == WriteStatus.GUARANTEE_WRITE) {
+			return writeStatus;
+		}
+
+		if (isAbstractOrInterface || !isMethodVisited) {
 			return WriteStatus.NO_GUARANTEE;
 		}
 		
