@@ -45,6 +45,10 @@ public class TraceRecovUtils {
 		return className.contains(".");
 	}
 	
+	public static boolean isUnrecorded(String type) {
+		return type.startsWith("java");
+	}
+	
 	public static boolean isCompositeType(String className) {
 		if (className == null || isPrimitiveType(className) || className.equals("null")) {
 			return false;
