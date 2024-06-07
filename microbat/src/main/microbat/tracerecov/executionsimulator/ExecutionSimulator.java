@@ -187,6 +187,10 @@ public class ExecutionSimulator {
 		request.put("model", SimulatorConstants.GPT4O);
 		request.put("messages", messages);
 		request.put("temperature", SimulatorConstants.TEMPERATURE);
+		request.put("max_tokens", SimulatorConstants.MAX_TOKENS);
+		request.put("top_p", SimulatorConstants.TOP_P);
+		request.put("frequency_penalty", SimulatorConstants.FREQUENCY_PENALTY);
+		request.put("presence_penalty", SimulatorConstants.PRESENCE_PENALTY);
 
 		/* send request */
 		try (OutputStream os = connection.getOutputStream()) {
