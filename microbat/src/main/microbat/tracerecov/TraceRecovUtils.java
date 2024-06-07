@@ -1,13 +1,18 @@
 package microbat.tracerecov;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.objectweb.asm.Type;
+
+import sav.strategies.dto.AppJavaClassPath;
 
 /**
  * @author hongshuwang
@@ -27,7 +32,7 @@ public class TraceRecovUtils {
 	public static boolean isArray(String className) {
 		return className.endsWith("[]");
 	}
-	
+
 	public static boolean isIterator(String className) {
 		return className.endsWith("Itr") && className.contains("$");
 	}
@@ -44,11 +49,37 @@ public class TraceRecovUtils {
 
 		return className.contains(".");
 	}
-	
-	public static boolean isUnrecorded(String type) {
-		return type.startsWith("java");
+
+	public static boolean isUnrecorded(String type, AppJavaClassPath appJavaClassPath) {
+		String sourceCodePath = appJavaClassPath.getSoureCodePath();
+		boolean isInsourceCodePath = isClassInFolder(sourceCodePath, type);
+		if (isInsourceCodePath) {
+			return false;
+		}
+		for (String sourcePath : appJavaClassPath.getAdditionalSourceFolders()) {
+			if (isClassInFolder(sourcePath, type)) {
+				return false;
+			}
+		}
+		return true;
 	}
-	
+
+	public static boolean isClassInFolder(String folderPath, String className) {
+		try {
+			File folder = new File(folderPath);
+			URL url = folder.toURI().toURL();
+			URL[] urls = new URL[] { url };
+			ClassLoader classLoader = new URLClassLoader(urls);
+			classLoader.loadClass(className);
+			return true;
+		} catch (ClassNotFoundException e) {
+			return false;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
 	public static boolean isCompositeType(String className) {
 		if (className == null || isPrimitiveType(className) || className.equals("null")) {
 			return false;
@@ -122,7 +153,7 @@ public class TraceRecovUtils {
 		}
 		return null;
 	}
-	
+
 	public static String processInputStringForLLM(String input) {
 		return input.replace("\n", "\\n").replace("<", "\\<").replace(">", "\\>");
 	}
