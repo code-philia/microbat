@@ -88,7 +88,9 @@ public class TraceRecoverer {
 								variablesToCheck.add(aliasIdOfLinkedVar);
 								
 								// link address
-								writtenField.setAliasVarID(aliasIdOfLinkedVar);
+								if (variableOnTrace.getType() != null && variableOnTrace.getType().equals(writtenField.getType())) {
+									writtenField.setAliasVarID(aliasIdOfLinkedVar);
+								}
 							}
 						}
 					} catch (IOException e) {
@@ -112,11 +114,13 @@ public class TraceRecoverer {
 			int stepOrder = relevantSteps.get(i);
 			TraceNode step = trace.getTraceNode(stepOrder);
 			
-			// INFER DEFINITION STEP
-			boolean def = parseDefiningStep(rootVar, targetVar, step, criticalVariables);
-			if (def && !step.getWrittenVariables().contains(targetVar)) {
-				step.getWrittenVariables().add(targetVar);
-				break;
+			if (step.isCallingAPI()) {
+				// INFER DEFINITION STEP
+				boolean def = parseDefiningStep(rootVar, targetVar, step, criticalVariables);
+				if (def && !step.getWrittenVariables().contains(targetVar)) {
+					step.getWrittenVariables().add(targetVar);
+					break;
+				}
 			}
 		}
 
