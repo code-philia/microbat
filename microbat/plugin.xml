@@ -174,6 +174,11 @@
             id="microbat.generateTraceCommand"
             name="Debug As DebugPilot">
       </command>
+      <command
+            defaultHandler="microbat.handler.RecovAllDependencyHandler"
+            id="microbat.allDependencyRecovery"
+            name="Exhaustive Dependency Recovery">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.menus">
@@ -247,6 +252,15 @@
                   commandId="microbat.command.startDebug"
                   icon="icons/microbat.png"
                   label="Start Debug"
+                  style="push">
+            </command>
+         </toolbar>
+         <toolbar
+               id="microbat.toolbar.allDependencyRecovery">
+            <command
+                  commandId="microbat.allDependencyRecovery"
+                  icon="icons/path_mark.png"
+                  label="Exhaustive Dependency Recovery"
                   style="push">
             </command>
          </toolbar>
