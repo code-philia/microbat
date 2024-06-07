@@ -735,6 +735,45 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					// latestNode.setInvokingMatchNode(invokingMatchNode);
 					// }
 				}
+				
+				/* Record return value for library calls (author: hongshuwang) */
+				String invokingClass = invokeMethodSig.split("#")[0];
+				boolean isAppClass = GlobalFilterChecker.isAppClass(invokingClass);
+				
+				if (returnedValue != null && !isAppClass) {
+					// invoking object is read before the method executes
+					// search for invoking object
+					VarValue invokingObjVarValue = null;
+					String invokingObjectType = invokeMethodSig.split("#")[0];
+					String invokingObjectAliasID = TraceUtils.getObjectVarId(invokeObj, invokingObjectType);
+					for (VarValue readVar : latestNode.getReadVariables()) {
+						if (readVar != null && readVar.getAliasVarID() != null 
+								&& readVar.getAliasVarID().equals(invokingObjectAliasID)) {
+							invokingObjVarValue = readVar;
+							break;
+						}
+					}
+					
+					// record returned value
+					if (invokingObjVarValue != null && !invokeMethodSig.contains("<init>")) {
+						String methodSigWithoutClassName = invokeMethodSig.split("#")[1];
+						String returnVarName = "return_value_of:" + invokingObjVarValue.getVarName() 
+							+ "#" + methodSigWithoutClassName;
+						
+						String returnTypeSign = returnedValue.getClass().getName();
+						String returnType = SignatureUtils.signatureToName(returnTypeSign);
+						
+						String returnedAliasID = TraceUtils.getObjectVarId(returnedValue, returnTypeSign);
+
+						Variable returnedVariable = new LocalVar(returnVarName, returnType, residingClassName, line);
+						returnedVariable.setAliasVarID(returnedAliasID);
+						returnedVariable.setVarID(returnedAliasID);
+
+						VarValue returneVarValue = appendVarValue(returnedValue, returnedVariable, null);
+						boolean isWrittenVar = false;
+						addRWriteValue(latestNode, returneVarValue, isWrittenVar);
+					}
+				}
 
 				if (returnedValue != null && invokeMethodSig.contains("clone()")) {
 					String returnTypeSign = returnedValue.getClass().getName();
