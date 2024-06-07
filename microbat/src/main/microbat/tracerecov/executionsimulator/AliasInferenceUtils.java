@@ -11,7 +11,6 @@ import org.json.JSONObject;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.TraceRecovUtils;
-import microbat.tracerecov.VariableOfInterest;
 
 /**
  * @author hongshuwang
@@ -87,16 +86,18 @@ public class AliasInferenceUtils {
 			isFirstVar = false;
 		}
 		
-		question.append("List all the fields in `" + rootVarName + "` that have the same memory address as variables at this step.");
+		question.append("List all the fields in `" + rootVarName
+				+ "` that have the same memory address as other variables at this step. "
+				+ "The variable names must be chosen from the above *names*.");
 
-		question.append("\nYour response should be a JSON with field_name as keys and variable_name as values.\n"
-				+ "If a field is an element in an array, use “array_name[element_index]” as its name.\n"
+		question.append("\nYour response should be a JSON with this expected format:\r\n" + "{\r\n"
+				+ "\"v1.f1\":\"v2\",\r\n" + "\"v1.f1.f2\":\"v3\",\r\n" + "\"v4.f3\":\"v1.f1\"\r\n" + "}\n"
+				+ "Both key and value in JSON should be variable or field names."
+				+ "If a field is an element in an array, use “array_name[element_index]” as its name."
 				+ "\n"
-				+ "Key format: \"layer1_var.layer2_var.field\"\n"
-				+ "Value format: \"variable_name\"\n"
+				+ "Field format: \"layer1_var.layer2_var.field\"\n"
 				+ "\n"
-				+ "In your response, strictly follow this format. If a key value pair does not follow the specified format, "
-				+ "do not include it in your response. Do not include explanation. Do not include duplicate pairs.");
+				+ "In your response, strictly follow this format. Do not include explanation. Do not include duplicate pairs.");
 
 		return question.toString();
 	}
