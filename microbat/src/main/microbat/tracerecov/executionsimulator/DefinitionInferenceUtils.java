@@ -27,14 +27,14 @@ public class DefinitionInferenceUtils {
 		/* source code */
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
-		String sourceCode = TraceRecovUtils.getSourceCode(location, lineNo).trim();
+		String sourceCode = TraceRecovUtils.processInputStringForLLM(TraceRecovUtils.getSourceCode(location, lineNo).trim());
 
 		/* variable properties */
 		String rootVarName = rootVar.getVarName();
 		String targetVarName = targetVar.getVarName();
 
 		/* type structure */
-		String jsonString = rootVar.toJSON().toString();
+		String jsonString = TraceRecovUtils.processInputStringForLLM(rootVar.toJSON().toString());
 		
 		/* all variables */
 		Set<VarValue> variablesInStep = step.getAllVariables();

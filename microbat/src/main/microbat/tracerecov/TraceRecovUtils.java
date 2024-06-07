@@ -118,4 +118,8 @@ public class TraceRecovUtils {
 		}
 		return null;
 	}
+	
+	public static String processInputStringForLLM(String input) {
+		return input.replace("\n", "\\n").replace("<", "\\<").replace(">", "\\>");
+	}
 }

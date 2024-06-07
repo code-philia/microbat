@@ -89,10 +89,10 @@ public class VariableExpansionUtils {
 		/* source code */
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
-		String sourceCode = TraceRecovUtils.getSourceCode(location, lineNo).trim();
+		String sourceCode = TraceRecovUtils.processInputStringForLLM(TraceRecovUtils.getSourceCode(location, lineNo).trim());
 		
 		/* type of selected variable */
-		String type = selectedVariable.getType();
+		String variableType = selectedVariable.getType();
 		// assume var layer == 1, then only elementArray will be recorded in ArrayList
 		if (!selectedVariable.getChildren().isEmpty()) {
 			VarValue child = selectedVariable.getChildren().get(0);
@@ -100,8 +100,13 @@ public class VariableExpansionUtils {
 			if (childType.contains("[]")) {
 				childType = childType.substring(0, childType.length() - 2); // remove [] at the end
 			}
-			type = type.concat("<" + childType + ">");
+			variableType = variableType.concat("\\<" + childType + "\\>");
 		}
+		
+		/* variable properties */
+		String variableValue = TraceRecovUtils.processInputStringForLLM(selectedVariable.getStringValue());
+		String variableName = selectedVariable.getVarName();
+		
 		
 		StringBuilder question = new StringBuilder("<Question>\n"
 				+ "Given the following data structure:\n");
@@ -117,13 +122,13 @@ public class VariableExpansionUtils {
 		question.append("with the input value of executing ```");
 		question.append(sourceCode + "```, ");
 		question.append("we have the value of *" + selectedVariable.getVarName() + "* of type ");
-		question.append(type);
+		question.append(variableType);
 		question.append(": \"");
-		question.append(selectedVariable.getStringValue());
+		question.append(variableValue);
 		question.append("\"");
-		question.append(", strictly return in JSON format for *" + selectedVariable.getVarName()
+		question.append(", strictly return in JSON format for *" + variableName
 				+ "* as the above example, each key must has a value and a type. "
-				+ "The JSON object must start with variable *" + selectedVariable.getVarName() + "* as the root. Do not include explanation in your response.\n");
+				+ "The JSON object must start with variable *" + variableName + "* as the root. Do not include explanation in your response.\n");
 		
 		question.append("You must follow the JSON format as \"var_name:var_type\": var_value. "
 				+ "Do not include duplicate keys. You can only include ***up to 3 layers of keys***, ignore deeper layers. "

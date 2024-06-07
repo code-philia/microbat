@@ -32,7 +32,7 @@ public class AliasInferenceUtils {
 		/* source code */
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
-		String sourceCode = TraceRecovUtils.getSourceCode(location, lineNo).trim();
+		String sourceCode = TraceRecovUtils.processInputStringForLLM(TraceRecovUtils.getSourceCode(location, lineNo).trim());
 
 		/* all variables */
 		Set<VarValue> variablesInStep = step.getAllVariables();
@@ -41,7 +41,7 @@ public class AliasInferenceUtils {
 		String rootVarName = rootVar.getVarName();
 
 		/* type structure */
-		String jsonString = rootVar.toJSON().toString();
+		String jsonString = TraceRecovUtils.processInputStringForLLM(rootVar.toJSON().toString());
 
 		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n```");
 		question.append(sourceCode);
