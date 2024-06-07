@@ -774,11 +774,15 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 							boolean isWrittenVar = false;
 							addRWriteValue(latestNode, returneVarValue, isWrittenVar);
 						}
-					} else if (invokeMethodSig.contains("<init>")) {
+					} else if (invokeMethodSig.contains("<init>") && !invokingClass.equals("java.lang.StringBuffer") 
+							&& !invokingClass.equals("java.lang.StringBuilder")) {
 						// invoking object (initialized object) should be recorded
+						// don't record StringBuffer and StringBuilder to avoid recording results of string concatenation.
 						
 						// record invoking object
-						String returnVarName = "return_value_of:" + invokeMethodSig;
+						int splitIndex = invokingClass.lastIndexOf(".");
+						String shortReturnType = invokingClass.substring(splitIndex + 1);
+						String returnVarName = shortReturnType + "_instance";
 						String invokingObjectAliasID = TraceUtils.getObjectVarId(invokeObj, invokingClass);
 						
 						Variable returnedVariable = new LocalVar(returnVarName, invokingClass, residingClassName, line);
