@@ -81,15 +81,17 @@ public class TraceRecoverer {
 							boolean isCriticalVariable = criticalVariables.stream()
 									.anyMatch(v -> v.getVarID().equals(writtenFieldID));
 							
-							if (isCriticalVariable) {
+//							if (isCriticalVariable) {
 								// add critical variable to the set (to be checked later)
 								VarValue variableOnTrace = fieldsWithAddressRecovered.get(writtenField);
 								String aliasIdOfLinkedVar = variableOnTrace.getAliasVarID();
 								variablesToCheck.add(aliasIdOfLinkedVar);
 								
 								// link address
-								writtenField.setAliasVarID(aliasIdOfLinkedVar);
-							}
+								if (variableOnTrace.getType() != null && variableOnTrace.getType().equals(writtenField.getType())) {
+									writtenField.setAliasVarID(aliasIdOfLinkedVar);
+								}
+//							}
 						}
 					} catch (IOException e) {
 						e.printStackTrace();
@@ -112,11 +114,13 @@ public class TraceRecoverer {
 			int stepOrder = relevantSteps.get(i);
 			TraceNode step = trace.getTraceNode(stepOrder);
 			
-			// INFER DEFINITION STEP
-			boolean def = parseDefiningStep(rootVar, targetVar, step, criticalVariables);
-			if (def && !step.getWrittenVariables().contains(targetVar)) {
-				step.getWrittenVariables().add(targetVar);
-				break;
+			if (step.isCallingAPI()) {
+				// INFER DEFINITION STEP
+				boolean def = parseDefiningStep(rootVar, targetVar, step, criticalVariables);
+				if (def && !step.getWrittenVariables().contains(targetVar)) {
+					step.getWrittenVariables().add(targetVar);
+					break;
+				}
 			}
 		}
 
