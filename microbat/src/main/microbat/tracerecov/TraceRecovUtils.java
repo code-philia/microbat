@@ -4,10 +4,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.objectweb.asm.Type;
@@ -51,12 +54,12 @@ public class TraceRecovUtils {
 	}
 
 	public static boolean isUnrecorded(String type, AppJavaClassPath appJavaClassPath) {
-		String sourceCodePath = appJavaClassPath.getSoureCodePath();
-		boolean isInsourceCodePath = isClassInFolder(sourceCodePath, type);
-		if (isInsourceCodePath) {
-			return false;
-		}
-		for (String sourcePath : appJavaClassPath.getAdditionalSourceFolders()) {
+		List<String> pathsToCheck = new ArrayList<>();
+		pathsToCheck.add(appJavaClassPath.getSoureCodePath());
+		pathsToCheck.add(appJavaClassPath.getTestCodePath());
+		pathsToCheck.addAll(appJavaClassPath.getAdditionalSourceFolders());
+		
+		for (String sourcePath : pathsToCheck) {
 			if (isClassInFolder(sourcePath, type)) {
 				return false;
 			}
@@ -65,19 +68,10 @@ public class TraceRecovUtils {
 	}
 
 	public static boolean isClassInFolder(String folderPath, String className) {
-		try {
-			File folder = new File(folderPath);
-			URL url = folder.toURI().toURL();
-			URL[] urls = new URL[] { url };
-			ClassLoader classLoader = new URLClassLoader(urls);
-			classLoader.loadClass(className);
-			return true;
-		} catch (ClassNotFoundException e) {
-			return false;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
+		String fileName = className.replace(".", File.separator).concat(".java");
+        Path filePath = Paths.get(folderPath, fileName);
+
+        return Files.exists(filePath);
 	}
 
 	public static boolean isCompositeType(String className) {
