@@ -20,7 +20,21 @@ public class AliasInferenceUtils {
 	/* Request content */
 
 	private static final String ALIAS_INFERENCE_BACKGROUND = "<Background>\n"
-			+ "You are a Java expert, you need to analyze the runtime execution of a Java program.";
+			+ "You are a Java expert, you need to analyze the runtime execution of a Java program. You need to identify when two variables can be linked at a step. Constants are values that are not assigned to variables. Do not include linkage between variable and constant.\n"
+			+ "\n"
+			+ "<Example>\n"
+			+ "Given the code as:\n"
+			+ "```list.add(element);```\n"
+			+ "`list` is of type `java.util.ArrayList`, of runtime value \"[]\",\n"
+			+ "`element` is of type `Integer`, of runtime value \" 1\",\n"
+			+ "We know that `list` has the following structure:\n"
+			+ "{\"list:java.util.ArrayList\":{\"elementData:java.lang.Object[]\":\"[]\",\"size:int\":\"0\"}}\n"
+			+ "\n"
+			+ "Your response should be:\n"
+			+ "{\n"
+			+ "\"element\":\"list.elementData[0]\"\n"
+			+ "}\n"
+			+ "\n";
 
 	/* Methods */
 
@@ -88,13 +102,11 @@ public class AliasInferenceUtils {
 		
 		question.append("List all the fields in `" + rootVarName
 				+ "` that have the same memory address as other variables at this step. "
-				+ "The variable names must be chosen from the above *names*.");
+				+ "The variable names must be chosen from the above names, not values.");
 
-		question.append("\nYour response should be a JSON with this expected format:\r\n" + "{\r\n"
-				+ "\"v1.f1\":\"v2\",\r\n" + "\"v1.f1.f2\":\"v3\",\r\n" + "\"v4.f3\":\"v1.f1\"\r\n" + "}\n"
-				+ "Both key and value in JSON should be variable or field names."
-				+ "If a field is an element in an array, use “array_name[element_index]” as its name."
+		question.append("\nYour response should be in JSON format, where key and value are both variable or field names.\n"
 				+ "\n"
+				+ "If a field is an element in an array, use “array_name[element_index]” as its name.\n"
 				+ "Field format: \"layer1_var.layer2_var.field\"\n"
 				+ "\n"
 				+ "In your response, strictly follow this format. Do not include explanation. You must not include duplicate keys.");
@@ -125,6 +137,11 @@ public class AliasInferenceUtils {
 			/* update memory address in rootVar */
 			VarValue variableOnTrace = variablesInStep.stream().filter(v -> v.getVarName().equals(variableName)).findFirst()
 					.orElse(null);
+			if (variableOnTrace == null) {
+				String rootVariableOnTrace = variableName.split("\\.")[0];
+				variableOnTrace = variablesInStep.stream().filter(v -> v.getVarName().equals(rootVariableOnTrace)).findFirst()
+						.orElse(null);
+			}
 			VarValue writtenField = searchForField(fieldName, rootVar);
 			if (variableOnTrace == null || writtenField == null) {
 				continue;

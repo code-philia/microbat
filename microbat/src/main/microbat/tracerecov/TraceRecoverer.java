@@ -52,7 +52,7 @@ public class TraceRecoverer {
 		// determine scope of searching
 		TraceNode scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
 		if(scopeStart == null) return;
-		int start = scopeStart.getOrder();
+		int start = scopeStart.getOrder() + 1;
 		int end = currentStep.getOrder();
 		
 		List<Integer> relevantSteps = new ArrayList<>();
@@ -81,7 +81,7 @@ public class TraceRecoverer {
 							boolean isCriticalVariable = criticalVariables.stream()
 									.anyMatch(v -> v.getVarID().equals(writtenFieldID));
 							
-							if (isCriticalVariable) {
+							if (isCriticalVariable || fieldsWithAddressRecovered.get(writtenField).getVarName().equals("PrintWriter_instance")) {
 								// add critical variable to the set (to be checked later)
 								VarValue variableOnTrace = fieldsWithAddressRecovered.get(writtenField);
 								String aliasIdOfLinkedVar = variableOnTrace.getAliasVarID();

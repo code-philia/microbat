@@ -12,7 +12,7 @@ public class SimulatorConstants {
 	public static final double TEMPERATURE = 0;
 	public static final int MAX_TOKENS = 256;
 	public static final double TOP_P = 1;
-	public static final double FREQUENCY_PENALTY = 2;
+	public static final double FREQUENCY_PENALTY = 1;
 	public static final double PRESENCE_PENALTY = 0;
 
 }
