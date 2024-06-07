@@ -114,8 +114,8 @@ public class VariableExpansionUtils {
 		
 		System.currentTimeMillis();
 
-		question.append("with the input value of executing \"");
-		question.append(sourceCode + "\", ");
+		question.append("with the input value of executing ```");
+		question.append(sourceCode + "```, ");
 		question.append("we have the value of *" + selectedVariable.getVarName() + "* of type ");
 		question.append(type);
 		question.append(": \"");
