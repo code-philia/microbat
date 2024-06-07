@@ -789,7 +789,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 						returnedVariable.setAliasVarID(invokingObjectAliasID);
 						returnedVariable.setVarID(invokingObjectAliasID);
 
-						VarValue returneVarValue = appendVarValue(returnedValue, returnedVariable, null);
+						VarValue returneVarValue = appendVarValue(invokeObj, returnedVariable, null);
 						boolean isWrittenVar = false;
 						addRWriteValue(latestNode, returneVarValue, isWrittenVar);
 					}
