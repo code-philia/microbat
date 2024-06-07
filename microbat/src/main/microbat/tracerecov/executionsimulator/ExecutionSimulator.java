@@ -98,7 +98,7 @@ public class ExecutionSimulator {
 
 		for (int i = 0; i < 2; i++) {
 			try {
-				String response = sendRequest(null, content);
+				String response = sendRequest(background, content);
 				System.out.println(i + "th try with GPT to generate response as " + response);
 				return AliasInferenceUtils.processResponse(response, rootVar, step);
 			} catch (org.json.JSONException e) {
@@ -166,21 +166,21 @@ public class ExecutionSimulator {
 		connection.setDoOutput(true);
 
 		/* construct request */
-		JSONObject background = null;
-		if (backgroundContent != null) {
-			background = new JSONObject();
-			background.put("role", "system");
-			background.put("content", backgroundContent);
-		}
+//		JSONObject background = null;
+//		if (backgroundContent != null) {
+//			background = new JSONObject();
+//			background.put("role", "system");
+//			background.put("content", backgroundContent);
+//		}
 
 		JSONObject question = new JSONObject();
 		question.put("role", "user");
-		question.put("content", questionContent);
+		question.put("content", backgroundContent + questionContent);
 
 		JSONArray messages = new JSONArray();
-		if (backgroundContent != null) {
-			messages.put(background);
-		}
+//		if (backgroundContent != null) {
+//			messages.put(background);
+//		}
 		messages.put(question);
 
 		JSONObject request = new JSONObject();
