@@ -97,7 +97,7 @@ public class AliasInferenceUtils {
 				+ "\n"
 				+ "Field format: \"layer1_var.layer2_var.field\"\n"
 				+ "\n"
-				+ "In your response, strictly follow this format. Do not include explanation. Do not include duplicate pairs.");
+				+ "In your response, strictly follow this format. Do not include explanation. You must not include duplicate keys.");
 
 		return question.toString();
 	}
