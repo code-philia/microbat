@@ -112,6 +112,7 @@ public class RecovAllDependencyHandler extends StartDebugHandler {
 
 			ExecutionSimulator executionSimulator = new ExecutionSimulator();
 			TraceRecoverer traceRecoverer = new TraceRecoverer();
+			AppJavaClassPath appJavaClassPath = trace.getAppJavaClassPath();
 
 			int firstStepNo = 1;
 			int lastStepNo = trace.getLatestNode().getOrder();
@@ -137,7 +138,7 @@ public class RecovAllDependencyHandler extends StartDebugHandler {
 				Set<Integer> dataDominatorsAfterRecovery = new HashSet<>();
 				for (VarValue readVar : readVars) {
 					if (TraceRecovUtils.shouldBeChecked(readVar.getType())
-							&& TraceRecovUtils.isUnrecorded(readVar.getType())) {
+							&& TraceRecovUtils.isUnrecorded(readVar.getType(), appJavaClassPath)) {
 						try {
 							// variable expansion
 							executionSimulator.expandVariable(readVar, step);
