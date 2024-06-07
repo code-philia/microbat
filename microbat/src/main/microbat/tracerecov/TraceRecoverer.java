@@ -66,7 +66,7 @@ public class TraceRecoverer {
 			
 			// only check steps containing recovered fields in rootVar AND calling API
 			boolean isRelevantStep = variablesInStep.stream().anyMatch(v -> variablesToCheck.contains(v.getAliasVarID()));
-			if (isRelevantStep && step.isCallingAPI()) {
+			if (isRelevantStep) {
 				
 				relevantSteps.add(i);
 				
