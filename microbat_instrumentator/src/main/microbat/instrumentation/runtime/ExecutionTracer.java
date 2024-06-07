@@ -740,34 +740,50 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				String invokingClass = invokeMethodSig.split("#")[0];
 				boolean isAppClass = GlobalFilterChecker.isAppClass(invokingClass);
 				
-				if (returnedValue != null && !isAppClass) {
-					// invoking object is read before the method executes
-					// search for invoking object
-					VarValue invokingObjVarValue = null;
-					String invokingObjectType = invokeMethodSig.split("#")[0];
-					String invokingObjectAliasID = TraceUtils.getObjectVarId(invokeObj, invokingObjectType);
-					for (VarValue readVar : latestNode.getReadVariables()) {
-						if (readVar != null && readVar.getAliasVarID() != null 
-								&& readVar.getAliasVarID().equals(invokingObjectAliasID)) {
-							invokingObjVarValue = readVar;
-							break;
+				if (!isAppClass) {
+					if (returnedValue != null) {
+						// invoking object is read before the method executes
+						// search for invoking object
+						VarValue invokingObjVarValue = null;
+						String invokingObjectType = invokeMethodSig.split("#")[0];
+						String invokingObjectAliasID = TraceUtils.getObjectVarId(invokeObj, invokingObjectType);
+						for (VarValue readVar : latestNode.getReadVariables()) {
+							if (readVar != null && readVar.getAliasVarID() != null 
+									&& readVar.getAliasVarID().equals(invokingObjectAliasID)) {
+								invokingObjVarValue = readVar;
+								break;
+							}
 						}
-					}
-					
-					// record returned value
-					if (invokingObjVarValue != null && !invokeMethodSig.contains("<init>")) {
-						String methodSigWithoutClassName = invokeMethodSig.split("#")[1];
-						String returnVarName = "return_value_of:" + invokingObjVarValue.getVarName() 
-							+ "#" + methodSigWithoutClassName;
 						
-						String returnTypeSign = returnedValue.getClass().getName();
-						String returnType = SignatureUtils.signatureToName(returnTypeSign);
-						
-						String returnedAliasID = TraceUtils.getObjectVarId(returnedValue, returnTypeSign);
+						// record returned value
+						if (invokingObjVarValue != null) {
+							String methodSigWithoutClassName = invokeMethodSig.split("#")[1];
+							String returnVarName = "return_value_of:" + invokingObjVarValue.getVarName() 
+								+ "#" + methodSigWithoutClassName;
+							
+							String returnTypeSign = returnedValue.getClass().getName();
+							String returnType = SignatureUtils.signatureToName(returnTypeSign);
+							
+							String returnedAliasID = TraceUtils.getObjectVarId(returnedValue, returnTypeSign);
 
-						Variable returnedVariable = new LocalVar(returnVarName, returnType, residingClassName, line);
-						returnedVariable.setAliasVarID(returnedAliasID);
-						returnedVariable.setVarID(returnedAliasID);
+							Variable returnedVariable = new LocalVar(returnVarName, returnType, residingClassName, line);
+							returnedVariable.setAliasVarID(returnedAliasID);
+							returnedVariable.setVarID(returnedAliasID);
+
+							VarValue returneVarValue = appendVarValue(returnedValue, returnedVariable, null);
+							boolean isWrittenVar = false;
+							addRWriteValue(latestNode, returneVarValue, isWrittenVar);
+						}
+					} else if (invokeMethodSig.contains("<init>")) {
+						// invoking object (initialized object) should be recorded
+						
+						// record invoking object
+						String returnVarName = "return_value_of:" + invokeMethodSig;
+						String invokingObjectAliasID = TraceUtils.getObjectVarId(invokeObj, invokingClass);
+						
+						Variable returnedVariable = new LocalVar(returnVarName, invokingClass, residingClassName, line);
+						returnedVariable.setAliasVarID(invokingObjectAliasID);
+						returnedVariable.setVarID(invokingObjectAliasID);
 
 						VarValue returneVarValue = appendVarValue(returnedValue, returnedVariable, null);
 						boolean isWrittenVar = false;
