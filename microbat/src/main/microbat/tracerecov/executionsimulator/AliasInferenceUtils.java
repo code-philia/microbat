@@ -108,7 +108,7 @@ public class AliasInferenceUtils {
 			cascadeName += criticalVar.getVarName() + ".";
 		}
 		
-		question.append(" values in JSON are the names of other variables listed above, not variable values.\n"
+		question.append(" do not include other keys. Values in JSON are the names of other variables listed above, not variable values.\n"
 				+ "\n"
 				+ "If a field is an element in an array, use “array_name[element_index]” as its name.\n"
 				+ "If a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of <TYPE>.\n"
