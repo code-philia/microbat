@@ -3,12 +3,9 @@ package microbat.tracerecov.executionsimulator;
 import java.util.List;
 import java.util.Set;
 
-import org.json.JSONObject;
-
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.TraceRecovUtils;
-import microbat.tracerecov.VariableOfInterest;
 
 public class DefinitionInferenceUtils {
 
@@ -92,7 +89,14 @@ public class DefinitionInferenceUtils {
 		}
 		
 		question.append("`" + rootVarName + "` has a field called `");
-		question.append(targetVarName);
+
+		String cascadeFieldName = "";
+		for (VarValue criticalVar : criticalVariables) {
+			cascadeFieldName += criticalVar.getVarName() + ".";
+		}
+		cascadeFieldName += targetVarName;
+
+		question.append(cascadeFieldName);
 		question.append("`, does the code change the value of this field?"
 				+ "\nIn your response, return T for true and F for false. Do not include explanation.");
 
