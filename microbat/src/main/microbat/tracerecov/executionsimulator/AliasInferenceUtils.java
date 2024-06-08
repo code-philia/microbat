@@ -20,7 +20,7 @@ public class AliasInferenceUtils {
 	/* Request content */
 
 	private static final String ALIAS_INFERENCE_BACKGROUND = "<Background>\n"
-			+ "You are a Java expert, you need to analyze the runtime execution of a Java program. You need to identify when two variables can be linked at a step. Constants are values that are not assigned to variables. Do not include linkage between variable and constant.\n"
+			+ "You are a Java expert, you need to analyze the runtime execution of a Java program. You need to identify when there is a relationship between two variables.\n"
 			+ "\n"
 			+ "<Example>\n"
 			+ "Given the code as:\n"
@@ -33,8 +33,7 @@ public class AliasInferenceUtils {
 			+ "Your response should be:\n"
 			+ "{\n"
 			+ "\"element\":\"list.elementData[0]\"\n"
-			+ "}\n"
-			+ "\n";
+			+ "}\n";
 
 	/* Methods */
 
@@ -100,16 +99,21 @@ public class AliasInferenceUtils {
 			isFirstVar = false;
 		}
 		
-		question.append("List all the fields in `" + rootVarName
-				+ "` that have the same memory address as other variables at this step. "
-				+ "The variable names must be chosen from the above names, not values.");
-
-		question.append("\nYour response should be in JSON format, where key and value are both variable or field names.\n"
+		question.append("Identify all the variable pairs such that each pair has the same memory address. The variable names must be chosen from the above names, not values.");
+		question.append("\nYour response should be in JSON format, where keys must be chosen from:");
+		
+		String cascadeName = "";
+		for (VarValue criticalVar : criticalVariables) {
+			question.append("`" + cascadeName + criticalVar.getVarName() + "`,");
+			cascadeName += criticalVar.getVarName() + ".";
+		}
+		
+		question.append(" values in JSON are the names of other variables listed above, not variable values.\n"
 				+ "\n"
 				+ "If a field is an element in an array, use “array_name[element_index]” as its name.\n"
-				+ "Field format: \"layer1_var.layer2_var.field\"\n"
+				+ "If a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of <TYPE>.\n"
 				+ "\n"
-				+ "In your response, strictly follow this format. Do not include explanation. You must not include duplicate keys.");
+				+ "In your response, strictly follow this format. Do not include explanation. Each key must be included exactly once.");
 
 		return question.toString();
 	}
@@ -129,6 +133,10 @@ public class AliasInferenceUtils {
 		Iterator<String> keys = inferences.keys();
 		while (keys.hasNext()) {
 			String fieldName = keys.next();
+			if (!(inferences.get(fieldName) instanceof String)) {
+				continue;
+			}
+			
 			String variableName = (String) inferences.getString(fieldName);
 
 			/* all variables */
@@ -154,7 +162,7 @@ public class AliasInferenceUtils {
 	}
 
 	private static VarValue searchForField(String fieldName, VarValue rootVar) {
-		VarValue field = null;
+		VarValue field = rootVar;
 
 		String[] fields = fieldName.split("\\.");
 		if (fields.length <= 1 && !rootVar.getVarName().equals(fields[0].trim())) {

@@ -80,6 +80,17 @@ public class DefinitionInferenceUtils {
 			isFirstVar = false;
 		}
 		
+		// TODO: update this later
+		boolean containsPrintWriter = variablesInStep.stream().anyMatch(v -> v.getVarName().equals("pw"));
+		if (containsPrintWriter && rootVar.getVarName().equals("out")) {
+			question.append(isFirstVar ? "where\n`" : "`");
+			question.append("out");
+			question.append("` refers to `");
+			question.append("pw.out");
+			question.append("`,\n");
+			isFirstVar = false;
+		}
+		
 		question.append("`" + rootVarName + "` has a field called `");
 		question.append(targetVarName);
 		question.append("`, does the code change the value of this field?"
