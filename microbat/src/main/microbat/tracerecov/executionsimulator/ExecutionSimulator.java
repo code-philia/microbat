@@ -109,52 +109,6 @@ public class ExecutionSimulator {
 		return new HashMap<>();
 	}
 
-	// TODO: Not Used
-//	public void recoverLinkageSteps() throws IOException {
-//		List<TraceNode> steps = VariableGraph.getPotentialLinkageSteps();
-//		String background = LinkageEstimationUtils.getBackgroundContent();
-//		String content = LinkageEstimationUtils.getQuestionContent(steps);
-//		System.out.println(background);
-//		System.out.println(content);
-//
-//		String response = sendRequest(background, content);
-//		System.out.println(response);
-//
-//		LinkageEstimationUtils.processResponse(response, steps);
-//	}
-
-//	public void sendRequests() throws IOException {
-//		String variableID = VariableGraph.getNextNodeIDToVisit();
-//		while (variableID != null) {
-//			List<TraceNode> relevantSteps = VariableGraph.getRelevantSteps(variableID);
-//			if (!relevantSteps.isEmpty()) {
-//				if (VariableGraph.hasChildren(variableID)) {
-//					String background = SimulationUtilsWithCandidateVar.getBackgroundContent();
-//					String content = SimulationUtilsWithCandidateVar.getQuestionContent(variableID, relevantSteps);
-//					System.out.println(background);
-//					System.out.println(content);
-//
-//					String response = this.sendRequest(background, content);
-//					System.out.println(response);
-//
-//					SimulationUtilsWithCandidateVar.processResponse(response, variableID, relevantSteps);
-//				} else {
-//					String background = SimulationUtils.getBackgroundContent();
-//					String content = SimulationUtils.getQuestionContent(variableID, relevantSteps);
-//					System.out.println(background);
-//					System.out.println(content);
-//
-//					String response = this.sendRequest(background, content);
-//					System.out.println(response);
-//					SimulationUtils.processResponse(response, variableID, relevantSteps);
-//				}
-//			}
-//
-//			VariableGraph.addCurrentToParentVariables();
-//			variableID = VariableGraph.getNextNodeIDToVisit();
-//		}
-//	}
-
 	private String sendRequest(String backgroundContent, String questionContent) throws IOException {
 		/* set up connection */
 		URL url = new URL(SimulatorConstants.API_URL);

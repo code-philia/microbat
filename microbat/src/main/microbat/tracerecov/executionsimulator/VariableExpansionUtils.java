@@ -15,8 +15,6 @@ import microbat.model.value.VarValue;
 import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
 import microbat.tracerecov.TraceRecovUtils;
-import microbat.tracerecov.VariableOfInterest;
-import microbat.tracerecov.varexpansion.VarSkeletonBuilder;
 import microbat.tracerecov.varexpansion.VariableSkeleton;
 
 public class VariableExpansionUtils {
@@ -146,7 +144,6 @@ public class VariableExpansionUtils {
 		response = response.substring(begin, end + 1);
 		
 		JSONObject variable = new JSONObject(response);
-		VariableOfInterest.setVariableOfInterest(variable);
 		
 		processResponseRecur(true, variable, selectedVariable);
 	}
