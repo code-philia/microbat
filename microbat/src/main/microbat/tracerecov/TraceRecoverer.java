@@ -81,7 +81,7 @@ public class TraceRecoverer {
 							boolean isCriticalVariable = criticalVariables.stream()
 									.anyMatch(v -> v.getVarID().equals(writtenFieldID));
 							
-							if (isCriticalVariable || fieldsWithAddressRecovered.get(writtenField).getVarName().equals("PrintWriter_instance")) {
+							if (isCriticalVariable) {
 								// add critical variable to the set (to be checked later)
 								VarValue variableOnTrace = fieldsWithAddressRecovered.get(writtenField);
 								String aliasIdOfLinkedVar = variableOnTrace.getAliasVarID();
