@@ -17,6 +17,7 @@ import java.util.zip.ZipEntry;
 
 import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.Code;
+import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
 import org.objectweb.asm.Type;
@@ -197,7 +198,6 @@ public class TraceRecovUtils {
 			}
 
 			if (targetMethod == null) {
-				System.out.println("Method not found: " + methodSig);
 				throw new CannotBuildCFGException(
 						"Method `" + methodSig + "` is not found in class `" + className + "`");
 			}
@@ -206,6 +206,9 @@ public class TraceRecovUtils {
 			Code code = targetMethod.getCode();
 			CFGConstructor cfgConstructor = new CFGConstructor();
 			CFG cfg = cfgConstructor.buildCFGWithControlDomiance(code);
+
+			ConstantPool constantPool = targetMethod.getConstantPool();
+			cfg.setConstantPool(constantPool);
 
 			return cfg;
 		} catch (IOException e) {

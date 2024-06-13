@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.bcel.classfile.Code;
+import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.LineNumber;
 import org.apache.bcel.generic.InstructionHandle;
 
@@ -13,6 +14,7 @@ public class CFG {
 	private List<CFGNode> exitList = new ArrayList<>();
 	
 	private Code code;
+	private ConstantPool constantPool;
 	
 	public CFG(Code code) {
 		super();
@@ -106,5 +108,13 @@ public class CFG {
 		}
 		
 		return max;
+	}
+
+	public ConstantPool getConstantPool() {
+		return constantPool;
+	}
+
+	public void setConstantPool(ConstantPool constantPool) {
+		this.constantPool = constantPool;
 	}
 }
