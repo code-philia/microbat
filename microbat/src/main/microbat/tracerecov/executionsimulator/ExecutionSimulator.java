@@ -14,12 +14,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import microbat.Activator;
+import microbat.codeanalysis.bytecode.CFG;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.preference.MicrobatPreference;
+import microbat.tracerecov.CannotBuildCFGException;
 import microbat.tracerecov.TraceRecovUtils;
-import microbat.tracerecov.candidatevar.CandidateVarVerificationException;
-import microbat.tracerecov.candidatevar.CandidateVarVerifier;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
 import microbat.tracerecov.varexpansion.VarSkeletonBuilder;
 import microbat.tracerecov.varexpansion.VariableSkeleton;
@@ -37,24 +37,24 @@ public class ExecutionSimulator {
 	public ExecutionSimulator() {
 	}
 
-	public void expandVariable(VarValue selectedVar, TraceNode step)
-			throws IOException {
-		
-		if(selectedVar.isExpanded()) {
+	public void expandVariable(VarValue selectedVar, TraceNode step) throws IOException {
+
+		if (selectedVar.isExpanded()) {
 			return;
 		}
-		
+
 		System.out.println("***Variable Expansion***");
 		System.out.println();
-		
+
 		List<VariableSkeleton> variableSkeletons = new ArrayList<>();
 
 		/*
 		 * Expand the selected variable.
 		 */
-		VariableSkeleton parentSkeleton = VarSkeletonBuilder.getVariableStructure(selectedVar.getType(), step.getTrace().getAppJavaClassPath());
-			variableSkeletons.add(parentSkeleton);
-			
+		VariableSkeleton parentSkeleton = VarSkeletonBuilder.getVariableStructure(selectedVar.getType(),
+				step.getTrace().getAppJavaClassPath());
+		variableSkeletons.add(parentSkeleton);
+
 		// assume var layer == 1, then only elementArray will be recorded in ArrayList
 		if (!selectedVar.getChildren().isEmpty()) {
 			VarValue child = selectedVar.getChildren().get(0);
@@ -62,7 +62,8 @@ public class ExecutionSimulator {
 			if (childType.contains("[]")) {
 				childType = childType.substring(0, childType.length() - 2); // remove [] at the end
 			}
-			VariableSkeleton childSkeleton = VarSkeletonBuilder.getVariableStructure(childType, step.getTrace().getAppJavaClassPath());
+			VariableSkeleton childSkeleton = VarSkeletonBuilder.getVariableStructure(childType,
+					step.getTrace().getAppJavaClassPath());
 			variableSkeletons.add(childSkeleton);
 		}
 
@@ -86,7 +87,8 @@ public class ExecutionSimulator {
 	/**
 	 * Return a map with key: written_field, value: variable_on_trace
 	 */
-	public Map<VarValue, VarValue> inferenceAliasRelations(TraceNode step, VarValue rootVar, List<VarValue> criticalVariables) throws IOException {
+	public Map<VarValue, VarValue> inferenceAliasRelations(TraceNode step, VarValue rootVar,
+			List<VarValue> criticalVariables) throws IOException {
 		System.out.println();
 		System.out.println("***Alias Inferencing***");
 		System.out.println();
@@ -105,7 +107,7 @@ public class ExecutionSimulator {
 				e.printStackTrace();
 			}
 		}
-		
+
 		return new HashMap<>();
 	}
 
@@ -171,8 +173,9 @@ public class ExecutionSimulator {
 		}
 	}
 
-	public boolean inferDefinition(TraceNode step, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
-		
+	public boolean inferDefinition(TraceNode step, VarValue rootVar, VarValue targetVar,
+			List<VarValue> criticalVariables) {
+
 		WriteStatus complication = WriteStatus.NO_GUARANTEE;
 		String targetFieldName = targetVar.getVarName();
 		if (targetFieldName.contains("[") || targetFieldName.contains("]")) {
@@ -184,7 +187,7 @@ public class ExecutionSimulator {
 				String aliasID = readVarInStep.getAliasVarID();
 				VarValue criticalAncestor = criticalVariables.stream()
 						.filter(criticalVar -> aliasID.equals(criticalVar.getAliasVarID())).findFirst().orElse(null);
-				
+
 				if (criticalAncestor != null) {
 					ancestorVarOnTrace = readVarInStep;
 					break;
@@ -196,18 +199,16 @@ public class ExecutionSimulator {
 				complication = estimateComplication(step, ancestorVarOnTrace, targetVar);
 			}
 		}
-		
+
 		System.out.println(targetVar.getVarName());
 		System.out.println(step.getInvokingMethod());
 		System.out.println(complication);
-		
-		if(complication == WriteStatus.GUARANTEE_WRITE) {
+
+		if (complication == WriteStatus.GUARANTEE_WRITE) {
 			return true;
-		}
-		else if(complication == WriteStatus.GUARANTEE_NO_WRITE) {
+		} else if (complication == WriteStatus.GUARANTEE_NO_WRITE) {
 			return false;
-		}
-		else {
+		} else {
 			boolean def = false;
 			try {
 				def = inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
@@ -223,36 +224,40 @@ public class ExecutionSimulator {
 	 * 
 	 * must-analysis
 	 * 
-	 * guarantee write: 1. 2.
+	 * guarantee write
 	 * 
-	 * guarantee no-write 1. 2
-	 * 
+	 * guarantee no-write
 	 */
 	private WriteStatus estimateComplication(TraceNode step, VarValue parentVar, VarValue targetVar) {
-		
+
 		String[] invokingMethods = step.getInvokingMethod().split("%");
-		
-		for (String methodSig : invokingMethods) {
-			if (!methodSig.contains("#")) {
-				continue;
-			}
-			CandidateVarVerifier candidateVarVerifier;
+
+		for (String invokedMethod : invokingMethods) {
+
 			try {
-				candidateVarVerifier = new CandidateVarVerifier(parentVar.getType());
-				// TODO: change to field name with path
-				WriteStatus writeStatus = candidateVarVerifier.verifyCandidateVariable(methodSig, targetVar.getVarName());
-				if (writeStatus != WriteStatus.NO_GUARANTEE) {
-					return writeStatus;
-				}
-			} catch (CandidateVarVerificationException e) {
+				CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokedMethod);
+			} catch (CannotBuildCFGException e) {
 				e.printStackTrace();
 			}
+
+//			CandidateVarVerifier candidateVarVerifier;
+//			try {
+//				candidateVarVerifier = new CandidateVarVerifier(parentVar.getType());
+//				// TODO: change to field name with path
+//				WriteStatus writeStatus = candidateVarVerifier.verifyCandidateVariable(methodSig, targetVar.getVarName());
+//				if (writeStatus != WriteStatus.NO_GUARANTEE) {
+//					return writeStatus;
+//				}
+//			} catch (CandidateVarVerificationException e) {
+//				e.printStackTrace();
+//			}
 		}
-		
+
 		return WriteStatus.NO_GUARANTEE;
 	}
 
-	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) throws IOException {
+	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar,
+			List<VarValue> criticalVariables) throws IOException {
 		System.out.println();
 		System.out.println("***Definition Inference***");
 		System.out.println();
@@ -271,7 +276,7 @@ public class ExecutionSimulator {
 				e.printStackTrace();
 			}
 		}
-		
+
 		return false;
 	}
 }

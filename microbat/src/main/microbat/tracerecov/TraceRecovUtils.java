@@ -12,9 +12,19 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 
+import org.apache.bcel.classfile.ClassParser;
+import org.apache.bcel.classfile.Code;
+import org.apache.bcel.classfile.JavaClass;
+import org.apache.bcel.classfile.Method;
 import org.objectweb.asm.Type;
 
+import microbat.Activator;
+import microbat.codeanalysis.bytecode.CFG;
+import microbat.codeanalysis.bytecode.CFGConstructor;
+import microbat.preference.MicrobatPreference;
 import sav.strategies.dto.AppJavaClassPath;
 
 /**
@@ -58,7 +68,7 @@ public class TraceRecovUtils {
 		pathsToCheck.add(appJavaClassPath.getSoureCodePath());
 		pathsToCheck.add(appJavaClassPath.getTestCodePath());
 		pathsToCheck.addAll(appJavaClassPath.getAdditionalSourceFolders());
-		
+
 		for (String sourcePath : pathsToCheck) {
 			if (isClassInFolder(sourcePath, type)) {
 				return false;
@@ -69,9 +79,9 @@ public class TraceRecovUtils {
 
 	public static boolean isClassInFolder(String folderPath, String className) {
 		String fileName = className.replace(".", File.separator).concat(".java");
-        Path filePath = Paths.get(folderPath, fileName);
+		Path filePath = Paths.get(folderPath, fileName);
 
-        return Files.exists(filePath);
+		return Files.exists(filePath);
 	}
 
 	public static boolean isCompositeType(String className) {
@@ -150,5 +160,56 @@ public class TraceRecovUtils {
 
 	public static String processInputStringForLLM(String input) {
 		return input.replace("\n", "\\n").replace("<", "\\<").replace(">", "\\>");
+	}
+
+	public static CFG getCFGFromMethodSignature(String invokedMethod) throws CannotBuildCFGException {
+		if (!invokedMethod.contains("#")) {
+			throw new CannotBuildCFGException(
+					"invoked method: `" + invokedMethod + "` doesn't follow format `type#method`");
+		}
+
+		String rtJarPath = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.JAVA7HOME_PATH)
+				+ "/jre/lib/rt.jar";
+
+		String className = invokedMethod.split("#")[0].replace(".", File.separator);
+		String methodSig = invokedMethod.split("#")[1];
+
+		try (JarFile rtJar = new JarFile(rtJarPath)) {
+			// Get class
+			String resourcePath = className + ".class";
+			ZipEntry entry = rtJar.getEntry(resourcePath);
+
+			if (entry == null) {
+				throw new CannotBuildCFGException("Class: `" + className + "` is not found in " + rtJarPath);
+			}
+
+			ClassParser parser = new ClassParser(rtJar.getInputStream(entry), className);
+			JavaClass javaClass = parser.parse();
+
+			// Find target method
+			Method targetMethod = null;
+			for (Method method : javaClass.getMethods()) {
+				String methodSignature = method.getName() + method.getSignature();
+				if (methodSignature.equals(methodSig)) {
+					targetMethod = method;
+					break;
+				}
+			}
+
+			if (targetMethod == null) {
+				System.out.println("Method not found: " + methodSig);
+				throw new CannotBuildCFGException(
+						"Method `" + methodSig + "` is not found in class `" + className + "`");
+			}
+
+			// Build CFG
+			Code code = targetMethod.getCode();
+			CFGConstructor cfgConstructor = new CFGConstructor();
+			CFG cfg = cfgConstructor.buildCFGWithControlDomiance(code);
+
+			return cfg;
+		} catch (IOException e) {
+			throw new CannotBuildCFGException(e.getMessage());
+		}
 	}
 }
