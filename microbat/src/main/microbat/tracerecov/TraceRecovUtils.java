@@ -207,9 +207,6 @@ public class TraceRecovUtils {
 			CFGConstructor cfgConstructor = new CFGConstructor();
 			CFG cfg = cfgConstructor.buildCFGWithControlDomiance(code);
 
-			ConstantPool constantPool = targetMethod.getConstantPool();
-			cfg.setConstantPool(constantPool);
-
 			return cfg;
 		} catch (IOException e) {
 			throw new CannotBuildCFGException(e.getMessage());

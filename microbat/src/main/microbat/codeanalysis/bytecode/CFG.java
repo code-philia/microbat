@@ -14,7 +14,6 @@ public class CFG {
 	private List<CFGNode> exitList = new ArrayList<>();
 	
 	private Code code;
-	private ConstantPool constantPool;
 	
 	public CFG(Code code) {
 		super();
@@ -109,12 +108,8 @@ public class CFG {
 		
 		return max;
 	}
-
+	
 	public ConstantPool getConstantPool() {
-		return constantPool;
-	}
-
-	public void setConstantPool(ConstantPool constantPool) {
-		this.constantPool = constantPool;
+		return this.code.getConstantPool();
 	}
 }
