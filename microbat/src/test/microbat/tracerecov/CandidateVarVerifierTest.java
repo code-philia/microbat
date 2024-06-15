@@ -10,6 +10,9 @@ import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
 
 public class CandidateVarVerifierTest {
 
+	/**
+	 * 2:putfield java.lang.StringBuffer.toStringCache:[C (11)
+	 */
 	@Test
 	public void getVarWriteStatus_GuaranteeWrite() {
 		String methodSignature = "java.lang.StringBuffer#append(Ljava/lang/CharSequence;)Ljava/lang/StringBuffer;";
@@ -26,7 +29,26 @@ public class CandidateVarVerifierTest {
 		}
 	}
 
-	// TODO: not passed
+	/**
+	 * `getBuffer` reads `buf` but doesn't write it.
+	 */
+	@Test
+	public void getVarWriteStatus_GuaranteeNoWrite() {
+		String methodSignature = "java.io.StringWriter#getBuffer()Ljava/lang/StringBuffer;";
+		String fieldName = "buf";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName);
+
+			assertEquals(WriteStatus.GUARANTEE_NO_WRITE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
+	// TODO: not passed (method invocation not expanded)
 	@Test
 	public void getVarWriteStatus_withMethodInvocation_GuaranteeWrite() {
 		String methodSignature = "java.io.StringWriter#append(Ljava/lang/CharSequence;)Ljava/io/StringWriter;";
@@ -43,7 +65,7 @@ public class CandidateVarVerifierTest {
 		}
 	}
 
-	// TODO: not passed
+	// TODO: not passed (method invocation not expanded)
 	@Test
 	public void getVarWriteStatus_withMethodInvocation_GuaranteeNoWrite() {
 		String methodSignature = "java.io.StringWriter#append(Ljava/lang/CharSequence;)Ljava/io/StringWriter;";
@@ -60,6 +82,7 @@ public class CandidateVarVerifierTest {
 		}
 	}
 
+	// TODO: method invocation not expanded
 	@Test
 	public void getVarWriteStatus_withMethodInvocation_NoGuarantee() {
 		String methodSignature = "java.io.StringWriter#append(Ljava/lang/CharSequence;)Ljava/io/StringWriter;";

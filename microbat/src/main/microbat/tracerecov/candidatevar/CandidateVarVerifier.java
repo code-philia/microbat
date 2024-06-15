@@ -102,7 +102,7 @@ public class CandidateVarVerifier {
 				}
 			}
 		} else if (instruction instanceof InvokeInstruction) {
-			// TODO: expand method
+			// TODO: expand method invocation
 			return WriteStatus.NO_GUARANTEE;
 		} else {
 			return WriteStatus.GUARANTEE_NO_WRITE;
