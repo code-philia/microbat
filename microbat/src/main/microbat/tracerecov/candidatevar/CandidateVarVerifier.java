@@ -1,6 +1,8 @@
 package microbat.tracerecov.candidatevar;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.bcel.classfile.Constant;
 import org.apache.bcel.classfile.ConstantFieldref;
@@ -36,23 +38,36 @@ public class CandidateVarVerifier {
 	}
 
 	public WriteStatus getVarWriteStatus(String varName) {
-		// TODO: record visited nodes
-		return getWriteStatusRecur(cfg.getStartNode(), varName);
+		return getWriteStatusRecur(cfg.getStartNode(), new HashMap<>(), varName);
 	}
 
-	private WriteStatus getWriteStatusRecur(CFGNode node, String varName) {
+	private WriteStatus getWriteStatusRecur(CFGNode node, Map<CFGNode, WriteStatus> visitedNodes, String varName) {
+		visitedNodes.put(node, null);
+		
 		WriteStatus writeStatus = getWriteStatusAtNode(node, varName);
-		// stop early when status is GUARANTEE_WRITE
+		// only check the whole graph when status is GUARANTEE_NO_WRITE
 		if (writeStatus != WriteStatus.GUARANTEE_NO_WRITE) {
+			visitedNodes.put(node, writeStatus);
 			return writeStatus;
 		}
 
 		WriteStatus writeStatusAmongChildren = null;
 		List<CFGNode> children = node.getChildren();
 		for (CFGNode child : children) {
-			WriteStatus childWriteStatus = getWriteStatusRecur(child, varName);
+			WriteStatus childWriteStatus;
+			if (visitedNodes.containsKey(child)) {
+				if (visitedNodes.get(child) == null) {
+					continue;
+				} else {
+					childWriteStatus = visitedNodes.get(child);
+				}
+			} else {
+				childWriteStatus = getWriteStatusRecur(child, visitedNodes, varName);
+			}
+			
 			// if status is NO_GUARANTEE at any point, the overall status is NO_GUARANTEE
 			if (childWriteStatus == WriteStatus.NO_GUARANTEE) {
+				visitedNodes.put(node, childWriteStatus);
 				return childWriteStatus;
 			}
 
@@ -61,19 +76,23 @@ public class CandidateVarVerifier {
 			} else if (writeStatusAmongChildren != childWriteStatus) {
 				// if write status are different among branches, the overall status is
 				// NO_GUARANTEE
+				visitedNodes.put(node, WriteStatus.NO_GUARANTEE);
 				return WriteStatus.NO_GUARANTEE;
 			}
 		}
 
 		if (writeStatusAmongChildren == null) {
 			// if there are no children, return the status of the current node
+			visitedNodes.put(node, writeStatus);
 			return writeStatus;
 		} else if (writeStatusAmongChildren == WriteStatus.GUARANTEE_WRITE) {
 			// if the children all have status GUARANTEE_WRITE, then the overall status is
 			// GUARANTEE_WRITE
+			visitedNodes.put(node, writeStatusAmongChildren);
 			return writeStatusAmongChildren;
 		}
 
+		visitedNodes.put(node, writeStatus);
 		return writeStatus;
 	}
 

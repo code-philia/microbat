@@ -30,12 +30,29 @@ public class CandidateVarVerifierTest {
 	}
 
 	/**
-	 * `getBuffer` reads `buf` but doesn't write it.
+	 * `getBuffer` reads `buf` but doesn't write to it.
 	 */
 	@Test
 	public void getVarWriteStatus_GuaranteeNoWrite() {
 		String methodSignature = "java.io.StringWriter#getBuffer()Ljava/lang/StringBuffer;";
 		String fieldName = "buf";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName);
+
+			assertEquals(WriteStatus.GUARANTEE_NO_WRITE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	// TODO: not passed (method invocation not expanded)
+	@Test
+	public void getVarWriteStatus_forLoop_GuaranteeNoWrite() {
+		String methodSignature = "java.util.ArrayList#remove(Ljava/lang/Object;)Z";
+		String fieldName = "elementData";
 
 		try {
 			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
