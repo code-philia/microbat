@@ -12,6 +12,23 @@ public class CandidateVarVerifierTest {
 
 	@Test
 	public void getVarWriteStatus_GuaranteeWrite() {
+		String methodSignature = "java.lang.StringBuffer#append(Ljava/lang/CharSequence;)Ljava/lang/StringBuffer;";
+		String fieldName = "toStringCache";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName);
+
+			assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
+	// TODO: not passed
+	@Test
+	public void getVarWriteStatus_withMethodInvocation_GuaranteeWrite() {
 		String methodSignature = "java.io.StringWriter#append(Ljava/lang/CharSequence;)Ljava/io/StringWriter;";
 		String fieldName = "toStringCache";
 
@@ -26,8 +43,9 @@ public class CandidateVarVerifierTest {
 		}
 	}
 
+	// TODO: not passed
 	@Test
-	public void getVarWriteStatus_GuaranteeNoWrite() {
+	public void getVarWriteStatus_withMethodInvocation_GuaranteeNoWrite() {
 		String methodSignature = "java.io.StringWriter#append(Ljava/lang/CharSequence;)Ljava/io/StringWriter;";
 		String fieldName = "buf";
 
@@ -43,7 +61,7 @@ public class CandidateVarVerifierTest {
 	}
 
 	@Test
-	public void getVarWriteStatus_NoGuarantee() {
+	public void getVarWriteStatus_withMethodInvocation_NoGuarantee() {
 		String methodSignature = "java.io.StringWriter#append(Ljava/lang/CharSequence;)Ljava/io/StringWriter;";
 		String fieldName = "value";
 

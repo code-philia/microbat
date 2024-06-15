@@ -3,10 +3,11 @@ package microbat.tracerecov.candidatevar;
 import java.util.List;
 
 import org.apache.bcel.classfile.Constant;
+import org.apache.bcel.classfile.ConstantFieldref;
+import org.apache.bcel.classfile.ConstantNameAndType;
 import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.Instruction;
-import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InvokeInstruction;
 import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.PUTSTATIC;
@@ -86,14 +87,27 @@ public class CandidateVarVerifier {
 			FieldInstruction putInstruction = (FieldInstruction) instruction;
 			int varIndex = putInstruction.getIndex();
 			Constant constant = this.constantPool.getConstant(varIndex);
-			// TODO: if constant name == varName : guarantee write
-			return WriteStatus.GUARANTEE_WRITE;
+			if (constant instanceof ConstantFieldref) {
+				ConstantFieldref field = (ConstantFieldref) constant;
+				int nameNTypeIndex = field.getNameAndTypeIndex();
+				Constant nameNType = this.constantPool.getConstant(nameNTypeIndex);
+				if (nameNType instanceof ConstantNameAndType) {
+					ConstantNameAndType constantNameAndType = (ConstantNameAndType) nameNType;
+					String fieldName = constantNameAndType.getName(this.constantPool);
+					if (fieldName.equals(varName)) {
+						return WriteStatus.GUARANTEE_WRITE;
+					} else {
+						return WriteStatus.GUARANTEE_NO_WRITE;
+					}
+				}
+			}
 		} else if (instruction instanceof InvokeInstruction) {
 			// TODO: expand method
 			return WriteStatus.NO_GUARANTEE;
 		} else {
 			return WriteStatus.GUARANTEE_NO_WRITE;
 		}
+		return WriteStatus.NO_GUARANTEE;
 	}
 
 //	private String className;
