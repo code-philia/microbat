@@ -146,7 +146,7 @@ public class TraceRecoverer {
 	 * Return a map with key: written_field, value: variable_on_trace
 	 */
 	private Map<VarValue, VarValue> inferAddress(VarValue variable, TraceNode step, List<VarValue> criticalVariables) throws IOException {
-		return this.executionSimulator.inferenceAliasRelations(step, variable, criticalVariables);
+		return this.executionSimulator.inferAliasRelations(step, variable, criticalVariables);
 	}
 
 	private boolean parseDefiningStep(VarValue parentVar, VarValue targetVar, TraceNode step, List<VarValue> criticalVariables) {
@@ -178,7 +178,5 @@ public class TraceRecoverer {
 		
 		return list0;
 	}
-
-
 	
 }

@@ -88,7 +88,7 @@ public class ExecutionSimulator {
 	/**
 	 * Return a map with key: written_field, value: variable_on_trace
 	 */
-	public Map<VarValue, VarValue> inferenceAliasRelations(TraceNode step, VarValue rootVar,
+	public Map<VarValue, VarValue> inferAliasRelations(TraceNode step, VarValue rootVar,
 			List<VarValue> criticalVariables) throws IOException {
 		System.out.println();
 		System.out.println("***Alias Inferencing***");
@@ -215,13 +215,8 @@ public class ExecutionSimulator {
 	}
 
 	/**
-	 * we only care about deterministic flow
-	 * 
-	 * must-analysis
-	 * 
-	 * guarantee write
-	 * 
-	 * guarantee no-write
+	 * deterministic flow: guarantee_write, guarantee_no_write
+	 * must-analysis by LLM: no_guarantee
 	 */
 	private WriteStatus estimateComplication(TraceNode step, VarValue parentVar, VarValue targetVar) {
 
@@ -232,22 +227,10 @@ public class ExecutionSimulator {
 			try {
 				CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokedMethod);
 				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
-				candidateVarVerifier.getVarWriteStatus(targetVar.getVarName());
+				return candidateVarVerifier.getVarWriteStatus(targetVar.getVarName());
 			} catch (CannotBuildCFGException e) {
 				e.printStackTrace();
 			}
-
-//			CandidateVarVerifier candidateVarVerifier;
-//			try {
-//				candidateVarVerifier = new CandidateVarVerifier(parentVar.getType());
-//				// TODO: change to field name with path
-//				WriteStatus writeStatus = candidateVarVerifier.verifyCandidateVariable(methodSig, targetVar.getVarName());
-//				if (writeStatus != WriteStatus.NO_GUARANTEE) {
-//					return writeStatus;
-//				}
-//			} catch (CandidateVarVerificationException e) {
-//				e.printStackTrace();
-//			}
 		}
 
 		return WriteStatus.NO_GUARANTEE;
