@@ -88,9 +88,7 @@ public class TraceRecoverer {
 								variablesToCheck.add(aliasIdOfLinkedVar);
 								
 								// link address
-								if (variableOnTrace.getType() != null && variableOnTrace.getType().equals(writtenField.getType())) {
-									writtenField.setAliasVarID(aliasIdOfLinkedVar);
-								}
+								writtenField.setAliasVarID(aliasIdOfLinkedVar);
 							}
 						}
 					} catch (IOException e) {

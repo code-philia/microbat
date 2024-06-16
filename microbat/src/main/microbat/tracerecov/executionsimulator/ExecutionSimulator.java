@@ -37,6 +37,69 @@ public class ExecutionSimulator {
 
 	public ExecutionSimulator() {
 	}
+	
+	private String sendRequest(String backgroundContent, String questionContent) throws IOException {
+		/* set up connection */
+		URL url = new URL(SimulatorConstants.API_URL);
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+		connection.setRequestMethod("POST");
+		connection.setRequestProperty("Content-Type", "application/json");
+		connection.setRequestProperty("Authorization", "Bearer " + apiKey);
+		connection.setDoOutput(true);
+
+		/* construct request */
+//		JSONObject background = null;
+//		if (backgroundContent != null) {
+//			background = new JSONObject();
+//			background.put("role", "system");
+//			background.put("content", backgroundContent);
+//		}
+
+		JSONObject question = new JSONObject();
+		question.put("role", "user");
+		question.put("content", backgroundContent + questionContent);
+
+		JSONArray messages = new JSONArray();
+//		if (backgroundContent != null) {
+//			messages.put(background);
+//		}
+		messages.put(question);
+
+		JSONObject request = new JSONObject();
+		request.put("model", SimulatorConstants.GPT4O);
+		request.put("messages", messages);
+		request.put("temperature", SimulatorConstants.TEMPERATURE);
+		request.put("max_tokens", SimulatorConstants.MAX_TOKENS);
+		request.put("top_p", SimulatorConstants.TOP_P);
+		request.put("frequency_penalty", SimulatorConstants.FREQUENCY_PENALTY);
+		request.put("presence_penalty", SimulatorConstants.PRESENCE_PENALTY);
+
+		/* send request */
+		try (OutputStream os = connection.getOutputStream()) {
+			byte[] input = request.toString().getBytes("utf-8");
+			os.write(input, 0, input.length);
+		}
+
+		/* parse response */
+		int responseCode = connection.getResponseCode();
+		if (responseCode == HttpURLConnection.HTTP_OK) {
+			try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+				StringBuilder response = new StringBuilder();
+				String responseLine;
+				while ((responseLine = br.readLine()) != null) {
+					response.append(responseLine.trim());
+				}
+
+				JSONObject responseObject = new JSONObject(response.toString());
+				return responseObject.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
+						.getString("content").trim();
+			}
+		} else {
+			throw new RuntimeException("Failed : HTTP error code : " + responseCode);
+		}
+	}
+
 
 	public void expandVariable(VarValue selectedVar, TraceNode step) throws IOException {
 
@@ -110,68 +173,6 @@ public class ExecutionSimulator {
 		}
 
 		return new HashMap<>();
-	}
-
-	private String sendRequest(String backgroundContent, String questionContent) throws IOException {
-		/* set up connection */
-		URL url = new URL(SimulatorConstants.API_URL);
-		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-		connection.setRequestMethod("POST");
-		connection.setRequestProperty("Content-Type", "application/json");
-		connection.setRequestProperty("Authorization", "Bearer " + apiKey);
-		connection.setDoOutput(true);
-
-		/* construct request */
-//		JSONObject background = null;
-//		if (backgroundContent != null) {
-//			background = new JSONObject();
-//			background.put("role", "system");
-//			background.put("content", backgroundContent);
-//		}
-
-		JSONObject question = new JSONObject();
-		question.put("role", "user");
-		question.put("content", backgroundContent + questionContent);
-
-		JSONArray messages = new JSONArray();
-//		if (backgroundContent != null) {
-//			messages.put(background);
-//		}
-		messages.put(question);
-
-		JSONObject request = new JSONObject();
-		request.put("model", SimulatorConstants.GPT4O);
-		request.put("messages", messages);
-		request.put("temperature", SimulatorConstants.TEMPERATURE);
-		request.put("max_tokens", SimulatorConstants.MAX_TOKENS);
-		request.put("top_p", SimulatorConstants.TOP_P);
-		request.put("frequency_penalty", SimulatorConstants.FREQUENCY_PENALTY);
-		request.put("presence_penalty", SimulatorConstants.PRESENCE_PENALTY);
-
-		/* send request */
-		try (OutputStream os = connection.getOutputStream()) {
-			byte[] input = request.toString().getBytes("utf-8");
-			os.write(input, 0, input.length);
-		}
-
-		/* parse response */
-		int responseCode = connection.getResponseCode();
-		if (responseCode == HttpURLConnection.HTTP_OK) {
-			try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
-				StringBuilder response = new StringBuilder();
-				String responseLine;
-				while ((responseLine = br.readLine()) != null) {
-					response.append(responseLine.trim());
-				}
-
-				JSONObject responseObject = new JSONObject(response.toString());
-				return responseObject.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
-						.getString("content").trim();
-			}
-		} else {
-			throw new RuntimeException("Failed : HTTP error code : " + responseCode);
-		}
 	}
 
 	public boolean inferDefinition(TraceNode step, VarValue rootVar, VarValue targetVar,
