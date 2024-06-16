@@ -38,6 +38,9 @@ public class CandidateVarVerifier {
 	}
 
 	public WriteStatus getVarWriteStatus(String varName) {
+		if (varName.contains("[") || varName.contains("]")) {
+			return WriteStatus.NO_GUARANTEE;
+		}
 		return getWriteStatusRecur(cfg.getStartNode(), new HashMap<>(), varName);
 	}
 

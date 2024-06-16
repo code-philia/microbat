@@ -9,6 +9,22 @@ import microbat.tracerecov.candidatevar.CandidateVarVerifier;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
 
 public class CandidateVarVerifierTest {
+	
+	@Test
+	public void getVarWriteStatus_elementInArray_NoGuarantee() {
+		String methodSignature = "java.util.ArrayList#clear()V";
+		String fieldName = "elementData[0]";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName);
+
+			assertEquals(WriteStatus.NO_GUARANTEE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
 
 	/**
 	 * 2:putfield java.lang.StringBuffer.toStringCache:[C (11)
