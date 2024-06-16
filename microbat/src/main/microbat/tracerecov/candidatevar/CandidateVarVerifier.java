@@ -4,10 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.bcel.classfile.Constant;
-import org.apache.bcel.classfile.ConstantFieldref;
-import org.apache.bcel.classfile.ConstantNameAndType;
-import org.apache.bcel.classfile.ConstantPool;
+import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InvokeInstruction;
@@ -26,7 +23,7 @@ import microbat.codeanalysis.bytecode.CFGNode;
 public class CandidateVarVerifier {
 
 	private CFG cfg;
-	private ConstantPool constantPool;
+	private ConstantPoolGen constantPoolGen;
 
 	public enum WriteStatus {
 		GUARANTEE_WRITE, GUARANTEE_NO_WRITE, NO_GUARANTEE
@@ -34,7 +31,7 @@ public class CandidateVarVerifier {
 
 	public CandidateVarVerifier(CFG cfg) {
 		this.cfg = cfg;
-		this.constantPool = cfg.getConstantPool();
+		this.constantPoolGen = new ConstantPoolGen(cfg.getConstantPool());
 	}
 
 	public WriteStatus getVarWriteStatus(String varName) {
@@ -46,7 +43,7 @@ public class CandidateVarVerifier {
 
 	private WriteStatus getWriteStatusRecur(CFGNode node, Map<CFGNode, WriteStatus> visitedNodes, String varName) {
 		visitedNodes.put(node, null);
-		
+
 		WriteStatus writeStatus = getWriteStatusAtNode(node, varName);
 		// only check the whole graph when status is GUARANTEE_NO_WRITE
 		if (writeStatus != WriteStatus.GUARANTEE_NO_WRITE) {
@@ -67,7 +64,7 @@ public class CandidateVarVerifier {
 			} else {
 				childWriteStatus = getWriteStatusRecur(child, visitedNodes, varName);
 			}
-			
+
 			// if status is NO_GUARANTEE at any point, the overall status is NO_GUARANTEE
 			if (childWriteStatus == WriteStatus.NO_GUARANTEE) {
 				visitedNodes.put(node, childWriteStatus);
@@ -107,21 +104,11 @@ public class CandidateVarVerifier {
 
 		if (instruction instanceof PUTFIELD || instruction instanceof PUTSTATIC) {
 			FieldInstruction putInstruction = (FieldInstruction) instruction;
-			int varIndex = putInstruction.getIndex();
-			Constant constant = this.constantPool.getConstant(varIndex);
-			if (constant instanceof ConstantFieldref) {
-				ConstantFieldref field = (ConstantFieldref) constant;
-				int nameNTypeIndex = field.getNameAndTypeIndex();
-				Constant nameNType = this.constantPool.getConstant(nameNTypeIndex);
-				if (nameNType instanceof ConstantNameAndType) {
-					ConstantNameAndType constantNameAndType = (ConstantNameAndType) nameNType;
-					String fieldName = constantNameAndType.getName(this.constantPool);
-					if (fieldName.equals(varName)) {
-						return WriteStatus.GUARANTEE_WRITE;
-					} else {
-						return WriteStatus.GUARANTEE_NO_WRITE;
-					}
-				}
+			String fieldName = putInstruction.getFieldName(this.constantPoolGen);
+			if (fieldName.equals(varName)) {
+				return WriteStatus.GUARANTEE_WRITE;
+			} else {
+				return WriteStatus.GUARANTEE_NO_WRITE;
 			}
 		} else if (instruction instanceof InvokeInstruction) {
 			// TODO: expand method invocation
@@ -129,7 +116,6 @@ public class CandidateVarVerifier {
 		} else {
 			return WriteStatus.GUARANTEE_NO_WRITE;
 		}
-		return WriteStatus.NO_GUARANTEE;
 	}
 
 //	private String className;

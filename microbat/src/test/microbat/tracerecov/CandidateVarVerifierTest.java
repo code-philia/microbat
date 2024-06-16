@@ -9,7 +9,10 @@ import microbat.tracerecov.candidatevar.CandidateVarVerifier;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
 
 public class CandidateVarVerifierTest {
-	
+
+	/**
+	 * Always bypass elements in array
+	 */
 	@Test
 	public void getVarWriteStatus_elementInArray_NoGuarantee() {
 		String methodSignature = "java.util.ArrayList#clear()V";
@@ -63,7 +66,7 @@ public class CandidateVarVerifierTest {
 			e.printStackTrace();
 		}
 	}
-	
+
 	// TODO: not passed (method invocation not expanded)
 	@Test
 	public void getVarWriteStatus_forLoop_GuaranteeNoWrite() {
