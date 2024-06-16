@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.FieldInstruction;
+import org.apache.bcel.generic.INVOKESPECIAL;
+import org.apache.bcel.generic.INVOKEVIRTUAL;
 import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InvokeInstruction;
 import org.apache.bcel.generic.PUTFIELD;
@@ -13,6 +15,8 @@ import org.apache.bcel.generic.PUTSTATIC;
 
 import microbat.codeanalysis.bytecode.CFG;
 import microbat.codeanalysis.bytecode.CFGNode;
+import microbat.tracerecov.CannotBuildCFGException;
+import microbat.tracerecov.TraceRecovUtils;
 
 /**
  * This class performs static analysis and verifies whether a candidate variable
@@ -110,12 +114,26 @@ public class CandidateVarVerifier {
 			} else {
 				return WriteStatus.GUARANTEE_NO_WRITE;
 			}
+		} else if (instruction instanceof INVOKEVIRTUAL || instruction instanceof INVOKESPECIAL) {
+			InvokeInstruction invokeInstruction = (InvokeInstruction) instruction;
+			String methodName = invokeInstruction.getName(this.constantPoolGen);
+			String methodSigature = invokeInstruction.getSignature(this.constantPoolGen);
+			String invokingType = invokeInstruction.getClassName(this.constantPoolGen);
+			
+			try {
+				CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokingType, methodName + methodSigature);
+				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+				return candidateVarVerifier.getVarWriteStatus(varName);
+			} catch (CannotBuildCFGException e) {
+				e.printStackTrace();
+			}
 		} else if (instruction instanceof InvokeInstruction) {
-			// TODO: expand method invocation
 			return WriteStatus.NO_GUARANTEE;
 		} else {
 			return WriteStatus.GUARANTEE_NO_WRITE;
 		}
+		
+		return WriteStatus.NO_GUARANTEE;
 	}
 
 //	private String className;

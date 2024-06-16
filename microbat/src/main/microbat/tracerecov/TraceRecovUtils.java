@@ -17,7 +17,6 @@ import java.util.zip.ZipEntry;
 
 import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.Code;
-import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
 import org.objectweb.asm.Type;
@@ -163,17 +162,11 @@ public class TraceRecovUtils {
 		return input.replace("\n", "\\n").replace("<", "\\<").replace(">", "\\>");
 	}
 
-	public static CFG getCFGFromMethodSignature(String invokedMethod) throws CannotBuildCFGException {
-		if (!invokedMethod.contains("#")) {
-			throw new CannotBuildCFGException(
-					"invoked method: `" + invokedMethod + "` doesn't follow format `type#method`");
-		}
+	public static CFG getCFGFromMethodSignature(String className, String methodSig) throws CannotBuildCFGException {
+		className = className.replace(".", File.separator);
 
 		String rtJarPath = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.JAVA7HOME_PATH)
 				+ "/jre/lib/rt.jar";
-
-		String className = invokedMethod.split("#")[0].replace(".", File.separator);
-		String methodSig = invokedMethod.split("#")[1];
 
 		try (JarFile rtJar = new JarFile(rtJarPath)) {
 			// Get class
@@ -204,6 +197,10 @@ public class TraceRecovUtils {
 
 			// Build CFG
 			Code code = targetMethod.getCode();
+			if (code == null) {
+				throw new CannotBuildCFGException(
+						"Bytecode is not available in `" + className + ": " + methodSig + "`");
+			}
 			CFGConstructor cfgConstructor = new CFGConstructor();
 			CFG cfg = cfgConstructor.buildCFGWithControlDomiance(code);
 
@@ -211,5 +208,17 @@ public class TraceRecovUtils {
 		} catch (IOException e) {
 			throw new CannotBuildCFGException(e.getMessage());
 		}
+	}
+
+	public static CFG getCFGFromMethodSignature(String invokedMethod) throws CannotBuildCFGException {
+		if (!invokedMethod.contains("#")) {
+			throw new CannotBuildCFGException(
+					"invoked method: `" + invokedMethod + "` doesn't follow format `type#method`");
+		}
+
+		String className = invokedMethod.split("#")[0];
+		String methodSig = invokedMethod.split("#")[1];
+
+		return getCFGFromMethodSignature(className, methodSig);
 	}
 }
