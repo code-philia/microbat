@@ -20,6 +20,7 @@ import microbat.model.value.VarValue;
 import microbat.preference.MicrobatPreference;
 import microbat.tracerecov.CannotBuildCFGException;
 import microbat.tracerecov.TraceRecovUtils;
+import microbat.tracerecov.candidatevar.CandidateVarVerifier;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
 import microbat.tracerecov.varexpansion.VarSkeletonBuilder;
 import microbat.tracerecov.varexpansion.VariableSkeleton;
@@ -177,27 +178,21 @@ public class ExecutionSimulator {
 			List<VarValue> criticalVariables) {
 
 		WriteStatus complication = WriteStatus.NO_GUARANTEE;
-		String targetFieldName = targetVar.getVarName();
-		if (targetFieldName.contains("[") || targetFieldName.contains("]")) {
-			// always query LLM for elements in array
-			complication = WriteStatus.NO_GUARANTEE;
-		} else {
-			VarValue ancestorVarOnTrace = null;
-			for (VarValue readVarInStep : step.getReadVariables()) {
-				String aliasID = readVarInStep.getAliasVarID();
-				VarValue criticalAncestor = criticalVariables.stream()
-						.filter(criticalVar -> aliasID.equals(criticalVar.getAliasVarID())).findFirst().orElse(null);
+		VarValue ancestorVarOnTrace = null;
+		for (VarValue readVarInStep : step.getReadVariables()) {
+			String aliasID = readVarInStep.getAliasVarID();
+			VarValue criticalAncestor = criticalVariables.stream()
+					.filter(criticalVar -> aliasID.equals(criticalVar.getAliasVarID())).findFirst().orElse(null);
 
-				if (criticalAncestor != null) {
-					ancestorVarOnTrace = readVarInStep;
-					break;
-				}
+			if (criticalAncestor != null) {
+				ancestorVarOnTrace = readVarInStep;
+				break;
 			}
-			if (ancestorVarOnTrace == null) {
-				complication = WriteStatus.GUARANTEE_NO_WRITE;
-			} else if (TraceRecovUtils.shouldBeChecked(ancestorVarOnTrace.getType())) {
-				complication = estimateComplication(step, ancestorVarOnTrace, targetVar);
-			}
+		}
+		if (ancestorVarOnTrace == null) {
+			complication = WriteStatus.GUARANTEE_NO_WRITE;
+		} else if (TraceRecovUtils.shouldBeChecked(ancestorVarOnTrace.getType())) {
+			complication = estimateComplication(step, ancestorVarOnTrace, targetVar);
 		}
 
 		System.out.println(targetVar.getVarName());
@@ -236,6 +231,8 @@ public class ExecutionSimulator {
 
 			try {
 				CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokedMethod);
+				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+				candidateVarVerifier.getVarWriteStatus(targetVar.getVarName());
 			} catch (CannotBuildCFGException e) {
 				e.printStackTrace();
 			}
