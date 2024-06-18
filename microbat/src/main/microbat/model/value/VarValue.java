@@ -50,6 +50,8 @@ public abstract class VarValue implements GraphNode, Serializable {
 
 	public static final int NOT_NULL_VAL = 1;
 	
+	public static final String VALUE_TBD = "<?>";
+	
 	public VarValue(){
 	}
 	
