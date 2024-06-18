@@ -50,6 +50,11 @@ public class TraceRecoverer {
 		Set<String> variablesToCheck = new HashSet<>();
 		variablesToCheck.add(rootVar.getAliasVarID());
 
+		List<Integer> relevantSteps = new ArrayList<>();
+
+		/**
+		 * 1. Alias Inferencing
+		 */
 		// determine scope of searching
 		TraceNode scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
 		if (scopeStart == null)
@@ -57,13 +62,13 @@ public class TraceRecoverer {
 		int start = scopeStart.getOrder() + 1;
 		int end = currentStep.getOrder();
 
-		List<Integer> relevantSteps = new ArrayList<>();
+		// infer alias relations
+		inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck, relevantSteps);
+		addAliasIDsToRelevantSteps();
 
 		/**
-		 * 1. Alias Inferencing
+		 * 2. Definition Inferencing
 		 */
-		inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck, relevantSteps);
-
 		// update scope of searching
 		scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
 		if (scopeStart == null)
@@ -71,9 +76,7 @@ public class TraceRecoverer {
 		start = scopeStart.getOrder();
 		int endIndex = relevantSteps.size() - 2; // skip the last step (self)
 
-		/**
-		 * 2. Definition Inferencing
-		 */
+		// infer definition
 		inferDefinition(trace, start, endIndex, rootVar, targetVar, criticalVariables, relevantSteps);
 	}
 
@@ -143,6 +146,10 @@ public class TraceRecoverer {
 
 			}
 		}
+	}
+
+	private void addAliasIDsToRelevantSteps() {
+		// TODO Implement this
 	}
 
 	private void inferDefinition(Trace trace, int scopeStart, int scopeEnd, VarValue rootVar, VarValue targetVar,
