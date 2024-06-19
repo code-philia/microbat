@@ -9,7 +9,10 @@ import java.util.Set;
 
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
+import microbat.model.value.ArrayValue;
+import microbat.model.value.PrimitiveValue;
 import microbat.model.value.ReferenceValue;
+import microbat.model.value.StringValue;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 
@@ -146,22 +149,37 @@ public class TraceRecoverer {
 		}
 	}
 
-	private void addAliasIDsToDefinitionStep(TraceNode step, List<VarValue> criticalVariables) {
+	private void addAliasIDsToDefinitionStep(TraceNode step, List<VarValue> criticalVariables, VarValue targetValue) {
 		for (VarValue readVar : step.getReadVariables()) {
 			String aliasID = readVar.getAliasVarID();
 			VarValue criticalVar = null;
 			for (VarValue var : criticalVariables) {
+				if (var.equals(targetValue)) {
+					break;
+				}
 				if (criticalVar == null) {
 					if (aliasID.equals(var.getAliasVarID())) {
 						criticalVar = var;
 					}
 				} else {
-					VarValue varCopy = new ReferenceValue(false, var.isRoot(), var.getVariable());
-					varCopy.setStringValue(VarValue.VALUE_TBD);
+					VarValue varCopy = null;
+					if (var instanceof ArrayValue) {
+						varCopy = new ArrayValue(false, var.isRoot(), var.getVariable());
+						varCopy.setStringValue(VarValue.VALUE_TBD);
+					} else if (var instanceof ReferenceValue) {
+						varCopy = new ReferenceValue(false, var.isRoot(), var.getVariable());
+						varCopy.setStringValue(VarValue.VALUE_TBD);
+					} else if (var instanceof StringValue) {
+						varCopy = new StringValue(VarValue.VALUE_TBD, var.isRoot(), var.getVariable());
+					} else if (var instanceof PrimitiveValue) {
+						varCopy = new PrimitiveValue(VarValue.VALUE_TBD, var.isRoot(), var.getVariable());
+					}
 
-					readVar.addChild(varCopy);
-					varCopy.addParent(readVar);
-					readVar = varCopy;
+					if (varCopy != null) {
+						readVar.addChild(varCopy);
+						varCopy.addParent(readVar);
+						readVar = varCopy;
+					}
 				}
 			}
 		}
@@ -179,7 +197,7 @@ public class TraceRecoverer {
 				// INFER DEFINITION STEP
 				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
 				if (def) {
-					addAliasIDsToDefinitionStep(step, criticalVariables);
+					addAliasIDsToDefinitionStep(step, criticalVariables, targetVar);
 					if (!step.getWrittenVariables().contains(targetVar)) {
 						step.getWrittenVariables().add(targetVar);
 					}
