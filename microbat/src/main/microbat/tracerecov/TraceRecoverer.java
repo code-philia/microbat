@@ -9,6 +9,7 @@ import java.util.Set;
 
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
+import microbat.model.value.ReferenceValue;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 
@@ -41,7 +42,7 @@ public class TraceRecoverer {
 
 		Trace trace = currentStep.getTrace();
 
-		/**
+		/*
 		 * the first element is rootVar, and the last one is the direct parent of the
 		 * targetVar.
 		 */
@@ -64,7 +65,6 @@ public class TraceRecoverer {
 
 		// infer alias relations
 		inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck, relevantSteps);
-		addAliasIDsToRelevantSteps();
 
 		/**
 		 * 2. Definition Inferencing
@@ -118,13 +118,11 @@ public class TraceRecoverer {
 				// INFER ADDERSS if there are some other variables
 				if (variablesInStep.size() > 1) {
 					try {
-
 						// Return a map with key: written_field, value: variable_on_trace
 						Map<VarValue, VarValue> fieldsWithAddressRecovered = this.executionSimulator
 								.inferAliasRelations(step, rootVar, criticalVariables);
 
 						for (VarValue writtenField : fieldsWithAddressRecovered.keySet()) {
-
 							String writtenFieldID = writtenField.getVarID();
 							boolean isCriticalVariable = criticalVariables.stream()
 									.anyMatch(v -> v.getVarID().equals(writtenFieldID));
@@ -148,8 +146,25 @@ public class TraceRecoverer {
 		}
 	}
 
-	private void addAliasIDsToRelevantSteps() {
-		// TODO Implement this
+	private void addAliasIDsToDefinitionStep(TraceNode step, List<VarValue> criticalVariables) {
+		for (VarValue readVar : step.getReadVariables()) {
+			String aliasID = readVar.getAliasVarID();
+			VarValue criticalVar = null;
+			for (VarValue var : criticalVariables) {
+				if (criticalVar == null) {
+					if (aliasID.equals(var.getAliasVarID())) {
+						criticalVar = var;
+					}
+				} else {
+					VarValue varCopy = new ReferenceValue(false, var.isRoot(), var.getVariable());
+					varCopy.setStringValue(VarValue.VALUE_TBD);
+
+					readVar.addChild(varCopy);
+					varCopy.addParent(readVar);
+					readVar = varCopy;
+				}
+			}
+		}
 	}
 
 	private void inferDefinition(Trace trace, int scopeStart, int scopeEnd, VarValue rootVar, VarValue targetVar,
@@ -163,8 +178,11 @@ public class TraceRecoverer {
 			if (step.isCallingAPI()) {
 				// INFER DEFINITION STEP
 				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
-				if (def && !step.getWrittenVariables().contains(targetVar)) {
-					step.getWrittenVariables().add(targetVar);
+				if (def) {
+					addAliasIDsToDefinitionStep(step, criticalVariables);
+					if (!step.getWrittenVariables().contains(targetVar)) {
+						step.getWrittenVariables().add(targetVar);
+					}
 					break;
 				}
 			}
