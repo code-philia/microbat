@@ -9,6 +9,10 @@ import java.util.Set;
 
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
+import microbat.model.value.ArrayValue;
+import microbat.model.value.PrimitiveValue;
+import microbat.model.value.ReferenceValue;
+import microbat.model.value.StringValue;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 
@@ -38,55 +42,106 @@ public class TraceRecoverer {
 	 * this process.
 	 */
 	public void recoverDataDependency(TraceNode currentStep, VarValue targetVar, VarValue rootVar) {
-		
+
 		Trace trace = currentStep.getTrace();
-		
-		/**
-		 * the first element is rootVar, and the last one is the direct parent of the targetVar. 
+
+		/*
+		 * the first element is rootVar, and the last one is the direct parent of the
+		 * targetVar.
 		 */
 		List<VarValue> criticalVariables = createQueue(targetVar, rootVar);
-		
+
+		/*
+		 * add all the existing alias IDs
+		 */
 		Set<String> variablesToCheck = new HashSet<>();
-		variablesToCheck.add(rootVar.getAliasVarID());
-		
+		for (VarValue criticalVar : criticalVariables) {
+			String aliasID = criticalVar.getAliasVarID();
+			if (aliasID != null && !aliasID.equals("0")) {
+				variablesToCheck.add(aliasID);
+			}
+		}
+
+		List<Integer> relevantSteps = new ArrayList<>();
+
+		/**
+		 * 1. Alias Inferencing
+		 */
 		// determine scope of searching
 		TraceNode scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
-		if(scopeStart == null) return;
+		if (scopeStart == null)
+			return;
 		int start = scopeStart.getOrder() + 1;
 		int end = currentStep.getOrder();
-		
-		List<Integer> relevantSteps = new ArrayList<>();
-		
+
+		// infer alias relations
+		inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck, relevantSteps);
+
+		/**
+		 * 2. Definition Inferencing
+		 */
+		inferDefinition(trace, rootVar, targetVar, criticalVariables, relevantSteps);
+	}
+
+	private TraceNode determineScopeOfSearching(VarValue parentVar, Trace trace, TraceNode currentStep) {
+		// search for data dominator of parentVar (skip return steps TODO: test more
+		// scenarios)
+		VarValue lastWrittenVariable = null;
+		TraceNode scopeStart = currentStep;
+		while (lastWrittenVariable == null) {
+
+			scopeStart = trace.findProducer(parentVar, scopeStart);
+			if (scopeStart == null) {
+				break;
+			}
+
+			lastWrittenVariable = scopeStart.getWrittenVariables().stream()
+					.filter(v -> v.getVarName() != null && !v.getVarName().contains("#")).findFirst().orElse(null);
+		}
+		return scopeStart;
+	}
+
+	public void inferAliasRelations(Trace trace, int scopeStart, int scopeEnd, VarValue rootVar,
+			List<VarValue> criticalVariables, Set<String> variablesToCheck, List<Integer> relevantSteps) {
 		// FORWARD ITERATION
-		// iterate through steps in scope, infer address and add relevant variables to the set
-		for (int i = start; i <= end; i++) {
+		// iterate through steps in scope, infer address and add relevant variables to
+		// the set
+		for (int i = scopeStart; i <= scopeEnd; i++) {
 			TraceNode step = trace.getTraceNode(i);
 
 			Set<VarValue> variablesInStep = step.getAllVariables();
-			
+			Set<String> aliasIDsInStep = new HashSet<>(variablesInStep.stream().map(v -> v.getAliasVarID()).toList());
+
 			// only check steps containing recovered fields in rootVar AND calling API
-			boolean isRelevantStep = variablesInStep.stream().anyMatch(v -> variablesToCheck.contains(v.getAliasVarID()));
+			boolean isRelevantStep = aliasIDsInStep.stream().anyMatch(id -> variablesToCheck.contains(id));
+
 			if (isRelevantStep) {
-				
 				relevantSteps.add(i);
-				
+
+				int numOfNewVars = 0;
+				for (String id : aliasIDsInStep) {
+					if (!variablesToCheck.contains(id)) {
+						numOfNewVars++;
+					}
+				}
 				// INFER ADDERSS if there are some other variables
-				if (variablesInStep.size() > 1) {
+				if (numOfNewVars > 0) {
 					try {
-						
-						Map<VarValue, VarValue> fieldsWithAddressRecovered = inferAddress(rootVar, step, criticalVariables);
+						// Return a map with key: written_field, value: variable_on_trace
+						Map<VarValue, VarValue> fieldsWithAddressRecovered = this.executionSimulator
+								.inferAliasRelations(step, rootVar, criticalVariables);
+
 						for (VarValue writtenField : fieldsWithAddressRecovered.keySet()) {
-							
 							String writtenFieldID = writtenField.getVarID();
 							boolean isCriticalVariable = criticalVariables.stream()
 									.anyMatch(v -> v.getVarID().equals(writtenFieldID));
-							
+
 							if (isCriticalVariable) {
 								// add critical variable to the set (to be checked later)
 								VarValue variableOnTrace = fieldsWithAddressRecovered.get(writtenField);
 								String aliasIdOfLinkedVar = variableOnTrace.getAliasVarID();
 								variablesToCheck.add(aliasIdOfLinkedVar);
-								
+
 								// link address
 								writtenField.setAliasVarID(aliasIdOfLinkedVar);
 							}
@@ -95,86 +150,93 @@ public class TraceRecoverer {
 						e.printStackTrace();
 					}
 				}
-				
+
 			}
 		}
-		
-		// update scope of searching
-		scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
-		if(scopeStart == null) return;
-		start = scopeStart.getOrder();
-		
-		int endIndex = relevantSteps.size() - 2; // skip the last step (self)
-		
+	}
+
+	private void addAliasIDsToDefinitionStep(TraceNode step, List<VarValue> criticalVariables, VarValue targetValue) {
+		for (VarValue readVar : step.getReadVariables()) {
+			String aliasID = readVar.getAliasVarID();
+			VarValue criticalVar = null;
+			for (VarValue var : criticalVariables) {
+				if (var.equals(targetValue)) {
+					break;
+				}
+				if (criticalVar == null) {
+					if (aliasID.equals(var.getAliasVarID())) {
+						criticalVar = var;
+					}
+				} else {
+					VarValue varCopy = null;
+					if (var instanceof ArrayValue) {
+						varCopy = new ArrayValue(false, var.isRoot(), var.getVariable());
+						varCopy.setStringValue(VarValue.VALUE_TBD);
+					} else if (var instanceof ReferenceValue) {
+						varCopy = new ReferenceValue(false, var.isRoot(), var.getVariable());
+						varCopy.setStringValue(VarValue.VALUE_TBD);
+					} else if (var instanceof StringValue) {
+						varCopy = new StringValue(VarValue.VALUE_TBD, var.isRoot(), var.getVariable());
+					} else if (var instanceof PrimitiveValue) {
+						varCopy = new PrimitiveValue(VarValue.VALUE_TBD, var.isRoot(), var.getVariable());
+					}
+
+					if (varCopy != null) {
+						readVar.addChild(varCopy);
+						varCopy.addParent(readVar);
+						readVar = varCopy;
+					}
+				}
+			}
+		}
+	}
+
+	private void inferDefinition(Trace trace, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables,
+			List<Integer> relevantSteps) {
 		// BACKWARD ITERATION
 		// iterate through steps in scope, infer definition
-		for (int i = endIndex; i >= 0; i--) {
+		int startIndex = relevantSteps.size() - 2; // skip self (last step)
+		for (int i = startIndex; i >= 0; i--) {
 			int stepOrder = relevantSteps.get(i);
 			TraceNode step = trace.getTraceNode(stepOrder);
-			
 			if (step.isCallingAPI()) {
 				// INFER DEFINITION STEP
-				boolean def = parseDefiningStep(rootVar, targetVar, step, criticalVariables);
-				if (def && !step.getWrittenVariables().contains(targetVar)) {
-					step.getWrittenVariables().add(targetVar);
+				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
+				if (def) {
+					addAliasIDsToDefinitionStep(step, criticalVariables, targetVar);
+					if (!step.getWrittenVariables().contains(targetVar)) {
+						step.getWrittenVariables().add(targetVar);
+					}
 					break;
 				}
 			}
 		}
-
-	}
-	
-	private TraceNode determineScopeOfSearching(VarValue parentVar, Trace trace, TraceNode currentStep) {
-		// search for data dominator of parentVar (skip return steps TODO: test more scenarios)
-		VarValue lastWrittenVariable = null;
-		TraceNode scopeStart = currentStep;
-		while (lastWrittenVariable == null) {
-			
-			scopeStart = trace.findProducer(parentVar, scopeStart);
-			if(scopeStart == null) {
-				break;
-			}
-		
-			lastWrittenVariable = scopeStart.getWrittenVariables().stream().filter(v -> v.getVarName() != null && !v.getVarName().contains("#")).findFirst().orElse(null);
-		}
-		return scopeStart;
-	}
-
-	/**
-	 * Return a map with key: written_field, value: variable_on_trace
-	 */
-	private Map<VarValue, VarValue> inferAddress(VarValue variable, TraceNode step, List<VarValue> criticalVariables) throws IOException {
-		return this.executionSimulator.inferAliasRelations(step, variable, criticalVariables);
-	}
-
-	private boolean parseDefiningStep(VarValue parentVar, VarValue targetVar, TraceNode step, List<VarValue> criticalVariables) {
-		return this.executionSimulator.inferDefinition(step, parentVar, targetVar, criticalVariables);
 	}
 
 	private List<VarValue> createQueue(VarValue targetVar, VarValue rootVar) {
-		List<VarValue>  list = new ArrayList<VarValue>();
-		
+		List<VarValue> list = new ArrayList<VarValue>();
+
 		VarValue temp = targetVar;
 		list.add(temp);
-		
-		//TODO consider more complicated graph scenarios
-		while(temp != rootVar) {
-			
+
+		// TODO consider more complicated graph scenarios
+		while (temp != rootVar) {
+
 			temp = temp.getParents().get(0);
-			if(!list.contains(temp)) {
+			if (!list.contains(temp)) {
 				list.add(temp);
 			}
-			
+
 		}
-		
+
 		List<VarValue> list0 = new ArrayList<VarValue>();
 		// modified by hongshu
 		// Add target var to list: the address of target var should also be inferred
-		for(int i=list.size()-1; i>=0; i--) {
+		for (int i = list.size() - 1; i >= 0; i--) {
 			list0.add(list.get(i));
 		}
-		
+
 		return list0;
 	}
-	
+
 }

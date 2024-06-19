@@ -744,36 +744,36 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					if (returnedValue != null) {
 						// invoking object is read before the method executes
 						// search for invoking object
-						VarValue invokingObjVarValue = null;
-						String invokingObjectType = invokeMethodSig.split("#")[0];
-						String invokingObjectAliasID = TraceUtils.getObjectVarId(invokeObj, invokingObjectType);
-						for (VarValue readVar : latestNode.getReadVariables()) {
-							if (readVar != null && readVar.getAliasVarID() != null 
-									&& readVar.getAliasVarID().equals(invokingObjectAliasID)) {
-								invokingObjVarValue = readVar;
-								break;
-							}
-						}
-						
-						// record returned value
-						if (invokingObjVarValue != null) {
-							String methodSigWithoutClassName = invokeMethodSig.split("#")[1];
-							String returnVarName = "return_value_of:" + invokingObjVarValue.getVarName() 
-								+ "#" + methodSigWithoutClassName;
-							
-							String returnTypeSign = returnedValue.getClass().getName();
-							String returnType = SignatureUtils.signatureToName(returnTypeSign);
-							
-							String returnedAliasID = TraceUtils.getObjectVarId(returnedValue, returnTypeSign);
-
-							Variable returnedVariable = new LocalVar(returnVarName, returnType, residingClassName, line);
-							returnedVariable.setAliasVarID(returnedAliasID);
-							returnedVariable.setVarID(returnedAliasID);
-
-							VarValue returneVarValue = appendVarValue(returnedValue, returnedVariable, null);
-							boolean isWrittenVar = false;
-							addRWriteValue(latestNode, returneVarValue, isWrittenVar);
-						}
+//						VarValue invokingObjVarValue = null;
+//						String invokingObjectType = invokeMethodSig.split("#")[0];
+//						String invokingObjectAliasID = TraceUtils.getObjectVarId(invokeObj, invokingObjectType);
+//						for (VarValue readVar : latestNode.getReadVariables()) {
+//							if (readVar != null && readVar.getAliasVarID() != null 
+//									&& readVar.getAliasVarID().equals(invokingObjectAliasID)) {
+//								invokingObjVarValue = readVar;
+//								break;
+//							}
+//						}
+//						
+//						// record returned value
+//						if (invokingObjVarValue != null) {
+//							String methodSigWithoutClassName = invokeMethodSig.split("#")[1];
+//							String returnVarName = "return_value_of:" + invokingObjVarValue.getVarName() 
+//								+ "#" + methodSigWithoutClassName;
+//							
+//							String returnTypeSign = returnedValue.getClass().getName();
+//							String returnType = SignatureUtils.signatureToName(returnTypeSign);
+//							
+//							String returnedAliasID = TraceUtils.getObjectVarId(returnedValue, returnTypeSign);
+//
+//							Variable returnedVariable = new LocalVar(returnVarName, returnType, residingClassName, line);
+//							returnedVariable.setAliasVarID(returnedAliasID);
+//							returnedVariable.setVarID(returnedAliasID);
+//
+//							VarValue returneVarValue = appendVarValue(returnedValue, returnedVariable, null);
+//							boolean isWrittenVar = false;
+//							addRWriteValue(latestNode, returneVarValue, isWrittenVar);
+//						}
 					} else if (invokeMethodSig.contains("<init>") && !invokingClass.equals("java.lang.StringBuffer") 
 							&& !invokingClass.equals("java.lang.StringBuilder")) {
 						// invoking object (initialized object) should be recorded

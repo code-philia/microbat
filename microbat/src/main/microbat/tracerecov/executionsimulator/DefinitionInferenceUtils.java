@@ -63,15 +63,18 @@ public class DefinitionInferenceUtils {
 			if (criticalVariable == null) {
 				continue;
 			}
+			
+			String cascadeFieldName = "";
 			int splitIndex = criticalVariable.getVarID().indexOf(".");
-			if (splitIndex < 0) {
-				continue;
+			if (splitIndex >= 0) {
+				cascadeFieldName = rootVar.getVarName() + criticalVariable.getVarID().substring(splitIndex);
+			} else {
+				cascadeFieldName = rootVar.getVarName();
 			}
-			String cascadeFieldName = rootVar.getVarName() + criticalVariable.getVarID().substring(splitIndex);
 			
 			question.append(isFirstVar ? "where\n`" : "`");
 			question.append(var.getVarName());
-			question.append("` refers to `");
+			question.append("` has the same memory address as `");
 			question.append(cascadeFieldName);
 			question.append("`,\n");
 			isFirstVar = false;
