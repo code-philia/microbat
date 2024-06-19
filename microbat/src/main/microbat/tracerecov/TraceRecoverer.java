@@ -51,8 +51,16 @@ public class TraceRecoverer {
 		 */
 		List<VarValue> criticalVariables = createQueue(targetVar, rootVar);
 
+		/*
+		 * add all the existing alias IDs
+		 */
 		Set<String> variablesToCheck = new HashSet<>();
-		variablesToCheck.add(rootVar.getAliasVarID());
+		for (VarValue criticalVar : criticalVariables) {
+			String aliasID = criticalVar.getAliasVarID();
+			if (aliasID != null && !aliasID.equals("0")) {
+				variablesToCheck.add(aliasID);
+			}
+		}
 
 		List<Integer> relevantSteps = new ArrayList<>();
 
@@ -72,15 +80,7 @@ public class TraceRecoverer {
 		/**
 		 * 2. Definition Inferencing
 		 */
-		// update scope of searching
-		scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
-		if (scopeStart == null)
-			return;
-		start = scopeStart.getOrder();
-		int endIndex = relevantSteps.size() - 2; // skip the last step (self)
-
-		// infer definition
-		inferDefinition(trace, start, endIndex, rootVar, targetVar, criticalVariables, relevantSteps);
+		inferDefinition(trace, rootVar, targetVar, criticalVariables, relevantSteps);
 	}
 
 	private TraceNode determineScopeOfSearching(VarValue parentVar, Trace trace, TraceNode currentStep) {
@@ -101,7 +101,7 @@ public class TraceRecoverer {
 		return scopeStart;
 	}
 
-	private void inferAliasRelations(Trace trace, int scopeStart, int scopeEnd, VarValue rootVar,
+	public void inferAliasRelations(Trace trace, int scopeStart, int scopeEnd, VarValue rootVar,
 			List<VarValue> criticalVariables, Set<String> variablesToCheck, List<Integer> relevantSteps) {
 		// FORWARD ITERATION
 		// iterate through steps in scope, infer address and add relevant variables to
@@ -110,16 +110,22 @@ public class TraceRecoverer {
 			TraceNode step = trace.getTraceNode(i);
 
 			Set<VarValue> variablesInStep = step.getAllVariables();
+			Set<String> aliasIDsInStep = new HashSet<>(variablesInStep.stream().map(v -> v.getAliasVarID()).toList());
 
 			// only check steps containing recovered fields in rootVar AND calling API
-			boolean isRelevantStep = variablesInStep.stream()
-					.anyMatch(v -> variablesToCheck.contains(v.getAliasVarID()));
-			if (isRelevantStep) {
+			boolean isRelevantStep = aliasIDsInStep.stream().anyMatch(id -> variablesToCheck.contains(id));
 
+			if (isRelevantStep) {
 				relevantSteps.add(i);
 
+				int numOfNewVars = 0;
+				for (String id : aliasIDsInStep) {
+					if (!variablesToCheck.contains(id)) {
+						numOfNewVars++;
+					}
+				}
 				// INFER ADDERSS if there are some other variables
-				if (variablesInStep.size() > 1) {
+				if (numOfNewVars > 0) {
 					try {
 						// Return a map with key: written_field, value: variable_on_trace
 						Map<VarValue, VarValue> fieldsWithAddressRecovered = this.executionSimulator
@@ -185,14 +191,14 @@ public class TraceRecoverer {
 		}
 	}
 
-	private void inferDefinition(Trace trace, int scopeStart, int scopeEnd, VarValue rootVar, VarValue targetVar,
-			List<VarValue> criticalVariables, List<Integer> relevantSteps) {
+	private void inferDefinition(Trace trace, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables,
+			List<Integer> relevantSteps) {
 		// BACKWARD ITERATION
 		// iterate through steps in scope, infer definition
-		for (int i = scopeEnd; i > scopeStart; i--) {
+		int startIndex = relevantSteps.size() - 2; // skip self (last step)
+		for (int i = startIndex; i >= 0; i--) {
 			int stepOrder = relevantSteps.get(i);
 			TraceNode step = trace.getTraceNode(stepOrder);
-
 			if (step.isCallingAPI()) {
 				// INFER DEFINITION STEP
 				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
