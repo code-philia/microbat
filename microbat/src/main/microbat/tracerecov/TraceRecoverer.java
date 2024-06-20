@@ -51,16 +51,7 @@ public class TraceRecoverer {
 		 */
 		List<VarValue> criticalVariables = createQueue(targetVar, rootVar);
 
-		/*
-		 * add all the existing alias IDs
-		 */
-		Set<String> variablesToCheck = new HashSet<>();
-		for (VarValue criticalVar : criticalVariables) {
-			String aliasID = criticalVar.getAliasVarID();
-			if (aliasID != null && !aliasID.equals("0")) {
-				variablesToCheck.add(aliasID);
-			}
-		}
+		Set<String> variablesToCheck = getVariablesToCheck(criticalVariables);
 
 		List<Integer> relevantSteps = new ArrayList<>();
 
@@ -83,6 +74,46 @@ public class TraceRecoverer {
 		inferDefinition(trace, rootVar, targetVar, criticalVariables, relevantSteps);
 	}
 
+	private List<VarValue> createQueue(VarValue targetVar, VarValue rootVar) {
+		List<VarValue> list = new ArrayList<VarValue>();
+
+		VarValue temp = targetVar;
+		list.add(temp);
+
+		// TODO consider more complicated graph scenarios
+		while (temp != rootVar) {
+
+			temp = temp.getParents().get(0);
+			if (!list.contains(temp)) {
+				list.add(temp);
+			}
+
+		}
+
+		List<VarValue> list0 = new ArrayList<VarValue>();
+		// modified by hongshu
+		// Add target var to list: the address of target var should also be inferred
+		for (int i = list.size() - 1; i >= 0; i--) {
+			list0.add(list.get(i));
+		}
+
+		return list0;
+	}
+
+	/**
+	 * add all the existing alias IDs
+	 */
+	private Set<String> getVariablesToCheck(List<VarValue> criticalVariables) {
+		Set<String> variablesToCheck = new HashSet<>();
+		for (VarValue criticalVar : criticalVariables) {
+			String aliasID = criticalVar.getAliasVarID();
+			if (aliasID != null && !aliasID.equals("0")) {
+				variablesToCheck.add(aliasID);
+			}
+		}
+		return variablesToCheck;
+	}
+
 	private TraceNode determineScopeOfSearching(VarValue parentVar, Trace trace, TraceNode currentStep) {
 		// search for data dominator of parentVar (skip return steps TODO: test more
 		// scenarios)
@@ -101,7 +132,7 @@ public class TraceRecoverer {
 		return scopeStart;
 	}
 
-	public void inferAliasRelations(Trace trace, int scopeStart, int scopeEnd, VarValue rootVar,
+	private void inferAliasRelations(Trace trace, int scopeStart, int scopeEnd, VarValue rootVar,
 			List<VarValue> criticalVariables, Set<String> variablesToCheck, List<Integer> relevantSteps) {
 		// FORWARD ITERATION
 		// iterate through steps in scope, infer address and add relevant variables to
@@ -155,42 +186,6 @@ public class TraceRecoverer {
 		}
 	}
 
-	private void addAliasIDsToDefinitionStep(TraceNode step, List<VarValue> criticalVariables, VarValue targetValue) {
-		for (VarValue readVar : step.getReadVariables()) {
-			String aliasID = readVar.getAliasVarID();
-			VarValue criticalVar = null;
-			for (VarValue var : criticalVariables) {
-				if (var.equals(targetValue)) {
-					break;
-				}
-				if (criticalVar == null) {
-					if (aliasID.equals(var.getAliasVarID())) {
-						criticalVar = var;
-					}
-				} else {
-					VarValue varCopy = null;
-					if (var instanceof ArrayValue) {
-						varCopy = new ArrayValue(false, var.isRoot(), var.getVariable());
-						varCopy.setStringValue(VarValue.VALUE_TBD);
-					} else if (var instanceof ReferenceValue) {
-						varCopy = new ReferenceValue(false, var.isRoot(), var.getVariable());
-						varCopy.setStringValue(VarValue.VALUE_TBD);
-					} else if (var instanceof StringValue) {
-						varCopy = new StringValue(VarValue.VALUE_TBD, var.isRoot(), var.getVariable());
-					} else if (var instanceof PrimitiveValue) {
-						varCopy = new PrimitiveValue(VarValue.VALUE_TBD, var.isRoot(), var.getVariable());
-					}
-
-					if (varCopy != null) {
-						readVar.addChild(varCopy);
-						varCopy.addParent(readVar);
-						readVar = varCopy;
-					}
-				}
-			}
-		}
-	}
-
 	private void inferDefinition(Trace trace, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables,
 			List<Integer> relevantSteps) {
 		// BACKWARD ITERATION
@@ -202,41 +197,48 @@ public class TraceRecoverer {
 			if (step.isCallingAPI()) {
 				// INFER DEFINITION STEP
 				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
-				if (def) {
-					addAliasIDsToDefinitionStep(step, criticalVariables, targetVar);
-					if (!step.getWrittenVariables().contains(targetVar)) {
-						step.getWrittenVariables().add(targetVar);
-					}
+				if (def && !step.getWrittenVariables().contains(targetVar)) {
+					step.getWrittenVariables().add(targetVar);
 					break;
 				}
 			}
 		}
 	}
 
-	private List<VarValue> createQueue(VarValue targetVar, VarValue rootVar) {
-		List<VarValue> list = new ArrayList<VarValue>();
-
-		VarValue temp = targetVar;
-		list.add(temp);
-
-		// TODO consider more complicated graph scenarios
-		while (temp != rootVar) {
-
-			temp = temp.getParents().get(0);
-			if (!list.contains(temp)) {
-				list.add(temp);
-			}
-
-		}
-
-		List<VarValue> list0 = new ArrayList<VarValue>();
-		// modified by hongshu
-		// Add target var to list: the address of target var should also be inferred
-		for (int i = list.size() - 1; i >= 0; i--) {
-			list0.add(list.get(i));
-		}
-
-		return list0;
+	private void addAliasIDsToDefinitionStep(TraceNode step, Map<VarValue, VarValue> fieldsWithAddressRecovered) {
+		// TODO: implement this
+//		for (VarValue readVar : step.getReadVariables()) {
+//			String aliasID = readVar.getAliasVarID();
+//			VarValue criticalVar = null;
+//			for (VarValue var : criticalVariables) {
+//				if (var.equals(targetValue)) {
+//					break;
+//				}
+//				if (criticalVar == null) {
+//					if (aliasID.equals(var.getAliasVarID())) {
+//						criticalVar = var;
+//					}
+//				} else {
+//					VarValue varCopy = null;
+//					if (var instanceof ArrayValue) {
+//						varCopy = new ArrayValue(false, var.isRoot(), var.getVariable());
+//						varCopy.setStringValue(VarValue.VALUE_TBD);
+//					} else if (var instanceof ReferenceValue) {
+//						varCopy = new ReferenceValue(false, var.isRoot(), var.getVariable());
+//						varCopy.setStringValue(VarValue.VALUE_TBD);
+//					} else if (var instanceof StringValue) {
+//						varCopy = new StringValue(VarValue.VALUE_TBD, var.isRoot(), var.getVariable());
+//					} else if (var instanceof PrimitiveValue) {
+//						varCopy = new PrimitiveValue(VarValue.VALUE_TBD, var.isRoot(), var.getVariable());
+//					}
+//
+//					if (varCopy != null) {
+//						readVar.addChild(varCopy);
+//						varCopy.addParent(readVar);
+//						readVar = varCopy;
+//					}
+//				}
+//			}
+//		}
 	}
-
 }
