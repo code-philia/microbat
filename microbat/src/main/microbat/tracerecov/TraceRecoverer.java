@@ -14,6 +14,8 @@ import microbat.model.value.PrimitiveValue;
 import microbat.model.value.ReferenceValue;
 import microbat.model.value.StringValue;
 import microbat.model.value.VarValue;
+import microbat.model.variable.FieldVar;
+import microbat.model.variable.Variable;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 
 public class TraceRecoverer {
@@ -53,7 +55,7 @@ public class TraceRecoverer {
 		if (scopeStart == null)
 			return;
 		int start = scopeStart.getOrder() + 1;
-		int end = currentStep.getOrder();
+		int end = currentStep.getOrder() - 1;
 
 		// alias and definition inferencing
 		inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck, relevantSteps);
@@ -171,7 +173,7 @@ public class TraceRecoverer {
 	private void inferDefinition(Trace trace, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables,
 			List<Integer> relevantSteps) {
 
-		int startIndex = relevantSteps.size() - 2; // skip self (last step)
+		int startIndex = relevantSteps.size() - 1;
 		for (int i = startIndex; i >= 0; i--) {
 			int stepOrder = relevantSteps.get(i);
 			TraceNode step = trace.getTraceNode(stepOrder);
@@ -260,22 +262,25 @@ public class TraceRecoverer {
 						criticalVar = var;
 					}
 				} else {
-					VarValue varCopy = null;
+					VarValue varValueCopy = null;
+					Variable variableCopy = new FieldVar(var.isStatic(), var.getVarName(), var.getType(), var.getType());
 					if (var instanceof ArrayValue) {
-						varCopy = new ArrayValue(false, var.isRoot(), var.getVariable());
+						varValueCopy = new ArrayValue(false, var.isRoot(), variableCopy);
 					} else if (var instanceof ReferenceValue) {
-						varCopy = new ReferenceValue(false, var.isRoot(), var.getVariable());
+						varValueCopy = new ReferenceValue(false, var.isRoot(), variableCopy);
 					} else if (var instanceof StringValue) {
-						varCopy = new StringValue(VarValue.VALUE_TBD, var.isRoot(), var.getVariable());
+						varValueCopy = new StringValue(VarValue.VALUE_TBD, var.isRoot(), variableCopy);
 					} else if (var instanceof PrimitiveValue) {
-						varCopy = new PrimitiveValue(VarValue.VALUE_TBD, var.isRoot(), var.getVariable());
+						varValueCopy = new PrimitiveValue(VarValue.VALUE_TBD, var.isRoot(), variableCopy);
 					}
 
-					if (varCopy != null) {
-						varCopy.setStringValue(VarValue.VALUE_TBD);
-						readVar.addChild(varCopy);
-						varCopy.addParent(readVar);
-						readVar = varCopy;
+					if (varValueCopy != null) {
+						varValueCopy.setStringValue(VarValue.VALUE_TBD);
+						varValueCopy.setVarID(readVar.getVarID() + "." + varValueCopy.getVarName());
+						
+						readVar.addChild(varValueCopy);
+						varValueCopy.addParent(readVar);
+						readVar = varValueCopy;
 					}
 				}
 			}
