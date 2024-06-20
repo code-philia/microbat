@@ -216,8 +216,8 @@ public class TraceRecoverer {
 	}
 
 	private boolean isCriticalVariable(List<VarValue> criticalVariables, VarValue variable) {
-		String aliasID = variable.getAliasVarID();
-		return criticalVariables.stream().anyMatch(v -> v.getVarID().equals(aliasID));
+		String varID = variable.getVarID();
+		return criticalVariables.stream().anyMatch(v -> v.getVarID().equals(varID));
 	}
 
 	private void addVarSkeletonToVariablesOnTrace(TraceNode step, List<VarValue> criticalVariables) {
