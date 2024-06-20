@@ -55,9 +55,6 @@ public class TraceRecoverer {
 
 		List<Integer> relevantSteps = new ArrayList<>();
 
-		/**
-		 * 1. Alias Inferencing
-		 */
 		// determine scope of searching
 		TraceNode scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
 		if (scopeStart == null)
@@ -65,12 +62,8 @@ public class TraceRecoverer {
 		int start = scopeStart.getOrder() + 1;
 		int end = currentStep.getOrder();
 
-		// infer alias relations
+		// alias and definition inferencing
 		inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck, relevantSteps);
-
-		/**
-		 * 2. Definition Inferencing
-		 */
 		inferDefinition(trace, rootVar, targetVar, criticalVariables, relevantSteps);
 	}
 
@@ -132,11 +125,15 @@ public class TraceRecoverer {
 		return scopeStart;
 	}
 
+	/**
+	 * Alias Inference: FORWARD ITERATION
+	 * 
+	 * iterate through steps in scope, infer address, add relevant variables to the
+	 * set and the corresponding steps
+	 */
 	private void inferAliasRelations(Trace trace, int scopeStart, int scopeEnd, VarValue rootVar,
 			List<VarValue> criticalVariables, Set<String> variablesToCheck, List<Integer> relevantSteps) {
-		// FORWARD ITERATION
-		// iterate through steps in scope, infer address and add relevant variables to
-		// the set
+
 		for (int i = scopeStart; i <= scopeEnd; i++) {
 			TraceNode step = trace.getTraceNode(i);
 
@@ -186,10 +183,14 @@ public class TraceRecoverer {
 		}
 	}
 
+	/**
+	 * Definition Inference: BACKWARD ITERATION
+	 * 
+	 * iterate through steps in scope, infer definition
+	 */
 	private void inferDefinition(Trace trace, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables,
 			List<Integer> relevantSteps) {
-		// BACKWARD ITERATION
-		// iterate through steps in scope, infer definition
+
 		int startIndex = relevantSteps.size() - 2; // skip self (last step)
 		for (int i = startIndex; i >= 0; i--) {
 			int stepOrder = relevantSteps.get(i);
