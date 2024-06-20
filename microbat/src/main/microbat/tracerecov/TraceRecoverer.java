@@ -96,7 +96,7 @@ public class TraceRecoverer {
 
 		for (VarValue criticalVar : criticalVariables) {
 			String aliasID = criticalVar.getAliasVarID();
-			if (aliasID != null && !aliasID.equals("0")) {
+			if (aliasID != null && !aliasID.equals("0") && !aliasID.equals("")) {
 				variablesToCheck.add(aliasID);
 			}
 		}
@@ -137,7 +137,7 @@ public class TraceRecoverer {
 			TraceNode step = trace.getTraceNode(i);
 			if (isRelevantStep(step, variablesToCheck)) {
 				relevantSteps.add(i);
-				
+
 				if (isRequiringAliasInference(step, variablesToCheck)) {
 					// INFER ADDERSS
 					try {
@@ -149,7 +149,7 @@ public class TraceRecoverer {
 								VarValue variableOnTrace = fieldToVarOnTraceMap.get(writtenField);
 								String aliasIdOfCriticalVar = variableOnTrace.getAliasVarID();
 
-								writtenField.setAliasVarID(aliasIdOfCriticalVar);
+								updateAliasIDOfField(writtenField, variableOnTrace, criticalVariables);
 								variablesToCheck.add(aliasIdOfCriticalVar);
 							}
 						}
@@ -157,7 +157,7 @@ public class TraceRecoverer {
 						e.printStackTrace();
 					}
 				}
-				
+
 				addVarSkeletonToVariablesOnTrace(step, criticalVariables);
 			}
 		}
@@ -220,6 +220,36 @@ public class TraceRecoverer {
 		return criticalVariables.stream().anyMatch(v -> v.getVarID().equals(varID));
 	}
 
+	private void updateAliasIDOfField(VarValue writtenField, VarValue variableOnTrace,
+			List<VarValue> criticalVariables) {
+		VarValue targetField = null;
+		VarValue targetVarOnTrace = variableOnTrace;
+		for (VarValue var : criticalVariables) {
+			if (targetField == null) {
+				if (var.equals(writtenField)) {
+					targetField = var;
+					targetField.setAliasVarID(targetVarOnTrace.getAliasVarID());
+				}
+			} else {
+				targetField = var;
+				String currentTargetName = targetField.getVarName();
+
+				if (targetVarOnTrace != null) {
+					targetVarOnTrace = targetVarOnTrace.getChildren().stream()
+							.filter(v -> v.getVarName().equals(currentTargetName)).findFirst().orElse(null);
+				}
+
+				if (targetVarOnTrace != null) {
+					targetField.setAliasVarID(targetVarOnTrace.getAliasVarID());
+				} else {
+					// reset children field IDs
+					targetField.setAliasVarID("");
+				}
+
+			}
+		}
+	}
+
 	private void addVarSkeletonToVariablesOnTrace(TraceNode step, List<VarValue> criticalVariables) {
 		for (VarValue readVar : step.getReadVariables()) {
 			String aliasID = readVar.getAliasVarID();
@@ -233,10 +263,8 @@ public class TraceRecoverer {
 					VarValue varCopy = null;
 					if (var instanceof ArrayValue) {
 						varCopy = new ArrayValue(false, var.isRoot(), var.getVariable());
-						varCopy.setStringValue(VarValue.VALUE_TBD);
 					} else if (var instanceof ReferenceValue) {
 						varCopy = new ReferenceValue(false, var.isRoot(), var.getVariable());
-						varCopy.setStringValue(VarValue.VALUE_TBD);
 					} else if (var instanceof StringValue) {
 						varCopy = new StringValue(VarValue.VALUE_TBD, var.isRoot(), var.getVariable());
 					} else if (var instanceof PrimitiveValue) {
@@ -244,6 +272,7 @@ public class TraceRecoverer {
 					}
 
 					if (varCopy != null) {
+						varCopy.setStringValue(VarValue.VALUE_TBD);
 						readVar.addChild(varCopy);
 						varCopy.addParent(readVar);
 						readVar = varCopy;
