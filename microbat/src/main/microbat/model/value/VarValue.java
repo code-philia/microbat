@@ -628,4 +628,33 @@ public abstract class VarValue implements GraphNode, Serializable {
 		this.isRecoveryPerformed = isRecoveryPerformed;
 	}
 	
+	public void updateChild(VarValue child) {
+		VarValue existingChild = this.getChildren().stream()
+				.filter(c -> c.getAliasVarID() != null && c.getVarName().equals(child.getVarName())).findFirst()
+				.orElse(null);
+		if (existingChild != null) {
+			migrateInfoToNewVar(existingChild, child);
+			this.getChildren().remove(existingChild);
+		}
+
+		this.addChild(child);
+		child.addParent(this);
+	}
+
+	private void migrateInfoToNewVar(VarValue oldVar, VarValue newVar) {
+		newVar.getVariable().setType(oldVar.getType());
+		newVar.setAliasVarID(oldVar.getAliasVarID());
+		if (!oldVar.getStringValue().equals(VarValue.VALUE_TBD)) {
+			newVar.setStringValue(oldVar.getStringValue());
+		}
+		
+		for (VarValue childInNewVar : newVar.getChildren()) {
+			for (VarValue childInOldVar : oldVar.getChildren()) {
+				if (childInOldVar.getAliasVarID() != null
+						&& childInOldVar.getVarName().equals(childInNewVar.getVarName())) {
+					migrateInfoToNewVar(childInOldVar, childInNewVar);
+				}
+			}
+		}
+	}
 }

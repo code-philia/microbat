@@ -98,12 +98,16 @@ public class TraceRecoverer {
 
 		for (VarValue criticalVar : criticalVariables) {
 			String aliasID = criticalVar.getAliasVarID();
-			if (aliasID != null && !aliasID.equals("0") && !aliasID.equals("")) {
+			if (isValidAliasID(aliasID)) {
 				variablesToCheck.add(aliasID);
 			}
 		}
 
 		return variablesToCheck;
+	}
+	
+	private boolean isValidAliasID(String aliasID) {
+		return aliasID != null && !aliasID.equals("0") && !aliasID.equals("");
 	}
 
 	/**
@@ -150,9 +154,11 @@ public class TraceRecoverer {
 							if (isCriticalVariable(criticalVariables, writtenField)) {
 								VarValue variableOnTrace = fieldToVarOnTraceMap.get(writtenField);
 								String aliasIdOfCriticalVar = variableOnTrace.getAliasVarID();
-
-								updateAliasIDOfField(writtenField, variableOnTrace, criticalVariables);
-								variablesToCheck.add(aliasIdOfCriticalVar);
+								
+								if (isValidAliasID(aliasIdOfCriticalVar)) {
+									updateAliasIDOfField(writtenField, variableOnTrace, criticalVariables);
+									variablesToCheck.add(aliasIdOfCriticalVar);
+								}
 							}
 						}
 					} catch (IOException e) {
@@ -230,6 +236,9 @@ public class TraceRecoverer {
 			if (targetField == null) {
 				if (var.equals(writtenField)) {
 					targetField = var;
+					if (targetVarOnTrace.getAliasVarID().equals(targetField.getAliasVarID())) {
+						break;
+					}
 					targetField.setAliasVarID(targetVarOnTrace.getAliasVarID());
 				}
 			} else {
@@ -277,9 +286,9 @@ public class TraceRecoverer {
 					if (varValueCopy != null) {
 						varValueCopy.setStringValue(VarValue.VALUE_TBD);
 						varValueCopy.setVarID(readVar.getVarID() + "." + varValueCopy.getVarName());
+						varValueCopy.setAliasVarID(var.getAliasVarID());
 						
-						readVar.addChild(varValueCopy);
-						varValueCopy.addParent(readVar);
+						readVar.updateChild(varValueCopy);
 						readVar = varValueCopy;
 					}
 				}

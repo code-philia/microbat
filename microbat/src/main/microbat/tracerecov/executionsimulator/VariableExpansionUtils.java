@@ -193,7 +193,7 @@ public class VariableExpansionUtils {
 				}
 
 				if (varValue != null) {
-					addChild(selectedVariable, varValue);
+					selectedVariable.updateChild(varValue);
 				}
 			}
 		}
@@ -243,40 +243,11 @@ public class VariableExpansionUtils {
 			}
 
 			if (varValue != null) {
-				addChild(selectedVariable, varValue);
+				selectedVariable.updateChild(varValue);
 			}
 
 			index++;
 		}
 	}
 
-	private static void addChild(VarValue parent, VarValue child) {
-		VarValue existingChild = parent.getChildren().stream()
-				.filter(c -> c.getAliasVarID() != null && c.getVarName().equals(child.getVarName())).findFirst()
-				.orElse(null);
-		if (existingChild != null) {
-			migrateInfoToNewVar(existingChild, child);
-			parent.getChildren().remove(existingChild);
-		}
-
-		parent.addChild(child);
-		child.addParent(parent);
-	}
-
-	private static void migrateInfoToNewVar(VarValue oldVar, VarValue newVar) {
-		newVar.getVariable().setType(oldVar.getType());
-		newVar.setAliasVarID(oldVar.getAliasVarID());
-		if (!oldVar.getStringValue().equals(VarValue.VALUE_TBD)) {
-			newVar.setStringValue(oldVar.getStringValue());
-		}
-		
-		for (VarValue childInNewVar : newVar.getChildren()) {
-			for (VarValue childInOldVar : oldVar.getChildren()) {
-				if (childInOldVar.getAliasVarID() != null
-						&& childInOldVar.getVarName().equals(childInNewVar.getVarName())) {
-					migrateInfoToNewVar(childInOldVar, childInNewVar);
-				}
-			}
-		}
-	}
 }
