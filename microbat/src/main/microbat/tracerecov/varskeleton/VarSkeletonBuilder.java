@@ -19,34 +19,30 @@ public class VarSkeletonBuilder {
 		if (!TraceRecovUtils.shouldBeChecked(className)) {
 			return null;
 		}
-		
-		
+
 		// load the class
 		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
 		InputStream inputStream = classLoader.getResourceAsStream(className.replace('.', '/') + ".class");
 
-		if(inputStream == null) {
+		if (inputStream == null) {
+			if (appJavaClassPath == null) {
+				return null;
+			}
 			ClassLoader classLoader2 = appJavaClassPath.getClassLoader();
 			inputStream = classLoader2.getResourceAsStream(className.replace('.', '/') + ".class");
 		}
-		
-		System.currentTimeMillis();
-		
-		try {
-			ClassReader classReader = new ClassReader(inputStream);
 
+		try {
 			// create and accept a classVisitor
+			ClassReader classReader = new ClassReader(inputStream);
 			VarSkeletonClassVisitor classVisitor = new VarSkeletonClassVisitor(appJavaClassPath, className, true);
 			classReader.accept(classVisitor, 0);
-			
-			System.currentTimeMillis();
-			
+
 			return classVisitor.getVariableStructure();
 		} catch (IOException e) {
-			// do nothing
-//			e.printStackTrace();
+			e.printStackTrace();
 		}
-		
+
 		return null;
 	}
 

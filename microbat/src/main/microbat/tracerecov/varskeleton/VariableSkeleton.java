@@ -123,6 +123,25 @@ public class VariableSkeleton {
 		
 		return stringBuilder.toString();
 	}
+	
+	/**
+	 * key: NAME
+	 * value: TYPE
+	 */
+	public String fieldsToString() {
+		StringBuilder stringBuilder = new StringBuilder("{");
+		
+		for (VariableSkeleton child : this.children) {
+			stringBuilder.append("\"");
+			stringBuilder.append(child.getName());
+			stringBuilder.append("\":\"");
+			stringBuilder.append(child.getType());
+			stringBuilder.append("\",");
+		}
+		
+		stringBuilder.append("}");
+		return stringBuilder.toString();
+	}
 
 	private VarValue toVarValue(String aliasID, String varID, VarValue parent) {
 		VarValue varValue = this.createVarValue(this.name, this.type, false);
