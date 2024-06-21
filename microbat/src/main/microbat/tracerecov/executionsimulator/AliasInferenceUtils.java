@@ -182,7 +182,9 @@ public class AliasInferenceUtils {
 				VarValue fieldInVarOnTrace = searchForField(variableName, variableOnTrace);
 				if (fieldInVarOnTrace == null) {
 					// field is not recorded
-					fieldsWithAddressRecovered.put(variableOnTrace, variableOnTrace);
+					if (!variableOnTrace.getVarName().equals("this")) {
+						fieldsWithAddressRecovered.put(variableOnTrace, variableOnTrace);
+					}
 					continue;
 				} else {
 					variableOnTrace = fieldInVarOnTrace;
@@ -193,7 +195,9 @@ public class AliasInferenceUtils {
 				continue;
 			}
 
-			fieldsWithAddressRecovered.put(writtenField, variableOnTrace);
+			if (!variableOnTrace.getVarName().equals("this")) {
+				fieldsWithAddressRecovered.put(writtenField, variableOnTrace);
+			}
 		}
 
 		return fieldsWithAddressRecovered;

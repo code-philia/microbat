@@ -28,7 +28,7 @@ public class VarSkeletonClassVisitor extends AbstractClassVisitor {
 		this(className2, new VariableSkeleton(className2), b);
 		this.appJavaClassPath = appJavaClassPath;
 	}
-	
+
 	public VarSkeletonClassVisitor(String className) {
 		this(className, false);
 	}
@@ -55,7 +55,6 @@ public class VarSkeletonClassVisitor extends AbstractClassVisitor {
 		this.layer = layer;
 	}
 
-
 	/**
 	 * Record parent class in classesOfInterest.
 	 */
@@ -74,20 +73,19 @@ public class VarSkeletonClassVisitor extends AbstractClassVisitor {
 	public void visitEnd() {
 		visitedClasses.add(this.className);
 		for (String className : classesOfInterest) {
-			if (!visitedClasses.contains(className) && layer < MAX_LAYER) {
+			if (!visitedClasses.contains(className)) {
 				try {
-					
 					// load the class
 					ClassLoader classLoader = ClassLoader.getSystemClassLoader();
 					InputStream inputStream = classLoader.getResourceAsStream(className.replace('.', '/') + ".class");
 
-					if(inputStream == null) {
+					if (inputStream == null) {
 						ClassLoader classLoader2 = appJavaClassPath.getClassLoader();
 						inputStream = classLoader2.getResourceAsStream(className.replace('.', '/') + ".class");
 					}
-					
+
 					ClassReader classReader = new ClassReader(inputStream);
-					classReader.accept(new VarSkeletonClassVisitor(className, this.root, false, layer + 1), 0);
+					classReader.accept(new VarSkeletonClassVisitor(className, this.root, false, this.layer), 0);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

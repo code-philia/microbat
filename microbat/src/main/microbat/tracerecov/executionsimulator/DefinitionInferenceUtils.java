@@ -75,12 +75,14 @@ public class DefinitionInferenceUtils {
 				cascadeFieldName = rootVar.getVarName();
 			}
 
-			question.append(isFirstVar ? "where\n`" : "`");
-			question.append(var.getVarName());
-			question.append("` has the same memory address as `");
-			question.append(cascadeFieldName);
-			question.append("`,\n");
-			isFirstVar = false;
+			if (!cascadeFieldName.equals(var.getVarName())) {
+				question.append(isFirstVar ? "where\n`" : "`");
+				question.append(var.getVarName());
+				question.append("` has the same memory address as `");
+				question.append(cascadeFieldName);
+				question.append("`,\n");
+				isFirstVar = false;
+			}
 		}
 
 		question.append("`" + rootVarName + "` has a field called `");
