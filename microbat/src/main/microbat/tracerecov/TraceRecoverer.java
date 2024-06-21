@@ -105,7 +105,7 @@ public class TraceRecoverer {
 
 		return variablesToCheck;
 	}
-	
+
 	private boolean isValidAliasID(String aliasID) {
 		return aliasID != null && !aliasID.equals("0") && !aliasID.equals("");
 	}
@@ -154,10 +154,17 @@ public class TraceRecoverer {
 							if (isCriticalVariable(criticalVariables, writtenField)) {
 								VarValue variableOnTrace = fieldToVarOnTraceMap.get(writtenField);
 								String aliasIdOfCriticalVar = variableOnTrace.getAliasVarID();
-								
+
 								if (isValidAliasID(aliasIdOfCriticalVar)) {
 									updateAliasIDOfField(writtenField, variableOnTrace, criticalVariables);
 									variablesToCheck.add(aliasIdOfCriticalVar);
+								}
+							} else {
+								/*
+								 * key and value: variable on trace. Field in variable is not recorded.
+								 */
+								if (isValidAliasID(writtenField.getAliasVarID())) {
+									variablesToCheck.add(writtenField.getAliasVarID());
 								}
 							}
 						}
@@ -272,7 +279,8 @@ public class TraceRecoverer {
 					}
 				} else {
 					VarValue varValueCopy = null;
-					Variable variableCopy = new FieldVar(var.isStatic(), var.getVarName(), var.getType(), var.getType());
+					Variable variableCopy = new FieldVar(var.isStatic(), var.getVarName(), var.getType(),
+							var.getType());
 					if (var instanceof ArrayValue) {
 						varValueCopy = new ArrayValue(false, var.isRoot(), variableCopy);
 					} else if (var instanceof ReferenceValue) {
@@ -287,7 +295,7 @@ public class TraceRecoverer {
 						varValueCopy.setStringValue(VarValue.VALUE_TBD);
 						varValueCopy.setVarID(readVar.getVarID() + "." + varValueCopy.getVarName());
 						varValueCopy.setAliasVarID(var.getAliasVarID());
-						
+
 						readVar.updateChild(varValueCopy);
 						readVar = varValueCopy;
 					}

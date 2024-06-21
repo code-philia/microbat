@@ -172,13 +172,22 @@ public class AliasInferenceUtils {
 			Set<VarValue> variablesInStep = step.getAllVariables();
 
 			/* update memory address in rootVar */
+			VarValue writtenField = searchForField(fieldName, rootVar);
+			
 			String rootVariableOnTrace = variableName.split("\\.")[0];
 			VarValue variableOnTrace = variablesInStep.stream().filter(v -> v.getVarName().equals(rootVariableOnTrace))
 					.findFirst().orElse(null);
 			if (variableOnTrace != null) {
-				variableOnTrace = searchForField(variableName, variableOnTrace);
+				VarValue fieldInVarOnTrace = searchForField(variableName, variableOnTrace);
+				if (fieldInVarOnTrace == null) {
+					// field is not recorded
+					fieldsWithAddressRecovered.put(variableOnTrace, variableOnTrace);
+					continue;
+				} else {
+					variableOnTrace = fieldInVarOnTrace;
+				}
 			}
-			VarValue writtenField = searchForField(fieldName, rootVar);
+
 			if (variableOnTrace == null || writtenField == null) {
 				continue;
 			}
