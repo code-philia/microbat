@@ -22,8 +22,8 @@ import microbat.tracerecov.CannotBuildCFGException;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
-import microbat.tracerecov.varexpansion.VarSkeletonBuilder;
-import microbat.tracerecov.varexpansion.VariableSkeleton;
+import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
+import microbat.tracerecov.varskeleton.VariableSkeleton;
 
 /**
  * This class is used to simulate execution through LLM and retrieve

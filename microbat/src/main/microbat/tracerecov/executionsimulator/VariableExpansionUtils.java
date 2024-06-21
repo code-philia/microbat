@@ -15,7 +15,7 @@ import microbat.model.value.VarValue;
 import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
 import microbat.tracerecov.TraceRecovUtils;
-import microbat.tracerecov.varexpansion.VariableSkeleton;
+import microbat.tracerecov.varskeleton.VariableSkeleton;
 
 public class VariableExpansionUtils {
 	/* Request content */

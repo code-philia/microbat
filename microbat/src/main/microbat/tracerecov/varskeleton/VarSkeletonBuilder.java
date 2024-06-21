@@ -1,4 +1,4 @@
-package microbat.tracerecov.varexpansion;
+package microbat.tracerecov.varskeleton;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +36,7 @@ public class VarSkeletonBuilder {
 			ClassReader classReader = new ClassReader(inputStream);
 
 			// create and accept a classVisitor
-			VarExpansionClassVisitor classVisitor = new VarExpansionClassVisitor(appJavaClassPath, className, true);
+			VarSkeletonClassVisitor classVisitor = new VarSkeletonClassVisitor(appJavaClassPath, className, true);
 			classReader.accept(classVisitor, 0);
 			
 			System.currentTimeMillis();

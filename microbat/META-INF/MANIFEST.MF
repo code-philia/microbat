@@ -177,7 +177,7 @@ Export-Package:
  microbat.tracerecov,
  microbat.tracerecov.candidatevar,
  microbat.tracerecov.executionsimulator,
- microbat.tracerecov.varexpansion,
+ microbat.tracerecov.varskeleton,
  microbat.util;
   uses:="org.eclipse.jdt.core,
    microbat.views,

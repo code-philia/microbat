@@ -1,4 +1,4 @@
-package microbat.tracerecov.varexpansion;
+package microbat.tracerecov.varskeleton;
 
 import java.util.ArrayList;
 import java.util.Arrays;

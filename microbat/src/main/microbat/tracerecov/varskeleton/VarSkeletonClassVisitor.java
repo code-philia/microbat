@@ -1,4 +1,4 @@
-package microbat.tracerecov.varexpansion;
+package microbat.tracerecov.varskeleton;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,7 +13,7 @@ import microbat.tracerecov.AbstractClassVisitor;
 import microbat.tracerecov.TraceRecovUtils;
 import sav.strategies.dto.AppJavaClassPath;
 
-public class VarExpansionClassVisitor extends AbstractClassVisitor {
+public class VarSkeletonClassVisitor extends AbstractClassVisitor {
 
 	private static final int MAX_LAYER = 2;
 
@@ -24,24 +24,24 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 	private int layer;
 	private AppJavaClassPath appJavaClassPath;
 
-	public VarExpansionClassVisitor(AppJavaClassPath appJavaClassPath, String className2, boolean b) {
+	public VarSkeletonClassVisitor(AppJavaClassPath appJavaClassPath, String className2, boolean b) {
 		this(className2, new VariableSkeleton(className2), b);
 		this.appJavaClassPath = appJavaClassPath;
 	}
 	
-	public VarExpansionClassVisitor(String className) {
+	public VarSkeletonClassVisitor(String className) {
 		this(className, false);
 	}
 
-	public VarExpansionClassVisitor(String className, boolean reset) {
+	public VarSkeletonClassVisitor(String className, boolean reset) {
 		this(className, new VariableSkeleton(className), reset);
 	}
 
-	public VarExpansionClassVisitor(String className, VariableSkeleton root, boolean reset) {
+	public VarSkeletonClassVisitor(String className, VariableSkeleton root, boolean reset) {
 		this(className, root, reset, 1);
 	}
 
-	public VarExpansionClassVisitor(String className, VariableSkeleton root, boolean reset, int layer) {
+	public VarSkeletonClassVisitor(String className, VariableSkeleton root, boolean reset, int layer) {
 		super(className, reset);
 		if (reset) {
 			visitedClasses = new HashSet<String>();
@@ -87,7 +87,7 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 					}
 					
 					ClassReader classReader = new ClassReader(inputStream);
-					classReader.accept(new VarExpansionClassVisitor(className, this.root, false, layer + 1), 0);
+					classReader.accept(new VarSkeletonClassVisitor(className, this.root, false, layer + 1), 0);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -108,7 +108,7 @@ public class VarExpansionClassVisitor extends AbstractClassVisitor {
 				// expand inner field further
 				try {
 					ClassReader classReader = new ClassReader(newClassName);
-					classReader.accept(new VarExpansionClassVisitor(newClassName, child, false, layer + 1), 0);
+					classReader.accept(new VarSkeletonClassVisitor(newClassName, child, false, layer + 1), 0);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
