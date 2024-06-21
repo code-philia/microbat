@@ -34,8 +34,8 @@ public class AliasInferenceUtils {
 			+ "\n"
 			+ "Your response should be:\n"
 			+ "{\n"
-			+ "\"element\":\"list.elementData[0]\"\n"
-			+ "}\n";
+			+ "\"list.elementData[0]\":\"element\"\n"
+			+ "}";
 
 	/* Methods */
 
@@ -102,12 +102,14 @@ public class AliasInferenceUtils {
 				cascadeFieldName = rootVar.getVarName();
 			}
 
-			question.append(isFirstVar ? "where\n`" : "`");
-			question.append(var.getVarName());
-			question.append("` has the same memory address as `");
-			question.append(cascadeFieldName);
-			question.append("`,\n");
-			isFirstVar = false;
+			if (!cascadeFieldName.equals(var.getVarName())) {
+				question.append(isFirstVar ? "where\n`" : "`");
+				question.append(var.getVarName());
+				question.append("` has the same memory address as `");
+				question.append(cascadeFieldName);
+				question.append("`,\n");
+				isFirstVar = false;
+			}
 		}
 
 		// fields in other variables
@@ -128,8 +130,8 @@ public class AliasInferenceUtils {
 
 		// keys (critical variables)
 		question.append("\nIdentify all the variable pairs such that each pair has the same memory address. "
-				+ "The variable names must be chosen from the above names, not values."
-				+ "\nYour response should be in JSON format, where keys must be chosen from:");
+				+ "The variable names must be chosen from the above names, not values.\n"
+				+ "Your response should be in JSON format, where keys must be chosen from:");
 		String cascadeName = "";
 		for (VarValue criticalVar : criticalVariables) {
 			question.append("`" + cascadeName + criticalVar.getVarName() + "`,");
@@ -138,10 +140,9 @@ public class AliasInferenceUtils {
 
 		// description
 		question.append(
-				" do not include other keys. Values in JSON are the names of other variables listed above, not variable values.\n"
-						+ "\n" + "If a field is an element in an array, use `array_name[element_index]` as its name.\n"
-						+ "If a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of `<TYPE>`.\n"
-						+ "\n"
+				" do not include other keys. Values in JSON are the names of other variables listed above, not variable values.\n\n"
+						+ "If a field is an element in an array, use `array_name[element_index]` as its name.\n"
+						+ "If a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of `<TYPE>`.\n\n"
 						+ "In your response, strictly follow this format. Do not include explanation. Each key must be included exactly once.");
 
 		return question.toString();

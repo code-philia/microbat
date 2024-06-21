@@ -20,11 +20,13 @@ public class DefinitionInferenceUtils {
 		return DEFINITION_INFERENCE_BACKGROUND;
 	}
 
-	public static String getQuestionContent(TraceNode step, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
+	public static String getQuestionContent(TraceNode step, VarValue rootVar, VarValue targetVar,
+			List<VarValue> criticalVariables) {
 		/* source code */
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
-		String sourceCode = TraceRecovUtils.processInputStringForLLM(TraceRecovUtils.getSourceCode(location, lineNo).trim());
+		String sourceCode = TraceRecovUtils
+				.processInputStringForLLM(TraceRecovUtils.getSourceCode(location, lineNo).trim());
 
 		/* variable properties */
 		String rootVarName = rootVar.getVarName();
@@ -32,7 +34,7 @@ public class DefinitionInferenceUtils {
 
 		/* type structure */
 		String jsonString = TraceRecovUtils.processInputStringForLLM(rootVar.toJSON().toString());
-		
+
 		/* all variables */
 		Set<VarValue> variablesInStep = step.getAllVariables();
 
@@ -53,17 +55,18 @@ public class DefinitionInferenceUtils {
 		question.append("we know that `" + rootVarName + "` has the following structure:\n");
 		question.append(jsonString);
 		question.append("\n");
-		
+
 		boolean isFirstVar = true;
 		for (VarValue var : variablesInStep) {
 			VarValue criticalVariable = null;
 			if (var.getAliasVarID() != null) {
-				criticalVariable = criticalVariables.stream().filter(v -> var.getAliasVarID().equals(v.getAliasVarID())).findFirst().orElse(null);
+				criticalVariable = criticalVariables.stream().filter(v -> var.getAliasVarID().equals(v.getAliasVarID()))
+						.findFirst().orElse(null);
 			}
 			if (criticalVariable == null) {
 				continue;
 			}
-			
+
 			String cascadeFieldName = "";
 			int splitIndex = criticalVariable.getVarID().indexOf(".");
 			if (splitIndex >= 0) {
@@ -71,7 +74,7 @@ public class DefinitionInferenceUtils {
 			} else {
 				cascadeFieldName = rootVar.getVarName();
 			}
-			
+
 			question.append(isFirstVar ? "where\n`" : "`");
 			question.append(var.getVarName());
 			question.append("` has the same memory address as `");
@@ -79,17 +82,19 @@ public class DefinitionInferenceUtils {
 			question.append("`,\n");
 			isFirstVar = false;
 		}
-		
+
 		question.append("`" + rootVarName + "` has a field called `");
 
 		String cascadeFieldName = "";
-		for (VarValue criticalVar : criticalVariables) {
+		int stopIndex = criticalVariables.size() - 1;
+		for (int i = 0; i < stopIndex; i++) {
+			VarValue criticalVar = criticalVariables.get(i);
 			cascadeFieldName += criticalVar.getVarName() + ".";
 		}
 		cascadeFieldName += targetVarName;
 
 		question.append(cascadeFieldName);
-		question.append("`, does the code change the value of this field?"
+		question.append("`, does the code directly or indirectly write this field?"
 				+ "\nIn your response, return T for true and F for false. Do not include explanation.");
 
 		return question.toString();
