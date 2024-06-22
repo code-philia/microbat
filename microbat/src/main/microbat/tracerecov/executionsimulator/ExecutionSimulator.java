@@ -167,7 +167,7 @@ public class ExecutionSimulator {
 				String response = sendRequest(background, content);
 				System.out.println(i + "th try with GPT to generate response as " + response);
 				return AliasInferenceUtils.processResponse(response, rootVar, step);
-			} catch (org.json.JSONException e) {
+			} catch (org.json.JSONException | java.lang.StringIndexOutOfBoundsException e) {
 				e.printStackTrace();
 			}
 		}
