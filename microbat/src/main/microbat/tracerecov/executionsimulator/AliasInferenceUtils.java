@@ -13,6 +13,7 @@ import microbat.model.value.VarValue;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
+import sav.strategies.dto.AppJavaClassPath;
 
 /**
  * @author hongshuwang
@@ -209,7 +210,9 @@ public class AliasInferenceUtils {
 				continue;
 			}
 
-			if (!variableOnTrace.getVarName().equals("this")) {
+			AppJavaClassPath appJavaClassPath = step.getTrace().getAppJavaClassPath();
+			if (!variableOnTrace.getVarName().equals("this")
+					&& TraceRecovUtils.isAssignable(writtenField, variableOnTrace, appJavaClassPath)) {
 				fieldsWithAddressRecovered.put(writtenField, variableOnTrace);
 			}
 		}

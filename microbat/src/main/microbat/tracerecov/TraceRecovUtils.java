@@ -24,6 +24,7 @@ import org.objectweb.asm.Type;
 import microbat.Activator;
 import microbat.codeanalysis.bytecode.CFG;
 import microbat.codeanalysis.bytecode.CFGConstructor;
+import microbat.model.value.VarValue;
 import microbat.preference.MicrobatPreference;
 import sav.strategies.dto.AppJavaClassPath;
 
@@ -224,7 +225,7 @@ public class TraceRecovUtils {
 
 	public static Set<String> getInvokedMethodsToBeChecked(String invokingMethods) {
 		Set<String> methods = new HashSet<>();
-		
+
 		String[] invokedMethods = invokingMethods.split("%");
 		for (String methodSig : invokedMethods) {
 			if (methodSig == null || !methodSig.contains("#")) {
@@ -235,7 +236,63 @@ public class TraceRecovUtils {
 				methods.add(methodSig);
 			}
 		}
-		
+
 		return methods;
+	}
+
+	public static boolean isAssignable(VarValue variableWithGeneralType, VarValue variableWithSpecificType,
+			AppJavaClassPath appJavaClassPath) {
+		String generalType = variableWithGeneralType.getType();
+		// element in array doesn't have an inferred type (TODO: type of each element?)
+		if (generalType == null || generalType.equals("")) {
+			return true;
+		}
+
+		String specificType = variableWithSpecificType.getType();
+		if (!shouldBeChecked(generalType) || !shouldBeChecked(specificType)
+				|| !isUnrecorded(generalType, appJavaClassPath) || !isUnrecorded(specificType, appJavaClassPath)
+				|| specificType == null) {
+			return false;
+		}
+
+		// primitive types: must be the same
+		if (isPrimitiveType(generalType)) {
+			return generalType.equals(specificType);
+		}
+
+		// composite types: general type must be a parent of specific type
+		List<String> classesToCheck = new ArrayList<>();
+		Set<String> visitedClasses = new HashSet<>();
+		classesToCheck.add(specificType);
+		while (!classesToCheck.isEmpty()) {
+			String typeToCheck = classesToCheck.remove(0);
+			visitedClasses.add(typeToCheck);
+
+			if (generalType.equals(typeToCheck)) {
+				return true;
+			}
+
+			try {
+				Class<?> clazz = Class.forName(typeToCheck);
+
+				String superClass = clazz.getSuperclass().getName();
+				if (!visitedClasses.contains(superClass) && shouldBeChecked(superClass)) {
+					classesToCheck.add(superClass);
+				}
+
+				Class<?>[] interfaces = clazz.getInterfaces();
+				for (Class<?> i : interfaces) {
+					String interfaceName = i.getName();
+					if (!visitedClasses.contains(interfaceName) && shouldBeChecked(interfaceName)) {
+						classesToCheck.add(interfaceName);
+					}
+				}
+
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+
+		return false;
 	}
 }
