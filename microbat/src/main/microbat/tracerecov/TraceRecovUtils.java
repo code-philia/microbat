@@ -39,6 +39,27 @@ public class TraceRecovUtils {
 		return className != null && primitiveTypes.contains(className);
 	}
 
+	public static String getWrapperType(String primitiveTypeName) {
+		if (primitiveTypeName.equals("int")) {
+			return "java.lang.Integer";
+		} else if (primitiveTypeName.equals("long")) {
+			return "java.lang.Long";
+		} else if (primitiveTypeName.equals("short")) {
+			return "java.lang.Short";
+		} else if (primitiveTypeName.equals("byte")) {
+			return "java.lang.Byte";
+		} else if (primitiveTypeName.equals("char")) {
+			return "java.lang.Character";
+		} else if (primitiveTypeName.equals("boolean")) {
+			return "java.lang.Boolean";
+		} else if (primitiveTypeName.equals("float")) {
+			return "java.lang.Float";
+		} else if (primitiveTypeName.equals("double")) {
+			return "java.lang.Double";
+		}
+		return "";
+	}
+
 	public static boolean isString(String className) {
 		return className != null && (className.equals("java.lang.String") || className.equals("String"));
 	}
@@ -243,21 +264,30 @@ public class TraceRecovUtils {
 	public static boolean isAssignable(VarValue variableWithGeneralType, VarValue variableWithSpecificType,
 			AppJavaClassPath appJavaClassPath) {
 		String generalType = variableWithGeneralType.getType();
+		if (generalType.contains("class ")) {
+			generalType = generalType.split(" ")[1];
+		}
 		// element in array doesn't have an inferred type (TODO: type of each element?)
 		if (generalType == null || generalType.equals("")) {
 			return true;
 		}
 
 		String specificType = variableWithSpecificType.getType();
-		if (!shouldBeChecked(generalType) || !shouldBeChecked(specificType)
-				|| !isUnrecorded(generalType, appJavaClassPath) || !isUnrecorded(specificType, appJavaClassPath)
+		if (specificType.contains("class ")) {
+			specificType = specificType.split(" ")[1];
+		}
+		if (!isUnrecorded(generalType, appJavaClassPath) || !isUnrecorded(specificType, appJavaClassPath)
 				|| specificType == null) {
 			return false;
 		}
 
 		// primitive types: must be the same
-		if (isPrimitiveType(generalType)) {
+		if (isPrimitiveType(generalType) || isString(generalType) || isString(specificType)) {
 			return generalType.equals(specificType);
+		}
+
+		if (isPrimitiveType(specificType)) {
+			return generalType.equals(specificType) || generalType.equals(getWrapperType(specificType));
 		}
 
 		// composite types: general type must be a parent of specific type
@@ -275,9 +305,12 @@ public class TraceRecovUtils {
 			try {
 				Class<?> clazz = Class.forName(typeToCheck);
 
-				String superClass = clazz.getSuperclass().getName();
-				if (!visitedClasses.contains(superClass) && shouldBeChecked(superClass)) {
-					classesToCheck.add(superClass);
+				Class<?> superClass = clazz.getSuperclass();
+				if (superClass != null) {
+					String superClassName = superClass.getName();
+					if (!visitedClasses.contains(superClassName) && shouldBeChecked(superClassName)) {
+						classesToCheck.add(superClassName);
+					}
 				}
 
 				Class<?>[] interfaces = clazz.getInterfaces();

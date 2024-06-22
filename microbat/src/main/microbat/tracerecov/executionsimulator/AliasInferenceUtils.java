@@ -190,9 +190,14 @@ public class AliasInferenceUtils {
 			/* update memory address in rootVar */
 			VarValue writtenField = searchForField(fieldName, rootVar);
 
-			String rootVariableOnTrace = variableName.split("\\.")[0];
-			VarValue variableOnTrace = variablesInStep.stream().filter(v -> v.getVarName().equals(rootVariableOnTrace))
+			VarValue variableOnTrace = variablesInStep.stream().filter(v -> v.getVarName().equals(variableName))
 					.findFirst().orElse(null);
+			if (variableOnTrace == null) {
+				String rootVariableOnTrace = variableName.split("\\.")[0];
+				variableOnTrace = variablesInStep.stream().filter(v -> v.getVarName().equals(rootVariableOnTrace))
+						.findFirst().orElse(null);
+			}
+
 			if (variableOnTrace != null) {
 				VarValue fieldInVarOnTrace = searchForField(variableName, variableOnTrace);
 				if (fieldInVarOnTrace == null) {
