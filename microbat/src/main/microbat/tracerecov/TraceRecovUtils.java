@@ -221,4 +221,21 @@ public class TraceRecovUtils {
 
 		return getCFGFromMethodSignature(className, methodSig);
 	}
+
+	public static Set<String> getInvokedMethodsToBeChecked(String invokingMethods) {
+		Set<String> methods = new HashSet<>();
+		
+		String[] invokedMethods = invokingMethods.split("%");
+		for (String methodSig : invokedMethods) {
+			if (methodSig == null || !methodSig.contains("#")) {
+				continue;
+			}
+			String type = methodSig.split("#")[0];
+			if (shouldBeChecked(type)) {
+				methods.add(methodSig);
+			}
+		}
+		
+		return methods;
+	}
 }

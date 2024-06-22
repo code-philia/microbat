@@ -59,6 +59,9 @@ public class AliasInferenceUtils {
 		/* type structure */
 		String jsonString = TraceRecovUtils.processInputStringForLLM(rootVar.toJSON().toString());
 
+		/* invoked methods to be checked */
+		Set<String> invokedMethods = TraceRecovUtils.getInvokedMethodsToBeChecked(step.getInvokingMethod());
+
 		// source code
 		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n```");
 		question.append(sourceCode);
@@ -128,10 +131,21 @@ public class AliasInferenceUtils {
 			question.append("\n");
 		}
 
-		// keys (critical variables)
 		question.append("\nIdentify all the variable pairs such that each pair has the same memory address. "
-				+ "The variable names must be chosen from the above names, not values.\n"
-				+ "Your response should be in JSON format, where keys must be chosen from:");
+				+ "The variable names must be chosen from the above names, not values.\n");
+
+		// invoked methods
+		if (!invokedMethods.isEmpty()) {
+			question.append("\nOnly analyse variables or fields involved in the following functions:\n");
+			for (String methodSig : invokedMethods) {
+				question.append(methodSig);
+				question.append("\n");
+			}
+			question.append("Do not analyse other functions.\n");
+		}
+
+		// keys (critical variables)
+		question.append("Your response should be in JSON format, where keys must be chosen from:");
 		String cascadeName = "";
 		for (VarValue criticalVar : criticalVariables) {
 			question.append("`" + cascadeName + criticalVar.getVarName() + "`,");
@@ -174,7 +188,7 @@ public class AliasInferenceUtils {
 
 			/* update memory address in rootVar */
 			VarValue writtenField = searchForField(fieldName, rootVar);
-			
+
 			String rootVariableOnTrace = variableName.split("\\.")[0];
 			VarValue variableOnTrace = variablesInStep.stream().filter(v -> v.getVarName().equals(rootVariableOnTrace))
 					.findFirst().orElse(null);
