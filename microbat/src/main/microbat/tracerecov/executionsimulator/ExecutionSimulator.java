@@ -142,7 +142,7 @@ public class ExecutionSimulator {
 				System.out.println(i + "th try with GPT to generate response as " + response);
 				VariableExpansionUtils.processResponse(selectedVar, response);
 				break;
-			} catch (org.json.JSONException e) {
+			} catch (org.json.JSONException | java.lang.StringIndexOutOfBoundsException e) {
 				e.printStackTrace();
 			}
 		}

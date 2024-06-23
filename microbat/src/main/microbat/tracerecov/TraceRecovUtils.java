@@ -185,10 +185,10 @@ public class TraceRecovUtils {
 	}
 
 	public static CFG getCFGFromMethodSignature(String className, String methodSig) throws CannotBuildCFGException {
-		className = className.replace(".", File.separator);
+		className = className.replace(".", "/");
 
 		String rtJarPath = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.JAVA7HOME_PATH)
-				+ "/jre/lib/rt.jar";
+				+ File.separator + "jre" + File.separator + "lib" + File.separator + "rt.jar";
 
 		try (JarFile rtJar = new JarFile(rtJarPath)) {
 			// Get class
