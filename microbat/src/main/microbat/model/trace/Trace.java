@@ -944,6 +944,10 @@ public class Trace {
 	
 	public TraceNode findProducer(VarValue varValue, TraceNode startNode) {
 		
+		if (varValue == null || startNode == null) {
+			return null;
+		}
+
 		String varID = Variable.truncateSimpleID(varValue.getVarID());
 		String headID = Variable.truncateSimpleID(varValue.getAliasVarID());
 		
