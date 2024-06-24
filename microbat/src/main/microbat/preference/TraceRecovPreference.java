@@ -25,10 +25,14 @@ import microbat.tracerecov.executionsimulator.SimulatorConstants;
 public class TraceRecovPreference extends PreferencePage implements IWorkbenchPreferencePage {
 
 	public static final String API_KEY = "api_key";
+	public static final String MODEL_TYPE = "model_type";
 
+	/* constants before update */
 	private String apiKey;
-	protected LLMModel llmModelType = LLMModel.GPT4O; // default model
-	
+	private LLMModel llmModelType = LLMModel.GPT4O; // default model
+
+	/* constants after update */
+	private Combo modelTypeCombo;
 	private Text apiKeyText;
 
 	public TraceRecovPreference() {
@@ -45,6 +49,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	@Override
 	public void init(IWorkbench workbench) {
 		this.apiKey = Activator.getDefault().getPreferenceStore().getString(API_KEY);
+		String modelType = Activator.getDefault().getPreferenceStore().getString(MODEL_TYPE);
+		if (modelType != null && !modelType.equals("")) {
+			this.llmModelType = LLMModel.valueOf(modelType);
+		}
 	}
 
 	@Override
@@ -67,7 +75,9 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		Group modelSelectionGroup = initGroup(parent, title);
 
 		String modelSelectionLabel = "LLM Model:";
-		createDropDown(modelSelectionGroup, modelSelectionLabel, LLMModel.values(), this.llmModelType.ordinal());
+		Combo modelTypeCombo = createDropDown(modelSelectionGroup, modelSelectionLabel, LLMModel.values(),
+				this.llmModelType.ordinal());
+		this.modelTypeCombo = modelTypeCombo;
 
 		String apiKeyLabel = "API Key:";
 		Text apiKeyText = createText(modelSelectionGroup, apiKeyLabel, this.apiKey);
@@ -120,11 +130,16 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 
 	public boolean performOk() {
 		IEclipsePreferences preferences = ConfigurationScope.INSTANCE.getNode("microbat.preference");
+
 		preferences.put(API_KEY, this.apiKeyText.getText());
+		preferences.put(MODEL_TYPE, this.modelTypeCombo.getText());
+
 		Activator.getDefault().getPreferenceStore().putValue(API_KEY, this.apiKeyText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(MODEL_TYPE, this.modelTypeCombo.getText());
 
-		SimulatorConstants.API_KEY = this.apiKey;
-
+		SimulatorConstants.API_KEY = this.apiKeyText.getText();
+		SimulatorConstants.modelType = LLMModel.valueOf(this.modelTypeCombo.getText());
+		
 		return true;
 	}
 

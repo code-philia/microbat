@@ -65,7 +65,7 @@ public class ExecutionSimulator {
 		messages.put(question);
 
 		JSONObject request = new JSONObject();
-		request.put("model", SimulatorConstants.GPT4O);
+		request.put("model", SimulatorConstants.getSelectedModel());
 		request.put("messages", messages);
 		request.put("temperature", SimulatorConstants.TEMPERATURE);
 		request.put("max_tokens", SimulatorConstants.MAX_TOKENS);
