@@ -1,5 +1,8 @@
 package microbat.tracerecov.executionsimulator;
 
+import microbat.Activator;
+import microbat.preference.TraceRecovPreference;
+
 public class SimulatorConstants {
 
 	/* ChatGPT API */
@@ -7,6 +10,9 @@ public class SimulatorConstants {
 	public static final String GPT3 = "gpt-3.5-turbo";
 	public static final String GPT4 = "gpt-4-turbo";
 	public static final String GPT4O = "gpt-4o";
+	
+	/* API Key */
+	public static String API_KEY = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.API_KEY);
 
 	/* Model constants */
 	public static final double TEMPERATURE = 0;

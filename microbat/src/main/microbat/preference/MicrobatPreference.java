@@ -63,8 +63,6 @@ public class MicrobatPreference extends PreferencePage implements
 //		this.defaultConfigPath = Activator.getDefault().getPreferenceStore().getString(CONFIG_PATH_MICROBAT);
 //		this.defaultTestCaseID = Activator.getDefault().getPreferenceStore().getString(TEST_CASE_ID_MICROBAT);
 //		this.defaultUseTestCaseID = Activator.getDefault().getPreferenceStore().getString(USE_TEST_CASE_ID);
-		
-		this.apiKey = Activator.getDefault().getPreferenceStore().getString(API_KEY);
 	}
 
 	public static String getStepLimit() {
@@ -100,9 +98,6 @@ public class MicrobatPreference extends PreferencePage implements
 //	public static final String TEST_CASE_ID_MICROBAT = "testCaseID";
 //	public static final String USE_TEST_CASE_ID = "useTestCaseID";
 	
-	/* TraceRecov Setting */
-	public static final String API_KEY = "api_key";
-	
 
 	private Combo projectCombo;
 	private Text lanuchClassText;
@@ -127,9 +122,6 @@ public class MicrobatPreference extends PreferencePage implements
 	
 //	private Combo autoFeedbackCombo;
 	
-	/* TraceRecov Setting */
-	private Text apiKeyText;
-	
 	private String defaultTargetProject = "";
 	private String defaultLanuchClass = "";
 	private String defaultTestMethod = "";
@@ -150,9 +142,6 @@ public class MicrobatPreference extends PreferencePage implements
 //	private String defaultProjectPath;
 //	private String defaultTestCaseID;
 //	private String defaultUseTestCaseID;
-	
-	/* TraceRecov Setting */
-	private String apiKey;
 
 	@Override
 	protected Control createContents(Composite parent) {
@@ -215,15 +204,6 @@ public class MicrobatPreference extends PreferencePage implements
 		variableLayerTextData.horizontalSpan = 2;
 		variableLayerText.setLayoutData(variableLayerTextData);
 		variableLayerText.setToolTipText("how many layers of variable children does the debugger need to retrieve, -1 means infinite.");
-		
-		Label apiKeyLabel = new Label(settingGroup, SWT.NONE);
-		apiKeyLabel.setText("API Key: ");
-		apiKeyText = new Text(settingGroup, SWT.BORDER);
-		apiKeyText.setLayoutData(new GridData(SWT.FILL, SWT.LEFT, true, false));
-		apiKeyText.setText(this.apiKey);
-		GridData apiKeyTextData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		apiKeyTextData.horizontalSpan = 2;
-		apiKeyText.setLayoutData(apiKeyTextData);
 		
 		supportConcurrentTraceButton = new Button(settingGroup, SWT.CHECK);
 		supportConcurrentTraceButton.setText("Support concurrent trace");
@@ -348,7 +328,6 @@ public class MicrobatPreference extends PreferencePage implements
 //		preferences.put(PROJECT_PATH, this.projectPathText.getText());
 //		preferences.put(TEST_CASE_ID_MICROBAT, this.testCaseIDText.getText());
 //		preferences.put(USE_TEST_CASE_ID, String.valueOf(this.useTestCaseIDButton.getSelection()));
-		preferences.put(API_KEY, this.apiKeyText.getText());
 		
 		Activator.getDefault().getPreferenceStore().putValue(TARGET_PORJECT, this.projectCombo.getText());
 		Activator.getDefault().getPreferenceStore().putValue(LANUCH_CLASS, this.lanuchClassText.getText());
@@ -370,7 +349,6 @@ public class MicrobatPreference extends PreferencePage implements
 //		Activator.getDefault().getPreferenceStore().putValue(PROJECT_PATH, this.projectPathText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(TEST_CASE_ID_MICROBAT, this.testCaseIDText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(USE_TEST_CASE_ID, String.valueOf(this.useTestCaseIDButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(API_KEY, this.apiKeyText.getText());
 		
 		confirmChanges();
 		

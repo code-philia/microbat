@@ -437,6 +437,12 @@
             id="microbat.preference.debugpilot"
             name="Debug Pilot Setting">
       </page>
+      <page
+            category="microbat.preference"
+            class="microbat.preference.TraceRecovPreference"
+            id="microbat.preference.tracerecov"
+            name="Trace Recov Setting">
+      </page>
    </extension>
    <extension
          point="org.eclipse.ui.editors.annotationTypes">

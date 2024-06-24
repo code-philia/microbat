@@ -33,8 +33,6 @@ import microbat.tracerecov.varskeleton.VariableSkeleton;
  */
 public class ExecutionSimulator {
 
-	private static String apiKey = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.API_KEY);
-
 	public ExecutionSimulator() {
 	}
 	
@@ -45,7 +43,7 @@ public class ExecutionSimulator {
 
 		connection.setRequestMethod("POST");
 		connection.setRequestProperty("Content-Type", "application/json");
-		connection.setRequestProperty("Authorization", "Bearer " + apiKey);
+		connection.setRequestProperty("Authorization", "Bearer " + SimulatorConstants.API_KEY);
 		connection.setDoOutput(true);
 
 		/* construct request */
