@@ -181,7 +181,8 @@ public class TraceRecovUtils {
 	}
 
 	public static String processInputStringForLLM(String input) {
-		return input.replace("\n", "\\n").replace("<>", "\\<\\>");
+//		return input.replace("\n", "\\n").replace("\r", "\\r").replace("<>", "\\<\\>");
+		return input.replace("\n", "\\n").replace("\r", "\\r");
 	}
 
 	public static CFG getCFGFromMethodSignature(String className, String methodSig) throws CannotBuildCFGException {

@@ -122,14 +122,17 @@ public class VariableExpansionUtils {
 		question.append(variableType);
 		question.append(": \"");
 		question.append(variableValue);
-		question.append("\"");
+		question.append("\"" + " ");
+		question.append(" (\"<\", "
+				+ "\">\" is the content, we shall not escape it)");
 		question.append(", strictly return in JSON format for *" + variableName
 				+ "* as the above example, each key must has a value and a type. "
 				+ "The JSON object must start with variable *" + variableName
 				+ "* as the root. Do not include explanation in your response.\n");
 
 		question.append("You must follow the JSON format as \"var_name:var_type\": var_value. "
-				+ "Do not include duplicate keys. You must infer all var_value.");
+				+ "Do not include duplicate keys. You must infer all var_value. ");
+		
 
 		return question.toString();
 	}
