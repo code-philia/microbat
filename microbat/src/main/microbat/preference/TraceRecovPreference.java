@@ -29,16 +29,19 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	public static final String API_KEY = "api_key";
 	public static final String MODEL_TYPE = "model_type";
 	public static final String ENABLE_LLM = "enable_llm";
+	public static final String USE_MUTATION_CONFIG = "use_mutation_config";
 
 	/* constants before update */
 	private String apiKey;
 	private LLMModel llmModelType = LLMModel.GPT4O; // default model
 	private boolean isEnableLLMInference;
+	private boolean isMutationExperiment;
 
 	/* constants after update */
 	private Combo modelTypeCombo;
 	private Text apiKeyText;
 	private Button isEnableLLMButton;
+	private Button useMutationConfigButton;
 
 	public TraceRecovPreference() {
 	}
@@ -65,6 +68,13 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 			this.isEnableLLMInference = true;
 		} else {
 			this.isEnableLLMInference = false;
+		}
+		
+		String isMutationExperimentString = Activator.getDefault().getPreferenceStore().getString(USE_MUTATION_CONFIG);
+		if (isMutationExperimentString != null && isMutationExperimentString.equals("true")) {
+			this.isMutationExperiment = true;
+		} else {
+			this.isMutationExperiment = false;
 		}
 	}
 
@@ -107,6 +117,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		String enableLLMLabel = "Enable LLM Inference";
 		Button isEnableLLMButton = createCheckButton(experimentSettingGroup, enableLLMLabel, this.isEnableLLMInference);
 		this.isEnableLLMButton = isEnableLLMButton;
+		
+		String mutationLabel = "Use Mutation Configuration";
+		Button useMutationConfigButton = createCheckButton(experimentSettingGroup, mutationLabel, this.isMutationExperiment);
+		this.useMutationConfigButton = useMutationConfigButton;
 
 	}
 
@@ -171,11 +185,14 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(API_KEY, this.apiKeyText.getText());
 		preferences.put(MODEL_TYPE, this.modelTypeCombo.getText());
 		preferences.put(ENABLE_LLM, String.valueOf(this.isEnableLLMButton.getSelection()));
+		preferences.put(USE_MUTATION_CONFIG, String.valueOf(this.useMutationConfigButton.getSelection()));
 
 		Activator.getDefault().getPreferenceStore().putValue(API_KEY, this.apiKeyText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(MODEL_TYPE, this.modelTypeCombo.getText());
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LLM,
 				String.valueOf(this.isEnableLLMButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(USE_MUTATION_CONFIG,
+				String.valueOf(this.useMutationConfigButton.getSelection()));
 
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();
 		SimulatorConstants.modelType = LLMModel.valueOf(this.modelTypeCombo.getText());
