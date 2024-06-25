@@ -252,6 +252,9 @@ public class Trace {
 	/**
 	 * Get the step where the read variable is defined. If we cannot find such a 
 	 * step, we find the step defining its (grand)parent of the read variable. 
+	 * 
+	 * This method will call GPT.
+	 * 
 	 * @param readVar
 	 * @return
 	 */

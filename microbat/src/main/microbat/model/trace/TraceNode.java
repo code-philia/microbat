@@ -225,7 +225,7 @@ public class TraceNode implements Comparator<TraceNode> {
 //		
 //		return dataDominator;
 		
-		return this.trace.findDataDependency(this, readVar);
+		return this.trace.findProducer(readVar, this);
 	}
 	
 //	private TraceNode findLatestProducer(StepVariableRelationEntry entry) {
