@@ -9,6 +9,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -21,19 +22,23 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import microbat.Activator;
 import microbat.tracerecov.executionsimulator.LLMModel;
 import microbat.tracerecov.executionsimulator.SimulatorConstants;
+import microbat.util.Settings;
 
 public class TraceRecovPreference extends PreferencePage implements IWorkbenchPreferencePage {
 
 	public static final String API_KEY = "api_key";
 	public static final String MODEL_TYPE = "model_type";
+	public static final String ENABLE_LLM = "enable_llm";
 
 	/* constants before update */
 	private String apiKey;
 	private LLMModel llmModelType = LLMModel.GPT4O; // default model
+	private boolean isEnableLLMInference;
 
 	/* constants after update */
 	private Combo modelTypeCombo;
 	private Text apiKeyText;
+	private Button isEnableLLMButton;
 
 	public TraceRecovPreference() {
 	}
@@ -49,28 +54,39 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	@Override
 	public void init(IWorkbench workbench) {
 		this.apiKey = Activator.getDefault().getPreferenceStore().getString(API_KEY);
+
 		String modelType = Activator.getDefault().getPreferenceStore().getString(MODEL_TYPE);
 		if (modelType != null && !modelType.equals("")) {
 			this.llmModelType = LLMModel.valueOf(modelType);
+		}
+
+		String isEnableLLMInferenceString = Activator.getDefault().getPreferenceStore().getString(ENABLE_LLM);
+		if (isEnableLLMInferenceString != null && isEnableLLMInferenceString.equals("true")) {
+			this.isEnableLLMInference = true;
+		} else {
+			this.isEnableLLMInference = false;
 		}
 	}
 
 	@Override
 	protected Control createContents(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NONE);
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
+		GridLayout layout = new GridLayout(1, false);
 
 		composite.setLayout(layout);
 
-		createModelSelectionGroup(composite);
+		// LLM Model Settings
+		createModelConfigGroup(composite);
+
+		// Experiment Settings
+		createExperimentSettingGroup(composite);
 
 		performOk();
 
 		return composite;
 	}
 
-	private void createModelSelectionGroup(final Composite parent) {
+	private void createModelConfigGroup(final Composite parent) {
 		String title = "LLM Model Settings";
 		Group modelSelectionGroup = initGroup(parent, title);
 
@@ -84,17 +100,26 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		this.apiKeyText = apiKeyText;
 	}
 
+	private void createExperimentSettingGroup(final Composite parent) {
+		String title = "Experiment Settings";
+		Group experimentSettingGroup = initGroup(parent, title);
+
+		String enableLLMLabel = "Enable LLM Inference";
+		Button isEnableLLMButton = createCheckButton(experimentSettingGroup, enableLLMLabel, this.isEnableLLMInference);
+		this.isEnableLLMButton = isEnableLLMButton;
+
+	}
+
 	private Group initGroup(final Composite parent, String title) {
-		final Group modelSelectionGroup = new Group(parent, SWT.NONE);
-		modelSelectionGroup.setText(title);
+		final Group group = new Group(parent, SWT.NONE);
+		group.setText(title);
 
-		GridLayout layout = new GridLayout();
-		layout.numColumns = 2;
-		modelSelectionGroup.setLayout(layout);
+		GridLayout layout = new GridLayout(2, false);
+		group.setLayout(layout);
 
-		modelSelectionGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		group.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 
-		return modelSelectionGroup;
+		return group;
 	}
 
 	private <T extends Enum<T>> Combo createDropDown(Group settingGroup, String textLabel, T[] enumOptions,
@@ -128,18 +153,34 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		return text;
 	}
 
+	private Button createCheckButton(Group settingGroup, String textLabel, boolean defaultValue) {
+		Button button = new Button(settingGroup, SWT.CHECK);
+		button.setText(textLabel);
+
+		GridData buttonData = new GridData(SWT.FILL, SWT.FILL, true, false);
+		button.setLayoutData(buttonData);
+
+		button.setSelection(defaultValue);
+
+		return button;
+	}
+
 	public boolean performOk() {
 		IEclipsePreferences preferences = ConfigurationScope.INSTANCE.getNode("microbat.preference");
 
 		preferences.put(API_KEY, this.apiKeyText.getText());
 		preferences.put(MODEL_TYPE, this.modelTypeCombo.getText());
+		preferences.put(ENABLE_LLM, String.valueOf(this.isEnableLLMButton.getSelection()));
 
 		Activator.getDefault().getPreferenceStore().putValue(API_KEY, this.apiKeyText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(MODEL_TYPE, this.modelTypeCombo.getText());
+		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LLM,
+				String.valueOf(this.isEnableLLMButton.getSelection()));
 
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();
 		SimulatorConstants.modelType = LLMModel.valueOf(this.modelTypeCombo.getText());
-		
+		Settings.isEnableGPTInference = this.isEnableLLMButton.getSelection();
+
 		return true;
 	}
 
