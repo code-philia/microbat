@@ -69,7 +69,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		} else {
 			this.isEnableLLMInference = false;
 		}
-		
+
 		String isMutationExperimentString = Activator.getDefault().getPreferenceStore().getString(USE_MUTATION_CONFIG);
 		if (isMutationExperimentString != null && isMutationExperimentString.equals("true")) {
 			this.isMutationExperiment = true;
@@ -114,12 +114,13 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		String title = "Experiment Settings";
 		Group experimentSettingGroup = initGroup(parent, title);
 
-		String enableLLMLabel = "Enable LLM Inference";
+		String enableLLMLabel = "Enable LLM Inference in Auto Root Cause Localization";
 		Button isEnableLLMButton = createCheckButton(experimentSettingGroup, enableLLMLabel, this.isEnableLLMInference);
 		this.isEnableLLMButton = isEnableLLMButton;
-		
+
 		String mutationLabel = "Use Mutation Configuration";
-		Button useMutationConfigButton = createCheckButton(experimentSettingGroup, mutationLabel, this.isMutationExperiment);
+		Button useMutationConfigButton = createCheckButton(experimentSettingGroup, mutationLabel,
+				this.isMutationExperiment);
 		this.useMutationConfigButton = useMutationConfigButton;
 
 	}
@@ -172,6 +173,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		button.setText(textLabel);
 
 		GridData buttonData = new GridData(SWT.FILL, SWT.FILL, true, false);
+		buttonData.horizontalSpan = 2;
 		button.setLayoutData(buttonData);
 
 		button.setSelection(defaultValue);
