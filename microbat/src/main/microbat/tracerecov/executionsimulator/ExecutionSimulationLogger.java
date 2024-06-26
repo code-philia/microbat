@@ -1,15 +1,17 @@
 package microbat.tracerecov.executionsimulator;
 
+import microbat.Activator;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
+import microbat.preference.TraceRecovPreference;
 
 public class ExecutionSimulationLogger {
 
-	public static boolean isLoggingEnabled;
+	public static boolean isLoggingEnabled = Activator.getDefault().getPreferenceStore()
+			.getString(TraceRecovPreference.ENABLE_LOGGING).equals("true");
 
-	public static boolean showDebugInfo;
-	public static boolean showRequest;
-	public static boolean showResponse;
+	public static boolean showDebugInfo = Activator.getDefault().getPreferenceStore()
+			.getString(TraceRecovPreference.LOG_DEBUG_INFO).equals("true");
 
 	public ExecutionSimulationLogger() {
 	}
@@ -28,20 +30,18 @@ public class ExecutionSimulationLogger {
 					+ selectedVar.getStringValue() + "\n");
 		}
 
-		if (showRequest) {
-			System.out.println(request);
-		}
+		System.out.println(request);
 	}
 
 	public void printResponse(int ithTry, String response) {
-		if (isLoggingEnabled && showResponse) {
+		if (isLoggingEnabled) {
 			System.out.println();
 			System.out.println(ithTry + "th try with LLM to generate response as \n" + response);
 		}
 	}
 
 	public void printError(String errorMessage) {
-		if (isLoggingEnabled && showResponse) {
+		if (isLoggingEnabled) {
 			System.out.println();
 			System.out.println(errorMessage);
 		}

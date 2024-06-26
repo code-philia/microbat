@@ -30,18 +30,24 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	public static final String MODEL_TYPE = "model_type";
 	public static final String ENABLE_LLM = "enable_llm";
 	public static final String USE_MUTATION_CONFIG = "use_mutation_config";
+	public static final String ENABLE_LOGGING = "enable_logging";
+	public static final String LOG_DEBUG_INFO = "log_debug_info";
 
 	/* constants before update */
 	private String apiKey;
 	private LLMModel llmModelType = LLMModel.GPT4O; // default model
 	private boolean isEnableLLMInference;
 	private boolean isMutationExperiment;
+	private boolean isEnableLogging;
+	private boolean logDebugInfo;
 
 	/* constants after update */
 	private Combo modelTypeCombo;
 	private Text apiKeyText;
 	private Button isEnableLLMButton;
 	private Button useMutationConfigButton;
+	private Button isEnableLoggingButton;
+	private Button logDebugInfoButton;
 
 	public TraceRecovPreference() {
 	}
@@ -76,6 +82,20 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		} else {
 			this.isMutationExperiment = false;
 		}
+
+		String isEnableLoggingString = Activator.getDefault().getPreferenceStore().getString(ENABLE_LOGGING);
+		if (isEnableLoggingString != null && isEnableLoggingString.equals("true")) {
+			this.isEnableLogging = true;
+		} else {
+			this.isEnableLogging = false;
+		}
+
+		String logDebugInfoString = Activator.getDefault().getPreferenceStore().getString(LOG_DEBUG_INFO);
+		if (logDebugInfoString != null && logDebugInfoString.equals("true")) {
+			this.logDebugInfo = true;
+		} else {
+			this.logDebugInfo = false;
+		}
 	}
 
 	@Override
@@ -91,8 +111,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		// Experiment Settings
 		createExperimentSettingGroup(composite);
 
-		performOk();
+		// Logging Settings
+		createLogSettingGroup(composite);
 
+		performOk();
 		return composite;
 	}
 
@@ -101,13 +123,11 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		Group modelSelectionGroup = initGroup(parent, title);
 
 		String modelSelectionLabel = "LLM Model:";
-		Combo modelTypeCombo = createDropDown(modelSelectionGroup, modelSelectionLabel, LLMModel.values(),
+		this.modelTypeCombo = createDropDown(modelSelectionGroup, modelSelectionLabel, LLMModel.values(),
 				this.llmModelType.ordinal());
-		this.modelTypeCombo = modelTypeCombo;
 
 		String apiKeyLabel = "API Key:";
-		Text apiKeyText = createText(modelSelectionGroup, apiKeyLabel, this.apiKey);
-		this.apiKeyText = apiKeyText;
+		this.apiKeyText = createText(modelSelectionGroup, apiKeyLabel, this.apiKey);
 	}
 
 	private void createExperimentSettingGroup(final Composite parent) {
@@ -115,14 +135,22 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		Group experimentSettingGroup = initGroup(parent, title);
 
 		String enableLLMLabel = "Enable LLM Inference in Auto Root Cause Localization";
-		Button isEnableLLMButton = createCheckButton(experimentSettingGroup, enableLLMLabel, this.isEnableLLMInference);
-		this.isEnableLLMButton = isEnableLLMButton;
+		this.isEnableLLMButton = createCheckButton(experimentSettingGroup, enableLLMLabel, this.isEnableLLMInference);
 
 		String mutationLabel = "Use Mutation Configuration";
-		Button useMutationConfigButton = createCheckButton(experimentSettingGroup, mutationLabel,
+		this.useMutationConfigButton = createCheckButton(experimentSettingGroup, mutationLabel,
 				this.isMutationExperiment);
-		this.useMutationConfigButton = useMutationConfigButton;
+	}
 
+	private void createLogSettingGroup(final Composite parent) {
+		String title = "Log Settings";
+		Group logSettingGroup = initGroup(parent, title);
+
+		String enableLogLabel = "Enable Logging";
+		this.isEnableLoggingButton = createCheckButton(logSettingGroup, enableLogLabel, this.isEnableLogging);
+
+		String logDebugInfoLabel = "Log Debug Info";
+		this.logDebugInfoButton = createCheckButton(logSettingGroup, logDebugInfoLabel, this.logDebugInfo);
 	}
 
 	private Group initGroup(final Composite parent, String title) {
@@ -188,6 +216,8 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(MODEL_TYPE, this.modelTypeCombo.getText());
 		preferences.put(ENABLE_LLM, String.valueOf(this.isEnableLLMButton.getSelection()));
 		preferences.put(USE_MUTATION_CONFIG, String.valueOf(this.useMutationConfigButton.getSelection()));
+		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
+		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
 
 		Activator.getDefault().getPreferenceStore().putValue(API_KEY, this.apiKeyText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(MODEL_TYPE, this.modelTypeCombo.getText());
@@ -195,6 +225,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 				String.valueOf(this.isEnableLLMButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(USE_MUTATION_CONFIG,
 				String.valueOf(this.useMutationConfigButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LOGGING,
+				String.valueOf(this.isEnableLoggingButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(LOG_DEBUG_INFO,
+				String.valueOf(this.logDebugInfoButton.getSelection()));
 
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();
 		SimulatorConstants.modelType = LLMModel.valueOf(this.modelTypeCombo.getText());
