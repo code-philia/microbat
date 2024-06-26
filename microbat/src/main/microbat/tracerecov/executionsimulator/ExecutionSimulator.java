@@ -13,11 +13,9 @@ import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import microbat.Activator;
 import microbat.codeanalysis.bytecode.CFG;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
-import microbat.preference.MicrobatPreference;
 import microbat.tracerecov.CannotBuildCFGException;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier;
@@ -33,9 +31,12 @@ import microbat.tracerecov.varskeleton.VariableSkeleton;
  */
 public class ExecutionSimulator {
 
+	private ExecutionSimulationLogger logger;
+
 	public ExecutionSimulator() {
+		this.logger = new ExecutionSimulationLogger();
 	}
-	
+
 	private String sendRequest(String backgroundContent, String questionContent) throws IOException {
 		/* set up connection */
 		URL url = new URL(SimulatorConstants.API_URL);
@@ -98,15 +99,11 @@ public class ExecutionSimulator {
 		}
 	}
 
-
 	public void expandVariable(VarValue selectedVar, TraceNode step) throws IOException {
 
 		if (selectedVar.isExpanded()) {
 			return;
 		}
-
-		System.out.println("***Variable Expansion***");
-		System.out.println();
 
 		List<VariableSkeleton> variableSkeletons = new ArrayList<>();
 
@@ -131,17 +128,17 @@ public class ExecutionSimulator {
 
 		String background = VariableExpansionUtils.getBackgroundContent();
 		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step);
-		System.out.println(background);
-		System.out.println(content);
+
+		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, background + content);
 
 		for (int i = 0; i < 2; i++) {
 			try {
 				String response = sendRequest(background, content);
-				System.out.println(i + "th try with GPT to generate response as " + response);
+				this.logger.printResponse(i, response);
 				VariableExpansionUtils.processResponse(selectedVar, response);
 				break;
 			} catch (org.json.JSONException | java.lang.StringIndexOutOfBoundsException e) {
-				e.printStackTrace();
+				this.logger.printError(e.getMessage());
 			}
 		}
 	}
@@ -151,22 +148,20 @@ public class ExecutionSimulator {
 	 */
 	public Map<VarValue, VarValue> inferAliasRelations(TraceNode step, VarValue rootVar,
 			List<VarValue> criticalVariables) throws IOException {
-		System.out.println();
-		System.out.println("***Alias Inferencing***");
-		System.out.println();
 
 		String background = AliasInferenceUtils.getBackgroundContent();
 		String content = AliasInferenceUtils.getQuestionContent(step, rootVar, criticalVariables);
-		System.out.println(background);
-		System.out.println(content);
+
+		this.logger.printInfoBeforeQuery("Alias Inferencing", criticalVariables.get(criticalVariables.size() - 1), step,
+				background + content);
 
 		for (int i = 0; i < 2; i++) {
 			try {
 				String response = sendRequest(background, content);
-				System.out.println(i + "th try with GPT to generate response as " + response);
+				this.logger.printResponse(i, response);
 				return AliasInferenceUtils.processResponse(response, rootVar, step);
 			} catch (org.json.JSONException | java.lang.StringIndexOutOfBoundsException e) {
-				e.printStackTrace();
+				this.logger.printError(e.getMessage());
 			}
 		}
 
@@ -203,13 +198,7 @@ public class ExecutionSimulator {
 		} else if (complication == WriteStatus.GUARANTEE_NO_WRITE) {
 			return false;
 		} else {
-			boolean def = false;
-			try {
-				def = inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			return def;
+			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
 		}
 	}
 
@@ -236,23 +225,20 @@ public class ExecutionSimulator {
 	}
 
 	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar,
-			List<VarValue> criticalVariables) throws IOException {
-		System.out.println();
-		System.out.println("***Definition Inference***");
-		System.out.println();
+			List<VarValue> criticalVariables) {
 
 		String background = DefinitionInferenceUtils.getBackgroundContent();
 		String content = DefinitionInferenceUtils.getQuestionContent(step, rootVar, targetVar, criticalVariables);
-		System.out.println(background);
-		System.out.println(content);
+
+		this.logger.printInfoBeforeQuery("Definition Inference", targetVar, step, background + content);
 
 		for (int i = 0; i < 2; i++) {
 			try {
 				String response = sendRequest(background, content);
-				System.out.println(i + "th try with GPT to generate response as " + response);
+				this.logger.printResponse(i, response);
 				return DefinitionInferenceUtils.isModified(response);
-			} catch (org.json.JSONException e) {
-				e.printStackTrace();
+			} catch (org.json.JSONException | IOException e) {
+				this.logger.printError(e.getMessage());
 			}
 		}
 
