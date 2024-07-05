@@ -31,7 +31,7 @@ import microbat.tracerecov.varskeleton.VariableSkeleton;
  */
 public class ExecutionSimulator {
 
-	private ExecutionSimulationLogger logger;
+	protected ExecutionSimulationLogger logger;
 
 	public ExecutionSimulator() {
 		this.logger = new ExecutionSimulationLogger();
