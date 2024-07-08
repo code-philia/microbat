@@ -60,6 +60,12 @@ public class CommandLine {
 
 		return CollectionUtils.toHashSet(value.split(AgentConstants.AGENT_PARAMS_MULTI_VALUE_SEPARATOR));
 	}
+	
+	public RuntimeCondition getRuntimeCondition(String option) {
+		//TODO Hongshu/Weiyu
+		
+		return null;
+	}
 
 	public String getString(String option) {
 		return argMap.get(option);

@@ -26,6 +26,7 @@ import microbat.codeanalysis.bytecode.MethodFinderBySignature;
 import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentLogger;
+import microbat.instrumentation.RuntimeCondition;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.model.BreakPoint;
 import microbat.model.trace.Trace;
@@ -60,6 +61,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public static int expectedSteps = Integer.MAX_VALUE;
 //	private static int tolerantExpectedSteps = expectedSteps;
 	public static boolean avoidProxyToString = false;
+	
+	public static RuntimeCondition condition;
+	
 	private long threadId;
 
 	private Trace trace;

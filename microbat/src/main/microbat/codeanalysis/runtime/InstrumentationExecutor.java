@@ -52,9 +52,22 @@ public class InstrumentationExecutor {
 	private List<String> includeLibs = Collections.emptyList();
 	private List<String> excludeLibs = Collections.emptyList();
 	
+	private Condition condition = new Condition();
+	
 	public InstrumentationExecutor(AppJavaClassPath appPath, String traceDir, String traceName, 
 			List<String> includeLibs, List<String> excludeLibs) {
 		this(appPath, generateTraceFilePath(traceDir, traceName), includeLibs, excludeLibs);
+		agentRunner = createTraceAgentRunner();
+	}
+	
+	public InstrumentationExecutor(AppJavaClassPath appPath, String traceDir, String traceName, 
+			List<String> includeLibs, List<String> excludeLibs, Condition condition) {
+		this(appPath, generateTraceFilePath(traceDir, traceName), includeLibs, excludeLibs);
+		
+		if(condition!=null) {
+			this.condition = condition;			
+		}
+		
 		agentRunner = createTraceAgentRunner();
 	}
 	
@@ -103,6 +116,9 @@ public class InstrumentationExecutor {
 		/* build includes & excludes params */
 		agentRunner.addIncludesParam(this.includeLibs);
 		agentRunner.addExcludesParam(this.excludeLibs);
+		
+		agentRunner.addAgentParam(AgentParams.OPT_CONDITION, condition.toString());
+		
 		agentRunner.addAgentParam(AgentParams.OPT_VARIABLE_LAYER, MicrobatPreference.getVariableValue());
 		agentRunner.addAgentParam(AgentParams.OPT_STEP_LIMIT, MicrobatPreference.getStepLimit());
 		agentRunner.addAgentParams(AgentParams.OPT_LOG, Arrays.asList(
