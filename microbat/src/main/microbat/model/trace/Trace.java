@@ -261,7 +261,7 @@ public class Trace {
 	public TraceNode findDataDependency(TraceNode checkingNode, VarValue readVar) {
 		
 		TraceNode dataDominator = findProducer(readVar, checkingNode);
-		
+		Settings.isEnableGPTInference = false;
 		if(Settings.isEnableGPTInference) {
 			
 			if(dataDominator == null && 
