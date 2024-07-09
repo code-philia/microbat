@@ -47,6 +47,10 @@ public class AgentParams extends CommonParams {
 	 * The condition (or query) to have additional instrumentation on the trace
 	 */
 	public static final String OPT_CONDITION = "condition";
+	public static final String OPT_CONDITION_VAR_NAME = "variable_name";
+	public static final String OPT_CONDITION_VAR_TYPE = "variable_type";
+	public static final String OPT_CONDITION_VAR_VALUE = "variable_value";
+	public static final String OPT_CONDITION_CLASS_STRUCTURE = "class_structure";
 	
 	private boolean precheck;
 	private EntryPoint entryPoint;

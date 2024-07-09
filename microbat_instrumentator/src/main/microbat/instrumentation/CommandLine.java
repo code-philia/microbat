@@ -62,9 +62,36 @@ public class CommandLine {
 	}
 	
 	public RuntimeCondition getRuntimeCondition(String option) {
-		//TODO Hongshu/Weiyu
+		String value = getString(option);
+		RuntimeCondition condition = new RuntimeCondition(null, null, null, null);
 		
-		return null;
+		if (value == null || value.isEmpty()) {
+			return condition;
+		}
+
+		String[] conditions = value.split(AgentConstants.AGENT_CONDITION_SEPARATOR);
+		
+		for (String conditionString : conditions) {
+			String[] keyValPair = conditionString.split(AgentConstants.AGENT_CONDITION_KEY_VAL_SEPARATOR, 2);
+			String conditionKey = keyValPair[0];
+			String conditionVal = keyValPair[1];
+			switch (conditionKey) {
+			case AgentParams.OPT_CONDITION_VAR_NAME:
+				condition.setVariableName(conditionVal);
+				break;
+			case AgentParams.OPT_CONDITION_VAR_TYPE:
+				condition.setVariableType(conditionVal);
+				break;
+			case AgentParams.OPT_CONDITION_VAR_VALUE:
+				condition.setVariableValue(conditionVal);
+				break;
+			case AgentParams.OPT_CONDITION_CLASS_STRUCTURE:
+				condition.setClassStructure(conditionVal);
+				break;
+			default: // do nothing
+			}
+		}
+		return condition;
 	}
 
 	public String getString(String option) {

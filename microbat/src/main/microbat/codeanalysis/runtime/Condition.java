@@ -1,16 +1,18 @@
 package microbat.codeanalysis.runtime;
 
+import microbat.instrumentation.AgentParams;
+
 public class Condition {
 	private String variableName;
 	private String variableType;
 	private String variableValue;
-	
+
 	private String classStructure;
 
 	public Condition() {
-		
+
 	}
-	
+
 	public Condition(String variableName, String variableType, String variableValue, String classStructure) {
 		super();
 		this.variableName = variableName;
@@ -53,9 +55,9 @@ public class Condition {
 
 	@Override
 	public String toString() {
-		return "variable_name:" + variableName + "#variable_type:" + variableType + "#variable_value:"
-				+ variableValue + "#class_structure:" + classStructure + "";
+		return AgentParams.OPT_CONDITION_VAR_NAME + ":" + variableName + "#" + AgentParams.OPT_CONDITION_VAR_TYPE + ":"
+				+ variableType + "#" + AgentParams.OPT_CONDITION_VAR_VALUE + ":" + variableValue + "#"
+				+ AgentParams.OPT_CONDITION_CLASS_STRUCTURE + ":" + classStructure + "";
 	}
-	
-	
+
 }
