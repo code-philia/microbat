@@ -8,6 +8,7 @@ import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
+import sav.common.core.Pair;
 
 public class ExecutionSimulatorForPromptCollection extends ExecutionSimulator {
 	
@@ -16,10 +17,10 @@ public class ExecutionSimulatorForPromptCollection extends ExecutionSimulator {
 	}
 
 	@Override
-	public void expandVariable(VarValue selectedVar, TraceNode step) throws IOException {
+	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String,String> preValueResponse) throws IOException {
 
 		if (selectedVar.isExpanded()) {
-			return;
+			return null;
 		}
 
 		List<VariableSkeleton> variableSkeletons = new ArrayList<>();
@@ -44,10 +45,11 @@ public class ExecutionSimulatorForPromptCollection extends ExecutionSimulator {
 		}
 
 		String background = VariableExpansionUtils.getBackgroundContent();
-		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step);
+		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step, preValueResponse);
 
 		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, background + content);
 
+		return null;
 //		for (int i = 0; i < 2; i++) {
 //			try {
 //				String response = sendRequest(background, content);

@@ -22,6 +22,7 @@ import microbat.tracerecov.candidatevar.CandidateVarVerifier;
 import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
 import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
+import sav.common.core.Pair;
 
 /**
  * This class is used to simulate execution through LLM and retrieve
@@ -99,10 +100,10 @@ public class ExecutionSimulator {
 		}
 	}
 
-	public void expandVariable(VarValue selectedVar, TraceNode step) throws IOException {
+	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String,String> preValueResponse) throws IOException {
 
 		if (selectedVar.isExpanded()) {
-			return;
+			return null;
 		}
 
 		List<VariableSkeleton> variableSkeletons = new ArrayList<>();
@@ -127,7 +128,7 @@ public class ExecutionSimulator {
 		}
 
 		String background = VariableExpansionUtils.getBackgroundContent();
-		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step);
+		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step, preValueResponse);
 
 		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, background + content);
 
@@ -136,11 +137,14 @@ public class ExecutionSimulator {
 				String response = sendRequest(background, content);
 				this.logger.printResponse(i, response);
 				VariableExpansionUtils.processResponse(selectedVar, response);
-				break;
+				return response;
+				//break;
 			} catch (org.json.JSONException | java.lang.StringIndexOutOfBoundsException e) {
 				this.logger.printError(e.getMessage());
 			}
 		}
+		
+		return null;
 	}
 
 	/**

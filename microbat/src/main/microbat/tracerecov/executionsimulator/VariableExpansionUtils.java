@@ -16,6 +16,7 @@ import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
+import sav.common.core.Pair;
 
 public class VariableExpansionUtils {
 	/* Request content */
@@ -82,7 +83,7 @@ public class VariableExpansionUtils {
 	}
 
 	public static String getQuestionContent(VarValue selectedVariable, List<VariableSkeleton> variableSkeletons,
-			TraceNode step) {
+			TraceNode step, Pair<String,String> preValueResponse) {
 
 		/* source code */
 		int lineNo = step.getLineNumber();
@@ -133,6 +134,13 @@ public class VariableExpansionUtils {
 		question.append("You must follow the JSON format as \"var_name:var_type\": var_value. "
 				+ "Do not include duplicate keys. You must infer all var_value. ");
 		
+		/*
+		 * Added to enforce identical variable structure in buggy and correct trace
+		 */
+		if(preValueResponse != null) {
+			question.append("\n For example, you may return\n"+preValueResponse.second()
+				+ " when *"+ selectedVariable.getVarName() +"* has the value: \""+ preValueResponse.first()+"\".");
+		}
 
 		return question.toString();
 	}
