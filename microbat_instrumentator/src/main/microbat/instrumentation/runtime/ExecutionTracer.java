@@ -251,6 +251,42 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				}
 			}
 		}
+		
+		// if condition is matched, record children
+		// TODO: children varValue are not matched to the condition
+		if (condition.matchBasicCondition(varValue)) {
+			// TODO: `matchBasicCondition` checks basic information
+			// shall we check class structure as well?
+			Class<?> clazz = value.getClass();
+			while (clazz != null) {
+				Field[] fields = clazz.getDeclaredFields();
+				for (Field field : fields) {
+					field.setAccessible(true);
+					try {
+						boolean isStatic = Modifier.isStatic(field.getModifiers());
+						if (isStatic) {
+							continue;
+						}
+
+						String fieldName = field.getName();
+						String fieldType = field.getType().toString();
+						Object fieldValue = field.get(value);
+
+						Variable childVar = new FieldVar(isStatic, fieldName, fieldType, fieldType);
+						String fieldVarId = TraceUtils.getFieldVarId(varValue.getVarID(), fieldName, fieldType,
+								fieldValue);
+						childVar.setVarID(fieldVarId);
+
+						// add child
+						appendVarValue(fieldValue, childVar, varValue);
+					} catch (IllegalArgumentException | IllegalAccessException e) {
+						AgentLogger.error(e);
+					}
+				}
+				clazz = clazz.getSuperclass();
+			}
+		}
+		
 		if (parent != null) {
 			parent.linkAchild(varValue);
 		}

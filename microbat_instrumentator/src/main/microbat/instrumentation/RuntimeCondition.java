@@ -1,5 +1,7 @@
 package microbat.instrumentation;
 
+import microbat.model.value.VarValue;
+
 public class RuntimeCondition {
 	private String variableName;
 	private String variableType;
@@ -12,6 +14,11 @@ public class RuntimeCondition {
 		this.variableType = variableType;
 		this.variableValue = variableValue;
 		this.classStructure = classStructure;
+	}
+
+	public boolean matchBasicCondition(VarValue varValue) {
+		return this.variableName.equals(varValue.getVarName()) && this.variableType.equals(varValue.getType())
+				&& this.variableValue.equals(varValue.getStringValue());
 	}
 
 	public String getVariableName() {
