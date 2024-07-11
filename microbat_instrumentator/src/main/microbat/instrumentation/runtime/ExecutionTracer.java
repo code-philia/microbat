@@ -254,6 +254,45 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		if (parent != null) {
 			parent.linkAchild(varValue);
 		}
+		
+		/**
+		 * @author hongshuwang
+		 * 
+		 * Used in TraceRecov RQ3: ground truth collection
+		 * If condition is matched, record children
+		 */
+		if (condition.matchBasicCondition(varValue) && value != null) {
+			// TODO: `matchBasicCondition` checks basic information
+			// shall we check class structure as well?
+			Class<?> clazz = value.getClass();
+			while (clazz != null && clazz != Object.class) {
+				Field[] fields = clazz.getDeclaredFields();
+				for (Field field : fields) {
+					field.setAccessible(true);
+					try {
+						boolean isStatic = Modifier.isStatic(field.getModifiers());
+						boolean isFinal = Modifier.isFinal(field.getModifiers());
+						if (isStatic || isFinal) {
+							continue;
+						}
+
+						String fieldName = field.getName();
+						String fieldType = field.getType().toString();
+						Object fieldValue = field.get(value);
+						Variable childVar = new FieldVar(isStatic, fieldName, fieldType, fieldType);
+						String fieldVarId = TraceUtils.getFieldVarId(varValue.getVarID(), fieldName, fieldType,
+								fieldValue);
+						childVar.setVarID(fieldVarId);
+
+						// add child
+						appendVarValue(fieldValue, childVar, varValue);
+					} catch (IllegalArgumentException | IllegalAccessException e) {
+						AgentLogger.error(e);
+					}
+				}
+				clazz = clazz.getSuperclass();
+			}
+		}
 		return varValue;
 	}
 
