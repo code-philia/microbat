@@ -256,12 +256,11 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		}
 		
 		// if condition is matched, record children
-		// TODO: solve infinite loop problem
-		if (condition.matchBasicCondition(varValue)) {
+		if (condition.matchBasicCondition(varValue) && value != null) {
 			// TODO: `matchBasicCondition` checks basic information
 			// shall we check class structure as well?
 			Class<?> clazz = value.getClass();
-			while (clazz != null) {
+			while (clazz != null && clazz != Object.class) {
 				Field[] fields = clazz.getDeclaredFields();
 				for (Field field : fields) {
 					field.setAccessible(true);
