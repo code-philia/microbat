@@ -251,9 +251,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				}
 			}
 		}
+		if (parent != null) {
+			parent.linkAchild(varValue);
+		}
 		
 		// if condition is matched, record children
-		// TODO: children varValue are not matched to the condition
+		// TODO: solve infinite loop problem
 		if (condition.matchBasicCondition(varValue)) {
 			// TODO: `matchBasicCondition` checks basic information
 			// shall we check class structure as well?
@@ -264,14 +267,14 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					field.setAccessible(true);
 					try {
 						boolean isStatic = Modifier.isStatic(field.getModifiers());
-						if (isStatic) {
+						boolean isFinal = Modifier.isFinal(field.getModifiers());
+						if (isStatic || isFinal) {
 							continue;
 						}
 
 						String fieldName = field.getName();
 						String fieldType = field.getType().toString();
 						Object fieldValue = field.get(value);
-
 						Variable childVar = new FieldVar(isStatic, fieldName, fieldType, fieldType);
 						String fieldVarId = TraceUtils.getFieldVarId(varValue.getVarID(), fieldName, fieldType,
 								fieldValue);
@@ -285,10 +288,6 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				}
 				clazz = clazz.getSuperclass();
 			}
-		}
-		
-		if (parent != null) {
-			parent.linkAchild(varValue);
 		}
 		return varValue;
 	}
