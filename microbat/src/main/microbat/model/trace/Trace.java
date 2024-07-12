@@ -250,8 +250,8 @@ public class Trace {
 	}
 	
 	/**
-	 * Get the step where the read variable is defined. If we cannot find such a 
-	 * step, we find the step defining its (grand)parent of the read variable. 
+	 * Get the step where the read variable is defined. If we cannot find such a
+	 * step, we find the step defining its (grand)parent of the read variable.
 	 * 
 	 * This method will call GPT.
 	 * 
@@ -259,31 +259,26 @@ public class Trace {
 	 * @return
 	 */
 	public TraceNode findDataDependency(TraceNode checkingNode, VarValue readVar) {
-		
 		TraceNode dataDominator = findProducer(readVar, checkingNode);
-		Settings.isEnableGPTInference = false;
-		if(Settings.isEnableGPTInference) {
-			
-			if(dataDominator == null && 
-					!checkingNode.getRecoveredDataDependency().contains(readVar)) {
+		if (Settings.isEnableGPTInference) {
+			if (dataDominator == null && !checkingNode.getRecoveredDataDependency().contains(readVar)) {
 				// find parent node
 				VarValue rootVar = readVar;
 				while (!checkingNode.getReadVariables().contains(rootVar)) {
 					rootVar = rootVar.getParents().get(0); // TODO: multiple parents?
 				}
-				
+
 				if (TraceRecovUtils.shouldBeChecked(rootVar.getType())) {
 					new TraceRecoverer().recoverDataDependency(checkingNode, readVar, rootVar);
-					
+
 					checkingNode.addRecoveredDataDependency(readVar);
 					rootVar.setRecoveryPerformed(true);
-			
+
 					dataDominator = findProducer(readVar, checkingNode);
 				}
 			}
-					
 		}
-		
+
 		return dataDominator;
 	}
 	
