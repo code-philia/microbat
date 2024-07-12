@@ -34,6 +34,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	public static final String COLLECT_PROMPT = "collect_prompt";
 	public static final String ENABLE_LOGGING = "enable_logging";
 	public static final String LOG_DEBUG_INFO = "log_debug_info";
+	public static final String PROMPT_GT_PATH = "prompt_gt_path";
 
 	/* constants before update */
 	private boolean isEnableTraceRecov;
@@ -44,6 +45,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private boolean isCollectingPrompt;
 	private boolean isEnableLogging;
 	private boolean logDebugInfo;
+	private String promptGTPath;
 
 	/* constants after update */
 	private Button isEnableTraceRecovButton;
@@ -54,6 +56,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private Button isCollectingPromptButton;
 	private Button isEnableLoggingButton;
 	private Button logDebugInfoButton;
+	private Text promptGTPathText;
 
 	public TraceRecovPreference() {
 	}
@@ -116,6 +119,8 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		} else {
 			this.logDebugInfo = false;
 		}
+		
+		this.promptGTPath = Activator.getDefault().getPreferenceStore().getString(PROMPT_GT_PATH);
 	}
 
 	@Override
@@ -178,6 +183,9 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 
 		String logDebugInfoLabel = "Log Debug Info";
 		this.logDebugInfoButton = createCheckButton(logSettingGroup, logDebugInfoLabel, this.logDebugInfo);
+		
+		String promptGTPathLabel = "Path for Prompt Ground Truth:";
+		this.promptGTPathText = createText(logSettingGroup, promptGTPathLabel, this.promptGTPath);
 	}
 
 	private Group initGroup(final Composite parent, String title) {
@@ -247,6 +255,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(COLLECT_PROMPT, String.valueOf(this.isCollectingPromptButton.getSelection()));
 		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
+		preferences.put(PROMPT_GT_PATH, this.promptGTPathText.getText());
 
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_TRACERECOV,
 				String.valueOf(this.isEnableTraceRecovButton.getSelection()));
@@ -262,6 +271,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 				String.valueOf(this.isEnableLoggingButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(LOG_DEBUG_INFO,
 				String.valueOf(this.logDebugInfoButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(PROMPT_GT_PATH, this.promptGTPathText.getText());
 
 		Settings.isEnableGPTInference = this.isEnableLLMButton.getSelection();
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();

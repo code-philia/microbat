@@ -1,18 +1,25 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import microbat.model.trace.TraceNode;
-import microbat.model.value.VarValue;
+import org.json.JSONObject;
+
+import microbat.Activator;
+import microbat.codeanalysis.runtime.Condition;
+import microbat.model.trace.Trace;
+import microbat.preference.TraceRecovPreference;
 
 public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
 
 	private String filePath;
 
 	public ExecutionSimulationFileLogger() {
-		this.filePath = "../log.txt";
+		String fileName = "gt.csv";
+		this.filePath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.PROMPT_GT_PATH)
+				+ File.separator + fileName;
 	}
 
 	private PrintWriter createWriter() throws IOException {
@@ -21,12 +28,13 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
 		return writer;
 	}
 
-	@Override
-	public void printInfoBeforeQuery(String header, VarValue selectedVar, TraceNode step, String request) {
-		if (!isLoggingEnabled) {
+	public void collectGT(Condition condition, Trace trace) {
+		JSONObject groundTruthJSON = condition.getMatchedGroundTruth(trace);
+		if (groundTruthJSON == null) {
 			return;
 		}
-		
+
+		// write to results file
 		PrintWriter writer;
 		try {
 			writer = createWriter();
@@ -35,53 +43,28 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
 			return;
 		}
 
-		writer.println("\n***" + header + "***\n");
-
-		if (showDebugInfo) {
-			writer.println("Step Number: " + step.getOrder() + "\nLine Number: " + step.getLineNumber());
-			writer.println("\n\nSelected Variable: `" + selectedVar.getVarName() + "`\nType: "
-					+ selectedVar.getType() + "\nAlias ID: " + selectedVar.getAliasVarID() + "\nValue: "
-					+ selectedVar.getStringValue() + "\n");
-		}
-
-		writer.println(request);
-		
+		writer.println(getCsvContent(condition, groundTruthJSON));
 		writer.close();
 	}
 
-	@Override
-	public void printResponse(int ithTry, String response) {
-		if (isLoggingEnabled) {
-			PrintWriter writer;
-			try {
-				writer = createWriter();
-			} catch (IOException e) {
-				e.printStackTrace();
-				return;
-			}
-			
-			writer.println();
-			writer.println(ithTry + "th try with LLM to generate response as \n" + response);
-			
-			writer.close();
-		}
+	private String getCsvContent(Condition condition, JSONObject groundTruthJSON) {
+		String variableName = condition.getVariableName();
+		String variableType = condition.getVariableType();
+		String variableValue = condition.getVariableValue();
+		String groundTruth = groundTruthJSON.toString();
+
+		StringBuilder stringBuilder = new StringBuilder();
+		String delimiter = "#";
+		stringBuilder.append(variableName);
+		stringBuilder.append(delimiter);
+		stringBuilder.append(variableType);
+		stringBuilder.append(delimiter);
+		stringBuilder.append(variableValue);
+		stringBuilder.append(delimiter);
+		stringBuilder.append(groundTruth);
+		stringBuilder.append("\n");
+
+		return stringBuilder.toString();
 	}
 
-	@Override
-	public void printError(String errorMessage) {
-		if (isLoggingEnabled) {
-			PrintWriter writer;
-			try {
-				writer = createWriter();
-			} catch (IOException e) {
-				e.printStackTrace();
-				return;
-			}
-			
-			writer.println();
-			writer.println(errorMessage);
-			
-			writer.close();
-		}
-	}
 }
