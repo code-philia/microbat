@@ -41,6 +41,7 @@ public class TraceAgent extends Agent {
 		ExecutionTracer.variableLayer = agentParams.getVariableLayer();
 		ExecutionTracer.condition = agentParams.getRuntimeCondition();
 		ExecutionTracer.setStepLimit(agentParams.getStepLimit());
+		ExecutionTracer.setMethodLayer(agentParams.getMethodLayer());
 		if (!agentParams.isRequireMethodSplit()) {
 			agentParams.getUserFilters().register(new OverLongMethodFilter(agentParams.getOverlongMethods()));
 		}

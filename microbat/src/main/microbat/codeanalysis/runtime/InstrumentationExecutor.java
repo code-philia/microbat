@@ -30,6 +30,7 @@ import microbat.model.value.VarValue;
 import microbat.preference.DatabasePreference;
 import microbat.preference.ExecutionRangePreference;
 import microbat.preference.MicrobatPreference;
+import microbat.preference.TraceRecovPreference;
 import microbat.sql.DBSettings;
 import microbat.sql.DbService;
 import microbat.util.JavaUtil;
@@ -117,6 +118,7 @@ public class InstrumentationExecutor {
 		agentRunner.addIncludesParam(this.includeLibs);
 		agentRunner.addExcludesParam(this.excludeLibs);
 		
+		agentRunner.addAgentParam(AgentParams.OPT_METHOD_LAYER, TraceRecovPreference.getMethodLayer());
 		agentRunner.addAgentParam(AgentParams.OPT_CONDITION, condition.toString());
 		
 		agentRunner.addAgentParam(AgentParams.OPT_VARIABLE_LAYER, MicrobatPreference.getVariableValue());

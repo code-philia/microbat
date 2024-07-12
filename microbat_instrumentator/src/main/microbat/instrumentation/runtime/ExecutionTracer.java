@@ -62,6 +62,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 //	private static int tolerantExpectedSteps = expectedSteps;
 	public static boolean avoidProxyToString = false;
 	
+	public static int methodLayer = Integer.MAX_VALUE;
 	public static RuntimeCondition condition;
 	
 	private long threadId;
@@ -85,6 +86,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public static void setStepLimit(int stepLimit) {
 		if (stepLimit != AgentConstants.UNSPECIFIED_INT_VALUE) {
 			ExecutionTracer.stepLimit = stepLimit;
+		}
+	}
+	
+	public static void setMethodLayer(int methodLayer) {
+		if (methodLayer != AgentConstants.UNSPECIFIED_INT_VALUE) {
+			ExecutionTracer.methodLayer = methodLayer;
 		}
 	}
 

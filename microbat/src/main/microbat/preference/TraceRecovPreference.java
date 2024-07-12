@@ -298,4 +298,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		return true;
 	}
 
+	public static String getMethodLayer() {
+		return Activator.getDefault().getPreferenceStore().getString(METHOD_LAYER);
+	}
 }
