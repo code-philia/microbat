@@ -19,11 +19,31 @@ public class CommandLine {
 	
 	public static CommandLine parse(String agentArgs) {
 		CommandLine cmd = new CommandLine();
+		
 		String[] args = agentArgs.split(AgentConstants.AGENT_PARAMS_SEPARATOR);
-		for (String arg : args) {
-			String[] keyValue = arg.split(AgentConstants.AGENT_OPTION_SEPARATOR);
-			cmd.argMap.put(keyValue[0], keyValue[1]);
+		int i = 0;
+		while(i < args.length) {
+			if(args[i].indexOf(AgentConstants.AGENT_OPTION_SEPARATOR)==-1) {
+				// condition.value contains ","
+				String condition_arg = args[i-1];
+				while(i<args.length && args[i].indexOf(AgentConstants.AGENT_OPTION_SEPARATOR)==-1) {
+					condition_arg += (","+args[i]);
+					i++;
+				}
+				String[] keyValue = condition_arg.split(AgentConstants.AGENT_OPTION_SEPARATOR);
+				cmd.argMap.put(keyValue[0], keyValue[1]);
+			}
+			else {
+				String[] keyValue = args[i].split(AgentConstants.AGENT_OPTION_SEPARATOR);
+				cmd.argMap.put(keyValue[0], keyValue[1]);
+				i++;
+			}
 		}
+		
+//		for (String arg : args) {
+//			String[] keyValue = arg.split(AgentConstants.AGENT_OPTION_SEPARATOR);
+//			cmd.argMap.put(keyValue[0], keyValue[1]);
+//		}
 		return cmd;
 	}
 
@@ -70,11 +90,12 @@ public class CommandLine {
 		}
 
 		String[] conditions = value.split(AgentConstants.AGENT_CONDITION_SEPARATOR);
-		
+
 		for (String conditionString : conditions) {
 			String[] keyValPair = conditionString.split(AgentConstants.AGENT_CONDITION_KEY_VAL_SEPARATOR, 2);
 			String conditionKey = keyValPair[0];
 			String conditionVal = keyValPair[1];
+						
 			switch (conditionKey) {
 			case AgentParams.OPT_CONDITION_VAR_NAME:
 				condition.setVariableName(conditionVal);
