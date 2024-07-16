@@ -1,6 +1,8 @@
 package microbat.codeanalysis.runtime;
 
 import org.json.JSONObject;
+import java.util.ArrayList;
+import java.util.List;
 
 import microbat.instrumentation.AgentParams;
 import microbat.model.trace.Trace;
@@ -41,6 +43,25 @@ public class Condition {
 		}
 		return groundTruthVar == null ? null : groundTruthVar.toJSON();
 	}
+	
+	public List<String> getGroundTruthVariablesAndAliases(Trace trace) {
+        List<String> variablesAndAliases = new ArrayList<>();
+        for (TraceNode step : trace.getExecutionList()) {
+            for (VarValue readVariable : step.getReadVariables()) {
+                if (matchBasicCondition(readVariable)) {
+                    collectVariablesAndAliases(readVariable, variablesAndAliases);
+                }
+            }
+        }
+        return variablesAndAliases;
+    }
+
+    private void collectVariablesAndAliases(VarValue varValue, List<String> list) {
+        list.add(varValue.getVarName() + ":" + varValue.getAliasVarID());
+        for (VarValue child : varValue.getChildren()) {
+            collectVariablesAndAliases(child, list);
+        }
+    }
 	
 	/**
 	 * Copied from {@code RuntimeCondition.matchBasicCondition}

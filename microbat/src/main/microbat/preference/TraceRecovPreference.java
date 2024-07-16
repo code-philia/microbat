@@ -35,6 +35,8 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	public static final String ENABLE_LOGGING = "enable_logging";
 	public static final String LOG_DEBUG_INFO = "log_debug_info";
 	public static final String PROMPT_GT_PATH = "prompt_gt_path";
+	public static final String ALIAS_FILE_PATH = "alias_file_path";
+
 
 	/* constants before update */
 	private boolean isEnableTraceRecov;
@@ -57,6 +59,8 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private Button isEnableLoggingButton;
 	private Button logDebugInfoButton;
 	private Text promptGTPathText;
+	private Text aliasFilePathText;
+
 
 	public TraceRecovPreference() {
 	}
@@ -186,6 +190,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		
 		String promptGTPathLabel = "Path for Prompt Ground Truth:";
 		this.promptGTPathText = createText(logSettingGroup, promptGTPathLabel, this.promptGTPath);
+		
+		 String aliasFilePathLabel = "Path for Alias File:";
+		    this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel, 
+		        Activator.getDefault().getPreferenceStore().getString(ALIAS_FILE_PATH));
 	}
 
 	private Group initGroup(final Composite parent, String title) {
@@ -256,6 +264,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
 		preferences.put(PROMPT_GT_PATH, this.promptGTPathText.getText());
+		preferences.put(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
 
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_TRACERECOV,
 				String.valueOf(this.isEnableTraceRecovButton.getSelection()));
@@ -272,6 +281,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		Activator.getDefault().getPreferenceStore().putValue(LOG_DEBUG_INFO,
 				String.valueOf(this.logDebugInfoButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(PROMPT_GT_PATH, this.promptGTPathText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
 
 		Settings.isEnableGPTInference = this.isEnableLLMButton.getSelection();
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();
