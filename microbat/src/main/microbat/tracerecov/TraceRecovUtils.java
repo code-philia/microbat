@@ -100,6 +100,10 @@ public class TraceRecovUtils {
 	}
 
 	public static boolean isClassInFolder(String folderPath, String className) {
+		if(folderPath == null) {
+			return false;
+		}
+		
 		String fileName = className.replace(".", File.separator).concat(".java");
 		Path filePath = Paths.get(folderPath, fileName);
 

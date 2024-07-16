@@ -1,8 +1,11 @@
 package microbat.handler;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.commands.ExecutionEvent;
@@ -12,6 +15,8 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
+
+import com.google.gson.Gson;
 
 import microbat.codeanalysis.runtime.InstrumentationExecutor;
 import microbat.codeanalysis.runtime.StepLimitException;
@@ -91,20 +96,21 @@ public class RecovAllDependencyHandler extends StartDebugHandler {
 					"trace", includedClassNames, excludedClassNames);
 			final RunningInfo result = executor.run();
 
-			TraceView traceView = MicroBatViews.getTraceView();
-			if (result == null) {
-				traceView.setMainTrace(null);
-				traceView.setTraceList(null);
-				return;
-			}
+//			TraceView traceView = MicroBatViews.getTraceView();
+//			if (result == null) {
+//				traceView.setMainTrace(null);
+//				traceView.setTraceList(null);
+//				return;
+//			}
+			
 			Trace trace = result.getMainTrace();
 			trace.setAppJavaClassPath(appClassPath);
 
 			List<Trace> traces = result.getTraceList();
 
-			traceView.setMainTrace(trace);
-			traceView.setTraceList(traces);
-			traceView.updateData();
+//			traceView.setMainTrace(trace);
+//			traceView.setTraceList(traces);
+//			traceView.updateData();
 
 			System.out.println("==============================================");
 			System.out.println("Start Recovering Data Dependency Exhaustively");
@@ -114,10 +120,12 @@ public class RecovAllDependencyHandler extends StartDebugHandler {
 			TraceRecoverer traceRecoverer = new TraceRecoverer();
 			AppJavaClassPath appJavaClassPath = trace.getAppJavaClassPath();
 
+			Map<Integer,Set<Integer>> map = new HashMap<>();
+			
 			int firstStepNo = 1;
 			int lastStepNo = trace.getLatestNode().getOrder();
 			for (int i = firstStepNo; i < lastStepNo; i++) {
-				System.out.println("Checking Step: " + i);
+				System.out.println("******* Checking Step: " + i + "*******");
 				TraceNode step = trace.getTraceNode(i);
 				List<VarValue> readVars = step.getReadVariables();
 
@@ -128,10 +136,6 @@ public class RecovAllDependencyHandler extends StartDebugHandler {
 					if (dataDom != null) {
 						originalDataDominators.add(dataDom.getOrder());
 					}
-				}
-				if (!originalDataDominators.isEmpty()) {
-					System.out.println("Original Data Dominators:");
-					originalDataDominators.stream().forEach(d -> System.out.print(d + ","));
 				}
 
 				// record data dominators after recovery
@@ -157,14 +161,34 @@ public class RecovAllDependencyHandler extends StartDebugHandler {
 
 					}
 				}
+				
+				System.out.println("********** Original Data Dominators: **********");
+				if (!originalDataDominators.isEmpty()) {
+					originalDataDominators.stream().forEach(d -> System.out.print(d + ","));
+				}
+				
+				System.out.println("\n********** Data Dominators after Recovery: **********");
 				if (!dataDominatorsAfterRecovery.isEmpty()) {
-					System.out.println("Data Dominators after Recovery:");
 					dataDominatorsAfterRecovery.stream().forEach(d -> System.out.print(d + ","));
 				}
-
+				System.out.println("");
+				
+				map.put(step.getOrder(), dataDominatorsAfterRecovery);
 			}
+			
+			String className = trace.getExecutionList().get(0).getClassCanonicalName();
+			className = className.substring(className.lastIndexOf(".")+1);
+//			String resultFile = "C:\\Users\\Kwy\\Desktop\\RQ2_tracerecov\\"+className+".json";
+			String resultFile = "...result file as above...";
+			Gson gson = new Gson();
+			FileWriter writer = new FileWriter(resultFile);
+			gson.toJson(map,writer);
+			System.out.println("Successfully wrote result to file: "+resultFile);
+			
 		} catch (StepLimitException e) {
 			System.out.println("Step limit exceeded");
+			e.printStackTrace();
+		} catch(IOException e) {
 			e.printStackTrace();
 		} catch (Exception e) {
 			System.out.println("Debug failed");

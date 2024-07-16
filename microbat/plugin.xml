@@ -177,7 +177,7 @@
       <command
             defaultHandler="microbat.handler.RecovAllDependencyHandler"
             id="microbat.allDependencyRecovery"
-            name="Exhaustive Dependency Recovery">
+            name="Recover All Data Dependency">
       </command>
    </extension>
    <extension
@@ -260,7 +260,7 @@
             <command
                   commandId="microbat.allDependencyRecovery"
                   icon="icons/path_mark.png"
-                  label="Exhaustive Dependency Recovery"
+                  label="Recover All Data Dependency"
                   style="push">
             </command>
          </toolbar>
