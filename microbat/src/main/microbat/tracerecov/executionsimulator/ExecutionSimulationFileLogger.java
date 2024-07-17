@@ -81,7 +81,7 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
         String groundTruth = groundTruthJSON.toString();
 
         StringBuilder stringBuilder = new StringBuilder();
-        String delimiter = "#";
+        String delimiter = "###";
         stringBuilder.append(variableName);
         stringBuilder.append(delimiter);
         stringBuilder.append(variableType);

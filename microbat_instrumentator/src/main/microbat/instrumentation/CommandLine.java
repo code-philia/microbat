@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import microbat.instrumentation.utils.DebugUtils;
 import sav.common.core.utils.CollectionUtils;
 
 /**
@@ -90,7 +91,7 @@ public class CommandLine {
 		}
 
 		String[] conditions = value.split(AgentConstants.AGENT_CONDITION_SEPARATOR);
-
+		
 		for (String conditionString : conditions) {
 			String[] keyValPair = conditionString.split(AgentConstants.AGENT_CONDITION_KEY_VAL_SEPARATOR, 2);
 			String conditionKey = keyValPair[0];
