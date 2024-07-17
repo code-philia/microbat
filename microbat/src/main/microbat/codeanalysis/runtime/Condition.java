@@ -8,6 +8,7 @@ import microbat.instrumentation.AgentParams;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
+import microbat.tracerecov.TraceRecovUtils;
 
 public class Condition {
 	private String variableName;
@@ -62,6 +63,21 @@ public class Condition {
             collectVariablesAndAliases(child, list);
         }
     }
+    
+	public String getSourceCode(Trace trace) {
+		for (TraceNode step : trace.getExecutionList()) {
+			for (VarValue readVariable : step.getReadVariables()) {
+				if (matchBasicCondition(readVariable)) {
+					int lineNo = step.getLineNumber();
+					String location = step.getBreakPoint().getFullJavaFilePath();
+					String sourceCode = TraceRecovUtils
+							.processInputStringForLLM(TraceRecovUtils.getSourceCode(location, lineNo).trim());
+					return sourceCode;
+				}
+			}
+		}
+		return null;
+	}
 	
 	/**
 	 * Copied from {@code RuntimeCondition.matchBasicCondition}

@@ -20,7 +20,7 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
     private String aliasFilePath;
 
     public ExecutionSimulationFileLogger() {
-        String fileName = "gt.csv";
+        String fileName = "gt.txt";
         String aliasFileName = "aliases.txt";
         this.filePath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.PROMPT_GT_PATH)
                 + File.separator + fileName;
@@ -43,6 +43,8 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
         if (groundTruthJSON == null) {
             return;
         }
+        
+        String sourceCode = condition.getSourceCode(trace);
 
         // write to results file
         PrintWriter writer;
@@ -53,10 +55,10 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
             return;
         }
 
-        writer.println(getCsvContent(condition, groundTruthJSON, aliasID));
+        writer.println(getCsvContent(condition, groundTruthJSON, aliasID,sourceCode));
         writer.close();
         
-     // collect variables and aliases
+        // collect variables and aliases
         List<String> variablesAndAliases = condition.getGroundTruthVariablesAndAliases(trace);
         try {
             writer = createWriter(this.aliasFilePath);
@@ -71,10 +73,11 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
         writer.close();
     }
 
-    private String getCsvContent(Condition condition, JSONObject groundTruthJSON, String aliasID) {
+    private String getCsvContent(Condition condition, JSONObject groundTruthJSON, String aliasID,String sourceCode) {
         String variableName = condition.getVariableName();
         String variableType = condition.getVariableType();
         String variableValue = condition.getVariableValue();
+        String variableClassStructure = condition.getClassStructure();
         String groundTruth = groundTruthJSON.toString();
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -85,10 +88,14 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
         stringBuilder.append(delimiter);
         stringBuilder.append(variableValue);
         stringBuilder.append(delimiter);
-        if (aliasID != null) {
-            stringBuilder.append(aliasID);
-            stringBuilder.append(delimiter);
-        }
+        stringBuilder.append(variableClassStructure);
+        stringBuilder.append(delimiter);
+        stringBuilder.append(sourceCode);
+        stringBuilder.append(delimiter);
+//        if (aliasID != null) {
+//            stringBuilder.append(aliasID);
+//            stringBuilder.append(delimiter);
+//        }
         stringBuilder.append(groundTruth);
         stringBuilder.append("\n");
 
