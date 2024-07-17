@@ -139,8 +139,8 @@ public class Condition {
 
 	@Override
 	public String toString() {
-		return AgentParams.OPT_CONDITION_VAR_NAME + ":" + variableName + "#" + AgentParams.OPT_CONDITION_VAR_TYPE + ":"
-				+ variableType + "#" + AgentParams.OPT_CONDITION_VAR_VALUE + ":" + variableValue + "#"
+		return AgentParams.OPT_CONDITION_VAR_NAME + ":" + variableName + "###" + AgentParams.OPT_CONDITION_VAR_TYPE + ":"
+				+ variableType + "###" + AgentParams.OPT_CONDITION_VAR_VALUE + ":" + variableValue + "###"
 				+ AgentParams.OPT_CONDITION_CLASS_STRUCTURE + ":" + classStructure + "";
 	}
 
