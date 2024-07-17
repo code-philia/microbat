@@ -100,7 +100,11 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 
 		String modelType = Activator.getDefault().getPreferenceStore().getString(MODEL_TYPE);
 		if (modelType != null && !modelType.equals("")) {
-			this.llmModelType = LLMModel.valueOf(modelType);
+			try {
+	            this.llmModelType = LLMModel.valueOf(modelType);
+	        } catch (IllegalArgumentException e) {
+	            this.llmModelType = LLMModel.GPT4O; // default model if unknown value
+	        }
 		}
 
 		String isCollectingPromptString = Activator.getDefault().getPreferenceStore().getString(COLLECT_PROMPT);
