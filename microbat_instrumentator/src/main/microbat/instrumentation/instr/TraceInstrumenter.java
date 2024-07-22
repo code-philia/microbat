@@ -28,6 +28,7 @@ import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.GETFIELD;
 import org.apache.bcel.generic.GETSTATIC;
 import org.apache.bcel.generic.IINC;
+import org.apache.bcel.generic.ILOAD;
 import org.apache.bcel.generic.INVOKEINTERFACE;
 import org.apache.bcel.generic.INVOKESPECIAL;
 import org.apache.bcel.generic.INVOKESTATIC;
@@ -1032,10 +1033,10 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		
 		/* invoke _getMethodLayer() */
 		LocalVariableGen methodLayer = methodGen.addLocalVariable("methodLayer", Type.INT, null, null);
-        int methodLayerIndex = methodLayer.getIndex();
+		int methodLayerIndex = methodLayer.getIndex();
 		appendTracerMethodInvoke(newInsns, TracerMethods.GET_METHOD_LAYER, constPool);
-		InstructionHandle storeMethodLayerInstruction = newInsns.append(new ISTORE(methodLayerIndex));
-		
+		newInsns.append(new ISTORE(methodLayerIndex));
+
 		/* invoke _getTracer()  */
 		newInsns.append(new PUSH(constPool, isAppClass)); // startTracing
 		newInsns.append(new ALOAD(classNameVar.getIndex())); // startTracing, className
@@ -1051,6 +1052,9 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		LocalVariableGen argObjsVar = createMethodParamTypesObjectArrayVar(methodGen, constPool, startInsn, newInsns, nextTempVarName());
 		newInsns.append(new ALOAD(argObjsVar.getIndex()));
 		// className, String methodSig, int methodStartLine, methodEndLine, argNames, argTypes, argObjs
+		
+		newInsns.append(new ILOAD(methodLayerIndex));
+		// className, String methodSig, int methodStartLine, methodEndLine, argNames, argTypes, argObjs, int methodLayer
 		
 		appendTracerMethodInvoke(newInsns, TracerMethods.GET_TRACER, constPool);
 		InstructionHandle tracerStartPos = newInsns.append(new ASTORE(tracerVar.getIndex()));

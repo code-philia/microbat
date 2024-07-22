@@ -1549,8 +1549,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	 * -> USE AN ARRAY INSTEAD!
 	 */
 	public synchronized static IExecutionTracer _getTracer(boolean isAppClass, String className, String methodSig,
-			int methodStartLine, int methodEndLine, String paramNamesCode, String paramTypeSignsCode, Object[] params) {
+			int methodStartLine, int methodEndLine, String paramNamesCode, String paramTypeSignsCode, Object[] params,
+			int methodLayer) {
 		try {
+			if (methodLayer <= 0) {
+				return EmptyExecutionTracer.getInstance();
+			}
 			if (state == TracingState.TEST_STARTED && isAppClass) {
 				state = TracingState.RECORDING;
 				rtStore.setMainThreadId(Thread.currentThread().getId());
