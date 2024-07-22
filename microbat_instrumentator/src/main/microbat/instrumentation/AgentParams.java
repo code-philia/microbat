@@ -44,7 +44,11 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_TRACE_RECORDER = "trace_recorder";
 	public static final String OPT_RUN_ID = "run_id";
 	/**
-	 * The condition (or query) to have additional instrumentation on the trace
+	 * RQ1: Shorten Trace
+	 */
+	public static final String OPT_METHOD_LAYER = "methodLayer";
+	/**
+	 * RQ3: The condition (or query) to have additional instrumentation on the trace
 	 */
 	public static final String OPT_CONDITION = "condition";
 	public static final String OPT_CONDITION_VAR_NAME = "variable_name";
@@ -72,6 +76,7 @@ public class AgentParams extends CommonParams {
 	private String recorderName;
 	private String runId;
 	
+	private int methodLayer;
 	private RuntimeCondition condition;
 	
 	public AgentParams(CommandLine cmd) {
@@ -100,6 +105,7 @@ public class AgentParams extends CommonParams {
 		includesExpression = getFilterExpression(cmd, OPT_INCLUDES_FILE, OPT_INCLUDES);
 		excludesExpression = getFilterExpression(cmd, OPT_EXCLUDES_FILE, OPT_EXCLUDES);
 		variableLayer = cmd.getInt(OPT_VARIABLE_LAYER, 2);
+		methodLayer = cmd.getInt(OPT_METHOD_LAYER, AgentConstants.UNSPECIFIED_INT_VALUE);
 		condition = cmd.getRuntimeCondition(OPT_CONDITION);
 		stepLimit = cmd.getInt(OPT_STEP_LIMIT, AgentConstants.UNSPECIFIED_INT_VALUE);
 		expectedSteps = cmd.getInt(OPT_EXPECTED_STEP, AgentConstants.UNSPECIFIED_INT_VALUE);
@@ -179,6 +185,10 @@ public class AgentParams extends CommonParams {
 	
 	public int getVariableLayer() {
 		return variableLayer;
+	}
+	
+	public int getMethodLayer() {
+		return methodLayer;
 	}
 	
 	public RuntimeCondition getRuntimeCondition() {

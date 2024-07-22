@@ -31,6 +31,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	public static final String USE_MUTATION_CONFIG = "use_mutation_config";
 	public static final String API_KEY = "api_key";
 	public static final String MODEL_TYPE = "model_type";
+	public static final String METHOD_LAYER = "method_layer";
 	public static final String COLLECT_PROMPT = "collect_prompt";
 	public static final String ENABLE_LOGGING = "enable_logging";
 	public static final String LOG_DEBUG_INFO = "log_debug_info";
@@ -44,6 +45,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private boolean isMutationExperiment;
 	private String apiKey;
 	private LLMModel llmModelType = LLMModel.GPT4O; // default model
+	private String methodLayer;
 	private boolean isCollectingPrompt;
 	private boolean isEnableLogging;
 	private boolean logDebugInfo;
@@ -55,6 +57,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private Button useMutationConfigButton;
 	private Combo modelTypeCombo;
 	private Text apiKeyText;
+	private Text methodLayerText;
 	private Button isCollectingPromptButton;
 	private Button isEnableLoggingButton;
 	private Button logDebugInfoButton;
@@ -107,6 +110,8 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	        }
 		}
 
+		this.methodLayer = Activator.getDefault().getPreferenceStore().getString(METHOD_LAYER);
+
 		String isCollectingPromptString = Activator.getDefault().getPreferenceStore().getString(COLLECT_PROMPT);
 		if (isCollectingPromptString != null && isCollectingPromptString.equals("true")) {
 			this.isCollectingPrompt = true;
@@ -127,7 +132,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		} else {
 			this.logDebugInfo = false;
 		}
-		
+
 		this.promptGTPath = Activator.getDefault().getPreferenceStore().getString(PROMPT_GT_PATH);
 	}
 
@@ -144,7 +149,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		// LLM Model Settings
 		createModelConfigGroup(composite);
 
-		// Logging Settings
+		// RQ1: Shorten Trace Settings
+		createShortenTraceSettingGroup(composite);
+
+		// RQ3: Logging Settings
 		createLogSettingGroup(composite);
 
 		performOk();
@@ -179,6 +187,14 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		this.apiKeyText = createText(modelSelectionGroup, apiKeyLabel, this.apiKey);
 	}
 
+	private void createShortenTraceSettingGroup(Composite parent) {
+		String title = "Shorten Trace Settings";
+		Group shortenTraceSettingGroup = initGroup(parent, title);
+
+		String methodLayerLabel = "Method Layer Expanded:";
+		this.methodLayerText = createText(shortenTraceSettingGroup, methodLayerLabel, this.methodLayer);
+	}
+
 	private void createLogSettingGroup(final Composite parent) {
 		String title = "Log Settings";
 		Group logSettingGroup = initGroup(parent, title);
@@ -191,7 +207,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 
 		String logDebugInfoLabel = "Log Debug Info";
 		this.logDebugInfoButton = createCheckButton(logSettingGroup, logDebugInfoLabel, this.logDebugInfo);
-		
+
 		String promptGTPathLabel = "Path for Prompt Ground Truth:";
 		this.promptGTPathText = createText(logSettingGroup, promptGTPathLabel, this.promptGTPath);
 		
@@ -264,6 +280,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(USE_MUTATION_CONFIG, String.valueOf(this.useMutationConfigButton.getSelection()));
 		preferences.put(API_KEY, this.apiKeyText.getText());
 		preferences.put(MODEL_TYPE, this.modelTypeCombo.getText());
+		preferences.put(METHOD_LAYER, this.methodLayerText.getText());
 		preferences.put(COLLECT_PROMPT, String.valueOf(this.isCollectingPromptButton.getSelection()));
 		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
@@ -278,6 +295,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 				String.valueOf(this.useMutationConfigButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(API_KEY, this.apiKeyText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(MODEL_TYPE, this.modelTypeCombo.getText());
+		Activator.getDefault().getPreferenceStore().putValue(METHOD_LAYER, this.methodLayerText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(COLLECT_PROMPT,
 				String.valueOf(this.isCollectingPromptButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LOGGING,
@@ -294,4 +312,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		return true;
 	}
 
+	public static String getMethodLayer() {
+		return Activator.getDefault().getPreferenceStore().getString(METHOD_LAYER);
+	}
 }

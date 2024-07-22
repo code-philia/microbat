@@ -62,6 +62,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 //	private static int tolerantExpectedSteps = expectedSteps;
 	public static boolean avoidProxyToString = false;
 	
+	public static int methodLayer = Integer.MAX_VALUE;
 	public static RuntimeCondition condition;
 	
 	private long threadId;
@@ -85,6 +86,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public static void setStepLimit(int stepLimit) {
 		if (stepLimit != AgentConstants.UNSPECIFIED_INT_VALUE) {
 			ExecutionTracer.stepLimit = stepLimit;
+		}
+	}
+	
+	public static void setMethodLayer(int methodLayer) {
+		if (methodLayer != AgentConstants.UNSPECIFIED_INT_VALUE) {
+			ExecutionTracer.methodLayer = methodLayer;
 		}
 	}
 
@@ -520,6 +527,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public void enterMethod(String className, String methodSignature, int methodStartLine, int methodEndLine,
 			String paramTypeSignsCode, String paramNamesCode, Object[] params) {
 		trackingDelegate.untrack();
+		methodLayer--;
 		TraceNode caller = trace.getLatestNode();
 		if (caller != null && caller.getMethodSign().contains("<clinit>")) {
 			caller = caller.getInvocationParent();
@@ -611,6 +619,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 
 	public void exitMethod(int line, String className, String methodSignature) {
 		trackingDelegate.untrack();
+		methodLayer++;
 		boolean exclusive = GlobalFilterChecker.isExclusive(className, methodSignature);
 		if (!exclusive) {
 			methodCallStack.safePop();
@@ -1527,6 +1536,10 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		VarValue value = appendVarValue(eleValue, var, null);
 		return value;
 	}
+	
+	public static int _getMethodLayer() {
+		return methodLayer;
+	}
 
 	/**
 	 * BE VERY CAREFUL WHEN MODIFYING THIS FUNCTION! TO AVOID CREATING A LOOP, DO
@@ -1536,8 +1549,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	 * -> USE AN ARRAY INSTEAD!
 	 */
 	public synchronized static IExecutionTracer _getTracer(boolean isAppClass, String className, String methodSig,
-			int methodStartLine, int methodEndLine, String paramNamesCode, String paramTypeSignsCode, Object[] params) {
+			int methodStartLine, int methodEndLine, String paramNamesCode, String paramTypeSignsCode, Object[] params,
+			int methodLayer) {
 		try {
+			if (methodLayer <= 0) {
+				return EmptyExecutionTracer.getInstance();
+			}
 			if (state == TracingState.TEST_STARTED && isAppClass) {
 				state = TracingState.RECORDING;
 				rtStore.setMainThreadId(Thread.currentThread().getId());
