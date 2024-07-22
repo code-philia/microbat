@@ -527,6 +527,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public void enterMethod(String className, String methodSignature, int methodStartLine, int methodEndLine,
 			String paramTypeSignsCode, String paramNamesCode, Object[] params) {
 		trackingDelegate.untrack();
+		methodLayer--;
 		TraceNode caller = trace.getLatestNode();
 		if (caller != null && caller.getMethodSign().contains("<clinit>")) {
 			caller = caller.getInvocationParent();
@@ -618,6 +619,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 
 	public void exitMethod(int line, String className, String methodSignature) {
 		trackingDelegate.untrack();
+		methodLayer++;
 		boolean exclusive = GlobalFilterChecker.isExclusive(className, methodSignature);
 		if (!exclusive) {
 			methodCallStack.safePop();
@@ -1533,6 +1535,10 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 
 		VarValue value = appendVarValue(eleValue, var, null);
 		return value;
+	}
+	
+	public static int _getMethodLayer() {
+		return methodLayer;
 	}
 
 	/**

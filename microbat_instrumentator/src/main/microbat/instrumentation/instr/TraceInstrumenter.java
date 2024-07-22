@@ -36,6 +36,7 @@ import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.InvokeInstruction;
+import org.apache.bcel.generic.ISTORE;
 import org.apache.bcel.generic.LocalVariableGen;
 import org.apache.bcel.generic.LocalVariableInstruction;
 import org.apache.bcel.generic.MethodGen;
@@ -1028,6 +1029,12 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		String mSig = className + "#" + methodName + sig;
 		newInsns.append(new PUSH(constPool, mSig));
 		newInsns.append(new ASTORE(methodSigVar.getIndex())); 
+		
+		/* invoke _getMethodLayer() */
+		LocalVariableGen methodLayer = methodGen.addLocalVariable("methodLayer", Type.INT, null, null);
+        int methodLayerIndex = methodLayer.getIndex();
+		appendTracerMethodInvoke(newInsns, TracerMethods.GET_METHOD_LAYER, constPool);
+		InstructionHandle storeMethodLayerInstruction = newInsns.append(new ISTORE(methodLayerIndex));
 		
 		/* invoke _getTracer()  */
 		newInsns.append(new PUSH(constPool, isAppClass)); // startTracing
