@@ -10,6 +10,9 @@ import java.util.HashMap;
 import microbat.Activator;
 import microbat.preference.TraceRecovPreference;
 
+/**
+ * This class reads in dataset that is used in automatic prompt engineering.
+ */
 public class DatasetReader {
 	private String variableExpansionPath;
 
@@ -61,17 +64,11 @@ public class DatasetReader {
 	}
 
 	private static String[] parseLine(String line) {
-		// Split the line by commas, but handle quoted values
+		// Split the line by commas, handle quoted values
 		String[] columns = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
 		for (int i = 0; i < columns.length; i++) {
 			columns[i] = columns[i].trim().replaceAll("^\"|\"$", "").replaceAll("\"\"", "\"");
 		}
 		return columns;
-	}
-
-	public static void main(String[] args) {
-		DatasetReader datasetReader = new DatasetReader();
-		ArrayList<HashMap<String, String>> dataset = datasetReader.readVariableExpansionDataset();
-		System.out.println();
 	}
 }
