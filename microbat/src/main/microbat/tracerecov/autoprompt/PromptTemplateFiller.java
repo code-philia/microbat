@@ -2,7 +2,7 @@ package microbat.tracerecov.autoprompt;
 
 import java.util.HashMap;
 
-public class PromptTemplates {
+public class PromptTemplateFiller {
 	private static String variableExpansionPromptTemplate = 
 			"<Background>\n"
 			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \n"
@@ -60,7 +60,7 @@ public class PromptTemplates {
 			+ "<Question>\n"
 			+ "Given variable *___variable name___* of type ___variable type___, value \"___variable value___\", internal structure ___class structure___.\n"
 			+ "Execute ```___source code___```.\n"
-			+ "Return in JSON format for this variable as shown in the above example. You must follow the JSON format as \"var_name:var_type\": var_value. Do not include explanation in your response.\n";
+			+ "Return in JSON format for this variable as shown in the above example. You must follow the JSON format as \"var_name:var_type\": var_value. Do not include explanation in your response.";
 	
 	private static String variableExpansionAdjustmentPromptPrefix = 
 			"You are given a prompt template with an example which might be inaccurate.\n"
@@ -98,9 +98,10 @@ public class PromptTemplates {
 		stringBuilder.append("\nWe can summarize the structure as:\n```json\n" + groundTruth + "\n```");
 
 		// instruction
-		stringBuilder.append("\nUpdate the Prompt template: \"\"\"");
+		stringBuilder.append("\nUpdate the Prompt template: \"\"\"\n");
 		stringBuilder.append(variableExpansionPromptTemplate);
-		stringBuilder.append("\"\"\"");
+		stringBuilder.append("\n\"\"\"");
+		stringBuilder.append("\nReturn the updated <Example> section directly and do not include any explanation.");
 
 		return stringBuilder.toString();
 	}
