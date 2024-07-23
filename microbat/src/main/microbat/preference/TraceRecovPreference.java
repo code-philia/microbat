@@ -39,7 +39,6 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	public static final String ALIAS_FILE_PATH = "alias_file_path";
 	public static final String COLLECT_GROUND_TRUTH = "collect_ground_truth";
 
-
 	/* constants before update */
 	private boolean isEnableTraceRecov;
 	private boolean isEnableLLMInference;
@@ -66,7 +65,6 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private Button collectGroundTruthButton;
 	private Text promptGTPathText;
 	private Text aliasFilePathText;
-
 
 	public TraceRecovPreference() {
 	}
@@ -107,10 +105,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		String modelType = Activator.getDefault().getPreferenceStore().getString(MODEL_TYPE);
 		if (modelType != null && !modelType.equals("")) {
 			try {
-	            this.llmModelType = LLMModel.valueOf(modelType);
-	        } catch (IllegalArgumentException e) {
-	            this.llmModelType = LLMModel.GPT4O; // default model if unknown value
-	        }
+				this.llmModelType = LLMModel.valueOf(modelType);
+			} catch (IllegalArgumentException e) {
+				this.llmModelType = LLMModel.GPT4O; // default model if unknown value
+			}
 		}
 
 		this.methodLayer = Activator.getDefault().getPreferenceStore().getString(METHOD_LAYER);
@@ -135,14 +133,14 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		} else {
 			this.logDebugInfo = false;
 		}
-		
+
 		String collectGTString = Activator.getDefault().getPreferenceStore().getString(COLLECT_GROUND_TRUTH);
 		if (collectGTString != null && collectGTString.equals("true")) {
 			this.collectGroundTruth = true;
 		} else {
 			this.collectGroundTruth = false;
 		}
-		
+
 		this.promptGTPath = Activator.getDefault().getPreferenceStore().getString(PROMPT_GT_PATH);
 	}
 
@@ -183,7 +181,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		String mutationLabel = "Use Mutation Configuration";
 		this.useMutationConfigButton = createCheckButton(experimentSettingGroup, mutationLabel,
 				this.isMutationExperiment);
-		
+
 		String colleatGTLabel = "Collect Ground Truth";
 		this.collectGroundTruthButton = createCheckButton(experimentSettingGroup, colleatGTLabel,
 				this.collectGroundTruth);
@@ -224,10 +222,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 
 		String promptGTPathLabel = "Path for Prompt Ground Truth:";
 		this.promptGTPathText = createText(logSettingGroup, promptGTPathLabel, this.promptGTPath);
-		
+
 		String aliasFilePathLabel = "Path for Alias File:";
-		this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel, 
-		    Activator.getDefault().getPreferenceStore().getString(ALIAS_FILE_PATH));
+		this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel,
+				Activator.getDefault().getPreferenceStore().getString(ALIAS_FILE_PATH));
 	}
 
 	private Group initGroup(final Composite parent, String title) {
