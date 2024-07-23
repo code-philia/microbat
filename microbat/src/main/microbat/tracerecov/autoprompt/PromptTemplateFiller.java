@@ -3,11 +3,13 @@ package microbat.tracerecov.autoprompt;
 import java.util.HashMap;
 
 public class PromptTemplateFiller {
-	private static String variableExpansionPromptTemplate = 
+	private static String variableExpansionPromptBackground = 
 			"<Background>\n"
 			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \n"
-			+ "\n"
-			+ "<Example>\n"
+			+ "\n";
+	
+	private static String variableExpansionPromptExample = 
+			"<Example>\n"
 			+ "Class Name: java.util.HashMap<HashMap, ArrayList>\n"
 			+ "Structure: {\n"
 			+ "	java.util.HashMap$Node[] table;\n"
@@ -55,9 +57,10 @@ public class PromptTemplateFiller {
 			+ "       },\n"
 			+ "      \"size\": 2\n"
 			+ "  },\n"
-			+ " }\n"
-			+ "\n"
-			+ "<Question>\n"
+			+ " }";
+
+	private static String variableExpansionPromptQuestion = 
+			"\n\n<Question>\n"
 			+ "Given variable *___variable name___* of type ___variable type___, value \"___variable value___\", internal structure ___class structure___.\n"
 			+ "Execute ```___source code___```.\n"
 			+ "Return in JSON format for this variable as shown in the above example. You must follow the JSON format as \"var_name:var_type\": var_value. Do not include explanation in your response.";
@@ -72,6 +75,10 @@ public class PromptTemplateFiller {
 			+ "Replace the old example in the prompt by the updated example. Make sure you nest the structure in Additional Example with the structure in the <Example>.\n"
 			+ "\n"
 			+ "Additional Example:";
+	
+	private static String getVariableExpansionPromptTemplate(String example) {
+		return variableExpansionPromptBackground + example + variableExpansionPromptQuestion;
+	}
 	
 	/**
 	 * datapoint features:
@@ -99,10 +106,18 @@ public class PromptTemplateFiller {
 
 		// instruction
 		stringBuilder.append("\nUpdate the Prompt template: \"\"\"\n");
-		stringBuilder.append(variableExpansionPromptTemplate);
+		stringBuilder.append(getVariableExpansionPromptTemplate(variableExpansionPromptExample));
 		stringBuilder.append("\n\"\"\"");
 		stringBuilder.append("\nReturn the updated <Example> section directly and do not include any explanation.");
 
 		return stringBuilder.toString();
+	}
+	
+	public static String getVariableExpansionPromptExample() {
+		return variableExpansionPromptExample;
+	}
+
+	public static void setVariableExpansionPromptExample(String variableExpansionPromptExample) {
+		PromptTemplateFiller.variableExpansionPromptExample = variableExpansionPromptExample;
 	}
 }

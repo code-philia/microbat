@@ -42,11 +42,17 @@ public class DatasetReader {
 				headers = parseLine(line);
 			}
 
+			int count = 0;
 			// read content
 			while ((line = bufferReader.readLine()) != null) {
+				count++;
+				if (count % 15 != 0) {
+					continue;
+				}
+				
 				String[] columns = parseLine(line);
 
-				HashMap<String, String> datapoint = new HashMap();
+				HashMap<String, String> datapoint = new HashMap<>();
 				datapoint.put("var_name", columns[0]);
 				datapoint.put("var_type", columns[1]);
 				datapoint.put("var_value", columns[2]);
