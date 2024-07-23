@@ -17,6 +17,7 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
 	private String aliasFilePath;
 
 	public ExecutionSimulationFileLogger() {
+		// TODO: move this to preference page
 		String fileName = "var_expansion.txt";
 		String aliasFileName = "aliases.txt";
 		this.filePath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.PROMPT_GT_PATH)
