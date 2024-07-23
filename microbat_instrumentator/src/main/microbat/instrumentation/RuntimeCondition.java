@@ -3,6 +3,7 @@ package microbat.instrumentation;
 import microbat.model.value.VarValue;
 
 public class RuntimeCondition {
+
 	private String variableName;
 	private String variableType;
 	private String variableValue;
@@ -29,7 +30,7 @@ public class RuntimeCondition {
 
 		boolean isMatched = this.variableName.equals(varValue.getVarName())
 				&& this.variableType.equals(varValue.getType()) && this.variableValue.equals(varValue.getStringValue());
-
+		
 		if (isMatched) {
 			return true;
 		} else {
@@ -73,4 +74,9 @@ public class RuntimeCondition {
 		this.classStructure = classStructure;
 	}
 
+	@Override
+	public String toString() {
+		return "RuntimeCondition [variableName=" + variableName + ", variableType=" + variableType + ", variableValue="
+				+ variableValue + ", classStructure=" + classStructure + "]";
+	}
 }

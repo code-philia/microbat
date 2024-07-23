@@ -37,6 +37,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	public static final String LOG_DEBUG_INFO = "log_debug_info";
 	public static final String PROMPT_GT_PATH = "prompt_gt_path";
 	public static final String ALIAS_FILE_PATH = "alias_file_path";
+	public static final String COLLECT_GROUND_TRUTH = "collect_ground_truth";
 
 
 	/* constants before update */
@@ -50,6 +51,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private boolean isEnableLogging;
 	private boolean logDebugInfo;
 	private String promptGTPath;
+	private boolean collectGroundTruth;
 
 	/* constants after update */
 	private Button isEnableTraceRecovButton;
@@ -61,6 +63,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private Button isCollectingPromptButton;
 	private Button isEnableLoggingButton;
 	private Button logDebugInfoButton;
+	private Button collectGroundTruthButton;
 	private Text promptGTPathText;
 	private Text aliasFilePathText;
 
@@ -132,7 +135,14 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		} else {
 			this.logDebugInfo = false;
 		}
-
+		
+		String collectGTString = Activator.getDefault().getPreferenceStore().getString(COLLECT_GROUND_TRUTH);
+		if (collectGTString != null && collectGTString.equals("true")) {
+			this.collectGroundTruth = true;
+		} else {
+			this.collectGroundTruth = false;
+		}
+		
 		this.promptGTPath = Activator.getDefault().getPreferenceStore().getString(PROMPT_GT_PATH);
 	}
 
@@ -173,6 +183,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		String mutationLabel = "Use Mutation Configuration";
 		this.useMutationConfigButton = createCheckButton(experimentSettingGroup, mutationLabel,
 				this.isMutationExperiment);
+		
+		String colleatGTLabel = "Collect Ground Truth";
+		this.collectGroundTruthButton = createCheckButton(experimentSettingGroup, colleatGTLabel,
+				this.collectGroundTruth);
 	}
 
 	private void createModelConfigGroup(final Composite parent) {
@@ -211,9 +225,9 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		String promptGTPathLabel = "Path for Prompt Ground Truth:";
 		this.promptGTPathText = createText(logSettingGroup, promptGTPathLabel, this.promptGTPath);
 		
-		 String aliasFilePathLabel = "Path for Alias File:";
-		    this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel, 
-		        Activator.getDefault().getPreferenceStore().getString(ALIAS_FILE_PATH));
+		String aliasFilePathLabel = "Path for Alias File:";
+		this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel, 
+		    Activator.getDefault().getPreferenceStore().getString(ALIAS_FILE_PATH));
 	}
 
 	private Group initGroup(final Composite parent, String title) {
@@ -278,6 +292,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(ENABLE_TRACERECOV, String.valueOf(this.isEnableTraceRecovButton.getSelection()));
 		preferences.put(ENABLE_LLM, String.valueOf(this.isEnableLLMButton.getSelection()));
 		preferences.put(USE_MUTATION_CONFIG, String.valueOf(this.useMutationConfigButton.getSelection()));
+		preferences.put(COLLECT_GROUND_TRUTH, String.valueOf(this.collectGroundTruthButton.getSelection()));
 		preferences.put(API_KEY, this.apiKeyText.getText());
 		preferences.put(MODEL_TYPE, this.modelTypeCombo.getText());
 		preferences.put(METHOD_LAYER, this.methodLayerText.getText());
@@ -293,6 +308,8 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 				String.valueOf(this.isEnableLLMButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(USE_MUTATION_CONFIG,
 				String.valueOf(this.useMutationConfigButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(COLLECT_GROUND_TRUTH,
+				String.valueOf(this.collectGroundTruthButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(API_KEY, this.apiKeyText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(MODEL_TYPE, this.modelTypeCombo.getText());
 		Activator.getDefault().getPreferenceStore().putValue(METHOD_LAYER, this.methodLayerText.getText());

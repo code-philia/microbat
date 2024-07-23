@@ -32,6 +32,8 @@ public class Settings {
 	
 	public static boolean isEnableGPTInference = false;
 	
+	public static boolean collectGroundTruth = false;
+	
 	/**
 	 * We divide the library code into two categories: the interesting ones (e.g., 
 	 * those in java.util.*) and the normal ones. We only capture the data and control
@@ -87,6 +89,9 @@ public class Settings {
 				
 				String isEnableGPTInferenceString = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.ENABLE_LLM);
 				isEnableGPTInference = isEnableGPTInferenceString.equals("true");
+				
+				String collectGroundTruthString = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.COLLECT_GROUND_TRUTH);
+				collectGroundTruth = collectGroundTruthString.equals("true");
 			}
 			catch(Exception e){
 				e.printStackTrace();

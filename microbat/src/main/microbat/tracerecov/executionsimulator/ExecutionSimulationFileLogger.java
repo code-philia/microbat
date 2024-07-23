@@ -20,7 +20,7 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
     private String aliasFilePath;
 
     public ExecutionSimulationFileLogger() {
-        String fileName = "gt.txt";
+        String fileName = "var_expansion.txt";
         String aliasFileName = "aliases.txt";
         this.filePath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.PROMPT_GT_PATH)
                 + File.separator + fileName;
@@ -34,14 +34,14 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
         return writer;
     }
 
-    public void collectGT(Condition condition, Trace trace) {
-        collectGT(condition, trace, null);
+    public String collectGT(Condition condition, Trace trace) {
+        return collectGT(condition, trace, null);
     }
 
-    public void collectGT(Condition condition, Trace trace, String aliasID) {
+    public String collectGT(Condition condition, Trace trace, String aliasID) {
         JSONObject groundTruthJSON = condition.getMatchedGroundTruth(trace);
         if (groundTruthJSON == null) {
-            return;
+            return null;
         }
         
         String sourceCode = condition.getSourceCode(trace);
@@ -52,25 +52,27 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
             writer = createWriter(this.filePath);
         } catch (IOException e) {
             e.printStackTrace();
-            return;
+            return null;
         }
 
         writer.println(getCsvContent(condition, groundTruthJSON, aliasID,sourceCode));
         writer.close();
         
         // collect variables and aliases
-        List<String> variablesAndAliases = condition.getGroundTruthVariablesAndAliases(trace);
-        try {
-            writer = createWriter(this.aliasFilePath);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        for (String variableAndAlias : variablesAndAliases) {
-            writer.println(variableAndAlias);
-        }
-        writer.close();
+//        List<String> variablesAndAliases = condition.getGroundTruthVariablesAndAliases(trace);
+//        try {
+//            writer = createWriter(this.aliasFilePath);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return null;
+//        }
+//
+//        for (String variableAndAlias : variablesAndAliases) {
+//            writer.println(variableAndAlias);
+//        }
+//        writer.close();
+        
+        return groundTruthJSON.toString();
     }
 
     private String getCsvContent(Condition condition, JSONObject groundTruthJSON, String aliasID,String sourceCode) {
@@ -97,8 +99,6 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
 //            stringBuilder.append(delimiter);
 //        }
         stringBuilder.append(groundTruth);
-        stringBuilder.append("\n");
-
         return stringBuilder.toString();
     }
 }
