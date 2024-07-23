@@ -59,12 +59,6 @@ public class PromptTemplateFiller {
 			+ "  },\n"
 			+ " }";
 
-	private static String variableExpansionPromptQuestion = 
-			"\n\n<Question>\n"
-			+ "Given variable *___variable name___* of type ___variable type___, value \"___variable value___\", internal structure ___class structure___.\n"
-			+ "Execute ```___source code___```.\n"
-			+ "Return in JSON format for this variable as shown in the above example. You must follow the JSON format as \"var_name:var_type\": var_value. Do not include explanation in your response.";
-	
 	private static String variableExpansionAdjustmentPromptPrefix = 
 			"You are given a prompt template with an example which might be inaccurate.\n"
 			+ "\n"
@@ -75,11 +69,48 @@ public class PromptTemplateFiller {
 			+ "Replace the old example in the prompt by the updated example. Make sure you nest the structure in Additional Example with the structure in the <Example>.\n"
 			+ "\n"
 			+ "Additional Example:";
-	
-	private static String getVariableExpansionPromptTemplate(String example) {
-		return variableExpansionPromptBackground + example + variableExpansionPromptQuestion;
+
+	private static String getDefaultVariableExpansionPromptQuestion() {
+		HashMap<String, String> placeholders = new HashMap<>();
+		placeholders.put("var_name", "___variable name___");
+		placeholders.put("var_type", "___variable type___");
+		placeholders.put("var_value", "___variable value___");
+		placeholders.put("class_structure", "___class structure___");
+		placeholders.put("source_code", "___source code___");
+
+		return getVariableExpansionPromptQuestion(placeholders);
 	}
-	
+
+	private static String getVariableExpansionPromptQuestion(HashMap<String, String> datapoint) {
+		/* datapoint features */
+		String varName = datapoint.get("var_name");
+		String varType = datapoint.get("var_type");
+		String varValue = datapoint.get("var_value");
+		String classStructure = datapoint.get("class_structure");
+		String sourceCode = datapoint.get("source_code");
+
+		StringBuilder stringBuilder = new StringBuilder("\n\n<Question>\n");
+		stringBuilder.append("Given variable *" + varName + "*");
+		stringBuilder.append(" of type " + varType + ",");
+		stringBuilder.append(" value \"" + varValue + "\",");
+		stringBuilder.append(" internal structure " + classStructure + ".\n");
+		stringBuilder.append("Execute ```" + sourceCode + "```.\n");
+		stringBuilder.append(
+				"Return in JSON format for this variable as shown in the above example. You must follow the JSON format as \"var_name:var_type\": var_value. Do not include explanation in your response.");
+
+		return stringBuilder.toString();
+	}
+
+	private static String getVariableExpansionPromptTemplate() {
+		return variableExpansionPromptBackground + variableExpansionPromptExample
+				+ getDefaultVariableExpansionPromptQuestion();
+	}
+
+	public static String getVariableExpansionPrompt(HashMap<String, String> datapoint) {
+		return variableExpansionPromptBackground + variableExpansionPromptExample
+				+ getVariableExpansionPromptQuestion(datapoint);
+	}
+
 	/**
 	 * datapoint features:
 	 * 
@@ -87,11 +118,9 @@ public class PromptTemplateFiller {
 	 */
 	public static String getVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint) {
 		/* datapoint features */
-		String varName = datapoint.get("var_name");
 		String varType = datapoint.get("var_type");
 		String varValue = datapoint.get("var_value");
 		String classStructure = datapoint.get("class_structure");
-		String sourceCode = datapoint.get("source_code");
 		String groundTruth = datapoint.get("ground_truth");
 
 		StringBuilder stringBuilder = new StringBuilder(variableExpansionAdjustmentPromptPrefix);
@@ -106,13 +135,13 @@ public class PromptTemplateFiller {
 
 		// instruction
 		stringBuilder.append("\nUpdate the Prompt template: \"\"\"\n");
-		stringBuilder.append(getVariableExpansionPromptTemplate(variableExpansionPromptExample));
+		stringBuilder.append(getVariableExpansionPromptTemplate());
 		stringBuilder.append("\n\"\"\"");
 		stringBuilder.append("\nReturn the updated <Example> section directly and do not include any explanation.");
 
 		return stringBuilder.toString();
 	}
-	
+
 	public static String getVariableExpansionPromptExample() {
 		return variableExpansionPromptExample;
 	}
