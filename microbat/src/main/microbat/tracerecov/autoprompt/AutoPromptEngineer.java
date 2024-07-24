@@ -14,7 +14,7 @@ import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 public class AutoPromptEngineer {
 
 	// TODO: update this, threshold must be in range (0,1)
-	private static final double LOSS_THRESHOLD = 0.5;
+	private static final double LOSS_THRESHOLD = 0.4;
 
 	public String adjustVariableExpansionPromptExample() {
 		// read in dataset
@@ -67,9 +67,15 @@ public class AutoPromptEngineer {
 					updatedOutputJSON = new JSONObject(updatedOutput);
 				} catch (JSONException jsonException) {
 					// TODO: adjust prompt to generate valid JSON
+					// change back to original example
+					PromptTemplateFiller.setVariableExpansionPromptExample(originalExample);
 					continue;
 				}
 				double updatedLoss = lossCalculator.computeLoss(updatedOutputJSON, groundTruthJSON);
+				if (updatedLoss > originalLoss) {
+					// change back to original example
+					PromptTemplateFiller.setVariableExpansionPromptExample(originalExample);
+				}
 				System.out.println();
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -79,9 +85,59 @@ public class AutoPromptEngineer {
 		return PromptTemplateFiller.getVariableExpansionPromptExample();
 	}
 
+	/**
+	 * For testing purpose.
+	 */
+	private double getAverageLoss(String example) {
+		double loss = 0;
+		PromptTemplateFiller.setVariableExpansionPromptExample(example);
+
+		// read in dataset
+		DatasetReader datasetReader = new DatasetReader();
+		ArrayList<HashMap<String, String>> dataset = datasetReader.readVariableExpansionDataset();
+
+		ExecutionSimulator executionSimulator = new ExecutionSimulator();
+
+		for (HashMap<String, String> datapoint : dataset) {
+			String prompt = PromptTemplateFiller.getVariableExpansionPrompt(datapoint);
+
+			try {
+				// get output
+				String output = executionSimulator.sendRequest("", prompt);
+				int begin = output.indexOf("{");
+				int end = output.lastIndexOf("}");
+				output = output.substring(begin, end + 1);
+
+				JSONObject outputJSON;
+				JSONObject groundTruthJSON;
+				try {
+					outputJSON = new JSONObject(output);
+					groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
+				} catch (JSONException jsonException) {
+					loss += 1;
+					continue;
+				}
+
+				// compute loss
+				LossCalculator lossCalculator = new LossCalculator();
+				loss += lossCalculator.computeLoss(outputJSON, groundTruthJSON);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		return loss / (double) dataset.size();
+	}
+
 	public static void main(String[] args) {
 		AutoPromptEngineer autoPromptEngineer = new AutoPromptEngineer();
+		double originalAvgLoss = autoPromptEngineer
+				.getAverageLoss(PromptTemplateFiller.getVariableExpansionPromptExample());
+
 		String newExample = autoPromptEngineer.adjustVariableExpansionPromptExample();
+		double updatedAvgLoss = autoPromptEngineer.getAverageLoss(newExample);
+
+		System.out.println();
 	}
 
 }
