@@ -11,6 +11,8 @@ import org.json.JSONObject;
  */
 public class LossCalculator {
 
+	String emptyKey = ":";
+
 	public LossCalculator() {
 	}
 
@@ -50,8 +52,10 @@ public class LossCalculator {
 		int componentCount = 0;
 
 		// Loss based on type
-		componentCount += 1;
-		individualScoreSum += computeLossBetweenTypes(key1, key2);
+		if (!emptyKey.equals(key1)) {
+			componentCount += 1;
+			individualScoreSum += computeLossBetweenTypes(key1, key2);
+		}
 
 		// Loss based on common fields
 		Set<String> keySet1 = value1.keySet();
@@ -91,8 +95,10 @@ public class LossCalculator {
 		int componentCount = 0;
 
 		// Loss based on type
-		componentCount += 1;
-		individualScoreSum += computeLossBetweenTypes(key1, key2);
+		if (!emptyKey.equals(key1)) {
+			componentCount += 1;
+			individualScoreSum += computeLossBetweenTypes(key1, key2);
+		}
 
 		// Loss based on elements with overlapping indices
 		int len1 = value1.length();
@@ -104,7 +110,6 @@ public class LossCalculator {
 			// compute individual score for field
 			Object element1 = value1.get(i);
 			Object element2 = value2.get(i);
-			String emptyKey = ":";
 			if (element1 instanceof JSONObject && element2 instanceof JSONObject) {
 				individualScoreSum += computeLossForCompositeTypes(emptyKey, emptyKey, (JSONObject) element1,
 						(JSONObject) element2);
@@ -129,8 +134,10 @@ public class LossCalculator {
 		int componentCount = 0;
 
 		// Loss based on type
-		componentCount += 1;
-		individualScoreSum += computeLossBetweenTypes(key1, key2);
+		if (!emptyKey.equals(key1)) {
+			componentCount += 1;
+			individualScoreSum += computeLossBetweenTypes(key1, key2);
+		}
 
 		// Loss based on value
 		componentCount += 1;
