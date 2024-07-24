@@ -44,19 +44,33 @@ public class AutoPromptEngineer {
 					continue;
 				}
 
+				// compute loss
 				LossCalculator lossCalculator = new LossCalculator();
-				double loss = lossCalculator.computeLoss(outputJSON, groundTruthJSON);
-				if (loss < LOSS_THRESHOLD) {
+				double originalLoss = lossCalculator.computeLoss(outputJSON, groundTruthJSON);
+				if (originalLoss < LOSS_THRESHOLD) {
 					continue;
 				}
 
-//				System.out.println();
-//				String updatedExample = executionSimulator.sendRequest("", originalAdjustmentPrompt);
-//				PromptTemplateFiller.setVariableExpansionPromptExample(updatedExample);
-//				System.out.println();
-//				String updatedPrompt = PromptTemplateFiller.getVariableExpansionPrompt(datapoint);
-//				String updatedOutput = executionSimulator.sendRequest("", updatedPrompt);
-//				System.out.println();
+				// update example
+				String originalExample = PromptTemplateFiller.getVariableExpansionPromptExample();
+				String updatedExample = executionSimulator.sendRequest("", originalAdjustmentPrompt);
+				PromptTemplateFiller.setVariableExpansionPromptExample(updatedExample);
+
+				// compute new loss
+				String updatedPrompt = PromptTemplateFiller.getVariableExpansionPrompt(datapoint);
+				String updatedOutput = executionSimulator.sendRequest("", updatedPrompt);
+				begin = updatedOutput.indexOf("{");
+				end = updatedOutput.lastIndexOf("}");
+				updatedOutput = updatedOutput.substring(begin, end + 1);
+				JSONObject updatedOutputJSON;
+				try {
+					updatedOutputJSON = new JSONObject(updatedOutput);
+				} catch (JSONException jsonException) {
+					// TODO: adjust prompt to generate valid JSON
+					continue;
+				}
+				double updatedLoss = lossCalculator.computeLoss(updatedOutputJSON, groundTruthJSON);
+				System.out.println();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

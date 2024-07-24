@@ -47,7 +47,7 @@ public class LossCalculatorTest {
 		LossCalculator lossCalculator = new LossCalculator();
 		double loss = lossCalculator.computeLoss(json1, json2);
 
-		System.out.println("testOtherTypes: " + loss);
+		System.out.println("testSimpleExample: " + loss);
 		assertTrue(loss == (double) 19 / (double) 66);
 	}
 
