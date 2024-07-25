@@ -3,11 +3,12 @@ package microbat.tracerecov.autoprompt;
 import java.util.HashMap;
 
 public class PromptTemplateFiller {
+
 	private static String variableExpansionPromptBackground = 
 			"<Background>\n"
 			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \n"
 			+ "\n";
-	
+
 	private static String variableExpansionPromptExample = 
 			"<Example>\n"
 			+ "Class Name: java.util.HashMap<HashMap, ArrayList>\n"
@@ -74,7 +75,14 @@ public class PromptTemplateFiller {
 			+ "- Do not include <Background> and <Question>.\n"
 			+ "- Do not include any explanation.\n";
 
-	private static String getDefaultVariableExpansionPromptQuestion() {
+	public PromptTemplateFiller() {
+	}
+	
+	public String getDefaultVariableExpansionPromptExample() {
+		return variableExpansionPromptExample;
+	}
+
+	public String getDefaultVariableExpansionPromptQuestion() {
 		HashMap<String, String> placeholders = new HashMap<>();
 		placeholders.put("var_name", "___variable name___");
 		placeholders.put("var_type", "___variable type___");
@@ -85,7 +93,7 @@ public class PromptTemplateFiller {
 		return getVariableExpansionPromptQuestion(placeholders);
 	}
 
-	private static String getVariableExpansionPromptQuestion(HashMap<String, String> datapoint) {
+	public String getVariableExpansionPromptQuestion(HashMap<String, String> datapoint) {
 		/* datapoint features */
 		String varName = datapoint.get("var_name");
 		String varType = datapoint.get("var_type");
@@ -105,14 +113,12 @@ public class PromptTemplateFiller {
 		return stringBuilder.toString();
 	}
 
-	private static String getVariableExpansionPromptTemplate() {
-		return variableExpansionPromptBackground + variableExpansionPromptExample
-				+ getDefaultVariableExpansionPromptQuestion();
+	public String getVariableExpansionPromptTemplate(String example) {
+		return variableExpansionPromptBackground + example + getDefaultVariableExpansionPromptQuestion();
 	}
 
-	public static String getVariableExpansionPrompt(HashMap<String, String> datapoint) {
-		return variableExpansionPromptBackground + variableExpansionPromptExample
-				+ getVariableExpansionPromptQuestion(datapoint);
+	public String getVariableExpansionPrompt(HashMap<String, String> datapoint, String example) {
+		return variableExpansionPromptBackground + example + getVariableExpansionPromptQuestion(datapoint);
 	}
 
 	/**
@@ -120,7 +126,8 @@ public class PromptTemplateFiller {
 	 * 
 	 * var_name, var_type, var_value, class_structure, source_code, ground_truth
 	 */
-	public static String getVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint, String textualLoss) {
+	public String getVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint, String textualLoss,
+			String example) {
 		/* datapoint features */
 		String varType = datapoint.get("var_type");
 		String varValue = datapoint.get("var_value");
@@ -146,17 +153,13 @@ public class PromptTemplateFiller {
 
 		// instruction
 		stringBuilder.append("\nUpdate the Prompt template: \"\"\"\n");
-		stringBuilder.append(getVariableExpansionPromptTemplate());
+		stringBuilder.append(variableExpansionPromptBackground + example + getDefaultVariableExpansionPromptQuestion());
 		stringBuilder.append("\n\"\"\"");
 
 		return stringBuilder.toString();
 	}
 
-	public static String getVariableExpansionPromptExample() {
-		return variableExpansionPromptExample;
-	}
-
-	public static void setVariableExpansionPromptExample(String variableExpansionPromptExample) {
-		PromptTemplateFiller.variableExpansionPromptExample = variableExpansionPromptExample;
+	public String getDefaultVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint, String textualLoss) {
+		return getVariableExpansionAdjustmentPrompt(datapoint, textualLoss, variableExpansionPromptExample);
 	}
 }

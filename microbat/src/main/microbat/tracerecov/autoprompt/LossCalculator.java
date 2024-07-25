@@ -11,7 +11,7 @@ import org.json.JSONObject;
  */
 public class LossCalculator {
 
-	String emptyKey = ":";
+	private String emptyKey = ":";
 
 	public LossCalculator() {
 	}

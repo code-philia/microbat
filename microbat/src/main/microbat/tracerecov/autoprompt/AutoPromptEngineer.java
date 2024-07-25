@@ -15,75 +15,103 @@ public class AutoPromptEngineer {
 
 	// TODO: update this, threshold must be in range (0,1)
 	private static final double LOSS_THRESHOLD = 0.25;
+	private static final int TRIAL_LIMIT = 5;
 
 	private ArrayList<HashMap<String, String>> dataset;
 	private ExecutionSimulator executionSimulator;
+	private PromptTemplateFiller promptTemplateFiller;
 	private LossCalculator lossCalculator;
 	private TextualLossGenerator textualLossGeneartor;
 
 	public AutoPromptEngineer() {
 		dataset = readDataset();
 		executionSimulator = new ExecutionSimulator();
+		promptTemplateFiller = new PromptTemplateFiller();
 		lossCalculator = new LossCalculator();
 		textualLossGeneartor = new TextualLossGenerator();
 	}
 
 	public String adjustVariableExpansionPromptExample() {
+		String updatedExample = promptTemplateFiller.getDefaultVariableExpansionPromptExample();
 		for (HashMap<String, String> datapoint : dataset) {
-			JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
+			updatedExample = adjustVariableExpansionPromptExample(datapoint, updatedExample);
+			System.out.println();
+			System.out.println(updatedExample);
+		}
 
-			String originalExample = PromptTemplateFiller.getVariableExpansionPromptExample();
-			String originalPrompt = PromptTemplateFiller.getVariableExpansionPrompt(datapoint);
+		return updatedExample;
+	}
 
-			try {
-				// get original output
-				String originalOutput = getLLMOutput(originalPrompt);
-				String textualLoss = null;
-				JSONObject outputJSON = null;
-				try {
-					outputJSON = new JSONObject(originalOutput);
-				} catch (JSONException jsonException) {
-					textualLoss = textualLossGeneartor.getLossFromException(originalOutput, jsonException);
-				}
+	private String adjustVariableExpansionPromptExample(HashMap<String, String> datapoint, String originalExample) {
 
-				// compute original loss
-				double originalLoss = 1;
-				if (outputJSON != null && groundTruthJSON != null) {
-					originalLoss = lossCalculator.computeLoss(outputJSON, groundTruthJSON);
-					// TODO: get textual loss
-					if (originalLoss <= LOSS_THRESHOLD) {
-						continue;
-					}
-				}
+		JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
+		String originalPrompt = promptTemplateFiller.getVariableExpansionPrompt(datapoint, originalExample);
 
-				// update example
-				String originalAdjustmentPrompt = PromptTemplateFiller.getVariableExpansionAdjustmentPrompt(datapoint,
-						textualLoss);
-				String updatedExample = executionSimulator.sendRequest("", originalAdjustmentPrompt);
-				PromptTemplateFiller.setVariableExpansionPromptExample(updatedExample);
+		// get original output
+		String originalOutput = getLLMOutput(originalPrompt);
+		String textualLoss = null;
+		JSONObject outputJSON = null;
+		try {
+			outputJSON = new JSONObject(originalOutput);
+		} catch (JSONException jsonException) {
+			textualLoss = textualLossGeneartor.getLossFromException(originalOutput, jsonException);
+		}
 
-				// compute new loss
-				String updatedPrompt = PromptTemplateFiller.getVariableExpansionPrompt(datapoint);
-				String updatedOutput = getLLMOutput(updatedPrompt);
-				JSONObject updatedOutputJSON;
-				try {
-					updatedOutputJSON = new JSONObject(updatedOutput);
-				} catch (JSONException jsonException) {
-					// change back to original example
-					PromptTemplateFiller.setVariableExpansionPromptExample(originalExample);
-					continue;
-				}
-				double updatedLoss = lossCalculator.computeLoss(updatedOutputJSON, groundTruthJSON);
-				if (updatedLoss > originalLoss) {
-					// change back to original example
-					PromptTemplateFiller.setVariableExpansionPromptExample(originalExample);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
+		// compute original loss
+		double numericalLoss = 1;
+		if (outputJSON != null && groundTruthJSON != null) {
+			numericalLoss = lossCalculator.computeLoss(outputJSON, groundTruthJSON);
+			textualLoss = textualLossGeneartor.getLoss(outputJSON, groundTruthJSON);
+			if (numericalLoss > LOSS_THRESHOLD) {
+				return getFineTunedExample(datapoint, originalExample, numericalLoss, textualLoss, TRIAL_LIMIT);
 			}
 		}
 
-		return PromptTemplateFiller.getVariableExpansionPromptExample();
+		return originalExample;
+	}
+
+	private String getFineTunedExample(HashMap<String, String> datapoint, String originalExample, double numericalLoss,
+			String textualLoss, int trials) {
+		if (trials <= 0) {
+			return originalExample;
+		}
+
+		// update example
+		String originalAdjustmentPrompt = promptTemplateFiller.getVariableExpansionAdjustmentPrompt(datapoint,
+				textualLoss, originalExample);
+		String updatedExample = null;
+		try {
+			updatedExample = executionSimulator.sendRequest("", originalAdjustmentPrompt);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		// compute textual and numerical loss
+		String updatedPrompt = promptTemplateFiller.getVariableExpansionPrompt(datapoint, updatedExample);
+		String updatedOutput = getLLMOutput(updatedPrompt);
+		JSONObject updatedOutputJSON;
+		try {
+			updatedOutputJSON = new JSONObject(updatedOutput);
+		} catch (JSONException jsonException) {
+			String updatedTextualLoss = textualLossGeneartor.getLossFromException(updatedOutput, jsonException);
+			// retry with original example and textualLoss
+			return getFineTunedExample(datapoint, originalExample, numericalLoss, updatedTextualLoss, trials - 1);
+		}
+
+		JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
+		double updatedNumericalLoss = lossCalculator.computeLoss(updatedOutputJSON, groundTruthJSON);
+		String updatedTextualLoss = textualLossGeneartor.getLoss(updatedOutputJSON, groundTruthJSON);
+
+		if (updatedNumericalLoss > numericalLoss) {
+			// retry with original example
+			return getFineTunedExample(datapoint, originalExample, numericalLoss, textualLoss, trials - 1);
+		}
+		if (updatedNumericalLoss <= LOSS_THRESHOLD) {
+			return updatedExample;
+		} else {
+			// retry with updated example
+			return getFineTunedExample(datapoint, updatedExample, updatedNumericalLoss, updatedTextualLoss, trials - 1);
+		}
 	}
 
 	/**
@@ -91,12 +119,11 @@ public class AutoPromptEngineer {
 	 */
 	private double getAverageLoss(String example) {
 		double loss = 0;
-		PromptTemplateFiller.setVariableExpansionPromptExample(example);
 
 		for (HashMap<String, String> datapoint : dataset) {
 			JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
 
-			String request = PromptTemplateFiller.getVariableExpansionPrompt(datapoint);
+			String request = promptTemplateFiller.getVariableExpansionPrompt(datapoint, example);
 			String output = getLLMOutput(request);
 
 			JSONObject outputJSON;
@@ -136,14 +163,12 @@ public class AutoPromptEngineer {
 	public static void main(String[] args) {
 		AutoPromptEngineer autoPromptEngineer = new AutoPromptEngineer();
 		double originalAvgLoss = autoPromptEngineer
-				.getAverageLoss(PromptTemplateFiller.getVariableExpansionPromptExample());
+				.getAverageLoss(autoPromptEngineer.promptTemplateFiller.getDefaultVariableExpansionPromptExample());
 		String newExample = autoPromptEngineer.adjustVariableExpansionPromptExample();
 		double updatedAvgLoss = autoPromptEngineer.getAverageLoss(newExample);
 
 		System.out.println("Original Average Loss: " + originalAvgLoss);
 		System.out.println("Updated Average Loss: " + updatedAvgLoss);
-		System.out.println("New Example: ");
-		System.out.println(newExample);
 	}
 
 }
