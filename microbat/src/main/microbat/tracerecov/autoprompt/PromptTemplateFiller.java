@@ -60,15 +60,19 @@ public class PromptTemplateFiller {
 			+ " }";
 
 	private static String variableExpansionAdjustmentPromptPrefix = 
-			"You are given a prompt template with an example which might be inaccurate.\n"
+			"You are given a prompt template with examples which might be inaccurate.\n"
 			+ "\n"
-			+ "Given another example of the structure of a variable: \n"
-			+ "If the example variables have different data structures, create an example of a nested data structure from the two given data structures. For example, if the two data structures are `ArrayList` and `HashSet`, you should first create an instance of `ArrayList`, then populate it with `HashSet` instances.\n"
-			+ "Otherwise, modify the existing example such that its structure is similar to the additional example, keep one version of the example in the prompt.\n"
+			+ "Given an additional example of the structure of a variable:\n"
+			+ "1. Check the existing examples. If an existing example contain the data type in the additional example, modify the existing example such that its structure is more similar as the additional example.\n"
+			+ "OR 2. Check the existing examples. If there is a composite type with generic type, nest the additional example into the existing example. e.g. A, If the two data structures are `ArrayList<Integer>` and `PrintWriter`, you should first create an instance of `ArrayList<PrintWriter>`, then populate it with `PrintWriter` instances.\n"
+			+ "e.g. B, If the two data structures are `ArrayList<PrintWriter>` and `HashSet<Integer>`, you should first create an instance of `HashSet<ArrayList<PrintWriter>>`, then populate it with `ArrayList` instances.\n"
+			+ "OR 3. Add a new example based on the additional example.\n"
 			+ "\n"
-			+ "Replace the old example in the prompt by the updated example. Make sure you nest the structure in Additional Example with the structure in the <Example>.\n"
-			+ "\n"
-			+ "Additional Example:";
+			+ "- Between tags <Example></Example>, return the updated Example section. \n"
+			+ "- You must include all the composite types in the existing examples and the additional example.\n"
+			+ "- Keep the example concise, use the minimum possible size for the data structures in the example.\n"
+			+ "- Do not include <Background> and <Question>.\n"
+			+ "- Do not include any explanation.\n";
 
 	private static String getDefaultVariableExpansionPromptQuestion() {
 		HashMap<String, String> placeholders = new HashMap<>();
@@ -116,7 +120,7 @@ public class PromptTemplateFiller {
 	 * 
 	 * var_name, var_type, var_value, class_structure, source_code, ground_truth
 	 */
-	public static String getVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint) {
+	public static String getVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint, String textualLoss) {
 		/* datapoint features */
 		String varType = datapoint.get("var_type");
 		String varValue = datapoint.get("var_value");
@@ -125,7 +129,14 @@ public class PromptTemplateFiller {
 
 		StringBuilder stringBuilder = new StringBuilder(variableExpansionAdjustmentPromptPrefix);
 
+		if (textualLoss != null) {
+			stringBuilder.append(
+					"\nWhen generating the new examples, avoid the following wrong output from being generated again:\n");
+			stringBuilder.append(textualLoss);
+		}
+
 		// basic information
+		stringBuilder.append("\nAdditional Example:");
 		stringBuilder.append("\nClass Name: " + varType);
 		stringBuilder.append("\nStructure: " + classStructure);
 		stringBuilder.append("\nVariable Value: " + varValue);
@@ -137,7 +148,6 @@ public class PromptTemplateFiller {
 		stringBuilder.append("\nUpdate the Prompt template: \"\"\"\n");
 		stringBuilder.append(getVariableExpansionPromptTemplate());
 		stringBuilder.append("\n\"\"\"");
-		stringBuilder.append("\nReturn the updated <Example> section directly and do not include any explanation.");
 
 		return stringBuilder.toString();
 	}

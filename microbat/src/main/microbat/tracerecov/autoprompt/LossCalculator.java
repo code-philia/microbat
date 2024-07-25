@@ -165,9 +165,13 @@ public class LossCalculator {
 	 * name (not necessarily sharing the same field type).
 	 */
 	private boolean areComparableKeys(String key1, String key2) {
-		String field1 = key1.split(":")[0].trim();
-		String field2 = key2.split(":")[0].trim();
-		return field1.equals(field2);
+		try {
+			String field1 = key1.split(":")[0].trim();
+			String field2 = key2.split(":")[0].trim();
+			return field1.equals(field2);
+		} catch (ArrayIndexOutOfBoundsException e) {
+			return false;
+		}
 	}
 
 	/**
@@ -175,9 +179,13 @@ public class LossCalculator {
 	 * have the same type, Loss == 1 otherwise.
 	 */
 	private int computeLossBetweenTypes(String key1, String key2) {
-		String type1 = key1.split(":")[1].trim();
-		String type2 = key2.split(":")[1].trim();
-		return identityFunction(type1, type2);
+		try {
+			String type1 = key1.split(":")[1].trim();
+			String type2 = key2.split(":")[1].trim();
+			return identityFunction(type1, type2);
+		} catch (ArrayIndexOutOfBoundsException e) {
+			return 1;
+		}
 	}
 
 	private int computeLossBetweenValues(String value1, String value2) {

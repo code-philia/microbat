@@ -45,6 +45,9 @@ public class DatasetReader {
 				}
 
 				String[] columns = line.split("###");
+				if (columns.length != 6) {
+					continue;
+				}
 
 				HashMap<String, String> datapoint = new HashMap<>();
 				datapoint.put("var_name", columns[0]);
