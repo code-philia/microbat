@@ -38,7 +38,7 @@ public class ExecutionSimulator {
 		this.logger = new ExecutionSimulationLogger();
 	}
 
-	private String sendRequest(String backgroundContent, String questionContent) throws IOException {
+	public String sendRequest(String backgroundContent, String questionContent) throws IOException {
 		/* set up connection */
 		URL url = new URL(SimulatorConstants.API_URL);
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -100,7 +100,8 @@ public class ExecutionSimulator {
 		}
 	}
 
-	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String,String> preValueResponse) throws IOException {
+	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String, String> preValueResponse)
+			throws IOException {
 
 		if (selectedVar.isExpanded()) {
 			return null;
@@ -128,7 +129,8 @@ public class ExecutionSimulator {
 		}
 
 		String background = VariableExpansionUtils.getBackgroundContent();
-		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step, preValueResponse);
+		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step,
+				preValueResponse);
 
 		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, background + content);
 
@@ -138,12 +140,12 @@ public class ExecutionSimulator {
 				this.logger.printResponse(i, response);
 				VariableExpansionUtils.processResponse(selectedVar, response);
 				return response;
-				//break;
+				// break;
 			} catch (org.json.JSONException | java.lang.StringIndexOutOfBoundsException e) {
 				this.logger.printError(e.getMessage());
 			}
 		}
-		
+
 		return null;
 	}
 
