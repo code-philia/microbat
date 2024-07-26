@@ -176,6 +176,7 @@ Export-Package:
  microbat.test.handler;uses:="org.eclipse.core.commands",
  microbat.trace,
  microbat.tracerecov,
+ microbat.tracerecov.autoprompt,
  microbat.tracerecov.candidatevar,
  microbat.tracerecov.executionsimulator,
  microbat.tracerecov.varskeleton,

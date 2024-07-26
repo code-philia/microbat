@@ -15,7 +15,7 @@ public class AutoPromptEngineer {
 
 	// TODO: update this, threshold must be in range (0,1)
 	private static final double LOSS_THRESHOLD = 0.25;
-	private static final int TRIAL_LIMIT = 5;
+	private static final int TRIAL_LIMIT = 3;
 
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
@@ -116,10 +116,11 @@ public class AutoPromptEngineer {
 		}
 	}
 
-	/**
-	 * For testing purpose.
-	 */
-	private double getAverageLoss(String example) {
+	public double getAverageLoss() {
+		return getAverageLoss(promptTemplateFiller.getDefaultVariableExpansionPromptExample());
+	}
+
+	public double getAverageLoss(String example) {
 		double loss = 0;
 
 		for (HashMap<String, String> datapoint : testingDataset) {
@@ -165,17 +166,6 @@ public class AutoPromptEngineer {
 			e.printStackTrace();
 		}
 		return null;
-	}
-
-	public static void main(String[] args) {
-		AutoPromptEngineer autoPromptEngineer = new AutoPromptEngineer();
-		double originalAvgLoss = autoPromptEngineer
-				.getAverageLoss(autoPromptEngineer.promptTemplateFiller.getDefaultVariableExpansionPromptExample());
-		String newExample = autoPromptEngineer.adjustVariableExpansionPromptExample();
-		double updatedAvgLoss = autoPromptEngineer.getAverageLoss(newExample);
-
-		System.out.println("Original Average Loss: " + originalAvgLoss);
-		System.out.println("Updated Average Loss: " + updatedAvgLoss);
 	}
 
 }

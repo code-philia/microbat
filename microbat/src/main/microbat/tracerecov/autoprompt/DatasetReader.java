@@ -19,9 +19,8 @@ public class DatasetReader {
 	public DatasetReader() {
 		// TODO: move this to preference page
 		String variableExpansionFile = "var_expansion.txt";
-//		this.variableExpansionPath = Activator.getDefault().getPreferenceStore()
-//				.getString(TraceRecovPreference.PROMPT_GT_PATH) + File.separator + variableExpansionFile;
-		this.variableExpansionPath = "/Users/hongshuwang/Desktop/var_expansion.txt";
+		this.variableExpansionPath = Activator.getDefault().getPreferenceStore()
+				.getString(TraceRecovPreference.PROMPT_GT_PATH) + File.separator + variableExpansionFile;
 	}
 
 	/**
