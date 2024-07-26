@@ -17,14 +17,16 @@ public class AutoPromptEngineer {
 	private static final double LOSS_THRESHOLD = 0.25;
 	private static final int TRIAL_LIMIT = 5;
 
-	private ArrayList<HashMap<String, String>> dataset;
+	private ArrayList<HashMap<String, String>> trainingDataset;
+	private ArrayList<HashMap<String, String>> testingDataset;
 	private ExecutionSimulator executionSimulator;
 	private PromptTemplateFiller promptTemplateFiller;
 	private LossCalculator lossCalculator;
 	private TextualLossGenerator textualLossGeneartor;
 
 	public AutoPromptEngineer() {
-		dataset = readDataset();
+		trainingDataset = readTrainingDataset();
+		testingDataset = readTestingDataset();
 		executionSimulator = new ExecutionSimulator();
 		promptTemplateFiller = new PromptTemplateFiller();
 		lossCalculator = new LossCalculator();
@@ -33,7 +35,7 @@ public class AutoPromptEngineer {
 
 	public String adjustVariableExpansionPromptExample() {
 		String updatedExample = promptTemplateFiller.getDefaultVariableExpansionPromptExample();
-		for (HashMap<String, String> datapoint : dataset) {
+		for (HashMap<String, String> datapoint : trainingDataset) {
 			updatedExample = adjustVariableExpansionPromptExample(datapoint, updatedExample);
 			System.out.println();
 			System.out.println(updatedExample);
@@ -120,7 +122,7 @@ public class AutoPromptEngineer {
 	private double getAverageLoss(String example) {
 		double loss = 0;
 
-		for (HashMap<String, String> datapoint : dataset) {
+		for (HashMap<String, String> datapoint : testingDataset) {
 			JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
 
 			String request = promptTemplateFiller.getVariableExpansionPrompt(datapoint, example);
@@ -139,12 +141,17 @@ public class AutoPromptEngineer {
 			loss += lossCalculator.computeLoss(outputJSON, groundTruthJSON);
 		}
 
-		return loss / (double) dataset.size();
+		return loss / (double) testingDataset.size();
 	}
 
-	private ArrayList<HashMap<String, String>> readDataset() {
+	private ArrayList<HashMap<String, String>> readTrainingDataset() {
 		DatasetReader datasetReader = new DatasetReader();
-		return datasetReader.readVariableExpansionDataset();
+		return datasetReader.readVariableExpansionTrainingDataset();
+	}
+
+	private ArrayList<HashMap<String, String>> readTestingDataset() {
+		DatasetReader datasetReader = new DatasetReader();
+		return datasetReader.readVariableExpansionTestingDataset();
 	}
 
 	private String getLLMOutput(String request) {

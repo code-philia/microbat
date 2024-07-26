@@ -29,7 +29,7 @@ public class DatasetReader {
 	 * 
 	 * var_name, var_type, var_value, class_structure, source_code, ground_truth
 	 */
-	public ArrayList<HashMap<String, String>> readVariableExpansionDataset() {
+	public ArrayList<HashMap<String, String>> readVariableExpansionTrainingDataset() {
 		ArrayList<HashMap<String, String>> dataset = new ArrayList<>();
 
 		try {
@@ -40,7 +40,51 @@ public class DatasetReader {
 			// read content
 			while ((line = bufferReader.readLine()) != null) {
 				count++;
-				if (count % 15 != 0) {
+				if (count % 40 != 0) {
+					continue;
+				}
+
+				String[] columns = line.split("###");
+				if (columns.length != 6) {
+					continue;
+				}
+
+				HashMap<String, String> datapoint = new HashMap<>();
+				datapoint.put("var_name", columns[0]);
+				datapoint.put("var_type", columns[1]);
+				datapoint.put("var_value", columns[2]);
+				datapoint.put("class_structure", columns[3]);
+				datapoint.put("source_code", columns[4]);
+				datapoint.put("ground_truth", columns[5]);
+
+				dataset.add(datapoint);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return dataset;
+	}
+
+	/**
+	 * Reads variable expansion dataset.
+	 * 
+	 * var_name, var_type, var_value, class_structure, source_code, ground_truth
+	 */
+	public ArrayList<HashMap<String, String>> readVariableExpansionTestingDataset() {
+		ArrayList<HashMap<String, String>> dataset = new ArrayList<>();
+
+		try {
+			BufferedReader bufferReader = new BufferedReader(new FileReader(variableExpansionPath));
+
+			String line;
+			int count = 0;
+			bufferReader.readLine();
+			bufferReader.readLine();
+			// read content
+			while ((line = bufferReader.readLine()) != null) {
+				count++;
+				if (count % 40 != 0) {
 					continue;
 				}
 
