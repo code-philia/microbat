@@ -1,5 +1,6 @@
 package microbat.tracerecov.autoprompt;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import org.json.JSONArray;
@@ -19,129 +20,133 @@ public class LossCalculator {
 	/**
 	 * Compute loss from root of the variable.
 	 */
-	public double computeLoss(JSONObject var1, JSONObject var2) {
+	public double computeLoss(JSONObject actualJSON, JSONObject expectedJSON) {
 		// Assume there is only one key in the root.
-		String key1 = null;
-		for (String entry : var1.keySet()) {
-			key1 = entry;
+		String actualKey = null;
+		for (String entry : actualJSON.keySet()) {
+			actualKey = entry;
 			break;
 		}
-		String key2 = null;
-		for (String entry : var2.keySet()) {
-			key2 = entry;
+		String expectedKey = null;
+		for (String entry : expectedJSON.keySet()) {
+			expectedKey = entry;
 			break;
 		}
 
-		if (key1 == null || key2 == null) {
+		if (actualKey == null || expectedKey == null) {
 			return 1;
 		}
 
-		Object value1 = var1.get(key1);
-		Object value2 = var2.get(key2);
-		if (value1 instanceof JSONObject && value2 instanceof JSONObject) {
-			return computeLossForCompositeTypes(key1, key2, (JSONObject) value1, (JSONObject) value2);
-		} else if (value1 instanceof JSONArray && value2 instanceof JSONArray) {
-			return computeLossForArrays(key1, key2, (JSONArray) value1, (JSONArray) value2);
+		Object actualValue = actualJSON.get(actualKey);
+		Object expectedValue = expectedJSON.get(expectedKey);
+		if (actualValue instanceof JSONObject && expectedValue instanceof JSONObject) {
+			return computeLossForCompositeTypes(actualKey, expectedKey, (JSONObject) actualValue,
+					(JSONObject) expectedValue);
+		} else if (actualValue instanceof JSONArray && expectedValue instanceof JSONArray) {
+			return computeLossForArrays(actualKey, expectedKey, (JSONArray) actualValue, (JSONArray) expectedValue);
 		} else {
-			return computeLossForOtherTypes(key1, key2, value1, value2);
+			return computeLossForOtherTypes(actualKey, expectedKey, actualValue, expectedValue);
 		}
 	}
 
-	private double computeLossForCompositeTypes(String key1, String key2, JSONObject value1, JSONObject value2) {
+	private double computeLossForCompositeTypes(String actualJSONKey, String expectedJSONKey,
+			JSONObject actualJSONValue, JSONObject expectedJSONValue) {
 		double individualScoreSum = 0;
 		int componentCount = 0;
 
 		// Loss based on type
-		if (!emptyKey.equals(key1)) {
+		if (!emptyKey.equals(actualJSONKey)) {
 			componentCount += 1;
-			individualScoreSum += computeLossBetweenTypes(key1, key2);
+			individualScoreSum += computeLossBetweenTypes(actualJSONKey, expectedJSONKey);
 		}
 
 		// Loss based on common fields
-		Set<String> keySet1 = value1.keySet();
-		Set<String> keySet2 = value2.keySet();
-		for (String fieldSignature1 : keySet1) {
-			String fieldSignature2 = getComparableKey(fieldSignature1, keySet2);
-			if (fieldSignature2 != null) {
+		Set<String> actualKeySet = actualJSONValue.keySet();
+		Set<String> expectedKeySet = expectedJSONValue.keySet();
+		for (String actualFieldSignature : actualKeySet) {
+			String expectedFieldSignature = getComparableKey(actualFieldSignature, expectedKeySet);
+			if (expectedFieldSignature != null) {
 				// found common field
 				componentCount += 1;
 
 				// compute individual score for field
-				Object fieldValue1 = value1.get(fieldSignature1);
-				Object fieldValue2 = value2.get(fieldSignature2);
-				if (fieldValue1 instanceof JSONObject && fieldValue2 instanceof JSONObject) {
-					individualScoreSum += computeLossForCompositeTypes(fieldSignature1, fieldSignature2,
-							(JSONObject) fieldValue1, (JSONObject) fieldValue2);
-				} else if (fieldValue1 instanceof JSONArray && fieldValue2 instanceof JSONArray) {
-					individualScoreSum += computeLossForArrays(fieldSignature1, fieldSignature2,
-							(JSONArray) fieldValue1, (JSONArray) fieldValue2);
+				Object actualFieldValue = actualJSONValue.get(actualFieldSignature);
+				Object expectedFieldValue = expectedJSONValue.get(expectedFieldSignature);
+				if (actualFieldValue instanceof JSONObject && expectedFieldValue instanceof JSONObject) {
+					individualScoreSum += computeLossForCompositeTypes(actualFieldSignature, expectedFieldSignature,
+							(JSONObject) actualFieldValue, (JSONObject) expectedFieldValue);
+				} else if (actualFieldValue instanceof JSONArray && expectedFieldValue instanceof JSONArray) {
+					individualScoreSum += computeLossForArrays(actualFieldSignature, expectedFieldSignature,
+							(JSONArray) actualFieldValue, (JSONArray) expectedFieldValue);
 				} else {
-					individualScoreSum += computeLossForOtherTypes(fieldSignature1, fieldSignature2, fieldValue1,
-							fieldValue2);
+					individualScoreSum += computeLossForOtherTypes(actualFieldSignature, expectedFieldSignature,
+							actualFieldValue, expectedFieldValue);
 				}
 			}
 		}
 
 		// Loss based on different fields
-		int keySetDifferences = countKeySetDifferences(keySet1, keySet2);
+		int keySetDifferences = countKeySetDifferences(actualKeySet, expectedKeySet);
 		componentCount += keySetDifferences;
 		individualScoreSum += keySetDifferences;
 
 		return individualScoreSum / (double) componentCount;
 	}
 
-	private double computeLossForArrays(String key1, String key2, JSONArray value1, JSONArray value2) {
+	private double computeLossForArrays(String actualJSONKey, String expectedJSONKey, JSONArray actualJSONArray,
+			JSONArray expectedJSONArray) {
 		double individualScoreSum = 0;
 		int componentCount = 0;
 
 		// Loss based on type
-		if (!emptyKey.equals(key1)) {
+		if (!emptyKey.equals(actualJSONKey)) {
 			componentCount += 1;
-			individualScoreSum += computeLossBetweenTypes(key1, key2);
+			individualScoreSum += computeLossBetweenTypes(actualJSONKey, expectedJSONKey);
 		}
 
 		// Loss based on elements with overlapping indices
-		int len1 = value1.length();
-		int len2 = value2.length();
-		int overlappingLength = Math.min(len1, len2);
+		int actualLen = actualJSONArray.length();
+		int expectedLen = expectedJSONArray.length();
+		int overlappingLength = Math.min(actualLen, expectedLen);
 		for (int i = 0; i < overlappingLength; i++) {
 			componentCount += 1;
 
 			// compute individual score for field
-			Object element1 = value1.get(i);
-			Object element2 = value2.get(i);
-			if (element1 instanceof JSONObject && element2 instanceof JSONObject) {
-				individualScoreSum += computeLossForCompositeTypes(emptyKey, emptyKey, (JSONObject) element1,
-						(JSONObject) element2);
-			} else if (element1 instanceof JSONArray && element2 instanceof JSONArray) {
-				individualScoreSum += computeLossForArrays(emptyKey, emptyKey, (JSONArray) element1,
-						(JSONArray) element2);
+			Object actualElement = actualJSONArray.get(i);
+			Object expectedElement = expectedJSONArray.get(i);
+			if (actualElement instanceof JSONObject && expectedElement instanceof JSONObject) {
+				individualScoreSum += computeLossForCompositeTypes(emptyKey, emptyKey, (JSONObject) actualElement,
+						(JSONObject) expectedElement);
+			} else if (actualElement instanceof JSONArray && expectedElement instanceof JSONArray) {
+				individualScoreSum += computeLossForArrays(emptyKey, emptyKey, (JSONArray) actualElement,
+						(JSONArray) expectedElement);
 			} else {
-				individualScoreSum += computeLossForOtherTypes(emptyKey, emptyKey, element1, element2);
+				individualScoreSum += computeLossForOtherTypes(emptyKey, emptyKey, actualElement, expectedElement);
 			}
 		}
 
 		// Loss based on extra elements
-		int absLengthDifference = Math.abs(len1 - len2);
+		int absLengthDifference = Math.abs(actualLen - expectedLen);
 		componentCount += absLengthDifference;
 		individualScoreSum += absLengthDifference;
 
 		return individualScoreSum / (double) componentCount;
 	}
 
-	private double computeLossForOtherTypes(String key1, String key2, Object value1, Object value2) {
+	private double computeLossForOtherTypes(String actualJSONKey, String expectedJSONKey, Object actualValue,
+			Object expectedValue) {
 		double individualScoreSum = 0;
 		int componentCount = 0;
 
 		// Loss based on type
-		if (!emptyKey.equals(key1)) {
+		if (!emptyKey.equals(actualJSONKey)) {
 			componentCount += 1;
-			individualScoreSum += computeLossBetweenTypes(key1, key2);
+			individualScoreSum += computeLossBetweenTypes(actualJSONKey, expectedJSONKey);
 		}
 
 		// Loss based on value
 		componentCount += 1;
-		individualScoreSum += computeLossBetweenValues(value1.toString(), value2.toString());
+		individualScoreSum += computeLossBetweenValues(actualValue.toString(), expectedValue.toString());
 
 		return individualScoreSum / (double) componentCount;
 	}
@@ -179,9 +184,19 @@ public class LossCalculator {
 	 * have the same type, Loss == 1 otherwise.
 	 */
 	private int computeLossBetweenTypes(String key1, String key2) {
+		Set<String> equivalentTypes = new HashSet<>();
+		equivalentTypes.add("java.lang.String");
+		equivalentTypes.add("char[]");
+		equivalentTypes.add("byte[]");
+
 		try {
 			String type1 = key1.split(":")[1].trim();
 			String type2 = key2.split(":")[1].trim();
+
+			if (equivalentTypes.contains(type1) && equivalentTypes.contains(type2)) {
+				return 0;
+			}
+
 			return identityFunction(type1, type2);
 		} catch (ArrayIndexOutOfBoundsException e) {
 			return 1;
