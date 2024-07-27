@@ -13,9 +13,9 @@ public class PromptTemplateFiller {
 			"<Example>\n"
 			+ "Class Name: java.util.HashMap<String, Integer>\n"
 			+ "Structure: {\n"
-			+ "	java.util.HashMap$Node<String, Integer>[] table;\n"
-			+ "	java.util.Set<Map.Entry<String, Integer>> entrySet;\n"
-			+ "	int size;\n"
+			+ " java.util.HashMap$Node[] table;\n"
+			+ " java.util.Set entrySet;\n"
+			+ " int size;\n"
 			+ "}\n"
 			+ "\n"
 			+ "Given \"map.toString()\" has output value:\n"
@@ -23,50 +23,33 @@ public class PromptTemplateFiller {
 			+ "\n"
 			+ "We can summarize the structure as:\n"
 			+ "{\n"
-			+ "  \"map: java.util.HashMap<String, Integer>\": {\n"
-			+ "    \"table: java.util.HashMap$Node<String, Integer>[]\": [\"k1\"=1, \"k2\"=2],\n"
-			+ "    \"entrySet: java.util.Set<Map.Entry<String, Integer>>\": {\n"
-			+ "      this$0:java.util.HashMap<String, Integer>:{\n"
-			+ "        table:java.util.HashMap$Node<String, Integer>[]:[\"k1\"=1, \"k2\"=2]\n"
+			+ "  \"map: java.util.HashMap\": {\n"
+			+ "    \"table: java.util.HashMap$Node[]\": [\"k1\"=1, \"k2\"=2],\n"
+			+ "    \"entrySet: java.util.Set\": {\n"
+			+ "      this$0:java.util.HashMap:{\n"
+			+ "        table:java.util.HashMap$Node[]:[\"k1\"=1, \"k2\"=2]\n"
 			+ "      }\n"
 			+ "    },\n"
 			+ "    \"size: int\": 2\n"
 			+ "  }\n"
 			+ "}\n"
-			+ "";
+			+ "</Example>";
 
 	private static String variableExpansionAdjustmentPromptPrefix = 
 			"You are given a prompt template with examples which might be inaccurate.\n"
 			+ "\n"
-			+ "Given an additional example of the structure of a variable:\n"
-			+ "1. Check the existing examples and extract all the composite types.\n"
-			+ "2. Take note of the data types with generic type parameters. If there are generic types, take note of the generic types with primitive equivalences. e.g. Integer has corresponding primitive type int.\n"
-			+ "3. Replace one of the generic types in step 2 with the data type in the additional example.\n"
-			+ "4. Replace the existing example with the updated example.\n"
-			+ "Demonstration: If the existing example is `ArrayList<Integer>` and the additional example is `PrintWriter`. The generic type `Integer` has primitive equivalence `int`. Replace `Integer` with `PrintWriter`, the updated example should be `ArrayList<PrintWriter>`. You should first create an instance of `ArrayList<PrintWriter>`, then populate it with `PrintWriter` instances.\n"
-			+ "\n"
-			+ "Notes:\n"
-			+ "- Between tags <Example></Example>, return the updated Example section.\n"
-			+ "- Do not include <Background> and <Question>.\n"
-			+ "- You should use the specific data type in the additional example below.\n"
-			+ "- Do not include any explanation.\n";
+			+ "Given a variable in an existing example `V_e` and a variable in the additional example `V_a`:\n"
+			+ "1. Check `V_e` (e.g., `java.util.HashMap<String, Integer>`), identify all generic types present in `V_e` (e.g., `String`, `Integer`). If there are generic types, take note of the generic types with primitive equivalences, OR String. e.g. Integer has corresponding primitive type int.\n"
+			+ "2. Choose one of the identified generic types as `T_g`. Let `T_a` be the data type of `V_a` (e.g., `java.lang.StringBuffer`). Replace `T_g` with `T_a`. Let `T_e` be the updated data type of `V_e` (e.g., `java.util.HashMap<String, java.lang.StringBuffer>`).\n"
+			+ "3. Create an instance of `T_e`. Create some instances of `T_a`. Fully expand the structure of `V_a` according to its class definition, including all fields and their respective data types. \n"
+			+ "4. Populate the `T_e` instance using fully expanded `T_a` instances from step 3.\n"
+			+ "5. Replace `V_e` with the updated example. Do not include any explanation.\n";
 
 	public PromptTemplateFiller() {
 	}
-	
+
 	public String getDefaultVariableExpansionPromptExample() {
 		return variableExpansionPromptExample;
-	}
-
-	public String getDefaultVariableExpansionPromptQuestion() {
-		HashMap<String, String> placeholders = new HashMap<>();
-		placeholders.put("var_name", "___variable name___");
-		placeholders.put("var_type", "___variable type___");
-		placeholders.put("var_value", "___variable value___");
-		placeholders.put("class_structure", "___class structure___");
-		placeholders.put("source_code", "___source code___");
-
-		return getVariableExpansionPromptQuestion(placeholders);
 	}
 
 	public String getVariableExpansionPromptQuestion(HashMap<String, String> datapoint) {
@@ -87,10 +70,6 @@ public class PromptTemplateFiller {
 				"Return in JSON format for this variable as shown in the above example. You must follow the JSON format as \"var_name:var_type\": var_value. Do not include explanation in your response.");
 
 		return stringBuilder.toString();
-	}
-
-	public String getVariableExpansionPromptTemplate(String example) {
-		return variableExpansionPromptBackground + example + getDefaultVariableExpansionPromptQuestion();
 	}
 
 	public String getVariableExpansionPrompt(HashMap<String, String> datapoint, String example) {
@@ -129,7 +108,7 @@ public class PromptTemplateFiller {
 
 		// instruction
 		stringBuilder.append("\nUpdate the Prompt template: \"\"\"\n");
-		stringBuilder.append(variableExpansionPromptBackground + example + getDefaultVariableExpansionPromptQuestion());
+		stringBuilder.append(example);
 		stringBuilder.append("\n\"\"\"");
 
 		return stringBuilder.toString();
