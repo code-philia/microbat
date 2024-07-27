@@ -54,6 +54,14 @@ public class TextualLossGenerator {
 		} else if (actualJSONValue instanceof JSONArray && expectedJSONValue instanceof JSONArray) {
 			return getLossForArrays(actualJSONKey, expectedJSONKey, (JSONArray) actualJSONValue,
 					(JSONArray) expectedJSONValue);
+		} else if (actualJSONValue instanceof JSONArray && expectedJSONValue instanceof String) {
+			// expectedJSONValue cannot be parsed into JSONArray
+			JSONArray expectedJSONArray = trimArrayString((String) expectedJSONValue);
+			return getLossForArrays(actualJSONKey, expectedJSONKey, (JSONArray) actualJSONValue, expectedJSONArray);
+		} else if (expectedJSONValue instanceof JSONArray && actualJSONValue instanceof String) {
+			// actualJSONValue cannot be parsed into JSONArray
+			JSONArray actualJSONArray = trimArrayString((String) actualJSONValue);
+			return getLossForArrays(actualJSONKey, expectedJSONKey, actualJSONArray, (JSONArray) expectedJSONValue);
 		} else {
 			return getLossForOtherTypes(actualJSONKey, expectedJSONKey, actualJSONValue, expectedJSONValue);
 		}
@@ -84,6 +92,16 @@ public class TextualLossGenerator {
 				} else if (actualFieldValue instanceof JSONArray && expectedFieldValue instanceof JSONArray) {
 					fieldLoss = getLossForArrays(actualFieldSignature, expectedFieldSignature,
 							(JSONArray) actualFieldValue, (JSONArray) expectedFieldValue);
+				} else if (actualFieldValue instanceof JSONArray && expectedFieldValue instanceof String) {
+					// expectedFieldValue cannot be parsed into JSONArray
+					JSONArray expectedJSONArray = trimArrayString((String) expectedFieldValue);
+					fieldLoss = getLossForArrays(actualFieldSignature, expectedFieldSignature,
+							(JSONArray) actualFieldValue, expectedJSONArray);
+				} else if (expectedFieldValue instanceof JSONArray && actualFieldValue instanceof String) {
+					// actualFieldValue cannot be parsed into JSONArray
+					JSONArray actualJSONArray = trimArrayString((String) actualFieldValue);
+					fieldLoss = getLossForArrays(actualFieldSignature, expectedFieldSignature, actualJSONArray,
+							(JSONArray) expectedFieldValue);
 				} else {
 					fieldLoss = getLossForOtherTypes(actualFieldSignature, expectedFieldSignature, actualFieldValue,
 							expectedFieldValue);
@@ -123,6 +141,14 @@ public class TextualLossGenerator {
 			} else if (actualElement instanceof JSONArray && expectedElement instanceof JSONArray) {
 				elementLoss = getLossForArrays(emptyKey, emptyKey, (JSONArray) actualElement,
 						(JSONArray) expectedElement);
+			} else if (actualElement instanceof JSONArray && expectedElement instanceof String) {
+				// expectedElement cannot be parsed into JSONArray
+				JSONArray expectedChildJSONArray = trimArrayString((String) expectedElement);
+				elementLoss = getLossForArrays(emptyKey, emptyKey, (JSONArray) actualElement, expectedChildJSONArray);
+			} else if (expectedElement instanceof JSONArray && actualElement instanceof String) {
+				// actualElement cannot be parsed into JSONArray
+				JSONArray actualChildJSONArray = trimArrayString((String) actualElement);
+				elementLoss = getLossForArrays(emptyKey, emptyKey, actualChildJSONArray, (JSONArray) expectedElement);
 			} else {
 				elementLoss = getLossForOtherTypes(emptyKey, emptyKey, actualElement, expectedElement);
 			}
@@ -130,11 +156,21 @@ public class TextualLossGenerator {
 		}
 
 		// Loss based on extra elements
-		int lengthDifference = actualLen - expectedLen;
-		if (lengthDifference > 0) {
-			loss.append("the output array mistakenly includes " + lengthDifference + " more elements\n");
-		} else if (lengthDifference < 0) {
-			loss.append("the output array mistakenly excludes " + lengthDifference + " less elements\n");
+		for (int i = actualLen - 1; i >= overlappingLength; i--) {
+			Object actualElement = actualJSONArray.get(i);
+			if (actualElement != null && !actualElement.equals(JSONObject.NULL)) {
+				int extraElementCount = i - (overlappingLength - 1);
+				loss.append("the output array mistakenly includes " + extraElementCount + " more elements\n");
+				break;
+			}
+		}
+		for (int i = expectedLen - 1; i >= overlappingLength; i--) {
+			Object expectedElement = expectedJSONArray.get(i);
+			if (expectedElement != null && !expectedElement.equals(JSONObject.NULL)) {
+				int extraElementCount = i - (overlappingLength - 1);
+				loss.append("the output array mistakenly excludes " + extraElementCount + " less elements\n");
+				break;
+			}
 		}
 
 		return loss.toString();
@@ -273,5 +309,18 @@ public class TextualLossGenerator {
 		}
 
 		return loss.toString();
+	}
+
+	private JSONArray trimArrayString(String value) {
+		StringBuilder trimmedStringBuilder = new StringBuilder();
+		String[] entries = value.split(",");
+		for (int i = 0; i < entries.length; i++) {
+			String entry = entries[i];
+			trimmedStringBuilder.append(entry.trim());
+			if (i != entries.length - 1) {
+				trimmedStringBuilder.append(",");
+			}
+		}
+		return new JSONArray(trimmedStringBuilder.toString());
 	}
 }

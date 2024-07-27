@@ -44,6 +44,14 @@ public class LossCalculator {
 					(JSONObject) expectedValue);
 		} else if (actualValue instanceof JSONArray && expectedValue instanceof JSONArray) {
 			return computeLossForArrays(actualKey, expectedKey, (JSONArray) actualValue, (JSONArray) expectedValue);
+		} else if (actualValue instanceof JSONArray && expectedValue instanceof String) {
+			// expectedValue cannot be parsed into JSONArray
+			JSONArray expectedJSONArray = trimArrayString((String) expectedValue);
+			return computeLossForArrays(actualKey, expectedKey, (JSONArray) actualValue, expectedJSONArray);
+		} else if (expectedValue instanceof JSONArray && actualValue instanceof String) {
+			// actualValue cannot be parsed into JSONArray
+			JSONArray actualJSONArray = trimArrayString((String) actualValue);
+			return computeLossForArrays(actualKey, expectedKey, actualJSONArray, (JSONArray) expectedValue);
 		} else {
 			return computeLossForOtherTypes(actualKey, expectedKey, actualValue, expectedValue);
 		}
@@ -78,6 +86,16 @@ public class LossCalculator {
 				} else if (actualFieldValue instanceof JSONArray && expectedFieldValue instanceof JSONArray) {
 					individualScoreSum += computeLossForArrays(actualFieldSignature, expectedFieldSignature,
 							(JSONArray) actualFieldValue, (JSONArray) expectedFieldValue);
+				} else if (actualFieldValue instanceof JSONArray && expectedFieldValue instanceof String) {
+					// expectedFieldValue cannot be parsed into JSONArray
+					JSONArray expectedJSONArray = trimArrayString((String) expectedFieldValue);
+					individualScoreSum += computeLossForArrays(actualFieldSignature, expectedFieldSignature,
+							(JSONArray) actualFieldValue, expectedJSONArray);
+				} else if (expectedFieldValue instanceof JSONArray && actualFieldValue instanceof String) {
+					// actualFieldValue cannot be parsed into JSONArray
+					JSONArray actualJSONArray = trimArrayString((String) actualFieldValue);
+					individualScoreSum += computeLossForArrays(actualFieldSignature, expectedFieldSignature,
+							actualJSONArray, (JSONArray) expectedFieldValue);
 				} else {
 					individualScoreSum += computeLossForOtherTypes(actualFieldSignature, expectedFieldSignature,
 							actualFieldValue, expectedFieldValue);
@@ -120,15 +138,40 @@ public class LossCalculator {
 			} else if (actualElement instanceof JSONArray && expectedElement instanceof JSONArray) {
 				individualScoreSum += computeLossForArrays(emptyKey, emptyKey, (JSONArray) actualElement,
 						(JSONArray) expectedElement);
+			} else if (actualElement instanceof JSONArray && expectedElement instanceof String) {
+				// expectedElement cannot be parsed into JSONArray
+				JSONArray expectedChildJSONArray = trimArrayString((String) expectedElement);
+				individualScoreSum += computeLossForArrays(emptyKey, emptyKey, (JSONArray) actualElement,
+						expectedChildJSONArray);
+			} else if (expectedElement instanceof JSONArray && actualElement instanceof String) {
+				// actualElement cannot be parsed into JSONArray
+				JSONArray actualChildJSONArray = trimArrayString((String) actualElement);
+				individualScoreSum += computeLossForArrays(emptyKey, emptyKey, actualChildJSONArray,
+						(JSONArray) expectedElement);
 			} else {
 				individualScoreSum += computeLossForOtherTypes(emptyKey, emptyKey, actualElement, expectedElement);
 			}
 		}
 
 		// Loss based on extra elements
-		int absLengthDifference = Math.abs(actualLen - expectedLen);
-		componentCount += absLengthDifference;
-		individualScoreSum += absLengthDifference;
+		for (int i = actualLen - 1; i >= overlappingLength; i--) {
+			Object actualElement = actualJSONArray.get(i);
+			if (actualElement != null && !actualElement.equals(JSONObject.NULL)) {
+				int extraElementCount = i - (overlappingLength - 1);
+				componentCount += extraElementCount;
+				individualScoreSum += extraElementCount;
+				break;
+			}
+		}
+		for (int i = expectedLen - 1; i >= overlappingLength; i--) {
+			Object expectedElement = expectedJSONArray.get(i);
+			if (expectedElement != null && !expectedElement.equals(JSONObject.NULL)) {
+				int extraElementCount = i - (overlappingLength - 1);
+				componentCount += extraElementCount;
+				individualScoreSum += extraElementCount;
+				break;
+			}
+		}
 
 		return individualScoreSum / (double) componentCount;
 	}
@@ -233,5 +276,18 @@ public class LossCalculator {
 			}
 		}
 		return differences;
+	}
+
+	private JSONArray trimArrayString(String value) {
+		StringBuilder trimmedStringBuilder = new StringBuilder();
+		String[] entries = value.split(",");
+		for (int i = 0; i < entries.length; i++) {
+			String entry = entries[i];
+			trimmedStringBuilder.append(entry.trim());
+			if (i != entries.length - 1) {
+				trimmedStringBuilder.append(",");
+			}
+		}
+		return new JSONArray(trimmedStringBuilder.toString());
 	}
 }
