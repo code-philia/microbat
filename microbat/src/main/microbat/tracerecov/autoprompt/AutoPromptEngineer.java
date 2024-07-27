@@ -97,7 +97,7 @@ public class AutoPromptEngineer {
 		} catch (JSONException jsonException) {
 			String updatedTextualLoss = textualLossGeneartor.getLossFromException(updatedOutput, jsonException);
 			// retry with original example and textualLoss
-			return getFineTunedExample(datapoint, originalExample, numericalLoss, updatedTextualLoss, trials - 1);
+			return getFineTunedExample(datapoint, updatedExample, numericalLoss, updatedTextualLoss, trials - 1);
 		}
 
 		JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
