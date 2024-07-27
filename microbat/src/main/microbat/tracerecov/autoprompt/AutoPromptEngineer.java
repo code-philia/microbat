@@ -67,6 +67,8 @@ public class AutoPromptEngineer {
 			if (numericalLoss > LOSS_THRESHOLD) {
 				return getFineTunedExample(datapoint, originalExample, numericalLoss, textualLoss, TRIAL_LIMIT);
 			}
+		} else {
+			return getFineTunedExample(datapoint, originalExample, numericalLoss, textualLoss, TRIAL_LIMIT);
 		}
 
 		return originalExample;
