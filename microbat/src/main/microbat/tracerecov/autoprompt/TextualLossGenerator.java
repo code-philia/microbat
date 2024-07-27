@@ -194,9 +194,18 @@ public class TextualLossGenerator {
 	 * have the same type, Loss == 1 otherwise.
 	 */
 	private String getLossBetweenTypes(String actualKey, String expectedKey) {
+		Set<String> equivalentTypes = new HashSet<>();
+		equivalentTypes.add("java.lang.String");
+		equivalentTypes.add("char[]");
+		equivalentTypes.add("byte[]");
+
 		try {
 			String actualType = actualKey.split(":")[1].trim();
 			String expectedType = expectedKey.split(":")[1].trim();
+
+			if (equivalentTypes.contains(actualType) && equivalentTypes.contains(expectedType)) {
+				return "";
+			}
 
 			if (actualType.equals(expectedType)) {
 				return "";
