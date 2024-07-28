@@ -214,7 +214,8 @@ public class LossCalculator {
 
 		// Loss based on value
 		componentCount += 1;
-		individualScoreSum += computeLossBetweenValues(actualJSONKey, actualValue.toString(), expectedValue.toString());
+		individualScoreSum += computeLossBetweenValues(actualJSONKey, expectedJSONKey, actualValue.toString(),
+				expectedValue.toString());
 
 		return individualScoreSum / (double) componentCount;
 	}
@@ -264,21 +265,24 @@ public class LossCalculator {
 		}
 	}
 
-	/**
-	 * Assume both keys are valid and comparable. Loss between two keys == 0 if they
-	 * have the same type, Loss == 1 otherwise.
-	 */
-	private int computeLossBetweenTypes(String key1, String key2) {
+	private boolean areStringEquivalences(String type1, String type2) {
 		Set<String> equivalentTypes = new HashSet<>();
 		equivalentTypes.add("java.lang.String");
 		equivalentTypes.add("char[]");
 		equivalentTypes.add("byte[]");
 
+		return equivalentTypes.contains(type1) && equivalentTypes.contains(type2);
+	}
+
+	/**
+	 * Assume both keys are valid and comparable. Loss between two keys == 0 if they
+	 * have the same type, Loss == 1 otherwise.
+	 */
+	private int computeLossBetweenTypes(String key1, String key2) {
 		try {
 			String type1 = getFieldType(key1);
 			String type2 = getFieldType(key2);
-
-			if (equivalentTypes.contains(type1) && equivalentTypes.contains(type2)) {
+			if (areStringEquivalences(type1, type2)) {
 				return 0;
 			}
 
@@ -288,9 +292,32 @@ public class LossCalculator {
 		}
 	}
 
-	private int computeLossBetweenValues(String actualKey, String actualValue, String expectedValue) {
-		String type = getFieldType(actualKey);
-		if (type.equals("byte")) {
+	private String convertArrayToString(String plainArrayString) {
+		if (plainArrayString.startsWith("[") && plainArrayString.endsWith("]")) {
+			plainArrayString = plainArrayString.substring(1, plainArrayString.length() - 1);
+			String[] entries = plainArrayString.split(",");
+			StringBuilder stringBuilder = new StringBuilder();
+			for (String entry : entries) {
+				entry = entry.trim();
+				if (entry == "") {
+					entry = " ";
+				}
+				stringBuilder.append(entry);
+			}
+			return stringBuilder.toString();
+		} else {
+			return plainArrayString;
+		}
+	}
+
+	private int computeLossBetweenValues(String actualKey, String expectedKey, String actualValue,
+			String expectedValue) {
+		String actualType = getFieldType(actualKey);
+		String expectedType = getFieldType(expectedKey);
+		if (areStringEquivalences(actualType, expectedType)) {
+			actualValue = convertArrayToString(actualValue);
+			expectedValue = convertArrayToString(expectedValue);
+		} else if (actualType.equals("byte")) {
 			try {
 				int actualByte = Integer.valueOf(actualValue);
 				char character = (char) actualByte;

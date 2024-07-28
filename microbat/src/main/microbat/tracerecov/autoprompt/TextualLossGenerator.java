@@ -212,7 +212,7 @@ public class TextualLossGenerator {
 		loss.append(getLossBetweenTypes(actualJSONKey, expectedJSONKey));
 
 		// Loss based on value
-		loss.append(getLossBetweenValues(actualJSONKey, actualValue.toString(), expectedValue.toString()));
+		loss.append(getLossBetweenValues(actualJSONKey, expectedJSONKey, actualValue.toString(), expectedValue.toString()));
 
 		return loss.toString();
 	}
@@ -277,20 +277,26 @@ public class TextualLossGenerator {
 	}
 
 	/**
-	 * Assume both keys are valid and comparable. Loss between two keys == 0 if they
-	 * have the same type, Loss == 1 otherwise.
+	 * Copied from {@code LossCalculator} class.
 	 */
-	private String getLossBetweenTypes(String actualKey, String expectedKey) {
+	private boolean areStringEquivalences(String type1, String type2) {
 		Set<String> equivalentTypes = new HashSet<>();
 		equivalentTypes.add("java.lang.String");
 		equivalentTypes.add("char[]");
 		equivalentTypes.add("byte[]");
 
+		return equivalentTypes.contains(type1) && equivalentTypes.contains(type2);
+	}
+
+	/**
+	 * Assume both keys are valid and comparable. Loss between two keys == 0 if they
+	 * have the same type, Loss == 1 otherwise.
+	 */
+	private String getLossBetweenTypes(String actualKey, String expectedKey) {
 		try {
 			String actualType = getFieldType(actualKey);
 			String expectedType = getFieldType(expectedKey);
-
-			if (equivalentTypes.contains(actualType) && equivalentTypes.contains(expectedType)) {
+			if (areStringEquivalences(actualType, expectedType)) {
 				return "";
 			}
 
@@ -309,9 +315,34 @@ public class TextualLossGenerator {
 		}
 	}
 
-	private String getLossBetweenValues(String actualKey, String actualValue, String expectedValue) {
-		String type = getFieldType(actualKey);
-		if (type.equals("byte")) {
+	/**
+	 * Copied from {@code LossCalculator} class.
+	 */
+	private String convertArrayToString(String plainArrayString) {
+		if (plainArrayString.startsWith("[") && plainArrayString.endsWith("]")) {
+			plainArrayString = plainArrayString.substring(1, plainArrayString.length() - 1);
+			String[] entries = plainArrayString.split(",");
+			StringBuilder stringBuilder = new StringBuilder();
+			for (String entry : entries) {
+				entry = entry.trim();
+				if (entry == "") {
+					entry = " ";
+				}
+				stringBuilder.append(entry);
+			}
+			return stringBuilder.toString();
+		} else {
+			return plainArrayString;
+		}
+	}
+	
+	private String getLossBetweenValues(String actualKey, String expectedKey, String actualValue, String expectedValue) {
+		String actualType = getFieldType(actualKey);
+		String expectedType = getFieldType(expectedKey);
+		if (areStringEquivalences(actualType, expectedType)) {
+			actualValue = convertArrayToString(actualValue);
+			expectedValue = convertArrayToString(expectedValue);
+		} else if (actualType.equals("byte")) {
 			try {
 				int actualByte = Integer.valueOf(actualValue);
 				char character = (char) actualByte;
