@@ -52,6 +52,8 @@ public class PromptTemplateFiller {
 		return variableExpansionPromptExample;
 	}
 
+	/* Prompt to be adjusted */
+
 	public String getVariableExpansionPromptQuestion(HashMap<String, String> datapoint) {
 		/* datapoint features */
 		String varName = datapoint.get("var_name");
@@ -76,28 +78,20 @@ public class PromptTemplateFiller {
 		return variableExpansionPromptBackground + example + getVariableExpansionPromptQuestion(datapoint);
 	}
 
+	/* Adjustment Prompt */
+
 	/**
 	 * datapoint features:
 	 * 
 	 * var_name, var_type, var_value, class_structure, source_code, ground_truth
 	 */
 	public String getVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint, String example) {
-		/* datapoint features */
-		String varType = datapoint.get("var_type");
-		String varValue = datapoint.get("var_value");
-		String classStructure = datapoint.get("class_structure");
-		String groundTruth = datapoint.get("ground_truth");
-
 		StringBuilder stringBuilder = new StringBuilder(variableExpansionAdjustmentPromptPrefix);
+		String groundTruth = datapoint.get("ground_truth");
 
 		// basic information
 		stringBuilder.append("\nAdditional Example:");
-		stringBuilder.append("\nClass Name: " + varType);
-		stringBuilder.append("\nStructure: " + classStructure);
-		stringBuilder.append("\nVariable Value: " + varValue);
-
-		// ground truth
-		stringBuilder.append("\nWe can summarize the structure as:\n```json\n" + groundTruth + "\n```");
+		stringBuilder.append(getExample(datapoint, groundTruth));
 
 		// instruction
 		stringBuilder.append("\nUpdate the Prompt template: \"\"\"\n");
@@ -109,5 +103,45 @@ public class PromptTemplateFiller {
 
 	public String getDefaultVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint) {
 		return getVariableExpansionAdjustmentPrompt(datapoint, variableExpansionPromptExample);
+	}
+
+	private String getExample(HashMap<String, String> datapoint, String structure) {
+		String varType = datapoint.get("var_type");
+		String varValue = datapoint.get("var_value");
+		String classStructure = datapoint.get("class_structure");
+
+		StringBuilder stringBuilder = new StringBuilder();
+
+		stringBuilder.append("\nClass Name: " + varType);
+		stringBuilder.append("\nStructure: " + classStructure);
+		stringBuilder.append("\nVariable Value: " + varValue);
+
+		stringBuilder.append("\nWe can summarize the structure as:\n```json\n" + structure + "\n```");
+
+		return stringBuilder.toString();
+	}
+
+	/* Adjustment Prompt Incorporating Textual Loss */
+
+	public String getVariableExpansionAdjustmentPromptWithLoss(String example, HashMap<String, String> datapoint,
+			String output, String textualLoss) {
+		// existing example
+		StringBuilder stringBuilder = new StringBuilder("Given example:\n");
+		stringBuilder.append(example);
+		stringBuilder.append("\n");
+
+		// output
+		stringBuilder.append("Based on the example, an output was generated:\n\"\"\"");
+		stringBuilder.append(getExample(datapoint, output));
+		stringBuilder.append("\"\"\"");
+
+		// errors (textual loss) in output
+		stringBuilder.append("It has the following errors:\n\"\"\"");
+		stringBuilder.append(textualLoss);
+		stringBuilder.append("\"\"\"");
+
+		stringBuilder.append("Summarize the errors first, update the given example to avoid these errors. "
+				+ "In your answer, include the updated example only. Do not include explanations.");
+		return stringBuilder.toString();
 	}
 }
