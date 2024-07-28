@@ -12,8 +12,6 @@ import org.json.JSONObject;
  */
 public class LossCalculator {
 
-	private String emptyKey = ":";
-
 	public LossCalculator() {
 	}
 
@@ -63,10 +61,8 @@ public class LossCalculator {
 		int componentCount = 0;
 
 		// Loss based on type
-		if (!emptyKey.equals(actualJSONKey)) {
-			componentCount += 1;
-			individualScoreSum += computeLossBetweenTypes(actualJSONKey, expectedJSONKey);
-		}
+		componentCount += 1;
+		individualScoreSum += computeLossBetweenTypes(actualJSONKey, expectedJSONKey);
 
 		// Loss based on common fields
 		Set<String> actualKeySet = actualJSONValue.keySet();
@@ -117,10 +113,8 @@ public class LossCalculator {
 		int componentCount = 0;
 
 		// Loss based on type
-		if (!emptyKey.equals(actualJSONKey)) {
-			componentCount += 1;
-			individualScoreSum += computeLossBetweenTypes(actualJSONKey, expectedJSONKey);
-		}
+		componentCount += 1;
+		individualScoreSum += computeLossBetweenTypes(actualJSONKey, expectedJSONKey);
 
 		// Loss based on elements with overlapping indices
 		int actualLen = actualJSONArray.length();
@@ -132,24 +126,27 @@ public class LossCalculator {
 			// compute individual score for field
 			Object actualElement = actualJSONArray.get(i);
 			Object expectedElement = expectedJSONArray.get(i);
+
+			String arrayName = getFieldName(actualJSONKey);
+			String arrayElementType = getArrayElementType(actualJSONKey);
+			String key = arrayName + "[" + i + "]:" + arrayElementType;
+
 			if (actualElement instanceof JSONObject && expectedElement instanceof JSONObject) {
-				individualScoreSum += computeLossForCompositeTypes(emptyKey, emptyKey, (JSONObject) actualElement,
+				individualScoreSum += computeLossForCompositeTypes(key, key, (JSONObject) actualElement,
 						(JSONObject) expectedElement);
 			} else if (actualElement instanceof JSONArray && expectedElement instanceof JSONArray) {
-				individualScoreSum += computeLossForArrays(emptyKey, emptyKey, (JSONArray) actualElement,
+				individualScoreSum += computeLossForArrays(key, key, (JSONArray) actualElement,
 						(JSONArray) expectedElement);
 			} else if (actualElement instanceof JSONArray && expectedElement instanceof String) {
 				// expectedElement cannot be parsed into JSONArray
 				JSONArray expectedChildJSONArray = trimArrayString((String) expectedElement);
-				individualScoreSum += computeLossForArrays(emptyKey, emptyKey, (JSONArray) actualElement,
-						expectedChildJSONArray);
+				individualScoreSum += computeLossForArrays(key, key, (JSONArray) actualElement, expectedChildJSONArray);
 			} else if (expectedElement instanceof JSONArray && actualElement instanceof String) {
 				// actualElement cannot be parsed into JSONArray
 				JSONArray actualChildJSONArray = trimArrayString((String) actualElement);
-				individualScoreSum += computeLossForArrays(emptyKey, emptyKey, actualChildJSONArray,
-						(JSONArray) expectedElement);
+				individualScoreSum += computeLossForArrays(key, key, actualChildJSONArray, (JSONArray) expectedElement);
 			} else {
-				individualScoreSum += computeLossForOtherTypes(emptyKey, emptyKey, actualElement, expectedElement);
+				individualScoreSum += computeLossForOtherTypes(key, key, actualElement, expectedElement);
 			}
 		}
 
@@ -182,14 +179,12 @@ public class LossCalculator {
 		int componentCount = 0;
 
 		// Loss based on type
-		if (!emptyKey.equals(actualJSONKey)) {
-			componentCount += 1;
-			individualScoreSum += computeLossBetweenTypes(actualJSONKey, expectedJSONKey);
-		}
+		componentCount += 1;
+		individualScoreSum += computeLossBetweenTypes(actualJSONKey, expectedJSONKey);
 
 		// Loss based on value
 		componentCount += 1;
-		individualScoreSum += computeLossBetweenValues(actualValue.toString(), expectedValue.toString());
+		individualScoreSum += computeLossBetweenValues(actualJSONKey, actualValue.toString(), expectedValue.toString());
 
 		return individualScoreSum / (double) componentCount;
 	}
@@ -208,14 +203,31 @@ public class LossCalculator {
 		return items.length == 2;
 	}
 
+	private String getFieldName(String key) {
+		return key.split(":")[0].trim();
+	}
+
+	private String getFieldType(String key) {
+		return key.split(":")[1].trim();
+	}
+
+	private String getArrayElementType(String key) {
+		String arrayType = getFieldType(key);
+		if (arrayType.contains("[]")) {
+			return arrayType.substring(0, arrayType.lastIndexOf("[]"));
+		} else {
+			return arrayType;
+		}
+	}
+
 	/**
 	 * Assume both keys are valid. Keys are comparable if they have the same field
 	 * name (not necessarily sharing the same field type).
 	 */
 	private boolean areComparableKeys(String key1, String key2) {
 		try {
-			String field1 = key1.split(":")[0].trim();
-			String field2 = key2.split(":")[0].trim();
+			String field1 = getFieldName(key1);
+			String field2 = getFieldName(key2);
 			return field1.equals(field2);
 		} catch (ArrayIndexOutOfBoundsException e) {
 			return false;
@@ -233,8 +245,8 @@ public class LossCalculator {
 		equivalentTypes.add("byte[]");
 
 		try {
-			String type1 = key1.split(":")[1].trim();
-			String type2 = key2.split(":")[1].trim();
+			String type1 = getFieldType(key1);
+			String type2 = getFieldType(key2);
 
 			if (equivalentTypes.contains(type1) && equivalentTypes.contains(type2)) {
 				return 0;
@@ -246,8 +258,15 @@ public class LossCalculator {
 		}
 	}
 
-	private int computeLossBetweenValues(String value1, String value2) {
-		return identityFunction(value1, value2);
+	private int computeLossBetweenValues(String actualKey, String actualValue, String expectedValue) {
+		String type = getFieldType(actualKey);
+		if (type.equals("byte")) {
+			int actualByte = Integer.valueOf(actualValue);
+			char character = (char) actualByte;
+			actualValue = String.valueOf(character);
+		}
+
+		return identityFunction(actualValue, expectedValue);
 	}
 
 	/**
