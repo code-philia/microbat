@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -60,6 +61,15 @@ public class TextualLossGenerator {
 			// actualJSONValue cannot be parsed into JSONArray
 			JSONArray actualJSONArray = trimArrayString((String) actualJSONValue);
 			return getLossForArrays(actualJSONKey, expectedJSONKey, actualJSONArray, (JSONArray) expectedJSONValue);
+		} else if (actualJSONValue instanceof String && expectedJSONValue instanceof String) {
+			// both are string, attempt to parse them into arrays
+			try {
+				JSONArray actualJSONArray = trimArrayString((String) actualJSONValue);
+				JSONArray expectedJSONArray = trimArrayString((String) expectedJSONValue);
+				return getLossForArrays(actualJSONKey, expectedJSONKey, actualJSONArray, expectedJSONArray);
+			} catch (JSONException e) {
+				return getLossForOtherTypes(actualJSONKey, expectedJSONKey, actualJSONValue, expectedJSONValue);
+			}
 		} else {
 			return getLossForOtherTypes(actualJSONKey, expectedJSONKey, actualJSONValue, expectedJSONValue);
 		}
@@ -98,6 +108,17 @@ public class TextualLossGenerator {
 					JSONArray actualJSONArray = trimArrayString((String) actualFieldValue);
 					fieldLoss = getLossForArrays(actualFieldSignature, expectedFieldSignature, actualJSONArray,
 							(JSONArray) expectedFieldValue);
+				} else if (actualFieldValue instanceof String && expectedFieldValue instanceof String) {
+					// both are string, attempt to parse them into arrays
+					try {
+						JSONArray actualJSONArray = trimArrayString((String) actualFieldValue);
+						JSONArray expectedJSONArray = trimArrayString((String) expectedFieldValue);
+						fieldLoss = getLossForArrays(actualFieldSignature, expectedFieldSignature, actualJSONArray,
+								expectedJSONArray);
+					} catch (JSONException e) {
+						fieldLoss = getLossForOtherTypes(actualFieldSignature, expectedFieldSignature, actualFieldValue,
+								expectedFieldValue);
+					}
 				} else {
 					fieldLoss = getLossForOtherTypes(actualFieldSignature, expectedFieldSignature, actualFieldValue,
 							expectedFieldValue);
@@ -147,6 +168,15 @@ public class TextualLossGenerator {
 				// actualElement cannot be parsed into JSONArray
 				JSONArray actualChildJSONArray = trimArrayString((String) actualElement);
 				elementLoss = getLossForArrays(key, key, actualChildJSONArray, (JSONArray) expectedElement);
+			} else if (actualElement instanceof String && expectedElement instanceof String) {
+				// both are string, attempt to parse them into arrays
+				try {
+					JSONArray actualChildJSONArray = trimArrayString((String) actualElement);
+					JSONArray expectedChildJSONArray = trimArrayString((String) expectedElement);
+					elementLoss = getLossForArrays(key, key, actualChildJSONArray, expectedChildJSONArray);
+				} catch (JSONException e) {
+					elementLoss = getLossForOtherTypes(key, key, actualElement, expectedElement);
+				}
 			} else {
 				elementLoss = getLossForOtherTypes(key, key, actualElement, expectedElement);
 			}
@@ -282,9 +312,13 @@ public class TextualLossGenerator {
 	private String getLossBetweenValues(String actualKey, String actualValue, String expectedValue) {
 		String type = getFieldType(actualKey);
 		if (type.equals("byte")) {
-			int actualByte = Integer.valueOf(actualValue);
-			char character = (char) actualByte;
-			actualValue = String.valueOf(character);
+			try {
+				int actualByte = Integer.valueOf(actualValue);
+				char character = (char) actualByte;
+				actualValue = String.valueOf(character);
+			} catch (java.lang.NumberFormatException e) {
+				// do nothing
+			}
 		}
 
 		if (actualValue.equals(expectedValue)) {

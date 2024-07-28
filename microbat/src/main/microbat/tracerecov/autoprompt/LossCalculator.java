@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -50,6 +51,15 @@ public class LossCalculator {
 			// actualValue cannot be parsed into JSONArray
 			JSONArray actualJSONArray = trimArrayString((String) actualValue);
 			return computeLossForArrays(actualKey, expectedKey, actualJSONArray, (JSONArray) expectedValue);
+		} else if (actualValue instanceof String && expectedValue instanceof String) {
+			// both are string, attempt to parse them into arrays
+			try {
+				JSONArray actualJSONArray = trimArrayString((String) actualValue);
+				JSONArray expectedJSONArray = trimArrayString((String) expectedValue);
+				return computeLossForArrays(actualKey, expectedKey, actualJSONArray, expectedJSONArray);
+			} catch (JSONException e) {
+				return computeLossForOtherTypes(actualKey, expectedKey, actualValue, expectedValue);
+			}
 		} else {
 			return computeLossForOtherTypes(actualKey, expectedKey, actualValue, expectedValue);
 		}
@@ -92,6 +102,17 @@ public class LossCalculator {
 					JSONArray actualJSONArray = trimArrayString((String) actualFieldValue);
 					individualScoreSum += computeLossForArrays(actualFieldSignature, expectedFieldSignature,
 							actualJSONArray, (JSONArray) expectedFieldValue);
+				} else if (actualFieldValue instanceof String && expectedFieldValue instanceof String) {
+					// both are string, attempt to parse them into arrays
+					try {
+						JSONArray actualJSONArray = trimArrayString((String) actualFieldValue);
+						JSONArray expectedJSONArray = trimArrayString((String) expectedFieldValue);
+						individualScoreSum += computeLossForArrays(actualFieldSignature, expectedFieldSignature,
+								actualJSONArray, expectedJSONArray);
+					} catch (JSONException e) {
+						individualScoreSum += computeLossForOtherTypes(actualFieldSignature, expectedFieldSignature,
+								actualFieldValue, expectedFieldValue);
+					}
 				} else {
 					individualScoreSum += computeLossForOtherTypes(actualFieldSignature, expectedFieldSignature,
 							actualFieldValue, expectedFieldValue);
@@ -145,6 +166,15 @@ public class LossCalculator {
 				// actualElement cannot be parsed into JSONArray
 				JSONArray actualChildJSONArray = trimArrayString((String) actualElement);
 				individualScoreSum += computeLossForArrays(key, key, actualChildJSONArray, (JSONArray) expectedElement);
+			} else if (actualElement instanceof String && expectedElement instanceof String) {
+				// both are string, attempt to parse them into arrays
+				try {
+					JSONArray actualChildJSONArray = trimArrayString((String) actualElement);
+					JSONArray expectedChildJSONArray = trimArrayString((String) expectedElement);
+					individualScoreSum += computeLossForArrays(key, key, actualChildJSONArray, expectedChildJSONArray);
+				} catch (JSONException e) {
+					individualScoreSum += computeLossForOtherTypes(key, key, actualElement, expectedElement);
+				}
 			} else {
 				individualScoreSum += computeLossForOtherTypes(key, key, actualElement, expectedElement);
 			}
@@ -261,9 +291,13 @@ public class LossCalculator {
 	private int computeLossBetweenValues(String actualKey, String actualValue, String expectedValue) {
 		String type = getFieldType(actualKey);
 		if (type.equals("byte")) {
-			int actualByte = Integer.valueOf(actualValue);
-			char character = (char) actualByte;
-			actualValue = String.valueOf(character);
+			try {
+				int actualByte = Integer.valueOf(actualValue);
+				char character = (char) actualByte;
+				actualValue = String.valueOf(character);
+			} catch (java.lang.NumberFormatException e) {
+				// do nothing
+			}
 		}
 
 		return identityFunction(actualValue, expectedValue);
