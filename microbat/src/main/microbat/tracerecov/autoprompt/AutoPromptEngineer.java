@@ -82,7 +82,7 @@ public class AutoPromptEngineer {
 
 		// update example
 		String originalAdjustmentPrompt = promptTemplateFiller.getVariableExpansionAdjustmentPrompt(datapoint,
-				textualLoss, originalExample);
+				originalExample);
 		String updatedExample = null;
 		try {
 			updatedExample = executionSimulator.sendRequest("", originalAdjustmentPrompt);

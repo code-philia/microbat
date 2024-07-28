@@ -81,8 +81,7 @@ public class PromptTemplateFiller {
 	 * 
 	 * var_name, var_type, var_value, class_structure, source_code, ground_truth
 	 */
-	public String getVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint, String textualLoss,
-			String example) {
+	public String getVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint, String example) {
 		/* datapoint features */
 		String varType = datapoint.get("var_type");
 		String varValue = datapoint.get("var_value");
@@ -90,12 +89,6 @@ public class PromptTemplateFiller {
 		String groundTruth = datapoint.get("ground_truth");
 
 		StringBuilder stringBuilder = new StringBuilder(variableExpansionAdjustmentPromptPrefix);
-
-		if (textualLoss != null) {
-			stringBuilder.append(
-					"\nWhen generating the new examples, avoid the following wrong output from being generated again:\n");
-			stringBuilder.append(textualLoss);
-		}
 
 		// basic information
 		stringBuilder.append("\nAdditional Example:");
@@ -114,7 +107,7 @@ public class PromptTemplateFiller {
 		return stringBuilder.toString();
 	}
 
-	public String getDefaultVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint, String textualLoss) {
-		return getVariableExpansionAdjustmentPrompt(datapoint, textualLoss, variableExpansionPromptExample);
+	public String getDefaultVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint) {
+		return getVariableExpansionAdjustmentPrompt(datapoint, variableExpansionPromptExample);
 	}
 }
