@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -11,8 +12,6 @@ import org.json.JSONObject;
  * prompt engineering.
  */
 public class TextualLossGenerator {
-
-	private String emptyKey = ":";
 
 	public TextualLossGenerator() {
 	}
@@ -54,6 +53,23 @@ public class TextualLossGenerator {
 		} else if (actualJSONValue instanceof JSONArray && expectedJSONValue instanceof JSONArray) {
 			return getLossForArrays(actualJSONKey, expectedJSONKey, (JSONArray) actualJSONValue,
 					(JSONArray) expectedJSONValue);
+		} else if (actualJSONValue instanceof JSONArray && expectedJSONValue instanceof String) {
+			// expectedJSONValue cannot be parsed into JSONArray
+			JSONArray expectedJSONArray = trimArrayString((String) expectedJSONValue);
+			return getLossForArrays(actualJSONKey, expectedJSONKey, (JSONArray) actualJSONValue, expectedJSONArray);
+		} else if (expectedJSONValue instanceof JSONArray && actualJSONValue instanceof String) {
+			// actualJSONValue cannot be parsed into JSONArray
+			JSONArray actualJSONArray = trimArrayString((String) actualJSONValue);
+			return getLossForArrays(actualJSONKey, expectedJSONKey, actualJSONArray, (JSONArray) expectedJSONValue);
+		} else if (actualJSONValue instanceof String && expectedJSONValue instanceof String) {
+			// both are string, attempt to parse them into arrays
+			try {
+				JSONArray actualJSONArray = trimArrayString((String) actualJSONValue);
+				JSONArray expectedJSONArray = trimArrayString((String) expectedJSONValue);
+				return getLossForArrays(actualJSONKey, expectedJSONKey, actualJSONArray, expectedJSONArray);
+			} catch (JSONException e) {
+				return getLossForOtherTypes(actualJSONKey, expectedJSONKey, actualJSONValue, expectedJSONValue);
+			}
 		} else {
 			return getLossForOtherTypes(actualJSONKey, expectedJSONKey, actualJSONValue, expectedJSONValue);
 		}
@@ -64,9 +80,7 @@ public class TextualLossGenerator {
 		StringBuilder loss = new StringBuilder();
 
 		// Loss based on type
-		if (!emptyKey.equals(actualJSONKey)) {
-			loss.append(getLossBetweenTypes(actualJSONKey, expectedJSONKey));
-		}
+		loss.append(getLossBetweenTypes(actualJSONKey, expectedJSONKey));
 
 		// Loss based on common fields
 		Set<String> actualJSONKeyset = actualJSONValue.keySet();
@@ -84,6 +98,27 @@ public class TextualLossGenerator {
 				} else if (actualFieldValue instanceof JSONArray && expectedFieldValue instanceof JSONArray) {
 					fieldLoss = getLossForArrays(actualFieldSignature, expectedFieldSignature,
 							(JSONArray) actualFieldValue, (JSONArray) expectedFieldValue);
+				} else if (actualFieldValue instanceof JSONArray && expectedFieldValue instanceof String) {
+					// expectedFieldValue cannot be parsed into JSONArray
+					JSONArray expectedJSONArray = trimArrayString((String) expectedFieldValue);
+					fieldLoss = getLossForArrays(actualFieldSignature, expectedFieldSignature,
+							(JSONArray) actualFieldValue, expectedJSONArray);
+				} else if (expectedFieldValue instanceof JSONArray && actualFieldValue instanceof String) {
+					// actualFieldValue cannot be parsed into JSONArray
+					JSONArray actualJSONArray = trimArrayString((String) actualFieldValue);
+					fieldLoss = getLossForArrays(actualFieldSignature, expectedFieldSignature, actualJSONArray,
+							(JSONArray) expectedFieldValue);
+				} else if (actualFieldValue instanceof String && expectedFieldValue instanceof String) {
+					// both are string, attempt to parse them into arrays
+					try {
+						JSONArray actualJSONArray = trimArrayString((String) actualFieldValue);
+						JSONArray expectedJSONArray = trimArrayString((String) expectedFieldValue);
+						fieldLoss = getLossForArrays(actualFieldSignature, expectedFieldSignature, actualJSONArray,
+								expectedJSONArray);
+					} catch (JSONException e) {
+						fieldLoss = getLossForOtherTypes(actualFieldSignature, expectedFieldSignature, actualFieldValue,
+								expectedFieldValue);
+					}
 				} else {
 					fieldLoss = getLossForOtherTypes(actualFieldSignature, expectedFieldSignature, actualFieldValue,
 							expectedFieldValue);
@@ -104,9 +139,7 @@ public class TextualLossGenerator {
 		StringBuilder loss = new StringBuilder();
 
 		// Loss based on type
-		if (!emptyKey.equals(actualJSONKey)) {
-			loss.append(getLossBetweenTypes(actualJSONKey, expectedJSONKey));
-		}
+		loss.append(getLossBetweenTypes(actualJSONKey, expectedJSONKey));
 
 		// Loss based on elements with overlapping indices
 		int actualLen = actualJSONArray.length();
@@ -117,24 +150,55 @@ public class TextualLossGenerator {
 			Object actualElement = actualJSONArray.get(i);
 			Object expectedElement = expectedJSONArray.get(i);
 			String elementLoss;
+
+			String arrayName = getFieldName(actualJSONKey);
+			String arrayElementType = getArrayElementType(actualJSONKey);
+			String key = arrayName + "[" + i + "]:" + arrayElementType;
+
 			if (actualElement instanceof JSONObject && expectedElement instanceof JSONObject) {
-				elementLoss = getLossForCompositeTypes(emptyKey, emptyKey, (JSONObject) actualElement,
+				elementLoss = getLossForCompositeTypes(key, key, (JSONObject) actualElement,
 						(JSONObject) expectedElement);
 			} else if (actualElement instanceof JSONArray && expectedElement instanceof JSONArray) {
-				elementLoss = getLossForArrays(emptyKey, emptyKey, (JSONArray) actualElement,
-						(JSONArray) expectedElement);
+				elementLoss = getLossForArrays(key, key, (JSONArray) actualElement, (JSONArray) expectedElement);
+			} else if (actualElement instanceof JSONArray && expectedElement instanceof String) {
+				// expectedElement cannot be parsed into JSONArray
+				JSONArray expectedChildJSONArray = trimArrayString((String) expectedElement);
+				elementLoss = getLossForArrays(key, key, (JSONArray) actualElement, expectedChildJSONArray);
+			} else if (expectedElement instanceof JSONArray && actualElement instanceof String) {
+				// actualElement cannot be parsed into JSONArray
+				JSONArray actualChildJSONArray = trimArrayString((String) actualElement);
+				elementLoss = getLossForArrays(key, key, actualChildJSONArray, (JSONArray) expectedElement);
+			} else if (actualElement instanceof String && expectedElement instanceof String) {
+				// both are string, attempt to parse them into arrays
+				try {
+					JSONArray actualChildJSONArray = trimArrayString((String) actualElement);
+					JSONArray expectedChildJSONArray = trimArrayString((String) expectedElement);
+					elementLoss = getLossForArrays(key, key, actualChildJSONArray, expectedChildJSONArray);
+				} catch (JSONException e) {
+					elementLoss = getLossForOtherTypes(key, key, actualElement, expectedElement);
+				}
 			} else {
-				elementLoss = getLossForOtherTypes(emptyKey, emptyKey, actualElement, expectedElement);
+				elementLoss = getLossForOtherTypes(key, key, actualElement, expectedElement);
 			}
 			loss.append(elementLoss);
 		}
 
 		// Loss based on extra elements
-		int lengthDifference = actualLen - expectedLen;
-		if (lengthDifference > 0) {
-			loss.append("the output array mistakenly includes " + lengthDifference + " more elements\n");
-		} else if (lengthDifference < 0) {
-			loss.append("the output array mistakenly excludes " + lengthDifference + " less elements\n");
+		for (int i = actualLen - 1; i >= overlappingLength; i--) {
+			Object actualElement = actualJSONArray.get(i);
+			if (actualElement != null && !actualElement.equals(JSONObject.NULL)) {
+				int extraElementCount = i - (overlappingLength - 1);
+				loss.append("the output array mistakenly includes " + extraElementCount + " more elements\n");
+				break;
+			}
+		}
+		for (int i = expectedLen - 1; i >= overlappingLength; i--) {
+			Object expectedElement = expectedJSONArray.get(i);
+			if (expectedElement != null && !expectedElement.equals(JSONObject.NULL)) {
+				int extraElementCount = i - (overlappingLength - 1);
+				loss.append("the output array mistakenly excludes " + extraElementCount + " less elements\n");
+				break;
+			}
 		}
 
 		return loss.toString();
@@ -145,12 +209,10 @@ public class TextualLossGenerator {
 		StringBuilder loss = new StringBuilder();
 
 		// Loss based on type
-		if (!emptyKey.equals(actualJSONKey)) {
-			loss.append(getLossBetweenTypes(actualJSONKey, expectedJSONKey));
-		}
+		loss.append(getLossBetweenTypes(actualJSONKey, expectedJSONKey));
 
 		// Loss based on value
-		loss.append(getLossBetweenValues(actualJSONKey, actualValue.toString(), expectedValue.toString()));
+		loss.append(getLossBetweenValues(actualJSONKey, expectedJSONKey, actualValue.toString(), expectedValue.toString()));
 
 		return loss.toString();
 	}
@@ -176,17 +238,54 @@ public class TextualLossGenerator {
 	}
 
 	/**
-	 * Assume both keys are valid. Keys are comparable if they have the same field
-	 * name (not necessarily sharing the same field type).
+	 * Copied from {@code LossCalculator} class.
+	 */
+	private String getFieldName(String key) {
+		return key.split(":")[0].trim();
+	}
+
+	/**
+	 * Copied from {@code LossCalculator} class.
+	 */
+	private String getFieldType(String key) {
+		return key.split(":")[1].trim();
+	}
+
+	/**
+	 * Copied from {@code LossCalculator} class.
+	 */
+	private String getArrayElementType(String key) {
+		String arrayType = getFieldType(key);
+		if (arrayType.contains("[]")) {
+			return arrayType.substring(0, arrayType.lastIndexOf("[]"));
+		} else {
+			return arrayType;
+		}
+	}
+
+	/**
+	 * Copied from {@code LossCalculator} class.
 	 */
 	private boolean areComparableKeys(String key1, String key2) {
 		try {
-			String field1 = key1.split(":")[0].trim();
-			String field2 = key2.split(":")[0].trim();
+			String field1 = getFieldName(key1);
+			String field2 = getFieldName(key2);
 			return field1.equals(field2);
 		} catch (ArrayIndexOutOfBoundsException e) {
 			return false;
 		}
+	}
+
+	/**
+	 * Copied from {@code LossCalculator} class.
+	 */
+	private boolean areStringEquivalences(String type1, String type2) {
+		Set<String> equivalentTypes = new HashSet<>();
+		equivalentTypes.add("java.lang.String");
+		equivalentTypes.add("char[]");
+		equivalentTypes.add("byte[]");
+
+		return equivalentTypes.contains(type1) && equivalentTypes.contains(type2);
 	}
 
 	/**
@@ -195,8 +294,11 @@ public class TextualLossGenerator {
 	 */
 	private String getLossBetweenTypes(String actualKey, String expectedKey) {
 		try {
-			String actualType = actualKey.split(":")[1].trim();
-			String expectedType = expectedKey.split(":")[1].trim();
+			String actualType = getFieldType(actualKey);
+			String expectedType = getFieldType(expectedKey);
+			if (areStringEquivalences(actualType, expectedType)) {
+				return "";
+			}
 
 			if (actualType.equals(expectedType)) {
 				return "";
@@ -213,7 +315,43 @@ public class TextualLossGenerator {
 		}
 	}
 
-	private String getLossBetweenValues(String actualKey, String actualValue, String expectedValue) {
+	/**
+	 * Copied from {@code LossCalculator} class.
+	 */
+	private String convertArrayToString(String plainArrayString) {
+		if (plainArrayString.startsWith("[") && plainArrayString.endsWith("]")) {
+			plainArrayString = plainArrayString.substring(1, plainArrayString.length() - 1);
+			String[] entries = plainArrayString.split(",");
+			StringBuilder stringBuilder = new StringBuilder();
+			for (String entry : entries) {
+				entry = entry.trim();
+				if (entry == "") {
+					entry = " ";
+				}
+				stringBuilder.append(entry);
+			}
+			return stringBuilder.toString();
+		} else {
+			return plainArrayString;
+		}
+	}
+	
+	private String getLossBetweenValues(String actualKey, String expectedKey, String actualValue, String expectedValue) {
+		String actualType = getFieldType(actualKey);
+		String expectedType = getFieldType(expectedKey);
+		if (areStringEquivalences(actualType, expectedType)) {
+			actualValue = convertArrayToString(actualValue);
+			expectedValue = convertArrayToString(expectedValue);
+		} else if (actualType.equals("byte")) {
+			try {
+				int actualByte = Integer.valueOf(actualValue);
+				char character = (char) actualByte;
+				actualValue = String.valueOf(character);
+			} catch (java.lang.NumberFormatException e) {
+				// do nothing
+			}
+		}
+
 		if (actualValue.equals(expectedValue)) {
 			return "";
 		} else {
@@ -264,5 +402,18 @@ public class TextualLossGenerator {
 		}
 
 		return loss.toString();
+	}
+
+	private JSONArray trimArrayString(String value) {
+		StringBuilder trimmedStringBuilder = new StringBuilder();
+		String[] entries = value.split(",");
+		for (int i = 0; i < entries.length; i++) {
+			String entry = entries[i];
+			trimmedStringBuilder.append(entry.trim());
+			if (i != entries.length - 1) {
+				trimmedStringBuilder.append(",");
+			}
+		}
+		return new JSONArray(trimmedStringBuilder.toString());
 	}
 }

@@ -48,7 +48,7 @@ public class SimulatorConstants {
 
 	/* Model parameters */
 	public static final double TEMPERATURE = 0;
-	public static final int MAX_TOKENS = 2048;
+	public static final int MAX_TOKENS = 4096;
 	public static final double TOP_P = 1;
 	public static final double FREQUENCY_PENALTY = 1;
 	public static final double PRESENCE_PENALTY = 0;

@@ -13,9 +13,8 @@ import microbat.tracerecov.executionsimulator.ExecutionSimulator;
  */
 public class AutoPromptEngineer {
 
-	// TODO: update this, threshold must be in range (0,1)
 	private static final double LOSS_THRESHOLD = 0.25;
-	private static final int TRIAL_LIMIT = 5;
+	private static final int TRIAL_LIMIT = 3;
 
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
@@ -65,22 +64,20 @@ public class AutoPromptEngineer {
 			numericalLoss = lossCalculator.computeLoss(outputJSON, groundTruthJSON);
 			textualLoss = textualLossGeneartor.getLoss(outputJSON, groundTruthJSON);
 			if (numericalLoss > LOSS_THRESHOLD) {
-				return getFineTunedExample(datapoint, originalExample, numericalLoss, textualLoss, TRIAL_LIMIT);
+				return getFineTunedExample(datapoint, originalExample, numericalLoss, textualLoss);
 			}
+		} else {
+			return getFineTunedExample(datapoint, originalExample, numericalLoss, textualLoss);
 		}
 
 		return originalExample;
 	}
 
 	private String getFineTunedExample(HashMap<String, String> datapoint, String originalExample, double numericalLoss,
-			String textualLoss, int trials) {
-		if (trials <= 0) {
-			return originalExample;
-		}
-
-		// update example
+			String textualLoss) {
+		// generate updated example
 		String originalAdjustmentPrompt = promptTemplateFiller.getVariableExpansionAdjustmentPrompt(datapoint,
-				textualLoss, originalExample);
+				originalExample);
 		String updatedExample = null;
 		try {
 			updatedExample = executionSimulator.sendRequest("", originalAdjustmentPrompt);
@@ -96,8 +93,51 @@ public class AutoPromptEngineer {
 			updatedOutputJSON = new JSONObject(updatedOutput);
 		} catch (JSONException jsonException) {
 			String updatedTextualLoss = textualLossGeneartor.getLossFromException(updatedOutput, jsonException);
+			// adjust example
+			return adjustExampleGivenTextualLoss(datapoint, updatedExample, updatedOutput, numericalLoss,
+					updatedTextualLoss, TRIAL_LIMIT);
+		}
+
+		JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
+		double updatedNumericalLoss = lossCalculator.computeLoss(updatedOutputJSON, groundTruthJSON);
+		String updatedTextualLoss = textualLossGeneartor.getLoss(updatedOutputJSON, groundTruthJSON);
+
+		if (updatedNumericalLoss <= LOSS_THRESHOLD) {
+			return updatedExample;
+		} else {
+			// adjust example
+			return adjustExampleGivenTextualLoss(datapoint, updatedExample, updatedOutput, updatedNumericalLoss,
+					updatedTextualLoss, TRIAL_LIMIT);
+		}
+	}
+
+	private String adjustExampleGivenTextualLoss(HashMap<String, String> datapoint, String originalExample,
+			String output, double numericalLoss, String textualLoss, int trials) {
+		if (trials <= 0) {
+			return originalExample;
+		}
+
+		// update example
+		String adjustmentPromptWithTextualLoss = promptTemplateFiller
+				.getVariableExpansionAdjustmentPromptWithLoss(originalExample, datapoint, output, textualLoss);
+		String updatedExample = null;
+		try {
+			updatedExample = executionSimulator.sendRequest("", adjustmentPromptWithTextualLoss);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		// compute textual and numerical loss
+		String updatedPrompt = promptTemplateFiller.getVariableExpansionPrompt(datapoint, updatedExample);
+		String updatedOutput = getLLMOutput(updatedPrompt);
+		JSONObject updatedOutputJSON;
+		try {
+			updatedOutputJSON = new JSONObject(updatedOutput);
+		} catch (JSONException jsonException) {
+			String updatedTextualLoss = textualLossGeneartor.getLossFromException(updatedOutput, jsonException);
 			// retry with original example and textualLoss
-			return getFineTunedExample(datapoint, originalExample, numericalLoss, updatedTextualLoss, trials - 1);
+			return adjustExampleGivenTextualLoss(datapoint, updatedExample, updatedOutput, numericalLoss,
+					updatedTextualLoss, trials - 1);
 		}
 
 		JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
@@ -106,20 +146,23 @@ public class AutoPromptEngineer {
 
 		if (updatedNumericalLoss > numericalLoss) {
 			// retry with original example
-			return getFineTunedExample(datapoint, originalExample, numericalLoss, textualLoss, trials - 1);
+			return adjustExampleGivenTextualLoss(datapoint, originalExample, updatedOutput, numericalLoss, textualLoss,
+					trials - 1);
 		}
 		if (updatedNumericalLoss <= LOSS_THRESHOLD) {
 			return updatedExample;
 		} else {
 			// retry with updated example
-			return getFineTunedExample(datapoint, updatedExample, updatedNumericalLoss, updatedTextualLoss, trials - 1);
+			return adjustExampleGivenTextualLoss(datapoint, updatedExample, updatedOutput, updatedNumericalLoss,
+					updatedTextualLoss, trials - 1);
 		}
 	}
 
-	/**
-	 * For testing purpose.
-	 */
-	private double getAverageLoss(String example) {
+	public double getAverageLoss() {
+		return getAverageLoss(promptTemplateFiller.getDefaultVariableExpansionPromptExample());
+	}
+
+	public double getAverageLoss(String example) {
 		double loss = 0;
 
 		for (HashMap<String, String> datapoint : testingDataset) {
@@ -165,17 +208,6 @@ public class AutoPromptEngineer {
 			e.printStackTrace();
 		}
 		return null;
-	}
-
-	public static void main(String[] args) {
-		AutoPromptEngineer autoPromptEngineer = new AutoPromptEngineer();
-		double originalAvgLoss = autoPromptEngineer
-				.getAverageLoss(autoPromptEngineer.promptTemplateFiller.getDefaultVariableExpansionPromptExample());
-		String newExample = autoPromptEngineer.adjustVariableExpansionPromptExample();
-		double updatedAvgLoss = autoPromptEngineer.getAverageLoss(newExample);
-
-		System.out.println("Original Average Loss: " + originalAvgLoss);
-		System.out.println("Updated Average Loss: " + updatedAvgLoss);
 	}
 
 }
