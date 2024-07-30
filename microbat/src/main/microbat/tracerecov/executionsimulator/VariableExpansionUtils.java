@@ -1,5 +1,6 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
@@ -15,6 +16,7 @@ import microbat.model.value.VarValue;
 import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
 import microbat.tracerecov.TraceRecovUtils;
+import microbat.tracerecov.autoprompt.ExampleSearcher;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.common.core.Pair;
 
@@ -79,19 +81,53 @@ public class VariableExpansionUtils {
 			+ " }\r\n";
 
 	/* Methods */
-
+	
 	public static String getBackgroundContent() {
 		return VAR_EXPAND_BACKGROUND + VAR_EXPAND_EXAMPLE;
 	}
 
-	public static String getQuestionContent(VarValue selectedVariable, List<VariableSkeleton> variableSkeletons,
-			TraceNode step, Pair<String,String> preValueResponse) {
+	public static String getBackgroundContent(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {
+		return VAR_EXPAND_BACKGROUND + getExample(varValue, varSkeleton, step);
+	}
 
-		/* source code */
+	private static HashMap<String, String> getDatapointFromStep(VarValue varValue, VariableSkeleton varSkeleton,
+			TraceNode step) {
+		HashMap<String, String> datapoint = new HashMap<>();
+
+		datapoint.put("var_name", varValue.getVarName());
+		datapoint.put("var_type", varValue.getType());
+		datapoint.put("var_value", varValue.getStringValue());
+		datapoint.put("class_structure", varSkeleton.toString());
+		datapoint.put("source_code", getSourceCode(step));
+		datapoint.put("ground_truth", ""); // not available yet
+
+		return datapoint;
+	}
+
+	private static String getExample(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {
+		HashMap<String, String> datapoint = getDatapointFromStep(varValue, varSkeleton, step);
+
+		ExampleSearcher exampleSearcher = new ExampleSearcher();
+		String closestExample = exampleSearcher.searchForExample(datapoint);
+
+		if (closestExample == null || closestExample.equals("")) {
+			return VAR_EXPAND_EXAMPLE;
+		}
+		return "<Example>\r\n" + closestExample;
+	}
+
+	private static String getSourceCode(TraceNode step) {
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
 		String sourceCode = TraceRecovUtils
 				.processInputStringForLLM(TraceRecovUtils.getSourceCode(location, lineNo).trim());
+		return sourceCode;
+	}
+
+	public static String getQuestionContent(VarValue selectedVariable, List<VariableSkeleton> variableSkeletons,
+			TraceNode step, Pair<String, String> preValueResponse) {
+		/* source code */
+		String sourceCode = getSourceCode(step);
 
 		/* type of selected variable */
 		String variableType = selectedVariable.getType();
@@ -126,8 +162,7 @@ public class VariableExpansionUtils {
 		question.append(": \"");
 		question.append(variableValue);
 		question.append("\"" + " ");
-		question.append(" (\"<\", "
-				+ "\">\" is the content, we shall not escape it)");
+		question.append(" (\"<\", " + "\">\" is the content, we shall not escape it)");
 		question.append(", strictly return in JSON format for *" + variableName
 				+ "* as the above example, each key must has a value and a type. "
 				+ "The JSON object must start with variable *" + variableName
@@ -135,13 +170,13 @@ public class VariableExpansionUtils {
 
 		question.append("You must follow the JSON format as \"var_name:var_type\": var_value. "
 				+ "Do not include duplicate keys. You must infer all var_value. ");
-		
+
 		/*
 		 * Added to enforce identical variable structure in buggy and correct trace
 		 */
-		if(preValueResponse != null) {
-			question.append("\n For example, you may return\n"+preValueResponse.second()
-				+ " when *"+ selectedVariable.getVarName() +"* has the value: \""+ preValueResponse.first()+"\".");
+		if (preValueResponse != null) {
+			question.append("\n For example, you may return\n" + preValueResponse.second() + " when *"
+					+ selectedVariable.getVarName() + "* has the value: \"" + preValueResponse.first() + "\".");
 		}
 
 		return question.toString();
