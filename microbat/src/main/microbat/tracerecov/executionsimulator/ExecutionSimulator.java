@@ -128,7 +128,7 @@ public class ExecutionSimulator {
 			variableSkeletons.add(childSkeleton);
 		}
 
-		String background = VariableExpansionUtils.getBackgroundContent();
+		String background = VariableExpansionUtils.getBackgroundContent(selectedVar, parentSkeleton, step);
 		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step,
 				preValueResponse);
 
@@ -137,6 +137,7 @@ public class ExecutionSimulator {
 		for (int i = 0; i < 2; i++) {
 			try {
 				String response = sendRequest(background, content);
+				response = TraceRecovUtils.processInputStringForLLM(response);
 				this.logger.printResponse(i, response);
 				VariableExpansionUtils.processResponse(selectedVar, response);
 				return response;

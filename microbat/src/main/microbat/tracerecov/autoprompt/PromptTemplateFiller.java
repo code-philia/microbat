@@ -2,6 +2,8 @@ package microbat.tracerecov.autoprompt;
 
 import java.util.HashMap;
 
+import microbat.tracerecov.TraceRecovUtils;
+
 public class PromptTemplateFiller {
 
 	private static String variableExpansionPromptBackground = 
@@ -105,9 +107,9 @@ public class PromptTemplateFiller {
 		return getVariableExpansionAdjustmentPrompt(datapoint, variableExpansionPromptExample);
 	}
 
-	private String getExample(HashMap<String, String> datapoint, String structure) {
+	public String getExample(HashMap<String, String> datapoint, String structure) {
 		String varType = datapoint.get("var_type");
-		String varValue = datapoint.get("var_value");
+		String varValue = TraceRecovUtils.processInputStringForLLM(datapoint.get("var_value"));
 		String classStructure = datapoint.get("class_structure");
 
 		StringBuilder stringBuilder = new StringBuilder();
