@@ -49,14 +49,4 @@ public class ExampleSearcher {
 		String groundTruth = closestExample.get(groundTruthKey);
 		return promptTemplateFiller.getExample(closestExample, groundTruth);
 	}
-
-	public static void main(String[] args) {
-		ExampleSearcher exampleSearcher = new ExampleSearcher();
-
-		DatasetReader datasetReader = new DatasetReader();
-		ArrayList<HashMap<String, String>> dataset = datasetReader.readCompleteDataset();
-
-		String newExample = exampleSearcher.searchForExample(dataset.get(69));
-		System.out.println();
-	}
 }
