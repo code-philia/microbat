@@ -13,28 +13,41 @@ public class ExampleSearcher {
 
 	private ArrayList<HashMap<String, String>> dataset;
 	private VarSkeletonParser varSkeletonParser;
+	private PromptTemplateFiller promptTemplateFiller;
 
 	public ExampleSearcher() {
 		DatasetReader datasetReader = new DatasetReader();
 		dataset = datasetReader.readCompleteDataset();
 
 		varSkeletonParser = new VarSkeletonParser();
+
+		promptTemplateFiller = new PromptTemplateFiller();
 	}
 
 	public String searchForExample(HashMap<String, String> datapoint) {
 		String classStructureKey = "class_structure";
+		String groundTruthKey = "ground_truth";
+
 		String classStructure = datapoint.get(classStructureKey);
 		VariableSkeleton varSkeleton = varSkeletonParser.parseClassStructure(classStructure);
 
-		for (HashMap<String, String> example : dataset) {
+		double minDiffScore = 1;
+		int datapointIndex = 0;
+		for (int i = 0; i < dataset.size(); i++) {
+			HashMap<String, String> example = dataset.get(i);
 			String exampleClassStructure = example.get(classStructureKey);
-			if (!classStructure.equals(exampleClassStructure)) {
-				VariableSkeleton exampleVarSkeleton = varSkeletonParser.parseClassStructure(exampleClassStructure);
-				double diffScore = varSkeleton.getDifferenceScore(exampleVarSkeleton);
+			VariableSkeleton exampleVarSkeleton = varSkeletonParser.parseClassStructure(exampleClassStructure);
+
+			double diffScore = varSkeleton.getDifferenceScore(exampleVarSkeleton);
+			if (diffScore < minDiffScore) {
+				minDiffScore = diffScore;
+				datapointIndex = i;
 			}
 		}
 
-		return "";
+		HashMap<String, String> closestExample = dataset.get(datapointIndex);
+		String groundTruth = closestExample.get(groundTruthKey);
+		return promptTemplateFiller.getExample(closestExample, groundTruth);
 	}
 
 	public static void main(String[] args) {
@@ -43,6 +56,7 @@ public class ExampleSearcher {
 		DatasetReader datasetReader = new DatasetReader();
 		ArrayList<HashMap<String, String>> dataset = datasetReader.readCompleteDataset();
 
-		exampleSearcher.searchForExample(dataset.get(0));
+		String newExample = exampleSearcher.searchForExample(dataset.get(69));
+		System.out.println();
 	}
 }

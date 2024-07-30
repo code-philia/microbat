@@ -10,6 +10,12 @@ public class VarSkeletonParser {
 
 	public VariableSkeleton parseClassStructure(String classStructure) {
 		String[] keyValuePair = classStructure.split(":", 2); // assume root layer has one key
+		if (keyValuePair.length == 1) {
+			String varType = keyValuePair[0];
+			VariableSkeleton variableSkeleton = new VariableSkeleton(varType);
+			return variableSkeleton;
+		}
+
 		String varType = keyValuePair[0];
 		String varValue = keyValuePair[1];
 
