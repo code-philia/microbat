@@ -19,13 +19,16 @@ import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.common.core.Pair;
 
 public class VariableExpansionUtils {
+
 	/* Request content */
 
 	private static final String VAR_EXPAND_BACKGROUND = 
 			"<Background>\r\n"
 			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \r\n"
-			+ "\r\n"
-			+ "<Example>\r\n"
+			+ "\r\n";
+
+	private static final String VAR_EXPAND_EXAMPLE = 
+			"<Example>\r\n"
 			+ "Class Name: java.util.HashMap<HashMap, ArrayList>\r\n"
 			+ "Structure: {\r\n"
 			+ "	java.util.HashMap$Node[] table;\r\n"
@@ -73,13 +76,12 @@ public class VariableExpansionUtils {
 			+ "       },\r\n"
 			+ "      \"size\": 2\r\n"
 			+ "  },\r\n"
-			+ " }\r\n"
-			+ "";
+			+ " }\r\n";
 
 	/* Methods */
 
 	public static String getBackgroundContent() {
-		return VAR_EXPAND_BACKGROUND;
+		return VAR_EXPAND_BACKGROUND + VAR_EXPAND_EXAMPLE;
 	}
 
 	public static String getQuestionContent(VarValue selectedVariable, List<VariableSkeleton> variableSkeletons,
