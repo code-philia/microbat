@@ -30,7 +30,7 @@ public class ExampleSearcher {
 			String exampleClassStructure = example.get(classStructureKey);
 			if (!classStructure.equals(exampleClassStructure)) {
 				VariableSkeleton exampleVarSkeleton = varSkeletonParser.parseClassStructure(exampleClassStructure);
-				System.out.println();
+				double diffScore = varSkeleton.getDifferenceScore(exampleVarSkeleton);
 			}
 		}
 

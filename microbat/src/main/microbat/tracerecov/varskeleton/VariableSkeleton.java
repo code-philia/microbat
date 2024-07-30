@@ -43,7 +43,7 @@ public class VariableSkeleton {
 	public String getValue() {
 		return value;
 	}
-	
+
 	public void setValue(String value) {
 		this.value = value;
 	}
@@ -74,17 +74,17 @@ public class VariableSkeleton {
 	}
 
 	public VarValue toVarValue(VarValue source) {
-		
+
 		VarValue varValue = this.createVarValue(source.getVarName(), source.getType(), source.isRoot());
 		varValue.setAliasVarID(source.getAliasVarID());
 		varValue.setVarID(source.getVarID());
 		varValue.setStringValue(source.getStringValue());
 		for (VariableSkeleton child : this.children) {
-			VarValue childVar = source.getChildren().stream().filter(c -> c.getVarName().equals(child.name)).findAny().orElse(null);
+			VarValue childVar = source.getChildren().stream().filter(c -> c.getVarName().equals(child.name)).findAny()
+					.orElse(null);
 			if (childVar == null) {
 				childVar = child.toVarValue(source.getAliasVarID(), source.getVarID(), varValue);
-				
-				//TODO Hongshu
+				// TODO Hongshu
 				childVar.setStringValue(child.value);
 			}
 			varValue.addChild(childVar);
@@ -92,45 +92,43 @@ public class VariableSkeleton {
 		}
 		return varValue;
 	}
-	
+
 	public String getType() {
 		return this.type;
 	}
-	
+
 	/**
-	 * parent: TYPE:{CHILDREN}
-	 * child: TYPE NAME:{CHILDREN}
+	 * parent: TYPE:{CHILDREN} child: TYPE NAME:{CHILDREN}
 	 */
 	@Override
 	public String toString() {
 		StringBuilder stringBuilder = new StringBuilder(this.type);
-		
+
 		if (this.parent != null) {
 			stringBuilder.append(" ");
 			stringBuilder.append(this.name);
 		}
-		
+
 		if (this.children.isEmpty()) {
 			return stringBuilder.toString();
 		}
-		
+
 		stringBuilder.append(":{");
 		for (VariableSkeleton child : this.children) {
 			stringBuilder.append(child.toString());
 			stringBuilder.append(";");
 		}
 		stringBuilder.append("}");
-		
+
 		return stringBuilder.toString();
 	}
-	
+
 	/**
-	 * key: NAME
-	 * value: TYPE
+	 * key: NAME value: TYPE
 	 */
 	public String fieldsToString() {
 		StringBuilder stringBuilder = new StringBuilder("{");
-		
+
 		for (VariableSkeleton child : this.children) {
 			stringBuilder.append("\"");
 			stringBuilder.append(child.getName());
@@ -138,7 +136,7 @@ public class VariableSkeleton {
 			stringBuilder.append(child.getType());
 			stringBuilder.append("\",");
 		}
-		
+
 		stringBuilder.append("}");
 		return stringBuilder.toString();
 	}
@@ -149,7 +147,8 @@ public class VariableSkeleton {
 		String newVarID = varID + "." + name;
 		varValue.setAliasVarID(newAliasID);
 		varValue.setVarID(newVarID);
-		List<VarValue> children = this.children.stream().map(v -> v.toVarValue(newAliasID, newVarID, varValue)).toList();
+		List<VarValue> children = this.children.stream().map(v -> v.toVarValue(newAliasID, newVarID, varValue))
+				.toList();
 		varValue.setChildren(children);
 		return varValue;
 	}
@@ -170,4 +169,40 @@ public class VariableSkeleton {
 		return varValue;
 	}
 
+	public double getDifferenceScore(VariableSkeleton other) {
+		if (other == null) {
+			return 1;
+		}
+
+		double diffScore = 0;
+		double numberOfEntities = 1; // type
+		if (this.type.equals(other.type)) {
+			// compare children
+			for (VariableSkeleton thisChild : this.children) {
+				VariableSkeleton otherChild = thisChild.findMatchingChild(other);
+				diffScore += thisChild.getDifferenceScore(otherChild);
+				numberOfEntities += 1;
+			}
+		} else {
+			diffScore += 1;
+			// check whether `other` can be found in `this`
+			double childScore = 1;
+			for (VariableSkeleton otherChild : other.children) {
+				childScore = Math.min(childScore, this.getDifferenceScore(otherChild));
+			}
+			diffScore += childScore;
+			numberOfEntities += 1;
+		}
+
+		return diffScore / numberOfEntities;
+	}
+
+	private VariableSkeleton findMatchingChild(VariableSkeleton other) {
+		for (VariableSkeleton child : other.children) {
+			if (child.name.equals(this.name)) {
+				return child;
+			}
+		}
+		return null;
+	}
 }
