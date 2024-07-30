@@ -96,7 +96,7 @@ public class VariableExpansionUtils {
 
 		datapoint.put("var_name", varValue.getVarName());
 		datapoint.put("var_type", varValue.getType());
-		datapoint.put("var_value", varValue.getStringValue());
+		datapoint.put("var_value", TraceRecovUtils.processInputStringForLLM(varValue.getStringValue()));
 		datapoint.put("class_structure", varSkeleton.toString());
 		datapoint.put("source_code", getSourceCode(step));
 		datapoint.put("ground_truth", ""); // not available yet

@@ -3,6 +3,7 @@ package microbat.tracerecov.autoprompt;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 
@@ -46,7 +47,7 @@ public class ExampleSearcher {
 		}
 
 		HashMap<String, String> closestExample = dataset.get(datapointIndex);
-		String groundTruth = closestExample.get(groundTruthKey);
+		String groundTruth = TraceRecovUtils.processInputStringForLLM(closestExample.get(groundTruthKey));
 		return promptTemplateFiller.getExample(closestExample, groundTruth);
 	}
 }
