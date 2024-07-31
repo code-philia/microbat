@@ -24,8 +24,9 @@ public class AutoPromptEngineer {
 	private TextualLossGenerator textualLossGeneartor;
 
 	public AutoPromptEngineer() {
-		trainingDataset = readTrainingDataset();
-		testingDataset = readTestingDataset();
+		ArrayList<ArrayList<HashMap<String, String>>> datasets = readDatasets();
+		trainingDataset = datasets.get(0);
+		testingDataset = datasets.get(1);
 		executionSimulator = new ExecutionSimulator();
 		promptTemplateFiller = new PromptTemplateFiller();
 		lossCalculator = new LossCalculator();
@@ -187,14 +188,9 @@ public class AutoPromptEngineer {
 		return loss / (double) testingDataset.size();
 	}
 
-	private ArrayList<HashMap<String, String>> readTrainingDataset() {
+	private ArrayList<ArrayList<HashMap<String, String>>> readDatasets() {
 		DatasetReader datasetReader = new DatasetReader();
-		return datasetReader.readVariableExpansionTrainingDataset();
-	}
-
-	private ArrayList<HashMap<String, String>> readTestingDataset() {
-		DatasetReader datasetReader = new DatasetReader();
-		return datasetReader.readVariableExpansionTestingDataset();
+		return datasetReader.getTrainingAndTestingDataset();
 	}
 
 	private String getLLMOutput(String request) {
