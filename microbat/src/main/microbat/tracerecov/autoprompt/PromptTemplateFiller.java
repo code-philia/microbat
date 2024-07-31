@@ -12,30 +12,55 @@ public class PromptTemplateFiller {
 			+ "\n";
 
 	private static String variableExpansionPromptExample = 
-			"<Example>\n"
-			+ "Class Name: java.util.HashMap<String, Integer>\n"
-			+ "Structure: {\n"
-			+ " java.util.HashMap$Node[] table;\n"
-			+ " java.util.Set entrySet;\n"
-			+ " int size;\n"
-			+ "}\n"
-			+ "\n"
-			+ "Given \"map.toString()\" has output value:\n"
-			+ "{\"k1\"=1, \"k2\"=2}\n"
-			+ "\n"
-			+ "We can summarize the structure as:\n"
-			+ "{\n"
-			+ "  \"map: java.util.HashMap\": {\n"
-			+ "    \"table: java.util.HashMap$Node[]\": [\"k1\"=1, \"k2\"=2],\n"
-			+ "    \"entrySet: java.util.Set\": {\n"
-			+ "      this$0:java.util.HashMap:{\n"
-			+ "        table:java.util.HashMap$Node[]:[\"k1\"=1, \"k2\"=2]\n"
-			+ "      }\n"
-			+ "    },\n"
-			+ "    \"size: int\": 2\n"
-			+ "  }\n"
-			+ "}\n"
-			+ "</Example>";
+			"<Example>\r\n"
+			+ "Class Name: java.util.HashMap<HashMap, ArrayList>\r\n"
+			+ "Structure: {\r\n"
+			+ "	java.util.HashMap$Node[] table;\r\n"
+			+ "	java.util.Set entrySet;\r\n"
+			+ "	int size;\r\n"
+			+ "	int modCount;\r\n"
+			+ "	int threshold;\r\n"
+			+ "	float loadFactor;\r\n"
+			+ "	java.util.Set keySet;\r\n"
+			+ "	java.util.Collection values;\r\n"
+			+ "}\r\n"
+			+ "\r\n"
+			+ "Given “map.toString()” has output value:\r\n"
+			+ "{{k1=1, k2=2} = [v1, v2], {kA=100, kB=200} = [vA, vB]}\r\n"
+			+ "\r\n"
+			+ "We can summarize the structure as \r\n"
+			+ "Here is the given structure converted to JSON format (every variable shall strictly have a Java type, followed by its value):\r\n"
+			+ "{\r\n"
+			+ "  \"map: java.util.HashMap<HashMap, ArrayList>\": {\r\n"
+			+ "    \"key[0]: HashMap\": {\r\n"
+			+ "      {\r\n"
+			+ "        \"key[0]: java.lang.String\": \"k1\",\r\n"
+			+ "        \"key[1]: java.lang.String\": \"k2\",\r\n"
+			+ "        \"value[0]: java.lang.Integer\": 1,\r\n"
+			+ "        \"value[1]: java.lang.Integer\": 2,\r\n"
+			+ "        \"size: int\": 2	\r\n"
+			+ "      }\r\n"
+			+ "    },\r\n"
+			+ "    \"key[1]: java.util.HashMap\": {\r\n"
+			+ "      \"map\": {\r\n"
+			+ "        \"key[0]: java.lang.String\": \"kA\",\r\n"
+			+ "        \"key[1]: java.lang.String\": \"kB\",\r\n"
+			+ "        \"value[0]: java.lang.Integer\": 100,\r\n"
+			+ "        \"value[1]: java.lang.Integer\": 200,\r\n"
+			+ "         \"size: int\": 2\r\n"
+			+ "       }\r\n"
+			+ "     },\r\n"
+			+ "     \"value[0]: java.util.ArrayList<String>\": { \r\n"
+			+ "\"elementData: java.lang.Object[]\": [ \"v1\", \"v2\"], \r\n"
+			+ "  \"size: int\": 2 \r\n"
+			+ "       }, \r\n"
+			+ "      \"value[1]: java.util.ArrayList<String>\": { \r\n"
+			+ "\"elementData: java.lang.Object[]\": [ \"vA\", \"vB\"], \r\n"
+			+ "  \"size: int\": 2 \r\n"
+			+ "       },\r\n"
+			+ "      \"size\": 2\r\n"
+			+ "  },\r\n"
+			+ " }\r\n";
 
 	private static String variableExpansionAdjustmentPromptPrefix = 
 			"You are given a prompt template with examples which might be inaccurate.\n"
@@ -80,6 +105,11 @@ public class PromptTemplateFiller {
 		return variableExpansionPromptBackground + example + getVariableExpansionPromptQuestion(datapoint);
 	}
 
+	public String getDefaultVariableExpansionPrompt(HashMap<String, String> datapoint) {
+		return variableExpansionPromptBackground + variableExpansionPromptExample
+				+ getVariableExpansionPromptQuestion(datapoint);
+	}
+
 	/* Adjustment Prompt */
 
 	/**
@@ -112,9 +142,9 @@ public class PromptTemplateFiller {
 		String varValue = TraceRecovUtils.processInputStringForLLM(datapoint.get("var_value"));
 		String classStructure = datapoint.get("class_structure");
 
-		StringBuilder stringBuilder = new StringBuilder();
+		StringBuilder stringBuilder = new StringBuilder("<Example>\r\n");
 
-		stringBuilder.append("\nClass Name: " + varType);
+		stringBuilder.append("Class Name: " + varType);
 		stringBuilder.append("\nStructure: " + classStructure);
 		stringBuilder.append("\nVariable Value: " + varValue);
 

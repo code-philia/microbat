@@ -45,12 +45,20 @@ public class LossCalculator {
 			return computeLossForArrays(actualKey, expectedKey, (JSONArray) actualValue, (JSONArray) expectedValue);
 		} else if (actualValue instanceof JSONArray && expectedValue instanceof String) {
 			// expectedValue cannot be parsed into JSONArray
-			JSONArray expectedJSONArray = trimArrayString((String) expectedValue);
-			return computeLossForArrays(actualKey, expectedKey, (JSONArray) actualValue, expectedJSONArray);
+			try {
+				JSONArray expectedJSONArray = trimArrayString((String) expectedValue);
+				return computeLossForArrays(actualKey, expectedKey, (JSONArray) actualValue, expectedJSONArray);
+			} catch (JSONException e) {
+				return computeLossForOtherTypes(actualKey, expectedKey, actualValue, expectedValue);
+			}
 		} else if (expectedValue instanceof JSONArray && actualValue instanceof String) {
 			// actualValue cannot be parsed into JSONArray
-			JSONArray actualJSONArray = trimArrayString((String) actualValue);
-			return computeLossForArrays(actualKey, expectedKey, actualJSONArray, (JSONArray) expectedValue);
+			try {
+				JSONArray actualJSONArray = trimArrayString((String) actualValue);
+				return computeLossForArrays(actualKey, expectedKey, actualJSONArray, (JSONArray) expectedValue);
+			} catch (JSONException e) {
+				return computeLossForOtherTypes(actualKey, expectedKey, actualValue, expectedValue);
+			}
 		} else if (actualValue instanceof String && expectedValue instanceof String) {
 			// both are string, attempt to parse them into arrays
 			try {
@@ -94,14 +102,24 @@ public class LossCalculator {
 							(JSONArray) actualFieldValue, (JSONArray) expectedFieldValue);
 				} else if (actualFieldValue instanceof JSONArray && expectedFieldValue instanceof String) {
 					// expectedFieldValue cannot be parsed into JSONArray
-					JSONArray expectedJSONArray = trimArrayString((String) expectedFieldValue);
-					individualScoreSum += computeLossForArrays(actualFieldSignature, expectedFieldSignature,
-							(JSONArray) actualFieldValue, expectedJSONArray);
+					try {
+						JSONArray expectedJSONArray = trimArrayString((String) expectedFieldValue);
+						individualScoreSum += computeLossForArrays(actualFieldSignature, expectedFieldSignature,
+								(JSONArray) actualFieldValue, expectedJSONArray);
+					} catch (JSONException e) {
+						individualScoreSum += computeLossForOtherTypes(actualFieldSignature, expectedFieldSignature,
+								actualFieldValue, expectedFieldValue);
+					}
 				} else if (expectedFieldValue instanceof JSONArray && actualFieldValue instanceof String) {
 					// actualFieldValue cannot be parsed into JSONArray
-					JSONArray actualJSONArray = trimArrayString((String) actualFieldValue);
-					individualScoreSum += computeLossForArrays(actualFieldSignature, expectedFieldSignature,
-							actualJSONArray, (JSONArray) expectedFieldValue);
+					try {
+						JSONArray actualJSONArray = trimArrayString((String) actualFieldValue);
+						individualScoreSum += computeLossForArrays(actualFieldSignature, expectedFieldSignature,
+								actualJSONArray, (JSONArray) expectedFieldValue);
+					} catch (JSONException e) {
+						individualScoreSum += computeLossForOtherTypes(actualFieldSignature, expectedFieldSignature,
+								actualFieldValue, expectedFieldValue);
+					}
 				} else if (actualFieldValue instanceof String && expectedFieldValue instanceof String) {
 					// both are string, attempt to parse them into arrays
 					try {
@@ -160,12 +178,22 @@ public class LossCalculator {
 						(JSONArray) expectedElement);
 			} else if (actualElement instanceof JSONArray && expectedElement instanceof String) {
 				// expectedElement cannot be parsed into JSONArray
-				JSONArray expectedChildJSONArray = trimArrayString((String) expectedElement);
-				individualScoreSum += computeLossForArrays(key, key, (JSONArray) actualElement, expectedChildJSONArray);
+				try {
+					JSONArray expectedChildJSONArray = trimArrayString((String) expectedElement);
+					individualScoreSum += computeLossForArrays(key, key, (JSONArray) actualElement,
+							expectedChildJSONArray);
+				} catch (JSONException e) {
+					individualScoreSum += computeLossForOtherTypes(key, key, actualElement, expectedElement);
+				}
 			} else if (expectedElement instanceof JSONArray && actualElement instanceof String) {
 				// actualElement cannot be parsed into JSONArray
-				JSONArray actualChildJSONArray = trimArrayString((String) actualElement);
-				individualScoreSum += computeLossForArrays(key, key, actualChildJSONArray, (JSONArray) expectedElement);
+				try {
+					JSONArray actualChildJSONArray = trimArrayString((String) actualElement);
+					individualScoreSum += computeLossForArrays(key, key, actualChildJSONArray,
+							(JSONArray) expectedElement);
+				} catch (JSONException e) {
+					individualScoreSum += computeLossForOtherTypes(key, key, actualElement, expectedElement);
+				}
 			} else if (actualElement instanceof String && expectedElement instanceof String) {
 				// both are string, attempt to parse them into arrays
 				try {
