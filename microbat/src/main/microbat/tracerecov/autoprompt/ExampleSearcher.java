@@ -71,7 +71,6 @@ public class ExampleSearcher {
 			double experimentLoss = getLoss(datapoint,
 					x -> promptTemplateFiller.getVariableExpansionPrompt(x, this.searchForExample(x)));
 			lossDataCollector.saveDataToFile(baselineLoss, experimentLoss);
-			break;
 		}
 	}
 
@@ -107,10 +106,5 @@ public class ExampleSearcher {
 		// compute loss
 		LossCalculator lossCalculator = new LossCalculator();
 		return lossCalculator.computeLoss(outputJSON, groundTruthJSON);
-	}
-
-	public static void main(String[] args) {
-		ExampleSearcher exampleSearcher = new ExampleSearcher();
-		exampleSearcher.recordLoss();
 	}
 }

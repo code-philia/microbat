@@ -142,9 +142,9 @@ public class PromptTemplateFiller {
 		String varValue = TraceRecovUtils.processInputStringForLLM(datapoint.get("var_value"));
 		String classStructure = datapoint.get("class_structure");
 
-		StringBuilder stringBuilder = new StringBuilder();
+		StringBuilder stringBuilder = new StringBuilder("<Example>\r\n");
 
-		stringBuilder.append("\nClass Name: " + varType);
+		stringBuilder.append("Class Name: " + varType);
 		stringBuilder.append("\nStructure: " + classStructure);
 		stringBuilder.append("\nVariable Value: " + varValue);
 
