@@ -26,7 +26,8 @@ public class AutoPromptEngineer {
 	private TextualLossGenerator textualLossGeneartor;
 
 	public AutoPromptEngineer() {
-		ArrayList<ArrayList<HashMap<String, String>>> datasets = readDatasets();
+		// TODO: other types of prompts
+		ArrayList<ArrayList<HashMap<String, String>>> datasets = readVarExpansionDatasets();
 		trainingDataset = datasets.get(0);
 		testingDataset = datasets.get(1);
 		executionSimulator = new ExecutionSimulator();
@@ -190,7 +191,7 @@ public class AutoPromptEngineer {
 		return loss / (double) testingDataset.size();
 	}
 
-	private ArrayList<ArrayList<HashMap<String, String>>> readDatasets() {
+	private ArrayList<ArrayList<HashMap<String, String>>> readVarExpansionDatasets() {
 		DatasetReader datasetReader = new VarExpansionDatasetReader();
 		return datasetReader.getTrainingAndTestingDataset();
 	}
