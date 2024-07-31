@@ -9,6 +9,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import microbat.tracerecov.TraceRecovUtils;
+import microbat.tracerecov.autoprompt.dataset.DatasetReader;
+import microbat.tracerecov.autoprompt.dataset.LossDataCollector;
+import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetReader;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
@@ -25,7 +28,7 @@ public class ExampleSearcher {
 	private ExecutionSimulator executionSimulator;
 
 	public ExampleSearcher() {
-		DatasetReader datasetReader = new DatasetReader();
+		DatasetReader datasetReader = new VarExpansionDatasetReader();
 		ArrayList<ArrayList<HashMap<String, String>>> datasets = datasetReader.getTrainingAndTestingDataset();
 		trainingDataset = datasets.get(0);
 		testingDataset = datasets.get(1);

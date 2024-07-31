@@ -1,4 +1,4 @@
-package microbat.tracerecov.autoprompt;
+package microbat.tracerecov.autoprompt.dataset;
 
 import java.io.File;
 import java.io.FileWriter;

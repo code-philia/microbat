@@ -6,6 +6,8 @@ import java.util.HashMap;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import microbat.tracerecov.autoprompt.dataset.DatasetReader;
+import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetReader;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 
 /**
@@ -189,7 +191,7 @@ public class AutoPromptEngineer {
 	}
 
 	private ArrayList<ArrayList<HashMap<String, String>>> readDatasets() {
-		DatasetReader datasetReader = new DatasetReader();
+		DatasetReader datasetReader = new VarExpansionDatasetReader();
 		return datasetReader.getTrainingAndTestingDataset();
 	}
 
