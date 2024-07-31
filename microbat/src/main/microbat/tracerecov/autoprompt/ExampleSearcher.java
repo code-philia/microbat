@@ -67,9 +67,15 @@ public class ExampleSearcher {
 		LossDataCollector lossDataCollector = new LossDataCollector();
 
 		for (HashMap<String, String> datapoint : testingDataset) {
+			System.out.println("Baseline:\n");
 			double baselineLoss = getLoss(datapoint, x -> promptTemplateFiller.getDefaultVariableExpansionPrompt(x));
+
+			System.out.println("Experiment:\n");
 			double experimentLoss = getLoss(datapoint,
 					x -> promptTemplateFiller.getVariableExpansionPrompt(x, this.searchForExample(x)));
+
+			System.out.println("baseline loss: " + baselineLoss);
+			System.out.println("experiment loss: " + experimentLoss);
 			lossDataCollector.saveDataToFile(baselineLoss, experimentLoss);
 		}
 	}
@@ -94,12 +100,20 @@ public class ExampleSearcher {
 		JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
 
 		String request = operation.apply(datapoint);
+		System.out.println(request);
+		System.out.println();
+
 		String output = getLLMOutput(request);
+		System.out.println(output);
+		System.out.println();
 
 		JSONObject outputJSON;
 		try {
 			outputJSON = new JSONObject(output);
 		} catch (JSONException jsonException) {
+			System.out.println(jsonException.getMessage());
+			System.out.println();
+
 			return 1;
 		}
 
