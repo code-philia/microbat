@@ -64,17 +64,15 @@ public class ExampleSearcher {
 	 * For testing purpose
 	 */
 	public void recordLoss() {
-		ArrayList<Double> baselineLoss = new ArrayList<>();
-		ArrayList<Double> experimentLoss = new ArrayList<>();
+		LossDataCollector lossDataCollector = new LossDataCollector();
 
 		for (HashMap<String, String> datapoint : testingDataset) {
-			baselineLoss.add(getLoss(datapoint, x -> promptTemplateFiller.getDefaultVariableExpansionPrompt(x)));
-			experimentLoss.add(getLoss(datapoint,
-					x -> promptTemplateFiller.getVariableExpansionPrompt(x, this.searchForExample(x))));
+			double baselineLoss = getLoss(datapoint, x -> promptTemplateFiller.getDefaultVariableExpansionPrompt(x));
+			double experimentLoss = getLoss(datapoint,
+					x -> promptTemplateFiller.getVariableExpansionPrompt(x, this.searchForExample(x)));
+			lossDataCollector.saveDataToFile(baselineLoss, experimentLoss);
+			break;
 		}
-		
-		LossDataCollector lossDataCollector = new LossDataCollector();
-		lossDataCollector.saveDataToFile(baselineLoss, experimentLoss);
 	}
 
 	/**
