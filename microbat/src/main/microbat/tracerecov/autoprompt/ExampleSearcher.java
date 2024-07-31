@@ -38,8 +38,8 @@ public class ExampleSearcher {
 	}
 
 	public String searchForExample(HashMap<String, String> datapoint) {
-		String classStructureKey = "class_structure";
-		String groundTruthKey = "ground_truth";
+		String classStructureKey = DatasetReader.CLASS_STRUCTURE;
+		String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
 		String classStructure = datapoint.get(classStructureKey);
 		VariableSkeleton varSkeleton = varSkeletonParser.parseClassStructure(classStructure);
@@ -100,7 +100,7 @@ public class ExampleSearcher {
 	}
 
 	private double getLoss(HashMap<String, String> datapoint, Function<HashMap<String, String>, String> operation) {
-		JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
+		JSONObject groundTruthJSON = new JSONObject(datapoint.get(DatasetReader.GROUND_TRUTH));
 
 		String request = operation.apply(datapoint);
 		System.out.println(request);

@@ -48,7 +48,7 @@ public class AutoPromptEngineer {
 
 	private String adjustVariableExpansionPromptExample(HashMap<String, String> datapoint, String originalExample) {
 
-		JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
+		JSONObject groundTruthJSON = new JSONObject(datapoint.get(DatasetReader.GROUND_TRUTH));
 		String originalPrompt = promptTemplateFiller.getVariableExpansionPrompt(datapoint, originalExample);
 
 		// get original output
@@ -143,7 +143,7 @@ public class AutoPromptEngineer {
 					updatedTextualLoss, trials - 1);
 		}
 
-		JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
+		JSONObject groundTruthJSON = new JSONObject(datapoint.get(DatasetReader.GROUND_TRUTH));
 		double updatedNumericalLoss = lossCalculator.computeLoss(updatedOutputJSON, groundTruthJSON);
 		String updatedTextualLoss = textualLossGeneartor.getLoss(updatedOutputJSON, groundTruthJSON);
 
@@ -169,7 +169,7 @@ public class AutoPromptEngineer {
 		double loss = 0;
 
 		for (HashMap<String, String> datapoint : testingDataset) {
-			JSONObject groundTruthJSON = new JSONObject(datapoint.get("ground_truth"));
+			JSONObject groundTruthJSON = new JSONObject(datapoint.get(DatasetReader.GROUND_TRUTH));
 
 			String request = promptTemplateFiller.getVariableExpansionPrompt(datapoint, example);
 			String output = getLLMOutput(request);

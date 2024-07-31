@@ -11,17 +11,17 @@ import microbat.Activator;
 import microbat.preference.TraceRecovPreference;
 
 public class VarExpansionDatasetReader extends DatasetReader {
-	
+
 	private String variableExpansionPath;
-	
+
 	public VarExpansionDatasetReader() {
 		// TODO: move this to preference page
 		String variableExpansionFile = "var_expansion.txt";
-		
+
 		this.variableExpansionPath = Activator.getDefault().getPreferenceStore()
 				.getString(TraceRecovPreference.PROMPT_GT_PATH) + File.separator + variableExpansionFile;
 	}
-	
+
 	/**
 	 * Reads variable expansion dataset.
 	 * 
@@ -43,12 +43,12 @@ public class VarExpansionDatasetReader extends DatasetReader {
 				}
 
 				HashMap<String, String> datapoint = new HashMap<>();
-				datapoint.put("var_name", columns[0]);
-				datapoint.put("var_type", columns[1]);
-				datapoint.put("var_value", columns[2]);
-				datapoint.put("class_structure", columns[3]);
-				datapoint.put("source_code", columns[4]);
-				datapoint.put("ground_truth", columns[5]);
+				datapoint.put(VAR_NAME, columns[0]);
+				datapoint.put(VAR_TYPE, columns[1]);
+				datapoint.put(VAR_VALUE, columns[2]);
+				datapoint.put(CLASS_STRUCTURE, columns[3]);
+				datapoint.put(SOURCE_CODE, columns[4]);
+				datapoint.put(GROUND_TRUTH, columns[5]);
 
 				dataset.add(datapoint);
 			}
