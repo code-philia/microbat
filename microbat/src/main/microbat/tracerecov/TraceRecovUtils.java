@@ -333,4 +333,10 @@ public class TraceRecovUtils {
 
 		return false;
 	}
+	
+
+	public static String[] parseArrayFromString(String stringValue) {
+		stringValue = stringValue.substring(1, stringValue.length() - 1);
+		return stringValue.split(",");
+	}
 }

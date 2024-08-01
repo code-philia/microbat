@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import org.json.JSONObject;
 
+import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 
 public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
@@ -37,11 +38,6 @@ public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
 		return aliasInferencePromptExample;
 	}
 
-	private String[] parseArrayFromString(String stringValue) {
-		stringValue = stringValue.substring(1, stringValue.length() - 1);
-		return stringValue.split(",");
-	}
-
 	@Override
 	public String getPromptQuestion(HashMap<String, String> datapoint) {
 		/* datapoint features */
@@ -55,10 +51,10 @@ public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
 		String rootVarName = targetVarNameAndValue[0];
 		String jsonString = targetVarNameAndValue[1];
 
-		String[] criticalVariables = parseArrayFromString(datapoint.get(DatasetReader.CRITICAL_VARS));
+		String[] criticalVariables = TraceRecovUtils.parseArrayFromString(datapoint.get(DatasetReader.CRITICAL_VARS));
 
 		JSONObject currentAliases = new JSONObject(datapoint.get(DatasetReader.CURRENT_ALIASES));
-		String[] invokedMethods = parseArrayFromString(datapoint.get(DatasetReader.INVOKED_METHODS));
+		String[] invokedMethods = TraceRecovUtils.parseArrayFromString(datapoint.get(DatasetReader.INVOKED_METHODS));
 
 		// source code
 		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n```");
