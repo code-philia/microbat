@@ -26,7 +26,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 		trainingDataset = datasets.get(0);
 		testingDataset = datasets.get(1);
 		varSkeletonParser = new VarSkeletonParser();
-		promptTemplateFiller = new PromptTemplateFiller();
+		promptTemplateFiller = new VarExpansionPromptTemplateFiller();
 	}
 
 	@Override
