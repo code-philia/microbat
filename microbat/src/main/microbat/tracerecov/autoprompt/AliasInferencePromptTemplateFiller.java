@@ -1,0 +1,214 @@
+package microbat.tracerecov.autoprompt;
+
+import java.util.HashMap;
+
+import org.json.JSONObject;
+
+import microbat.tracerecov.autoprompt.dataset.DatasetReader;
+
+public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
+
+	private static String aliasInferencePromptBackground = 
+			"<Background>\n"
+			+ "You are a Java expert, you need to analyze the runtime execution of a Java program. You need to identify when there is a relationship between two variables.\n"
+			+ "\n";
+
+	private static String aliasInferencePromptExample = 
+			"<Example>\n"
+			+ "Given the code as:\n"
+			+ "```list.add(element);```\n"
+			+ "`list` is of type `java.util.ArrayList`, of runtime value \"[]\",\n"
+			+ "`element` is of type `Integer`, of runtime value \" 1\",\n"
+			+ "We know that `list` has the following structure:\n"
+			+ "{\"list:java.util.ArrayList\":{\"elementData:java.lang.Object[]\":\"[]\",\"size:int\":\"0\"}}\n"
+			+ "\n"
+			+ "Your response should be:\n"
+			+ "{\n"
+			+ "\"list.elementData[0]\":\"element\"\n"
+			+ "}";
+
+	// TODO: prompt engineering
+	private static String aliasInferenceAdjustmentPromptPrefix = "";
+
+	/* Prompt to be adjusted */
+
+	@Override
+	public String getDefaultPromptExample() {
+		return aliasInferencePromptExample;
+	}
+
+	private String[] parseArrayFromString(String stringValue) {
+		stringValue = stringValue.substring(1, stringValue.length() - 1);
+		return stringValue.split(",");
+	}
+
+	@Override
+	public String getPromptQuestion(HashMap<String, String> datapoint) {
+		/* datapoint features */
+		String sourceCode = datapoint.get(DatasetReader.SOURCE_CODE);
+		JSONObject variablesInStep = new JSONObject(datapoint.get(DatasetReader.VARS_IN_STEP));
+
+		JSONObject fieldsOfVariablesInStep = new JSONObject(datapoint.get(DatasetReader.FIELDS_OF_VARS_IN_STEP));
+
+		String targetVar = datapoint.get(DatasetReader.TARGET_VAR);
+		String[] targetVarNameAndValue = targetVar.split(":", 2);
+		String rootVarName = targetVarNameAndValue[0];
+		String jsonString = targetVarNameAndValue[1];
+
+		String[] criticalVariables = parseArrayFromString(datapoint.get(DatasetReader.CRITICAL_VARS));
+
+		JSONObject currentAliases = new JSONObject(datapoint.get(DatasetReader.CURRENT_ALIASES));
+		String[] invokedMethods = parseArrayFromString(datapoint.get(DatasetReader.INVOKED_METHODS));
+
+		// source code
+		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n```");
+		question.append(sourceCode);
+		question.append("```");
+
+		// variables information (name, type, value)
+		for (String key : variablesInStep.keySet()) {
+			String[] nameAndType = key.split(":");
+			String value = variablesInStep.getString(key);
+
+			question.append("\n`");
+			question.append(nameAndType[0]);
+			question.append("` is of type `");
+			question.append(nameAndType[1]);
+			question.append("`, of runtime value \"");
+			question.append(value);
+			question.append("\",");
+		}
+
+		// target variable structure
+		question.append("\nWe know that `");
+		question.append(rootVarName);
+		question.append("` has the following structure:\n");
+		question.append(jsonString);
+		question.append("\n");
+
+		// existing alias relations
+		boolean isFirstVar = true;
+		for (String key : currentAliases.keySet()) {
+			question.append(isFirstVar ? "where\n`" : "`");
+			question.append(key);
+			question.append("` has the same memory address as `");
+			question.append(currentAliases.get(key));
+			question.append("`,\n");
+			isFirstVar = false;
+		}
+
+		// fields in other variables
+		for (String key : fieldsOfVariablesInStep.keySet()) {
+			question.append("\n`");
+			question.append(key);
+			question.append("` has the following fields:\n");
+			question.append(fieldsOfVariablesInStep.get(key));
+			question.append("\n");
+		}
+
+		question.append("\nIdentify all the variable pairs such that each pair has the same memory address. "
+				+ "The variable names must be chosen from the above names, not values.\n");
+
+		// invoked methods
+		if (invokedMethods.length != 0) {
+			question.append("\nOnly analyse variables or fields involved in the following functions:\n");
+			for (String methodSig : invokedMethods) {
+				question.append(methodSig);
+				question.append("\n");
+			}
+			question.append("Do not analyse other functions.\n");
+		}
+
+		// keys (critical variables)
+		question.append("Your response should be in JSON format, where keys must be chosen from:");
+		for (String criticalVar : criticalVariables) {
+			question.append("`" + criticalVar + "`,");
+		}
+
+		// description
+		question.append(
+				" do not include other keys. Values in JSON are the names of other variables listed above, not variable values.\n\n"
+						+ "If a field is an element in an array, use `array_name[element_index]` as its name.\n"
+						+ "If a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of `<TYPE>`.\n\n"
+						+ "In your response, strictly follow this format. Do not include explanation. Each key must be included exactly once.");
+
+		return question.toString();
+	}
+
+	@Override
+	public String getPrompt(HashMap<String, String> datapoint, String example) {
+		return aliasInferencePromptBackground + example + getPromptQuestion(datapoint);
+	}
+
+	@Override
+	public String getDefaultPrompt(HashMap<String, String> datapoint) {
+		return aliasInferencePromptBackground + aliasInferencePromptExample + getPromptQuestion(datapoint);
+	}
+
+	@Override
+	public String getExample(HashMap<String, String> datapoint, String structure) {
+		/* datapoint features */
+		String sourceCode = datapoint.get(DatasetReader.SOURCE_CODE);
+		JSONObject variablesInStep = new JSONObject(datapoint.get(DatasetReader.VARS_IN_STEP));
+
+		String targetVar = datapoint.get(DatasetReader.TARGET_VAR);
+		String[] targetVarNameAndValue = targetVar.split(":", 2);
+		String rootVarName = targetVarNameAndValue[0];
+		String jsonString = targetVarNameAndValue[1];
+
+		String groundTruthExample = datapoint.get(DatasetReader.GROUND_TRUTH);
+
+		// source code
+		StringBuilder stringBuilder = new StringBuilder("<Example>\n" + "Given the code as:\n```");
+		stringBuilder.append(sourceCode);
+		stringBuilder.append("```");
+
+		// variables information (name, type, value)
+		for (String key : variablesInStep.keySet()) {
+			String[] nameAndType = key.split(":");
+			String value = variablesInStep.getString(key);
+
+			stringBuilder.append("\n`");
+			stringBuilder.append(nameAndType[0]);
+			stringBuilder.append("` is of type `");
+			stringBuilder.append(nameAndType[1]);
+			stringBuilder.append("`, of runtime value \"");
+			stringBuilder.append(value);
+			stringBuilder.append("\",");
+		}
+
+		// target variable structure
+		stringBuilder.append("\nWe know that `");
+		stringBuilder.append(rootVarName);
+		stringBuilder.append("` has the following structure:\n");
+		stringBuilder.append(jsonString);
+		stringBuilder.append("\n");
+
+		stringBuilder.append("Your response should be:\n```json" + groundTruthExample + "\n```");
+
+		return stringBuilder.toString();
+	}
+
+	/* Adjustment Prompt */
+
+	@Override
+	public String getAdjustmentPrompt(HashMap<String, String> datapoint, String example) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getDefaultAdjustmentPrompt(HashMap<String, String> datapoint) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/* Adjustment Prompt Incorporating Textual Loss */
+
+	@Override
+	public String getAdjustmentPromptWithLoss(String example, HashMap<String, String> datapoint, String output,
+			String textualLoss) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+}
