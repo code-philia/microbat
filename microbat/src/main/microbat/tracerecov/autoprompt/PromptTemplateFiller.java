@@ -72,16 +72,13 @@ public class PromptTemplateFiller {
 			+ "4. Populate the `T_e` instance using fully expanded `T_a` instances from step 3.\n"
 			+ "5. Replace `V_e` with the updated example. Do not include any explanation.\n";
 
-	public PromptTemplateFiller() {
-	}
-
-	public String getDefaultVariableExpansionPromptExample() {
+	public String getDefaultPromptExample() {
 		return variableExpansionPromptExample;
 	}
 
 	/* Prompt to be adjusted */
 
-	public String getVariableExpansionPromptQuestion(HashMap<String, String> datapoint) {
+	public String getPromptQuestion(HashMap<String, String> datapoint) {
 		/* datapoint features */
 		String varName = datapoint.get("var_name");
 		String varType = datapoint.get("var_type");
@@ -101,13 +98,12 @@ public class PromptTemplateFiller {
 		return stringBuilder.toString();
 	}
 
-	public String getVariableExpansionPrompt(HashMap<String, String> datapoint, String example) {
-		return variableExpansionPromptBackground + example + getVariableExpansionPromptQuestion(datapoint);
+	public String getPrompt(HashMap<String, String> datapoint, String example) {
+		return variableExpansionPromptBackground + example + getPromptQuestion(datapoint);
 	}
 
-	public String getDefaultVariableExpansionPrompt(HashMap<String, String> datapoint) {
-		return variableExpansionPromptBackground + variableExpansionPromptExample
-				+ getVariableExpansionPromptQuestion(datapoint);
+	public String getDefaultPrompt(HashMap<String, String> datapoint) {
+		return variableExpansionPromptBackground + variableExpansionPromptExample + getPromptQuestion(datapoint);
 	}
 
 	/* Adjustment Prompt */
@@ -117,7 +113,7 @@ public class PromptTemplateFiller {
 	 * 
 	 * var_name, var_type, var_value, class_structure, source_code, ground_truth
 	 */
-	public String getVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint, String example) {
+	public String getAdjustmentPrompt(HashMap<String, String> datapoint, String example) {
 		StringBuilder stringBuilder = new StringBuilder(variableExpansionAdjustmentPromptPrefix);
 		String groundTruth = datapoint.get("ground_truth");
 
@@ -133,8 +129,8 @@ public class PromptTemplateFiller {
 		return stringBuilder.toString();
 	}
 
-	public String getDefaultVariableExpansionAdjustmentPrompt(HashMap<String, String> datapoint) {
-		return getVariableExpansionAdjustmentPrompt(datapoint, variableExpansionPromptExample);
+	public String getDefaultAdjustmentPrompt(HashMap<String, String> datapoint) {
+		return getAdjustmentPrompt(datapoint, variableExpansionPromptExample);
 	}
 
 	public String getExample(HashMap<String, String> datapoint, String structure) {
@@ -155,8 +151,8 @@ public class PromptTemplateFiller {
 
 	/* Adjustment Prompt Incorporating Textual Loss */
 
-	public String getVariableExpansionAdjustmentPromptWithLoss(String example, HashMap<String, String> datapoint,
-			String output, String textualLoss) {
+	public String getAdjustmentPromptWithLoss(String example, HashMap<String, String> datapoint, String output,
+			String textualLoss) {
 		// existing example
 		StringBuilder stringBuilder = new StringBuilder("Given example:\n");
 		stringBuilder.append(example);

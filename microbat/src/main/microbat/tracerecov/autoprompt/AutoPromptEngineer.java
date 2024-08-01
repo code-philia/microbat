@@ -37,7 +37,7 @@ public class AutoPromptEngineer {
 	}
 
 	public String adjustVariableExpansionPromptExample() {
-		String updatedExample = promptTemplateFiller.getDefaultVariableExpansionPromptExample();
+		String updatedExample = promptTemplateFiller.getDefaultPromptExample();
 		for (HashMap<String, String> datapoint : trainingDataset) {
 			updatedExample = adjustVariableExpansionPromptExample(datapoint, updatedExample);
 			System.out.println();
@@ -50,7 +50,7 @@ public class AutoPromptEngineer {
 	private String adjustVariableExpansionPromptExample(HashMap<String, String> datapoint, String originalExample) {
 
 		JSONObject groundTruthJSON = new JSONObject(datapoint.get(DatasetReader.GROUND_TRUTH));
-		String originalPrompt = promptTemplateFiller.getVariableExpansionPrompt(datapoint, originalExample);
+		String originalPrompt = promptTemplateFiller.getPrompt(datapoint, originalExample);
 
 		// get original output
 		String originalOutput = getLLMOutput(originalPrompt);
@@ -80,8 +80,7 @@ public class AutoPromptEngineer {
 	private String getFineTunedExample(HashMap<String, String> datapoint, String originalExample, double numericalLoss,
 			String textualLoss) {
 		// generate updated example
-		String originalAdjustmentPrompt = promptTemplateFiller.getVariableExpansionAdjustmentPrompt(datapoint,
-				originalExample);
+		String originalAdjustmentPrompt = promptTemplateFiller.getAdjustmentPrompt(datapoint, originalExample);
 		String updatedExample = null;
 		try {
 			updatedExample = executionSimulator.sendRequest("", originalAdjustmentPrompt);
@@ -90,7 +89,7 @@ public class AutoPromptEngineer {
 		}
 
 		// compute textual and numerical loss
-		String updatedPrompt = promptTemplateFiller.getVariableExpansionPrompt(datapoint, updatedExample);
+		String updatedPrompt = promptTemplateFiller.getPrompt(datapoint, updatedExample);
 		String updatedOutput = getLLMOutput(updatedPrompt);
 		JSONObject updatedOutputJSON;
 		try {
@@ -122,8 +121,8 @@ public class AutoPromptEngineer {
 		}
 
 		// update example
-		String adjustmentPromptWithTextualLoss = promptTemplateFiller
-				.getVariableExpansionAdjustmentPromptWithLoss(originalExample, datapoint, output, textualLoss);
+		String adjustmentPromptWithTextualLoss = promptTemplateFiller.getAdjustmentPromptWithLoss(originalExample,
+				datapoint, output, textualLoss);
 		String updatedExample = null;
 		try {
 			updatedExample = executionSimulator.sendRequest("", adjustmentPromptWithTextualLoss);
@@ -132,7 +131,7 @@ public class AutoPromptEngineer {
 		}
 
 		// compute textual and numerical loss
-		String updatedPrompt = promptTemplateFiller.getVariableExpansionPrompt(datapoint, updatedExample);
+		String updatedPrompt = promptTemplateFiller.getPrompt(datapoint, updatedExample);
 		String updatedOutput = getLLMOutput(updatedPrompt);
 		JSONObject updatedOutputJSON;
 		try {
@@ -163,7 +162,7 @@ public class AutoPromptEngineer {
 	}
 
 	public double getAverageLoss() {
-		return getAverageLoss(promptTemplateFiller.getDefaultVariableExpansionPromptExample());
+		return getAverageLoss(promptTemplateFiller.getDefaultPromptExample());
 	}
 
 	public double getAverageLoss(String example) {
@@ -172,7 +171,7 @@ public class AutoPromptEngineer {
 		for (HashMap<String, String> datapoint : testingDataset) {
 			JSONObject groundTruthJSON = new JSONObject(datapoint.get(DatasetReader.GROUND_TRUTH));
 
-			String request = promptTemplateFiller.getVariableExpansionPrompt(datapoint, example);
+			String request = promptTemplateFiller.getPrompt(datapoint, example);
 			String output = getLLMOutput(request);
 
 			JSONObject outputJSON;

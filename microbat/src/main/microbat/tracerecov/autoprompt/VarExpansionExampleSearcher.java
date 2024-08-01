@@ -65,18 +65,18 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 		for (HashMap<String, String> datapoint : testingDataset) {
 			System.out.println("Baseline:\n");
-			double baselineLoss = getLoss(datapoint, x -> promptTemplateFiller.getDefaultVariableExpansionPrompt(x));
+			double baselineLoss = getLoss(datapoint, x -> promptTemplateFiller.getDefaultPrompt(x));
 
 			System.out.println("Experiment:\n");
 			double experimentLoss = getLoss(datapoint,
-					x -> promptTemplateFiller.getVariableExpansionPrompt(x, this.searchForExample(x)));
+					x -> promptTemplateFiller.getPrompt(x, this.searchForExample(x)));
 
 			System.out.println("baseline loss: " + baselineLoss);
 			System.out.println("experiment loss: " + experimentLoss);
 			lossDataCollector.saveDataToFile(baselineLoss, experimentLoss);
 		}
 	}
-	
+
 	@Override
 	protected double getLoss(HashMap<String, String> datapoint, Function<HashMap<String, String>, String> operation) {
 		JSONObject groundTruthJSON = new JSONObject(datapoint.get(DatasetReader.GROUND_TRUTH));
