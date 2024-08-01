@@ -3,6 +3,7 @@ package microbat.tracerecov.autoprompt;
 import java.util.HashMap;
 
 import microbat.tracerecov.TraceRecovUtils;
+import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 
 public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 
@@ -82,11 +83,11 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 	@Override
 	public String getPromptQuestion(HashMap<String, String> datapoint) {
 		/* datapoint features */
-		String varName = datapoint.get("var_name");
-		String varType = datapoint.get("var_type");
-		String varValue = datapoint.get("var_value");
-		String classStructure = datapoint.get("class_structure");
-		String sourceCode = datapoint.get("source_code");
+		String varName = datapoint.get(DatasetReader.VAR_NAME);
+		String varType = datapoint.get(DatasetReader.VAR_TYPE);
+		String varValue = datapoint.get(DatasetReader.VAR_VALUE);
+		String classStructure = datapoint.get(DatasetReader.CLASS_STRUCTURE);
+		String sourceCode = datapoint.get(DatasetReader.SOURCE_CODE);
 
 		StringBuilder stringBuilder = new StringBuilder("\n\n<Question>\n");
 		stringBuilder.append("Given variable *" + varName + "*");
@@ -112,9 +113,9 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 
 	@Override
 	public String getExample(HashMap<String, String> datapoint, String groundTruthExample) {
-		String varType = datapoint.get("var_type");
-		String varValue = TraceRecovUtils.processInputStringForLLM(datapoint.get("var_value"));
-		String classStructure = datapoint.get("class_structure");
+		String varType = datapoint.get(DatasetReader.VAR_TYPE);
+		String varValue = TraceRecovUtils.processInputStringForLLM(datapoint.get(DatasetReader.VAR_VALUE));
+		String classStructure = datapoint.get(DatasetReader.CLASS_STRUCTURE);
 
 		StringBuilder stringBuilder = new StringBuilder("<Example>\r\n");
 
@@ -137,7 +138,7 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 	@Override
 	public String getAdjustmentPrompt(HashMap<String, String> datapoint, String example) {
 		StringBuilder stringBuilder = new StringBuilder(variableExpansionAdjustmentPromptPrefix);
-		String groundTruth = datapoint.get("ground_truth");
+		String groundTruth = datapoint.get(DatasetReader.GROUND_TRUTH);
 
 		// basic information
 		stringBuilder.append("\nAdditional Example:");

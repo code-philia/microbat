@@ -17,6 +17,7 @@ import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.ExampleSearcher;
+import microbat.tracerecov.autoprompt.VarExpansionExampleSearcher;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.common.core.Pair;
 
@@ -107,7 +108,7 @@ public class VariableExpansionUtils {
 	private static String getExample(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {
 		HashMap<String, String> datapoint = getDatapointFromStep(varValue, varSkeleton, step);
 
-		ExampleSearcher exampleSearcher = new ExampleSearcher();
+		ExampleSearcher exampleSearcher = new VarExpansionExampleSearcher();
 		String closestExample = exampleSearcher.searchForExample(datapoint);
 
 		if (closestExample == null || closestExample.equals("")) {
