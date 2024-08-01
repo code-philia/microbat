@@ -26,7 +26,7 @@ public abstract class DatasetReader {
 	public static final String CURRENT_ALIASES = "current_aliases";
 	public static final String FIELDS_OF_VARS_IN_STEP = "fields_in_step";
 	public static final String INVOKED_METHODS = "invoked_methods";
-	public static final String FIELDS_OF_TARGET_VAR = "target_fields";
+	public static final String CRITICAL_VARS = "critical_vars";
 	public static final String SOURCE_FILE = "source_file";
 
 	private long seed = 2024L;

@@ -39,7 +39,7 @@ public class AliasInferenceDatasetReader extends DatasetReader {
 			// read content
 			while ((line = bufferReader.readLine()) != null) {
 				String[] columns = line.split("###");
-				if (columns.length != 6) {
+				if (columns.length != 10) {
 					continue;
 				}
 
@@ -51,7 +51,7 @@ public class AliasInferenceDatasetReader extends DatasetReader {
 				datapoint.put(CURRENT_ALIASES, columns[4]);
 				datapoint.put(FIELDS_OF_VARS_IN_STEP, columns[5]);
 				datapoint.put(INVOKED_METHODS, columns[6]);
-				datapoint.put(FIELDS_OF_TARGET_VAR, columns[7]);
+				datapoint.put(CRITICAL_VARS, columns[7]);
 				datapoint.put(GROUND_TRUTH, columns[8]);
 				datapoint.put(SOURCE_FILE, columns[9]);
 
