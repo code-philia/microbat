@@ -1,5 +1,8 @@
 package microbat.tracerecov.varskeleton;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 /**
  * This class is used to parse a class structure string into Variable Skeleton.
  */
@@ -25,7 +28,7 @@ public class VarSkeletonParser {
 		return variableSkeleton;
 	}
 
-	public void parseClassStructureRecur(String varValue, VariableSkeleton parentVar) {
+	private void parseClassStructureRecur(String varValue, VariableSkeleton parentVar) {
 		if (varValue.startsWith("{")) {
 			varValue = extractVarValueContent(varValue);
 		}
@@ -70,5 +73,49 @@ public class VarSkeletonParser {
 		int startIndex = varValue.indexOf("{");
 		int endIndex = varValue.lastIndexOf("}");
 		return varValue.substring(startIndex + 1, endIndex);
+	}
+
+	public VariableSkeleton parseVariableValueJSONObject(JSONObject variable) {
+		String key = variable.keys().next(); // assume root layer has one key
+		String[] nameAndType = key.split(":");
+		Object value = variable.get(key);
+
+		VariableSkeleton varSkeleton = new VariableSkeleton(nameAndType[1], nameAndType[0]);
+		if (value instanceof JSONObject) {
+			parseVariableValueJSONObjectRecur((JSONObject) value, varSkeleton);
+		} else if (value instanceof JSONArray) {
+			parseVariableValueJSONArrayRecur((JSONArray) value, varSkeleton);
+		} else {
+			parseVariableValueOthersRecur(value, varSkeleton);
+		}
+
+		return varSkeleton;
+	}
+
+	private void parseVariableValueJSONObjectRecur(JSONObject variable, VariableSkeleton parentVar) {
+		for (String key : variable.keySet()) {
+			String[] nameAndType = key.split(":");
+			Object value = variable.get(key);
+
+			VariableSkeleton childVar = new VariableSkeleton(nameAndType[1], nameAndType[0]);
+			parentVar.addChild(childVar);
+
+			if (value instanceof JSONObject) {
+				parseVariableValueJSONObjectRecur((JSONObject) value, childVar);
+			} else if (value instanceof JSONArray) {
+				parseVariableValueJSONArrayRecur((JSONArray) value, childVar);
+			} else {
+				parseVariableValueOthersRecur(value, childVar);
+			}
+		}
+	}
+
+	private void parseVariableValueJSONArrayRecur(JSONArray variable, VariableSkeleton parentVar) {
+		// TODO: implement this
+	}
+
+	private void parseVariableValueOthersRecur(Object value, VariableSkeleton parentVar) {
+		String valueString = value.toString();
+		parentVar.setValue(valueString);
 	}
 }

@@ -100,7 +100,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 		}
 
 		// compute loss
-		LossCalculator lossCalculator = new LossCalculator();
+		LossCalculator lossCalculator = new VarExpansionLossCalculator();
 		return lossCalculator.computeLoss(outputJSON, groundTruthJSON);
 	}
 }

@@ -31,8 +31,8 @@ public class AutoPromptEngineer {
 		trainingDataset = datasets.get(0);
 		testingDataset = datasets.get(1);
 		executionSimulator = new ExecutionSimulator();
-		promptTemplateFiller = new PromptTemplateFiller();
-		lossCalculator = new LossCalculator();
+		promptTemplateFiller = new VarExpansionPromptTemplateFiller();
+		lossCalculator = new VarExpansionLossCalculator();
 		textualLossGeneartor = new TextualLossGenerator();
 	}
 
@@ -183,7 +183,6 @@ public class AutoPromptEngineer {
 			}
 
 			// compute loss
-			LossCalculator lossCalculator = new LossCalculator();
 			loss += lossCalculator.computeLoss(outputJSON, groundTruthJSON);
 		}
 
