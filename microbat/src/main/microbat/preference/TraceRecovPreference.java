@@ -20,6 +20,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import microbat.Activator;
+import microbat.tracerecov.autoprompt.PromptType;
 import microbat.tracerecov.executionsimulator.LLMModel;
 import microbat.tracerecov.executionsimulator.SimulatorConstants;
 import microbat.util.Settings;
@@ -38,6 +39,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	public static final String PROMPT_GT_PATH = "prompt_gt_path";
 	public static final String ALIAS_FILE_PATH = "alias_file_path";
 	public static final String COLLECT_GROUND_TRUTH = "collect_ground_truth";
+	public static final String PROMPT_TYPE = "prompt_type";
 
 	/* constants before update */
 	private boolean isEnableTraceRecov;
@@ -51,6 +53,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private boolean logDebugInfo;
 	private String promptGTPath;
 	private boolean collectGroundTruth;
+	private PromptType promptType = PromptType.VAR_EXPANSION; // default prompt type for incontext learning
 
 	/* constants after update */
 	private Button isEnableTraceRecovButton;
@@ -65,6 +68,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private Button collectGroundTruthButton;
 	private Text promptGTPathText;
 	private Text aliasFilePathText;
+	private Combo promptTypeCombo;
 
 	public TraceRecovPreference() {
 	}
@@ -142,6 +146,15 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		}
 
 		this.promptGTPath = Activator.getDefault().getPreferenceStore().getString(PROMPT_GT_PATH);
+
+		String promptType = Activator.getDefault().getPreferenceStore().getString(PROMPT_TYPE);
+		if (promptType != null && !promptType.equals("")) {
+			try {
+				this.promptType = PromptType.valueOf(promptType);
+			} catch (IllegalArgumentException e) {
+				this.promptType = PromptType.VAR_EXPANSION; // default prompt type if unknown value
+			}
+		}
 	}
 
 	@Override
@@ -219,6 +232,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 
 		String logDebugInfoLabel = "Log Debug Info";
 		this.logDebugInfoButton = createCheckButton(logSettingGroup, logDebugInfoLabel, this.logDebugInfo);
+
+		String promptSelectionLabel = "Type of Prompt (for auto incontext learning experiment, independent from TraceRecov):";
+		this.promptTypeCombo = createDropDown(logSettingGroup, promptSelectionLabel, PromptType.values(),
+				this.promptType.ordinal());
 
 		String promptGTPathLabel = "Path for Prompt Ground Truth:";
 		this.promptGTPathText = createText(logSettingGroup, promptGTPathLabel, this.promptGTPath);
@@ -299,6 +316,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
 		preferences.put(PROMPT_GT_PATH, this.promptGTPathText.getText());
 		preferences.put(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
+		preferences.put(PROMPT_TYPE, this.promptTypeCombo.getText());
 
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_TRACERECOV,
 				String.valueOf(this.isEnableTraceRecovButton.getSelection()));
@@ -319,6 +337,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 				String.valueOf(this.logDebugInfoButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(PROMPT_GT_PATH, this.promptGTPathText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(PROMPT_TYPE, this.promptTypeCombo.getText());
 
 		Settings.isEnableGPTInference = this.isEnableLLMButton.getSelection();
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();
