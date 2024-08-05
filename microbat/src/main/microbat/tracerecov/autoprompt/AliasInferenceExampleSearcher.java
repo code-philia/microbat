@@ -193,9 +193,4 @@ public class AliasInferenceExampleSearcher extends ExampleSearcher {
 		}
 		return diffScore / totalCount;
 	}
-
-	public static void main(String[] args) {
-		AliasInferenceExampleSearcher aliasInferenceExampleSearcher = new AliasInferenceExampleSearcher();
-		aliasInferenceExampleSearcher.recordLoss();
-	}
 }
