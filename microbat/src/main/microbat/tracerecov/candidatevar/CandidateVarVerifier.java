@@ -119,7 +119,7 @@ public class CandidateVarVerifier {
 			String methodName = invokeInstruction.getName(this.constantPoolGen);
 			String methodSigature = invokeInstruction.getSignature(this.constantPoolGen);
 			String invokingType = invokeInstruction.getClassName(this.constantPoolGen);
-			
+
 			try {
 				CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokingType, methodName + methodSigature);
 				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
@@ -132,7 +132,7 @@ public class CandidateVarVerifier {
 		} else {
 			return WriteStatus.GUARANTEE_NO_WRITE;
 		}
-		
+
 		return WriteStatus.NO_GUARANTEE;
 	}
 

@@ -100,10 +100,10 @@ public class TraceRecovUtils {
 	}
 
 	public static boolean isClassInFolder(String folderPath, String className) {
-		if(folderPath == null) {
+		if (folderPath == null) {
 			return false;
 		}
-		
+
 		String fileName = className.replace(".", File.separator).concat(".java");
 		Path filePath = Paths.get(folderPath, fileName);
 
@@ -222,6 +222,10 @@ public class TraceRecovUtils {
 						"Method `" + methodSig + "` is not found in class `" + className + "`");
 			}
 
+			if (targetMethod.isAbstract()) {
+				return null;
+			}
+
 			// Build CFG
 			Code code = targetMethod.getCode();
 			if (code == null) {
@@ -333,7 +337,6 @@ public class TraceRecovUtils {
 
 		return false;
 	}
-	
 
 	public static String[] parseArrayFromString(String stringValue) {
 		stringValue = stringValue.substring(1, stringValue.length() - 1);
