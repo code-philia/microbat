@@ -182,6 +182,9 @@ public class ExecutionSimulator {
 		VarValue ancestorVarOnTrace = null;
 		for (VarValue readVarInStep : step.getReadVariables()) {
 			String aliasID = readVarInStep.getAliasVarID();
+			if (aliasID == null) {
+				continue;
+			}
 			VarValue criticalAncestor = criticalVariables.stream()
 					.filter(criticalVar -> aliasID.equals(criticalVar.getAliasVarID())).findFirst().orElse(null);
 
