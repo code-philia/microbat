@@ -178,10 +178,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			String componentType = var.getType().substring(0, var.getType().length() - 2); // 2 = "[]".length
 			if (componentType != null && componentType.equals("java.lang.Object")) {
 				Object[] array = (Object[]) value;
-				for (Object item : array) {
-					if (item != null) {
-						componentType = item.getClass().getTypeName();
-						break;
+				if (array != null) {
+					for (Object item : array) {
+						if (item != null) {
+							componentType = item.getClass().getTypeName();
+							break;
+						}
 					}
 				}
 			}
