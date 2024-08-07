@@ -272,6 +272,9 @@ public class TraceRecoverer {
 		for (VarValue readVar : step.getReadVariables()) {
 			String aliasID = readVar.getAliasVarID();
 			VarValue criticalVar = null;
+			if (aliasID == null) {
+				continue;
+			}
 			for (VarValue var : criticalVariables) {
 				if (criticalVar == null) {
 					if (aliasID.equals(var.getAliasVarID())) {
