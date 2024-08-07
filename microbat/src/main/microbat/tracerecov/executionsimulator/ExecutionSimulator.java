@@ -221,6 +221,9 @@ public class ExecutionSimulator {
 
 			try {
 				CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokedMethod);
+				if (cfg == null) {
+					return WriteStatus.NO_GUARANTEE;
+				}
 				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
 				return candidateVarVerifier.getVarWriteStatus(targetVar.getVarName());
 			} catch (CannotBuildCFGException e) {
