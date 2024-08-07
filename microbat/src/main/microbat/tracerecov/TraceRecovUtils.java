@@ -291,7 +291,8 @@ public class TraceRecovUtils {
 		}
 
 		// primitive types: must be the same
-		if (isPrimitiveType(generalType) || isString(generalType) || isString(specificType)) {
+		if (isPrimitiveType(generalType) || isString(generalType) || isString(specificType) || isArray(generalType)
+				|| isArray(specificType)) {
 			return generalType.equals(specificType);
 		}
 
