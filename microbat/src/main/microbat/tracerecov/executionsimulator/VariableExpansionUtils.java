@@ -82,7 +82,7 @@ public class VariableExpansionUtils {
 			+ " }\r\n";
 
 	/* Methods */
-	
+
 	public static String getBackgroundContent() {
 		return VAR_EXPAND_BACKGROUND + VAR_EXPAND_EXAMPLE;
 	}
@@ -210,8 +210,12 @@ public class VariableExpansionUtils {
 				}
 				break;
 			} else {
+				String[] nameAndType = key.split(":");
 				String varName = key.split(":")[0].trim();
-				String varType = key.split(":")[1].trim();
+				String varType = "";
+				if (nameAndType.length == 2) {
+					varType = key.split(":")[1].trim();
+				}
 
 				Variable var = new FieldVar(false, varName, varType, varType);
 
