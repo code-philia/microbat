@@ -122,6 +122,9 @@ public class CandidateVarVerifier {
 
 			try {
 				CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokingType, methodName + methodSigature);
+				if (cfg == null) {
+					return WriteStatus.NO_GUARANTEE;
+				}
 				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
 				return candidateVarVerifier.getVarWriteStatus(varName);
 			} catch (CannotBuildCFGException e) {
