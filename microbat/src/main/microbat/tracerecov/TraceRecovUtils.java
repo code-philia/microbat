@@ -222,7 +222,7 @@ public class TraceRecovUtils {
 						"Method `" + methodSig + "` is not found in class `" + className + "`");
 			}
 
-			if (targetMethod.isAbstract()) {
+			if (targetMethod.isAbstract() || targetMethod.isNative()) {
 				return null;
 			}
 
