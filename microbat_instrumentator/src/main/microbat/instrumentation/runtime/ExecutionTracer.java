@@ -499,7 +499,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 
 	public boolean isClassNameAndObjectId(String input) {
         // Regular expression pattern for ClassName@ObjectId
-        String regex = "^[a-z]+(\\.[a-z]+)*\\.[A-Z][a-zA-Z0-9]*(\\$[A-Z][a-zA-Z]*)?@[0-9a-fA-F]+$";
+        String regex = "^[a-z]+(\\.[a-zA-Z0-9]+)*\\$?[A-Z][a-zA-Z0-9]*@[0-9a-fA-F]+$";
 
         // Compile the pattern
         Pattern pattern = Pattern.compile(regex);
