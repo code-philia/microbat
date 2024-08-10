@@ -48,18 +48,26 @@ public class TraceRecoverer {
 		Trace trace = currentStep.getTrace();
 		List<VarValue> criticalVariables = createQueue(targetVar, rootVar);
 		Set<String> variablesToCheck = getVariablesToCheck(criticalVariables);
-		List<Integer> relevantSteps = new ArrayList<>();
 
 		// determine scope of searching
-		TraceNode scopeStart = determineScopeOfSearching(rootVar, trace, currentStep);
+		TraceNode scopeStart = determineScopeOfSearching(criticalVariables, trace, currentStep);
 		if (scopeStart == null)
 			return;
 		int start = scopeStart.getOrder() + 1;
 		int end = currentStep.getOrder() - 1;
 
-		// alias and definition inferencing
-		inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck, relevantSteps);
-		inferDefinition(trace, rootVar, targetVar, criticalVariables, relevantSteps);
+		// alias inference
+		inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck);
+
+		// update scope of searching
+		scopeStart = determineScopeOfSearching(criticalVariables, trace, currentStep);
+		if (scopeStart == null)
+			return;
+		start = scopeStart.getOrder() + 1;
+		end = currentStep.getOrder() - 1;
+
+		// definition inference
+		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables, variablesToCheck);
 	}
 
 	/**
@@ -114,12 +122,12 @@ public class TraceRecoverer {
 	 * search for data dominator of parentVar (skip return steps TODO: test more
 	 * scenarios)
 	 */
-	private TraceNode determineScopeOfSearching(VarValue parentVar, Trace trace, TraceNode currentStep) {
+	private TraceNode determineScopeOfSearching(VarValue variable, Trace trace, TraceNode currentStep) {
 		VarValue lastWrittenVariable = null;
 		TraceNode scopeStart = currentStep;
 		while (lastWrittenVariable == null) {
 
-			scopeStart = trace.findProducer(parentVar, scopeStart);
+			scopeStart = trace.findProducer(variable, scopeStart);
 			if (scopeStart == null) {
 				break;
 			}
@@ -130,6 +138,21 @@ public class TraceRecoverer {
 		return scopeStart;
 	}
 
+	private TraceNode determineScopeOfSearching(List<VarValue> criticalVariables, Trace trace, TraceNode currentStep) {
+		int start = currentStep.getOrder();
+		for (VarValue variable : criticalVariables) {
+			if (variable == null || variable.getAliasVarID() == null || variable.getAliasVarID().equals("")
+					|| variable.getAliasVarID().equals("0")) {
+				continue;
+			}
+			TraceNode producer = determineScopeOfSearching(variable, trace, currentStep);
+			if (producer != null && producer.getOrder() < start) {
+				start = producer.getOrder();
+			}
+		}
+		return trace.getTraceNode(start);
+	}
+
 	/**
 	 * Alias Inference: FORWARD ITERATION
 	 * 
@@ -137,40 +160,36 @@ public class TraceRecoverer {
 	 * set and the corresponding steps
 	 */
 	private void inferAliasRelations(Trace trace, int scopeStart, int scopeEnd, VarValue rootVar,
-			List<VarValue> criticalVariables, Set<String> variablesToCheck, List<Integer> relevantSteps) {
+			List<VarValue> criticalVariables, Set<String> variablesToCheck) {
 
 		for (int i = scopeStart; i <= scopeEnd; i++) {
 			TraceNode step = trace.getTraceNode(i);
-			if (isRelevantStep(step, variablesToCheck)) {
-				relevantSteps.add(i);
+			if (isRelevantStep(step, variablesToCheck) && isRequiringAliasInference(step, variablesToCheck)) {
+				// INFER ADDERSS
+				try {
+					Map<VarValue, VarValue> fieldToVarOnTraceMap = this.executionSimulator.inferAliasRelations(step,
+							rootVar, criticalVariables);
 
-				if (isRequiringAliasInference(step, variablesToCheck)) {
-					// INFER ADDERSS
-					try {
-						Map<VarValue, VarValue> fieldToVarOnTraceMap = this.executionSimulator.inferAliasRelations(step,
-								rootVar, criticalVariables);
+					for (VarValue writtenField : fieldToVarOnTraceMap.keySet()) {
+						if (isCriticalVariable(criticalVariables, writtenField)) {
+							VarValue variableOnTrace = fieldToVarOnTraceMap.get(writtenField);
+							String aliasIdOfCriticalVar = variableOnTrace.getAliasVarID();
 
-						for (VarValue writtenField : fieldToVarOnTraceMap.keySet()) {
-							if (isCriticalVariable(criticalVariables, writtenField)) {
-								VarValue variableOnTrace = fieldToVarOnTraceMap.get(writtenField);
-								String aliasIdOfCriticalVar = variableOnTrace.getAliasVarID();
-
-								if (isValidAliasID(aliasIdOfCriticalVar)) {
-									updateAliasIDOfField(writtenField, variableOnTrace, criticalVariables);
-									variablesToCheck.add(aliasIdOfCriticalVar);
-								}
-							} else {
-								/*
-								 * key and value: variable on trace. Field in variable is not recorded.
-								 */
-								if (isValidAliasID(writtenField.getAliasVarID())) {
-									variablesToCheck.add(writtenField.getAliasVarID());
-								}
+							if (isValidAliasID(aliasIdOfCriticalVar)) {
+								updateAliasIDOfField(writtenField, variableOnTrace, criticalVariables);
+								variablesToCheck.add(aliasIdOfCriticalVar);
+							}
+						} else {
+							/*
+							 * key and value: variable on trace. Field in variable is not recorded.
+							 */
+							if (isValidAliasID(writtenField.getAliasVarID())) {
+								variablesToCheck.add(writtenField.getAliasVarID());
 							}
 						}
-					} catch (IOException e) {
-						e.printStackTrace();
 					}
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
 
 				addVarSkeletonToVariablesOnTrace(step, criticalVariables);
@@ -183,14 +202,12 @@ public class TraceRecoverer {
 	 * 
 	 * iterate through steps in scope, infer definition
 	 */
-	private void inferDefinition(Trace trace, VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables,
-			List<Integer> relevantSteps) {
+	private void inferDefinition(Trace trace, int start, int end, VarValue rootVar, VarValue targetVar,
+			List<VarValue> criticalVariables, Set<String> variablesToCheck) {
 
-		int startIndex = relevantSteps.size() - 1;
-		for (int i = startIndex; i >= 0; i--) {
-			int stepOrder = relevantSteps.get(i);
-			TraceNode step = trace.getTraceNode(stepOrder);
-			if (step.isCallingAPI()) {
+		for (int i = end; i >= start; i--) {
+			TraceNode step = trace.getTraceNode(i);
+			if (isRelevantStep(step, variablesToCheck) && step.isCallingAPI()) {
 				// INFER DEFINITION STEP
 				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
 
