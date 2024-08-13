@@ -114,7 +114,7 @@ public class VariableExpansionUtils {
 		if (closestExample == null || closestExample.equals("")) {
 			return VAR_EXPAND_EXAMPLE;
 		}
-		return "<Example>\r\n" + closestExample;
+		return closestExample;
 	}
 
 	private static String getSourceCode(TraceNode step) {
