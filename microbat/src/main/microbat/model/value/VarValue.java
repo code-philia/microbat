@@ -630,7 +630,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 	
 	public void updateChild(VarValue child) {
 		VarValue existingChild = this.getChildren().stream()
-				.filter(c -> c.getAliasVarID() != null && c.getVarName().equals(child.getVarName())).findFirst()
+				.filter(c -> c.getVarName().equals(child.getVarName())).findFirst()
 				.orElse(null);
 		if (existingChild != null) {
 			migrateInfoToNewVar(existingChild, child);
