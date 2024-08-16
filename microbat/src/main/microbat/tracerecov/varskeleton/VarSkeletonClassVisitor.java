@@ -79,6 +79,10 @@ public class VarSkeletonClassVisitor extends AbstractClassVisitor {
 					ClassLoader classLoader = ClassLoader.getSystemClassLoader();
 					InputStream inputStream = classLoader.getResourceAsStream(className.replace('.', '/') + ".class");
 
+					if (appJavaClassPath == null) {
+						continue;
+					}
+
 					if (inputStream == null) {
 						ClassLoader classLoader2 = appJavaClassPath.getClassLoader();
 						inputStream = classLoader2.getResourceAsStream(className.replace('.', '/') + ".class");
