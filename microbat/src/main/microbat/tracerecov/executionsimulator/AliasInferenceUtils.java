@@ -23,15 +23,22 @@ public class AliasInferenceUtils {
 	/* Request content */
 
 	private static final String ALIAS_INFERENCE_BACKGROUND = "<Background>\n"
-			+ "You are a Java expert, you need to analyze the runtime execution of a Java program. You need to identify when there is a relationship between two variables.\n"
+			+ "You are a Java expert, you need to analyze the alias relationships through static analysis.\n"
 			+ "\n"
 			+ "<Example>\n"
 			+ "Given code:\n"
 			+ "```list.add(element);```\n"
 			+ "\n"
+			+ "Given the source code of function calls in the code:\n"
+			+ "public boolean add(E e) {\n"
+			+ "        modCount++;\n"
+			+ "        add(e, elementData, size);\n"
+			+ "        return true;\n"
+			+ "    }\n"
+			+ "\n"
 			+ "Variables involved:\n"
-			+ "`list` is of type `java.util.ArrayList`, of runtime value \"[]\", `list` has the following fields: {\"elementData\":\"java.lang.Object[]\",\"size\":\"int\"},\n"
-			+ "`element` is of type `Integer`, of runtime value \" 1\",\n"
+			+ "`list` is of type `java.util.ArrayList`,\n"
+			+ "`element` is of type `Integer`,\n"
 			+ "\n"
 			+ "We know that another variable not in the code, `list`, with the following structure:\n"
 			+ "{\"list:java.util.ArrayList\":{\"elementData:java.lang.Object[]\":\"[]\",\"size:int\":\"0\"}}\n"
@@ -67,9 +74,19 @@ public class AliasInferenceUtils {
 		Set<String> invokedMethods = TraceRecovUtils.getInvokedMethodsToBeChecked(step.getInvokingMethod());
 
 		// source code
-		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n```");
+		StringBuilder question = new StringBuilder("<Question>\n" + "Given code:\n```");
 		question.append(sourceCode);
 		question.append("```");
+
+		// TODO: include source code of function calls
+		// invoked methods
+		if (!invokedMethods.isEmpty()) {
+			question.append("\n\nGiven the source code of function calls in the code:\n");
+			for (String methodSig : invokedMethods) {
+				question.append(methodSig);
+				question.append("\n");
+			}
+		}
 
 		// variables information (name, type, value)
 		question.append("\n\nVariables involved:");
@@ -78,11 +95,11 @@ public class AliasInferenceUtils {
 			question.append(var.getVarName());
 			question.append("` is of type `");
 			question.append(var.getType());
-			question.append("`, of runtime value \"");
-			question.append(var.getStringValue());
-			question.append("\",");
+			question.append("`,");
+		}
 
-			// fields
+		// fields in variables
+		for (VarValue var : variablesInStep) {
 			if (var.equals(rootVar)) {
 				continue;
 			}
@@ -90,12 +107,14 @@ public class AliasInferenceUtils {
 			if (varSkeleton == null) {
 				continue;
 			}
-			question.append(" `");
+			question.append("\n\n`");
 			question.append(var.getVarName());
 			question.append("` has the following fields: ");
 			question.append(varSkeleton.fieldsToString());
 			question.append(",");
 		}
+		question.append(
+				"\n\nIf a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of `<TYPE>`.");
 
 		// target variable structure
 		question.append("\n\nWe know that another variable not in the code, `");
@@ -124,14 +143,12 @@ public class AliasInferenceUtils {
 				cascadeFieldName = rootVar.getVarName();
 			}
 
-			if (!cascadeFieldName.equals(var.getVarName())) {
-				question.append(isFirstVar ? "where\n`" : "`");
-				question.append(cascadeFieldName);
-				question.append("` has the same memory address as `");
-				question.append(var.getVarName());
-				question.append("`,\n");
-				isFirstVar = false;
-			}
+			question.append(isFirstVar ? "where\n`" : "`");
+			question.append(cascadeFieldName);
+			question.append("` has the same memory address as `");
+			question.append(var.getVarName());
+			question.append("`,\n");
+			isFirstVar = false;
 		}
 
 		// keys (critical variables)
@@ -142,26 +159,14 @@ public class AliasInferenceUtils {
 			cascadeName += criticalVar.getVarName() + ".";
 		}
 
-		// invoked methods
-		if (!invokedMethods.isEmpty()) {
-			question.append("\n\nConsider the following functions in the code:\n");
-			for (String methodSig : invokedMethods) {
-				question.append(methodSig);
-				question.append("\n");
-			}
-		}
-
-		question.append(
-				"\nIdentify all the variables in the code such that the variable in the code has the same memory address and variable type as one of the fields in `"
-						+ rootVarName + "`. Don't include the fields without corresponding variable.");
+		question.append("\nPerform static analysis. From the given code, identify all the aliases of `" + rootVarName
+				+ "` and the fields in `" + rootVarName + "`.");
 
 		question.append("\n\nYour response should be in JSON format, where keys are fields in `" + rootVarName
 				+ "` and values are names of variables in the code. The variable names must be chosen from the above names, not values.");
 
-		question.append("\n\nIf a field is an element in an array, use `array_name[element_index]` as its name.\n"
-				+ "If a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of `<TYPE>`.\n"
-				+ "\n"
-				+ "In your response, strictly follow this format. Do not include explanation. Each key must be included exactly once.");
+		question.append(
+				"In your response, strictly follow this format. Do not include explanation. Each key must be included exactly once.");
 
 		return question.toString();
 	}
