@@ -26,17 +26,20 @@ public class AliasInferenceUtils {
 			+ "You are a Java expert, you need to analyze the runtime execution of a Java program. You need to identify when there is a relationship between two variables.\n"
 			+ "\n"
 			+ "<Example>\n"
-			+ "Given the code as:\n"
+			+ "Given code:\n"
 			+ "```list.add(element);```\n"
-			+ "`list` is of type `java.util.ArrayList`, of runtime value \"[]\",\n"
+			+ "\n"
+			+ "Variables involved:\n"
+			+ "`list` is of type `java.util.ArrayList`, of runtime value \"[]\", `list` has the following fields: {\"elementData\":\"java.lang.Object[]\",\"size\":\"int\"},\n"
 			+ "`element` is of type `Integer`, of runtime value \" 1\",\n"
-			+ "We know that `list` has the following structure:\n"
+			+ "\n"
+			+ "We know that another variable not in the code, `list`, with the following structure:\n"
 			+ "{\"list:java.util.ArrayList\":{\"elementData:java.lang.Object[]\":\"[]\",\"size:int\":\"0\"}}\n"
 			+ "\n"
 			+ "Your response should be:\n"
 			+ "{\n"
 			+ "\"list.elementData[0]\":\"element\"\n"
-			+ "}";
+			+ "}\n\n";
 
 	/* Methods */
 
@@ -69,6 +72,7 @@ public class AliasInferenceUtils {
 		question.append("```");
 
 		// variables information (name, type, value)
+		question.append("\n\nVariables involved:");
 		for (VarValue var : variablesInStep) {
 			question.append("\n`");
 			question.append(var.getVarName());
@@ -77,12 +81,26 @@ public class AliasInferenceUtils {
 			question.append("`, of runtime value \"");
 			question.append(var.getStringValue());
 			question.append("\",");
+
+			// fields
+			if (var.equals(rootVar)) {
+				continue;
+			}
+			VariableSkeleton varSkeleton = VarSkeletonBuilder.getVariableStructure(var.getType(), null);
+			if (varSkeleton == null) {
+				continue;
+			}
+			question.append(" `");
+			question.append(var.getVarName());
+			question.append("` has the following fields: ");
+			question.append(varSkeleton.fieldsToString());
+			question.append(",");
 		}
 
 		// target variable structure
-		question.append("\nWe know that `");
+		question.append("\n\nWe know that another variable not in the code, `");
 		question.append(rootVarName);
-		question.append("` has the following structure:\n");
+		question.append("`, with the following structure:\n");
 		question.append(jsonString);
 		question.append("\n");
 
@@ -108,57 +126,42 @@ public class AliasInferenceUtils {
 
 			if (!cascadeFieldName.equals(var.getVarName())) {
 				question.append(isFirstVar ? "where\n`" : "`");
-				question.append(var.getVarName());
-				question.append("` has the same memory address as `");
 				question.append(cascadeFieldName);
+				question.append("` has the same memory address as `");
+				question.append(var.getVarName());
 				question.append("`,\n");
 				isFirstVar = false;
 			}
 		}
 
-		// fields in other variables
-		for (VarValue var : variablesInStep) {
-			if (var.equals(rootVar)) {
-				continue;
-			}
-			VariableSkeleton varSkeleton = VarSkeletonBuilder.getVariableStructure(var.getType(), null);
-			if (varSkeleton == null) {
-				continue;
-			}
-			question.append("\n`");
-			question.append(var.getVarName());
-			question.append("` has the following fields:\n");
-			question.append(varSkeleton.fieldsToString());
-			question.append("\n");
-		}
-
-		question.append("\nIdentify all the variable pairs such that each pair has the same memory address. "
-				+ "The variable names must be chosen from the above names, not values.\n");
-
-		// invoked methods
-		if (!invokedMethods.isEmpty()) {
-			question.append("\nOnly analyse variables or fields involved in the following functions:\n");
-			for (String methodSig : invokedMethods) {
-				question.append(methodSig);
-				question.append("\n");
-			}
-			question.append("Do not analyse other functions.\n");
-		}
-
 		// keys (critical variables)
-		question.append("Your response should be in JSON format, where keys must be chosen from:");
+		question.append("\nWe are interested in the fields ");
 		String cascadeName = "";
 		for (VarValue criticalVar : criticalVariables) {
 			question.append("`" + cascadeName + criticalVar.getVarName() + "`,");
 			cascadeName += criticalVar.getVarName() + ".";
 		}
 
-		// description
+		// invoked methods
+		if (!invokedMethods.isEmpty()) {
+			question.append("\n\nConsider the following functions in the code:\n");
+			for (String methodSig : invokedMethods) {
+				question.append(methodSig);
+				question.append("\n");
+			}
+		}
+
 		question.append(
-				" do not include other keys. Values in JSON are the names of other variables listed above, not variable values.\n\n"
-						+ "If a field is an element in an array, use `array_name[element_index]` as its name.\n"
-						+ "If a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of `<TYPE>`.\n\n"
-						+ "In your response, strictly follow this format. Do not include explanation. Each key must be included exactly once.");
+				"\nIdentify all the variables in the code such that the variable in the code has the same memory address and variable type as one of the fields in `"
+						+ rootVarName + "`. Don't include the fields without corresponding variable.");
+
+		question.append("\n\nYour response should be in JSON format, where keys are fields in `" + rootVarName
+				+ "` and values are names of variables in the code. The variable names must be chosen from the above names, not values.");
+
+		question.append("\n\nIf a field is an element in an array, use `array_name[element_index]` as its name.\n"
+				+ "If a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of `<TYPE>`.\n"
+				+ "\n"
+				+ "In your response, strictly follow this format. Do not include explanation. Each key must be included exactly once.");
 
 		return question.toString();
 	}
