@@ -121,7 +121,7 @@ public class VariableExpansionUtils {
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
 		String sourceCode = TraceRecovUtils
-				.processInputStringForLLM(TraceRecovUtils.getSourceCode(location, lineNo).trim());
+				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(location, lineNo).trim());
 		return sourceCode;
 	}
 

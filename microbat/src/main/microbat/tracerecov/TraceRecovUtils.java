@@ -168,7 +168,7 @@ public class TraceRecovUtils {
 		}
 	}
 
-	public static String getSourceCode(String filePath, int lineNumber) {
+	public static String getSourceCodeOfALine(String filePath, int lineNumber) {
 		String line = null;
 		try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
 			int currentLine = 0;
@@ -181,6 +181,11 @@ public class TraceRecovUtils {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return null;
+	}
+	
+	public static String getSourceCodeOfAMethod(String className, String methodSignature) {
+		// TODO: implement this
 		return null;
 	}
 
