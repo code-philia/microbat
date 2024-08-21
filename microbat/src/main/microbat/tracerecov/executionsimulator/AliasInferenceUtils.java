@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.TraceRecovUtils;
+import microbat.tracerecov.coderetriever.SourceCodeRetriever;
 import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.strategies.dto.AppJavaClassPath;
@@ -78,18 +79,18 @@ public class AliasInferenceUtils {
 		question.append(sourceCode);
 		question.append("```");
 
-		// TODO: include source code of function calls
 		// invoked methods
+		SourceCodeRetriever sourceCodeRetriever = new SourceCodeRetriever();
 		if (!invokedMethods.isEmpty()) {
 			question.append("\n\nGiven the source code of function calls in the code:\n");
 			for (String methodSig : invokedMethods) {
-				question.append(methodSig);
+				question.append(sourceCodeRetriever.getMethodCode(methodSig));
 				question.append("\n");
 			}
 		}
 
 		// variables information (name, type, value)
-		question.append("\n\nVariables involved:");
+		question.append("\nVariables involved:");
 		for (VarValue var : variablesInStep) {
 			question.append("\n`");
 			question.append(var.getVarName());
@@ -159,14 +160,11 @@ public class AliasInferenceUtils {
 			cascadeName += criticalVar.getVarName() + ".";
 		}
 
-		question.append("\nPerform static analysis. From the given code, identify all the aliases of `" + rootVarName
+		question.append("\n\nPerform static analysis. From the given code, identify all the aliases of `" + rootVarName
 				+ "` and the fields in `" + rootVarName + "`.");
 
-		question.append("\n\nYour response should be in JSON format, where keys are fields in `" + rootVarName
-				+ "` and values are names of variables in the code. The variable names must be chosen from the above names, not values.");
-
 		question.append(
-				"In your response, strictly follow this format. Do not include explanation. Each key must be included exactly once.");
+				"\n\nIn your response, strictly follow this format. Do not include explanation.");
 
 		return question.toString();
 	}
