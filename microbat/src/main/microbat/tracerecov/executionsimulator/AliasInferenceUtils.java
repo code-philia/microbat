@@ -84,7 +84,7 @@ public class AliasInferenceUtils {
 		if (!invokedMethods.isEmpty()) {
 			question.append("\n\nGiven the source code of function calls in the code:\n");
 			for (String methodSig : invokedMethods) {
-				question.append(sourceCodeRetriever.getMethodCode(methodSig));
+				question.append(sourceCodeRetriever.getMethodCode(methodSig, step.getTrace().getAppJavaClassPath()));
 				question.append("\n");
 			}
 		}
@@ -163,8 +163,7 @@ public class AliasInferenceUtils {
 		question.append("\n\nPerform static analysis. From the given code, identify all the aliases of `" + rootVarName
 				+ "` and the fields in `" + rootVarName + "`.");
 
-		question.append(
-				"\n\nIn your response, strictly follow this format. Do not include explanation.");
+		question.append("\n\nIn your response, strictly follow this format. Do not include explanation.");
 
 		return question.toString();
 	}

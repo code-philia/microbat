@@ -195,6 +195,15 @@ public class TraceRecovUtils {
 			return type.getDescriptor();
 		}
 	}
+	
+	public static String getSimplifiedTypeName(String fullTypeName) {
+		if (fullTypeName.contains(".")) {
+			String[] entries = fullTypeName.split("\\.");
+			return entries[entries.length - 1];
+		} else {
+			return fullTypeName;
+		}
+	}
 
 	public static String getSourceCodeOfALine(String filePath, int lineNumber) {
 		String line = null;
@@ -209,11 +218,6 @@ public class TraceRecovUtils {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return null;
-	}
-
-	public static String getSourceCodeOfAMethod(String className, String methodSignature) {
-		// TODO: implement this
 		return null;
 	}
 

@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import org.benf.cfr.reader.Main;
 
 import microbat.tracerecov.TraceRecovUtils;
+import sav.strategies.dto.AppJavaClassPath;
 
 /**
  * This class is used to retrieve the source code of a method given bytecode.
@@ -48,10 +49,10 @@ public class SourceCodeRetriever {
 		return methodExtractor.getMethodCode(sourceCode, className, returnType, methodName, paramTypes);
 	}
 
-	public String getMethodCode(String signature) {
+	public String getMethodCode(String signature, AppJavaClassPath appJavaClassPath) {
 		/* class name */
 		String fullClassName = signature.split("#")[0];
-		String className = getSimplifiedTypeName(fullClassName);
+		String className = TraceRecovUtils.getSimplifiedTypeName(fullClassName);
 
 		/* method name */
 		String methodSignature = signature.split("#")[1];
@@ -63,11 +64,12 @@ public class SourceCodeRetriever {
 
 		/* return type */
 		String returnType = inputsAndOutput.split("\\)")[1];
-		returnType = getSimplifiedTypeName(TraceRecovUtils.getReadableType(returnType));
+		returnType = TraceRecovUtils.getSimplifiedTypeName(TraceRecovUtils.getReadableType(returnType));
 
+		Path classFile = null;
 		try {
 			// save bytecode to temp file
-			Path classFile = this.bytecodeRetriever.getBytecodeInFile(fullClassName);
+			classFile = this.bytecodeRetriever.getBytecodeInFile(fullClassName, appJavaClassPath);
 
 			String sourceCode = decompileClass(classFile);
 			String methodSourceCode = "";
@@ -80,6 +82,13 @@ public class SourceCodeRetriever {
 			Files.delete(classFile);
 			return methodSourceCode;
 		} catch (ClassNotFoundException | IOException | CodeRetrieverException e) {
+			try {
+				if (classFile != null) {
+					Files.delete(classFile);
+				}
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
 			return signature;
 		}
 	}
@@ -97,7 +106,7 @@ public class SourceCodeRetriever {
 				i++;
 			} else if (character == 'L') {
 				String type = inputs.substring(i).split(";")[0];
-				String readableType = getSimplifiedTypeName(TraceRecovUtils.getReadableType(type));
+				String readableType = TraceRecovUtils.getSimplifiedTypeName(TraceRecovUtils.getReadableType(type));
 				parameterTypes.add(readableType);
 				i += type.length() + 1;
 			}
@@ -109,15 +118,6 @@ public class SourceCodeRetriever {
 		}
 
 		return types;
-	}
-
-	private String getSimplifiedTypeName(String fullTypeName) {
-		if (fullTypeName.contains(".")) {
-			String[] entries = fullTypeName.split("\\.");
-			return entries[entries.length - 1];
-		} else {
-			return fullTypeName;
-		}
 	}
 
 }
