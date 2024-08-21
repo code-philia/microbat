@@ -60,6 +60,34 @@ public class TraceRecovUtils {
 		return "";
 	}
 
+	public static String getReadableType(String typeCode) {
+		switch (typeCode) {
+		case "V":
+			return "void";
+		case "Z":
+			return "boolean";
+		case "B":
+			return "byte";
+		case "C":
+			return "char";
+		case "S":
+			return "short";
+		case "I":
+			return "int";
+		case "J":
+			return "long";
+		case "F":
+			return "float";
+		case "D":
+			return "double";
+		default:
+			if (typeCode.startsWith("L")) {
+				return typeCode.substring(1, typeCode.length()).replace('/', '.');
+			}
+			throw new IllegalArgumentException("Unknown type code: " + typeCode);
+		}
+	}
+
 	public static boolean isString(String className) {
 		return className != null && (className.equals("java.lang.String") || className.equals("String"));
 	}
@@ -183,7 +211,7 @@ public class TraceRecovUtils {
 		}
 		return null;
 	}
-	
+
 	public static String getSourceCodeOfAMethod(String className, String methodSignature) {
 		// TODO: implement this
 		return null;
