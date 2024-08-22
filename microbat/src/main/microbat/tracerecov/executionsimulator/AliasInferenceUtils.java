@@ -104,7 +104,8 @@ public class AliasInferenceUtils {
 			if (var.equals(rootVar)) {
 				continue;
 			}
-			VariableSkeleton varSkeleton = VarSkeletonBuilder.getVariableStructure(var.getType(), null);
+			VariableSkeleton varSkeleton = VarSkeletonBuilder.getVariableStructure(var.getType(),
+					step.getTrace().getAppJavaClassPath());
 			if (varSkeleton == null) {
 				continue;
 			}

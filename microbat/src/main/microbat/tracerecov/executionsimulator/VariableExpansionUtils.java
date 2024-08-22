@@ -79,7 +79,7 @@ public class VariableExpansionUtils {
 			+ "       },\r\n"
 			+ "      \"size\": 2\r\n"
 			+ "  },\r\n"
-			+ " }\r\n";
+			+ " }\r\n\n";
 
 	/* Methods */
 

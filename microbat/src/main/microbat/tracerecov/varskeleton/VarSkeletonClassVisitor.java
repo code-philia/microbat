@@ -15,7 +15,7 @@ import sav.strategies.dto.AppJavaClassPath;
 
 public class VarSkeletonClassVisitor extends AbstractClassVisitor {
 
-	private static final int MAX_LAYER = 2;
+	private static final int MAX_LAYER = 3;
 
 	private static Set<String> visitedClasses = new HashSet<String>();
 
@@ -24,8 +24,8 @@ public class VarSkeletonClassVisitor extends AbstractClassVisitor {
 	private int layer;
 	private AppJavaClassPath appJavaClassPath;
 
-	public VarSkeletonClassVisitor(AppJavaClassPath appJavaClassPath, String className2, boolean b) {
-		this(className2, new VariableSkeleton(className2), b);
+	public VarSkeletonClassVisitor(AppJavaClassPath appJavaClassPath, String className2, boolean reset) {
+		this(className2, new VariableSkeleton(className2), reset);
 		this.appJavaClassPath = appJavaClassPath;
 	}
 
@@ -79,11 +79,10 @@ public class VarSkeletonClassVisitor extends AbstractClassVisitor {
 					ClassLoader classLoader = ClassLoader.getSystemClassLoader();
 					InputStream inputStream = classLoader.getResourceAsStream(className.replace('.', '/') + ".class");
 
-					if (appJavaClassPath == null) {
-						continue;
-					}
-
 					if (inputStream == null) {
+						if (appJavaClassPath == null) {
+							continue;
+						}
 						ClassLoader classLoader2 = appJavaClassPath.getClassLoader();
 						inputStream = classLoader2.getResourceAsStream(className.replace('.', '/') + ".class");
 					}
