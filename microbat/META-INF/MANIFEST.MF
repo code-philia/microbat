@@ -44,7 +44,6 @@ Bundle-ClassPath: .,
  lib/jheaps-0.14.jar,
  lib/belief-propagation-java.jar,
  lib/json-20220924.jar,
- lib/json-20220924-sources.jar,
  lib/gson-2.11.0.jar
 Export-Package: 
  microbat;uses:="org.osgi.framework,org.eclipse.jface.resource,org.eclipse.ui.plugin",
@@ -211,5 +210,6 @@ Export-Package:
    org.eclipse.ui.part",
  org.apache.bcel;uses:="org.apache.bcel.classfile,org.apache.bcel.util",
  org.apache.bcel.classfile,
- org.apache.bcel.generic
+ org.apache.bcel.generic,
+ org.json
 Import-Package: microbat.trace

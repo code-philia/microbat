@@ -1,6 +1,7 @@
 package microbat.instrumentation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -122,6 +123,13 @@ public class CommandLine {
 				break;
 			case AgentParams.OPT_CONDITION_CLASS_STRUCTURE:
 				condition.setClassStructure(conditionVal);
+				break;
+			case AgentParams.OPT_CONDITION_EXT_LIBCALL:
+				if(!"null".equals(conditionVal)) {
+					String[] libCalls = conditionVal.split(",");
+					ArrayList<String> extLibCall = new ArrayList<>(Arrays.asList(libCalls));
+					condition.setExtLibCall(extLibCall);
+				}
 				break;
 			default: // do nothing
 			}

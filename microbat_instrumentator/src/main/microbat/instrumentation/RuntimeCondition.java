@@ -1,5 +1,7 @@
 package microbat.instrumentation;
 
+import java.util.ArrayList;
+
 import microbat.model.value.VarValue;
 
 public class RuntimeCondition {
@@ -8,6 +10,8 @@ public class RuntimeCondition {
 	private String variableType;
 	private String variableValue;
 	private String classStructure;
+	private ArrayList<String> extLibCall;
+
 
 	public RuntimeCondition(String variableName, String variableType, String variableValue, String classStructure) {
 		super();
@@ -15,6 +19,7 @@ public class RuntimeCondition {
 		this.variableType = variableType;
 		this.variableValue = variableValue;
 		this.classStructure = classStructure;
+		this.extLibCall = null;
 	}
 
 	/**
@@ -74,6 +79,14 @@ public class RuntimeCondition {
 		this.classStructure = classStructure;
 	}
 
+	public ArrayList<String> getExtLibCall() {
+		return extLibCall;
+	}
+
+	public void setExtLibCall(ArrayList<String> extLibCall) {
+		this.extLibCall = extLibCall;
+	}
+	
 	@Override
 	public String toString() {
 		return "RuntimeCondition [variableName=" + variableName + ", variableType=" + variableType + ", variableValue="

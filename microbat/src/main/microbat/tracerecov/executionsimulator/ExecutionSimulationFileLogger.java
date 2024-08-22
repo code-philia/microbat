@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 
 import org.json.JSONObject;
 import microbat.Activator;
@@ -17,13 +18,7 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
 	private String aliasFilePath;
 
 	public ExecutionSimulationFileLogger() {
-		// TODO: move this to preference page
-		String fileName = "var_expansion.txt";
-		String aliasFileName = "aliases.txt";
-		this.filePath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.PROMPT_GT_PATH)
-				+ File.separator + fileName;
-		this.aliasFilePath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.PROMPT_GT_PATH)
-				+ File.separator + aliasFileName;
+		this.filePath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.PROMPT_GT_PATH);
 	}
 
 	private PrintWriter createWriter(String path) throws IOException {
@@ -57,19 +52,18 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
 		writer.close();
 
 		// collect variables and aliases
-//        List<String> variablesAndAliases = condition.getGroundTruthVariablesAndAliases(trace);
-//        try {
-//            writer = createWriter(this.aliasFilePath);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//            return null;
-//        }
-//
-//        for (String variableAndAlias : variablesAndAliases) {
-//            writer.println(variableAndAlias);
-//        }
-//        writer.close();
-
+//	    List<String> variablesAndAliases = condition.getGroundTruthVariablesAndAliases(trace);
+//	    try {
+//	        writer = createWriter(this.aliasFilePath);
+//	    } catch (IOException e) {
+//	        e.printStackTrace();
+//	        return null;
+//	    }//
+//	    for (String variableAndAlias : variablesAndAliases) {
+//	        writer.println(variableAndAlias);
+//	    }
+//	    writer.close();
+	    
 		return groundTruthJSON.toString();
 	}
 

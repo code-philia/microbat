@@ -641,7 +641,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 		child.addParent(this);
 	}
 
-	private void migrateInfoToNewVar(VarValue oldVar, VarValue newVar) {
+	public static void migrateInfoToNewVar(VarValue oldVar, VarValue newVar) {
 		newVar.getVariable().setType(oldVar.getType());
 		newVar.setAliasVarID(oldVar.getAliasVarID());
 		if (!oldVar.getStringValue().equals(VarValue.VALUE_TBD)) {

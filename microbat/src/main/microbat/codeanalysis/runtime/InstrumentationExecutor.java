@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -20,6 +21,7 @@ import microbat.agent.TraceAgentRunner;
 import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.AgentParams.LogType;
 import microbat.instrumentation.filter.CodeRangeEntry;
+import microbat.instrumentation.filter.JdkFilter;
 import microbat.instrumentation.output.RunningInfo;
 import microbat.instrumentation.precheck.PrecheckInfo;
 import microbat.model.BreakPoint;
@@ -171,6 +173,22 @@ public class InstrumentationExecutor {
 			
 //			agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
 //			agentRunner.getConfig().setPort(8000);
+			
+			if(condition.getExtLibCall()!=null) {
+				HashSet<String> extClasses = new HashSet<String>();
+				for(String s: condition.getExtLibCall()) {
+			        int index = s.indexOf("#");
+			        if (index == -1) {
+			        	continue;
+			        }
+			        s = s.substring(0, index);
+			        if(!JdkFilter.filter(s)) {
+			        	continue;
+			        }
+			        extClasses.add(s);
+				}
+				agentRunner.addIncludesParam(new ArrayList<>(extClasses));
+			}
 			
 			RunningInfo rInfo = execute(precheckInfomation);
 			return rInfo;

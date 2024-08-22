@@ -1,8 +1,9 @@
 package microbat.codeanalysis.runtime;
 
-import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.json.JSONObject;
 
 import microbat.instrumentation.AgentParams;
 import microbat.model.trace.Trace;
@@ -16,6 +17,8 @@ public class Condition {
 	private String variableValue;
 
 	private String classStructure;
+	
+	private ArrayList<String> extLibCall;
 
 	public Condition() {
 
@@ -27,6 +30,16 @@ public class Condition {
 		this.variableType = variableType;
 		this.variableValue = variableValue;
 		this.classStructure = classStructure;
+		this.extLibCall = null;
+	}
+	
+	public Condition(ArrayList<String> libCall) {
+		super();
+		this.variableName = null;
+		this.variableType = null;
+		this.variableValue = null;
+		this.classStructure = null;
+		this.extLibCall = libCall;
 	}
 	
 	public JSONObject getMatchedGroundTruth(Trace trace) {
@@ -43,6 +56,22 @@ public class Condition {
 			}
 		}
 		return groundTruthVar == null ? null : groundTruthVar.toJSON();
+	}
+	
+	public VarValue getMatchedVarValue(Trace trace) {
+		VarValue groundTruthVar = null;
+		for (TraceNode step : trace.getExecutionList()) {
+			for (VarValue readVariable : step.getReadVariables()) {
+				if (matchBasicCondition(readVariable)) {
+					groundTruthVar = readVariable;
+					break;
+				}
+			}
+			if (groundTruthVar != null) {
+				break;
+			}
+		}
+		return groundTruthVar;
 	}
 	
 	public List<String> getGroundTruthVariablesAndAliases(Trace trace) {
@@ -136,12 +165,31 @@ public class Condition {
 	public void setClassStructure(String classStructure) {
 		this.classStructure = classStructure;
 	}
+	
+	public ArrayList<String> getExtLibCall() {
+		return extLibCall;
+	}
+
+	public void setExtLibCall(ArrayList<String> extLibCall) {
+		this.extLibCall = extLibCall;
+	}
 
 	@Override
 	public String toString() {
-		return AgentParams.OPT_CONDITION_VAR_NAME + ":" + variableName + "###" + AgentParams.OPT_CONDITION_VAR_TYPE + ":"
+		String str = AgentParams.OPT_CONDITION_VAR_NAME + ":" + variableName + "###" + AgentParams.OPT_CONDITION_VAR_TYPE + ":"
 				+ variableType + "###" + AgentParams.OPT_CONDITION_VAR_VALUE + ":" + variableValue + "###"
-				+ AgentParams.OPT_CONDITION_CLASS_STRUCTURE + ":" + classStructure + "###";
+				+ AgentParams.OPT_CONDITION_CLASS_STRUCTURE + ":" + classStructure + "###"
+				+ AgentParams.OPT_CONDITION_EXT_LIBCALL + ":";
+		if(this.extLibCall == null) {
+			str+="null";
+		}
+		else {
+			for(String libCall : this.extLibCall) {
+				str+=(libCall+",");
+			}
+		}
+		str+="###";
+		return str;
 	}
 
 }

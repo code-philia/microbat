@@ -1,5 +1,6 @@
 package microbat.instrumentation.instr;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +56,7 @@ import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.AgentParams;
+import microbat.instrumentation.RuntimeCondition;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.filter.UserFilters;
 import microbat.instrumentation.instr.instruction.info.ArrayInstructionInfo;
@@ -66,6 +68,7 @@ import microbat.instrumentation.instr.instruction.info.RWInstructionInfo;
 import microbat.instrumentation.instr.instruction.info.SerializableLineInfo;
 import microbat.instrumentation.runtime.IExecutionTracer;
 import microbat.instrumentation.runtime.TraceUtils;
+import microbat.instrumentation.utils.DebugUtils;
 import microbat.instrumentation.utils.MicrobatUtils;
 
 public class TraceInstrumenter extends AbstractInstrumenter {
@@ -79,6 +82,9 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 
 	private HashMap<Integer, SerializableLineInfo> instructionTable;
 	
+	private ArrayList<String> extClasses;
+	private ArrayList<String> extLibCall;
+	
 	TraceInstrumenter() {
 	}
 	
@@ -89,10 +95,24 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		}
 		this.userFilters = params.getUserFilters();
 		this.instructionTable = new HashMap<>();
+		
+		if(params.getRuntimeCondition().getExtLibCall()!=null) {
+			this.extClasses = new ArrayList<String>();
+			for(String libCall : params.getRuntimeCondition().getExtLibCall()) {
+				extClasses.add(libCall.substring(0,libCall.indexOf("#")));
+			}
+			this.extLibCall = params.getRuntimeCondition().getExtLibCall();
+		}
+		else {
+			extClasses = null;
+			extLibCall = null;
+		}
 	}
 
 	@Override
 	protected byte[] instrument(String classFName, String className, JavaClass jc) {
+		DebugUtils.filePrintln(null, "className:"+className);
+		
 		ClassGen classGen = new ClassGen(jc);
 		ConstantPoolGen constPool = classGen.getConstantPool();
 		JavaClass newJC = null;
@@ -105,6 +125,18 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 			if (method.isNative() || method.isAbstract() || method.getCode() == null) {
 				continue; // Only instrument methods with code in them!
 			}
+			
+			DebugUtils.filePrintln(null, method.getName());
+			if(extClasses != null && extLibCall != null && extClasses.contains(className)) {
+				String temp = className+"#"+method.getName();
+				if(!extLibCall.contains(temp)) {
+					continue;
+				}
+				else {
+					DebugUtils.filePrintln(null, temp);
+				}
+			}
+			
 			try {
 				MethodGen methodGen = new MethodGen(method, classFName, constPool);
 				boolean isMainMethod = false;

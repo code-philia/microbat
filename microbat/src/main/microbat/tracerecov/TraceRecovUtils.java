@@ -36,7 +36,11 @@ public class TraceRecovUtils {
 	public static boolean isPrimitiveType(String className) {
 		Set<String> primitiveTypes = new HashSet<>(
 				Arrays.asList("int", "long", "short", "byte", "char", "boolean", "float", "double", "void"));
-		return className != null && primitiveTypes.contains(className);
+		Set<String> wrapperTypes = new HashSet<>(
+				Arrays.asList("java.lang.Integer","java.lang.Long","java.lang.Short","java.lang.Byte",
+						"java.lang.Character","java.lang.Boolean","java.lang.Float","java.lang.Double"));
+				
+		return className != null && (primitiveTypes.contains(className) || wrapperTypes.contains(className));
 	}
 
 	public static String getWrapperType(String primitiveTypeName) {

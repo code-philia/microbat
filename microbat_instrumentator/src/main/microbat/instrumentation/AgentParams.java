@@ -55,6 +55,7 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_CONDITION_VAR_TYPE = "variable_type";
 	public static final String OPT_CONDITION_VAR_VALUE = "variable_value";
 	public static final String OPT_CONDITION_CLASS_STRUCTURE = "class_structure";
+	public static final String OPT_CONDITION_EXT_LIBCALL = "ext_lib_call";
 	
 	private boolean precheck;
 	private EntryPoint entryPoint;
