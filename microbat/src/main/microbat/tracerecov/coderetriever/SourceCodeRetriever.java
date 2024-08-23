@@ -104,7 +104,7 @@ public class SourceCodeRetriever {
 				String readableType = TraceRecovUtils.getReadableType(type);
 				parameterTypes.add(readableType);
 				i++;
-			} else if (character == 'L') {
+			} else if (character == 'L' || character == '[') {
 				String type = inputs.substring(i).split(";")[0];
 				String readableType = TraceRecovUtils.getSimplifiedTypeName(TraceRecovUtils.getReadableType(type));
 				parameterTypes.add(readableType);

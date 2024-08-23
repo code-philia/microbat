@@ -83,6 +83,8 @@ public class TraceRecovUtils {
 		default:
 			if (typeCode.startsWith("L")) {
 				return typeCode.substring(1, typeCode.length()).replace('/', '.');
+			} else if (typeCode.startsWith("[")) {
+				return getReadableType(typeCode.substring(1)) + "[]";
 			}
 			throw new IllegalArgumentException("Unknown type code: " + typeCode);
 		}
