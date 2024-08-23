@@ -1349,12 +1349,19 @@ public class TraceNode implements Comparator<TraceNode> {
 	 */
 	public boolean isCallingAPI() {
 		ByteCodeList byteCodeList = new ByteCodeList(this.getBytecode());
+		if (byteCodeList.isEmpty() && this.stepOverPrevious != null && this.stepOverPrevious.isCallingAPI()) {
+			return true;
+		}
+
+		Set<String> invokedMethods = new HashSet<>();
 		for (ByteCode bytecode : byteCodeList) {
-			if(bytecode.getOpcodeType() == OpcodeType.INVOKE) {
-				if (this.invocationChildren.isEmpty()) {
-					return true;
-				}
+			if (bytecode.getOpcodeType() == OpcodeType.INVOKE) {
+				invokedMethods.add(bytecode.toString());
 			}
+		}
+
+		if (this.invocationChildren.isEmpty() || invokedMethods.size() > 1) {
+			return true;
 		}
 		return false;
 	}
