@@ -6,8 +6,9 @@ import org.json.JSONObject;
 import org.junit.Test;
 
 import microbat.tracerecov.autoprompt.LossCalculator;
+import microbat.tracerecov.autoprompt.VarExpansionLossCalculator;
 
-public class LossCalculatorTest {
+public class VarExpansionLossCalculatorTest {
 	
 	@Test
 	public void testOtherTypes() {
@@ -17,7 +18,7 @@ public class LossCalculatorTest {
 		JSONObject json1 = new JSONObject(string1);
 		JSONObject json2 = new JSONObject(string2);
 
-		LossCalculator lossCalculator = new LossCalculator();
+		LossCalculator lossCalculator = new VarExpansionLossCalculator();
 		double loss = lossCalculator.computeLoss(json1, json2);
 
 		System.out.println("testOtherTypes: " + loss);
@@ -44,7 +45,7 @@ public class LossCalculatorTest {
 		JSONObject json1 = new JSONObject(string1);
 		JSONObject json2 = new JSONObject(string2);
 
-		LossCalculator lossCalculator = new LossCalculator();
+		LossCalculator lossCalculator = new VarExpansionLossCalculator();
 		double loss = lossCalculator.computeLoss(json1, json2);
 
 		System.out.println("testSimpleExample: " + loss);
@@ -95,7 +96,7 @@ public class LossCalculatorTest {
 		JSONObject json1 = new JSONObject(string1);
 		JSONObject json2 = new JSONObject(string2);
 
-		LossCalculator lossCalculator = new LossCalculator();
+		LossCalculator lossCalculator = new VarExpansionLossCalculator();
 		double loss = lossCalculator.computeLoss(json1, json2);
 
 		System.out.println("largeLoss: " + loss);
@@ -140,7 +141,7 @@ public class LossCalculatorTest {
 		JSONObject json1 = new JSONObject(string1);
 		JSONObject json2 = new JSONObject(string2);
 
-		LossCalculator lossCalculator = new LossCalculator();
+		LossCalculator lossCalculator = new VarExpansionLossCalculator();
 		double loss = lossCalculator.computeLoss(json1, json2);
 
 		System.out.println("smallLoss: " + loss);
@@ -185,7 +186,7 @@ public class LossCalculatorTest {
 		JSONObject json1 = new JSONObject(string1);
 		JSONObject json2 = new JSONObject(string2);
 
-		LossCalculator lossCalculator = new LossCalculator();
+		LossCalculator lossCalculator = new VarExpansionLossCalculator();
 		double loss = lossCalculator.computeLoss(json1, json2);
 
 		System.out.println("zeroLoss: " + loss);
