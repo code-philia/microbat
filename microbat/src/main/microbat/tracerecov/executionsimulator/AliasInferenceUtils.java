@@ -199,9 +199,13 @@ public class AliasInferenceUtils {
 			VarValue variableOnTrace = variablesInStep.stream().filter(v -> v.getVarName().equals(variableName))
 					.findFirst().orElse(null);
 			if (variableOnTrace == null) {
-				String rootVariableOnTrace = variableName.split("\\.")[0];
-				variableOnTrace = variablesInStep.stream().filter(v -> v.getVarName().equals(rootVariableOnTrace))
-						.findFirst().orElse(null);
+				String rootVariableOnTrace = "";
+				if (variableName.contains(".")) {
+					rootVariableOnTrace = variableName.split("\\.")[0];
+				} else {
+					rootVariableOnTrace = variableName;
+				}
+				variableOnTrace = searchForVariableOnTrace(variablesInStep, rootVariableOnTrace);
 			}
 
 			if (variableOnTrace != null) {
@@ -229,6 +233,11 @@ public class AliasInferenceUtils {
 		}
 
 		return fieldsWithAddressRecovered;
+	}
+	
+	private static VarValue searchForVariableOnTrace(Set<VarValue> variablesInStep, String rootVariableName) {
+		return variablesInStep.stream().filter(v -> v.getVarName().equals(rootVariableName))
+				.findFirst().orElse(null);
 	}
 
 	private static VarValue searchForField(String fieldName, VarValue rootVar) {
