@@ -106,9 +106,21 @@ public class VarSkeletonClassVisitor extends AbstractClassVisitor {
 			String newClassName = TraceRecovUtils.getValidClassNameFromDescriptor(descriptor);
 			if (newClassName != null && TraceRecovUtils.shouldBeChecked(newClassName)
 					&& !visitedClasses.contains(className) && layer < MAX_LAYER) {
+				// load the class
+				ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+				InputStream inputStream = classLoader.getResourceAsStream(newClassName.replace('.', '/') + ".class");
+
+				if (inputStream == null) {
+					if (appJavaClassPath == null) {
+						return null;
+					}
+					ClassLoader classLoader2 = appJavaClassPath.getClassLoader();
+					inputStream = classLoader2.getResourceAsStream(newClassName.replace('.', '/') + ".class");
+				}
+				
 				// expand inner field further
 				try {
-					ClassReader classReader = new ClassReader(newClassName);
+					ClassReader classReader = new ClassReader(inputStream);
 					classReader.accept(new VarSkeletonClassVisitor(newClassName, child, false, layer + 1), 0);
 				} catch (IOException e) {
 					e.printStackTrace();
