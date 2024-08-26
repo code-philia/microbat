@@ -114,6 +114,10 @@ public class ExecutionSimulator {
 		 */
 		VariableSkeleton parentSkeleton = VarSkeletonBuilder.getVariableStructure(selectedVar.getType(),
 				step.getTrace().getAppJavaClassPath());
+		if (parentSkeleton == null) {
+			return null;
+		}
+
 		variableSkeletons.add(parentSkeleton);
 
 		// assume var layer == 1, then only elementArray will be recorded in ArrayList
