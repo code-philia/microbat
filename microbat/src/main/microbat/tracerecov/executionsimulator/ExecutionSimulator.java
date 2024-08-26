@@ -273,38 +273,39 @@ public class ExecutionSimulator {
 	public boolean inferDefinition(TraceNode step, VarValue rootVar, VarValue targetVar,
 			List<VarValue> criticalVariables) {
 
-		WriteStatus complication = WriteStatus.NO_GUARANTEE;
-		VarValue ancestorVarOnTrace = null;
-		for (VarValue readVarInStep : step.getReadVariables()) {
-			String aliasID = readVarInStep.getAliasVarID();
-			if (aliasID == null) {
-				continue;
-			}
-			VarValue criticalAncestor = criticalVariables.stream()
-					.filter(criticalVar -> aliasID.equals(criticalVar.getAliasVarID())).findFirst().orElse(null);
-
-			if (criticalAncestor != null) {
-				ancestorVarOnTrace = readVarInStep;
-				break;
-			}
-		}
-		if (ancestorVarOnTrace == null) {
-			complication = WriteStatus.GUARANTEE_NO_WRITE;
-		} else if (TraceRecovUtils.shouldBeChecked(ancestorVarOnTrace.getType())) {
-			complication = estimateComplication(step, ancestorVarOnTrace, targetVar);
-		}
-
-		System.out.println(targetVar.getVarName());
-		System.out.println(step.getInvokingMethod());
-		System.out.println(complication);
-
-		if (complication == WriteStatus.GUARANTEE_WRITE) {
-			return true;
-		} else if (complication == WriteStatus.GUARANTEE_NO_WRITE) {
-			return false;
-		} else {
-			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
-		}
+//		WriteStatus complication = WriteStatus.NO_GUARANTEE;
+//		VarValue ancestorVarOnTrace = null;
+//		for (VarValue readVarInStep : step.getReadVariables()) {
+//			String aliasID = readVarInStep.getAliasVarID();
+//			if (aliasID == null) {
+//				continue;
+//			}
+//			VarValue criticalAncestor = criticalVariables.stream()
+//					.filter(criticalVar -> aliasID.equals(criticalVar.getAliasVarID())).findFirst().orElse(null);
+//
+//			if (criticalAncestor != null) {
+//				ancestorVarOnTrace = readVarInStep;
+//				break;
+//			}
+//		}
+//		if (ancestorVarOnTrace == null) {
+//			complication = WriteStatus.GUARANTEE_NO_WRITE;
+//		} else if (TraceRecovUtils.shouldBeChecked(ancestorVarOnTrace.getType())) {
+//			complication = estimateComplication(step, ancestorVarOnTrace, targetVar);
+//		}
+//
+//		System.out.println(targetVar.getVarName());
+//		System.out.println(step.getInvokingMethod());
+//		System.out.println(complication);
+//
+//		if (complication == WriteStatus.GUARANTEE_WRITE) {
+//			return true;
+//		} else if (complication == WriteStatus.GUARANTEE_NO_WRITE) {
+//			return false;
+//		} else {
+//			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
+//		}
+		return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
 	}
 
 	/**
