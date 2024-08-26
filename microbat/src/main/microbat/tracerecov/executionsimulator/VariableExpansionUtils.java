@@ -172,13 +172,13 @@ public class VariableExpansionUtils {
 		question.append("You must follow the JSON format as \"var_name:var_type\": var_value. "
 				+ "Do not include duplicate keys. You must infer all var_value. ");
 
-		/*
-		 * Added to enforce identical variable structure in buggy and correct trace
-		 */
-		if (preValueResponse != null) {
-			question.append("\n For example, you may return\n" + preValueResponse.second() + " when *"
-					+ selectedVariable.getVarName() + "* has the value: \"" + preValueResponse.first() + "\".");
-		}
+//		/*
+//		 * Added to enforce identical variable structure in buggy and correct trace
+//		 */
+//		if (preValueResponse != null) {
+//			question.append("\n For example, you may return\n" + preValueResponse.second() + " when *"
+//					+ selectedVariable.getVarName() + "* has the value: \"" + preValueResponse.first() + "\".");
+//		}
 
 		return question.toString();
 	}
