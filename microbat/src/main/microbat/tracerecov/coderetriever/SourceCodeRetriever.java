@@ -54,10 +54,9 @@ public class SourceCodeRetriever {
 		String fullClassName = signature.split("#")[0];
 		String className = TraceRecovUtils.getSimplifiedTypeName(fullClassName);
 		
-		/* A patch for CSVPrinter 
-		 * This is an issue with javaparser 3.26.1
+		/* This is an issue with javaparser 3.26.1
 		 * TODO: update javaparser to newer version if released */
-		if (className.equals("CSVPrinter")) {
+		if (className.equals("CSVPrinter") || className.equals("POJOPropertyBuilder") || className.contains("$")) {
 			return signature;
 		}
 
@@ -78,6 +77,10 @@ public class SourceCodeRetriever {
 			// save bytecode to temp file
 			classFile = this.bytecodeRetriever.getBytecodeInFile(fullClassName, appJavaClassPath);
 
+			if (classFile == null) {
+				return signature;
+			}
+			
 			String sourceCode = decompileClass(classFile);
 			String methodSourceCode = "";
 			if (methodName.equals("<init>")) {

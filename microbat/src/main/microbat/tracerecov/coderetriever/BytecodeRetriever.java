@@ -30,6 +30,10 @@ public class BytecodeRetriever {
 			ClassLoader classLoader2 = appJavaClassPath.getClassLoader();
 			inputStream = classLoader2.getResourceAsStream(className.replace('.', '/') + ".class");
 		}
+		
+		if (inputStream == null) {
+			return null;
+		}
 
 		byte[] bytecode = inputStream.readAllBytes();
 

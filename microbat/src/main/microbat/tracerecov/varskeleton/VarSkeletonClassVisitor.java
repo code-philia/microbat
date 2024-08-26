@@ -98,8 +98,8 @@ public class VarSkeletonClassVisitor extends AbstractClassVisitor {
 
 	@Override
 	public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-		// exclude static fields
-		if ((access & Opcodes.ACC_STATIC) == 0) {
+		// exclude static and final fields
+		if ((access & Opcodes.ACC_STATIC) == 0 && (access & Opcodes.ACC_FINAL) == 0) {
 			VariableSkeleton child = new VariableSkeleton(TraceRecovUtils.getTypeNameFromDescriptor(descriptor), name);
 			this.root.addChild(child);
 
@@ -118,10 +118,17 @@ public class VarSkeletonClassVisitor extends AbstractClassVisitor {
 					inputStream = classLoader2.getResourceAsStream(newClassName.replace('.', '/') + ".class");
 				}
 				
-				// expand inner field further
+				// expand inner fields further
 				try {
-					ClassReader classReader = new ClassReader(inputStream);
-					classReader.accept(new VarSkeletonClassVisitor(newClassName, child, false, layer + 1), 0);
+					ClassReader classReader = null;
+					if (inputStream == null) {
+						classReader = new ClassReader(newClassName);
+					} else {
+						classReader = new ClassReader(inputStream);
+					}
+					if (classReader != null) {
+						classReader.accept(new VarSkeletonClassVisitor(newClassName, child, false, layer + 1), 0);
+					}
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
