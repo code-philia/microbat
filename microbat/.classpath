@@ -30,6 +30,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/belief-propagation-java.jar"/>
 	<classpathentry kind="lib" path="lib/json-20220924.jar" sourcepath="lib/json-20220924-sources.jar"/>
 	<classpathentry kind="lib" path="lib/cfr-0.152.jar"/>
-	<classpathentry kind="lib" path="lib/javaparser-core-3.26.1.jar"/>
+	<classpathentry kind="lib" path="lib/javaparser-core-3.26.1.jar" sourcepath="lib/javaparser-core-3.26.1-sources.jar"/>
+	<classpathentry kind="lib" path="lib/javaparser-core-3.26.1-sources.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

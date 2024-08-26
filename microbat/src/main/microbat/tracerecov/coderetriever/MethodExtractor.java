@@ -1,6 +1,7 @@
 package microbat.tracerecov.coderetriever;
 
 import com.github.javaparser.ParseProblemException;
+import com.github.javaparser.ParserConfiguration.LanguageLevel;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.CallableDeclaration;
@@ -75,12 +76,12 @@ public class MethodExtractor {
 	private ClassOrInterfaceDeclaration getClass(String sourceCode, String className) throws CodeRetrieverException {
 		CompilationUnit compilationUnit = null;
 		try {
+			StaticJavaParser.getParserConfiguration().setLanguageLevel(LanguageLevel.JAVA_14);
 			compilationUnit = StaticJavaParser.parse(sourceCode);
 		} catch (ParseProblemException e) {
 			e.printStackTrace();
 			throw new CodeRetrieverException("Class " + className + " cannot be parsed.");
 		}
-		
 
 		Optional<ClassOrInterfaceDeclaration> classDeclaration = compilationUnit
 				.findFirst(ClassOrInterfaceDeclaration.class, c -> c.getNameAsString().equals(className));
