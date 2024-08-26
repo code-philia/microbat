@@ -19,6 +19,10 @@ public class VarSkeletonBuilder {
 		if (!TraceRecovUtils.shouldBeChecked(className)) {
 			return null;
 		}
+		
+		if (TraceRecovUtils.isArray(className)) {
+			return new VariableSkeleton(className);
+		}
 
 		// load the class
 		ClassLoader classLoader = ClassLoader.getSystemClassLoader();
@@ -31,7 +35,7 @@ public class VarSkeletonBuilder {
 			ClassLoader classLoader2 = appJavaClassPath.getClassLoader();
 			inputStream = classLoader2.getResourceAsStream(className.replace('.', '/') + ".class");
 		}
-
+		
 		try {
 			// create and accept a classVisitor
 			ClassReader classReader = new ClassReader(inputStream);
