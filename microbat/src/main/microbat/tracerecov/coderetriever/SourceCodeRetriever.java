@@ -53,6 +53,13 @@ public class SourceCodeRetriever {
 		/* class name */
 		String fullClassName = signature.split("#")[0];
 		String className = TraceRecovUtils.getSimplifiedTypeName(fullClassName);
+		
+		/* A patch for CSVPrinter 
+		 * This is an issue with javaparser 3.26.1
+		 * TODO: update javaparser to newer version if released */
+		if (className.equals("CSVPrinter")) {
+			return signature;
+		}
 
 		/* method name */
 		String methodSignature = signature.split("#")[1];
