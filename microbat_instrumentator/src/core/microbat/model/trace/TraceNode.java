@@ -1017,6 +1017,14 @@ public class TraceNode{
 		return this.breakPoint.isBranch();
 	}
 
+	public boolean isCatch() {
+		return this.breakPoint.isCatch();
+	}
+	
+	public boolean isThrow() {
+		return this.breakPoint.isThrow();
+	}
+	
 	public TraceNode getInvokingMatchNode() {
 		return invokingMatchNode;
 	}

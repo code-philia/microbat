@@ -126,6 +126,14 @@ public class Trace {
 				breakPoint.setBranch(cfgNode.isBranch());				
 			}
 			
+			if (!breakPoint.isCatch()) {
+				breakPoint.setCatch(cfgNode.isCatch());
+			}
+			
+			if(!breakPoint.isThrow()) {
+				breakPoint.setThrow(cfgNode.isThrow());
+			}
+			
 			List<ClassLocation> controlScope0 = findControlledLines(cfgNode.getControlDependentees(), cfg.getMethod(), breakPoint);
 			ranges.addAll(controlScope0);
 		}
@@ -139,6 +147,7 @@ public class Trace {
 		scope.setRangeList(ranges);
 		scope.setCondition(breakPoint.isConditional());
 		scope.setBranch(breakPoint.isBranch());
+		scope.setCatch(breakPoint.isCatch());
 		return scope;
 	}
 
@@ -191,6 +200,30 @@ public class Trace {
 			if(node.isBranch()){
 				controlDominator = node;
 			}
+			
+			if (node.isCatch()) {
+				int previousNodeIndex = node.getOrder() - 2; // order - 1, start with index 0
+				TraceNode previousNode = this.executionList.get(previousNodeIndex);
+				previousNode.addControlDominatee(node);
+				node.setControlDominator(previousNode);
+				controlDominator = node;
+				
+//				while(previousNode.getOrder() > 0) {
+//					if(previousNode.getBreakPoint().isThrow()) {	// case 1: previous node throws exception that captured by current catch node
+//						TraceNode throwNode = previousNode.getStepOverNext();
+//						if(throwNode == null || throwNode.getLineNumber()!=previousNode.getLineNumber()) {
+//							throwNode = previousNode;
+//						}
+//						
+//						throwNode.addControlDominatee(node);
+//						node.setControlDominator(throwNode);
+//						break;
+//					}
+//					else { // case 2: last step of finally block
+//						previousNode = stepBeforeFinal();
+//					}
+//				}
+			}
 		}
 	}
 
@@ -220,6 +253,7 @@ public class Trace {
 					for (TraceNode node : breakpointMap.get(bkp)) {
 						node.getBreakPoint().setConditional(scope.isCondition());
 						node.getBreakPoint().setBranch(scope.isBranch());
+						node.getBreakPoint().setCatch(scope.isCatch());
 						node.setControlScope(scope);
 					}
 				}

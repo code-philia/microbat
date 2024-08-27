@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.apache.bcel.Const;
+import org.apache.bcel.generic.ATHROW;
 import org.apache.bcel.generic.IfInstruction;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.Select;
@@ -15,6 +16,7 @@ public class CFGNode implements IGraphNode<CFGNode>{
 
 	private int idx; // index of instruction in instructionList
 	private int lineNo; // optional
+	private boolean isCatch;
 	private InstructionHandle instructionHandle;
 	private List<CFGNode> parents = new ArrayList<>();
 	private List<CFGNode> children = new ArrayList<>();
@@ -37,6 +39,18 @@ public class CFGNode implements IGraphNode<CFGNode>{
 	public boolean isConditional(){
 		return this.instructionHandle.getInstruction() instanceof Select
 				|| this.instructionHandle.getInstruction() instanceof IfInstruction;
+	}
+	
+	public boolean isCatch() {
+		return this.isCatch;
+	}
+	
+	public boolean isThrow() {
+		return (this.instructionHandle.getInstruction() instanceof ATHROW);
+	}
+
+	public void setCatch(boolean isCatch) {
+		this.isCatch = isCatch;
 	}
 	
 	public InstructionHandle getInstructionHandle() {
