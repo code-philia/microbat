@@ -713,6 +713,10 @@ public class JavaUtil {
 				parser.setSource(contents.toCharArray());
 				parser.setResolveBindings(true);
 				
+				Map options = JavaCore.getOptions();
+				options.put(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_1_8);
+				parser.setCompilerOptions(options);
+				
 				CompilationUnit cu = (CompilationUnit)parser.createAST(null);
 				sourceFile2CUMap.put(javaFilePath, cu);
 				
