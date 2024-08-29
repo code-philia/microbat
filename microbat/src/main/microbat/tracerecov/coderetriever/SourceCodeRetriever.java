@@ -92,6 +92,8 @@ public class SourceCodeRetriever {
 			Files.delete(classFile);
 			return methodSourceCode;
 		} catch (ClassNotFoundException | IOException | CodeRetrieverException e) {
+			e.printStackTrace();
+		} finally {
 			try {
 				if (classFile != null) {
 					Files.delete(classFile);
@@ -99,8 +101,8 @@ public class SourceCodeRetriever {
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
-			return signature;
 		}
+		return signature;
 	}
 
 	private String[] getParameterTypes(String inputs) {
