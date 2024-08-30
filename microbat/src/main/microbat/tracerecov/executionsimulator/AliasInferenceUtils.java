@@ -244,7 +244,7 @@ public class AliasInferenceUtils {
 		VarValue field = rootVar;
 
 		String[] fields = fieldName.split("\\.");
-		if (fields.length <= 1 && !rootVar.getVarName().equals(fields[0].trim())) {
+		if (fields.length <= 1 || !rootVar.getVarName().equals(fields[0].trim())) {
 			// fieldName has <= 1 layers OR rootVar not matched
 			return field;
 		}
