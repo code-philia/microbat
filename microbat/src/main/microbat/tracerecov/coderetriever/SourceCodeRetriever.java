@@ -116,7 +116,19 @@ public class SourceCodeRetriever {
 				String readableType = TraceRecovUtils.getReadableType(type);
 				parameterTypes.add(readableType);
 				i++;
-			} else if (character == 'L' || character == '[') {
+			} else if (character == '[') {
+				String substring = inputs.substring(i);
+				String type = null;
+				if (substring.charAt(1) == 'L') {
+					type = substring.split(";")[0];
+					i += type.length() + 1;
+				} else {
+					type = inputs.substring(i, i+2);
+					i += 2;
+				}
+				String readableType = TraceRecovUtils.getSimplifiedTypeName(TraceRecovUtils.getReadableType(type));
+				parameterTypes.add(readableType);
+			} else if (character == 'L') {
 				String type = inputs.substring(i).split(";")[0];
 				String readableType = TraceRecovUtils.getSimplifiedTypeName(TraceRecovUtils.getReadableType(type));
 				parameterTypes.add(readableType);
