@@ -119,11 +119,11 @@ public class ExecutionSimulator {
 	        question.put("role", "user");
 
 	        if (i < promptSegments.size() - 1) {
-	            // Tell GPT that this is just preamping content and doesn't require an immediate response
-	            question.put("content", segment + "\n(Continued... please wait for the complete input)");
+	            question.put("content", segment + "\n(Note: Please wait for the complete input before responding with JSON only.)");
 	        } else {
-	            question.put("content", segment + "\n(Now please generate the response)");
+	            question.put("content", segment + "\n(Note: Now generate the JSON only response without any explanation.)");
 	        }
+
 
 	        JSONArray messages = new JSONArray();
 	        messages.put(question);
