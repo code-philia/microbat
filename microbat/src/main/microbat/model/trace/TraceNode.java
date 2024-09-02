@@ -64,6 +64,13 @@ public class TraceNode implements Comparator<TraceNode> {
 	protected List<VarValue> readVariables = new ArrayList<>();
 	protected List<VarValue> writtenVariables = new ArrayList<>();
 	
+	// for recover data dependency through extra instrumentation
+	public Set<String> collectReadVarID = new HashSet<>();
+	public Set<String> collectWrittenVarID = new HashSet<>();
+	
+	public Set<String> collectReadVarAliasID = new HashSet<>();
+	public Set<String> collectWrittenVarAliasID = new HashSet<>();
+	
 //	private List<VarValue> hiddenReadVariables = new ArrayList<>();
 //	private List<VarValue> hiddenWrittenVariables = new ArrayList<>();
 	

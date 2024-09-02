@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 import org.eclipse.jdt.core.dom.ASTVisitor;
@@ -259,6 +260,34 @@ public class Trace {
 	 */
 	public TraceNode findDataDependency(TraceNode checkingNode, VarValue readVar) {
 		return findProducer(readVar, checkingNode);
+	}
+	
+	public TraceNode findDataDependencyNew(TraceNode checkingNode, VarValue readVar) {
+		
+		String varID = Variable.truncateSimpleID(readVar.getVarID());
+		String headID = Variable.truncateSimpleID(readVar.getAliasVarID());
+
+		if(varID == null || headID == null) {
+			return null;
+		}
+		for(int i=checkingNode.getOrder()-1; i>=1; i--) {
+			TraceNode node = this.getTraceNode(i);
+			for(VarValue writtenValue: node.getWrittenVariables()) {
+				
+				String wVarID = Variable.truncateSimpleID(writtenValue.getVarID());
+				String wHeadID = Variable.truncateSimpleID(writtenValue.getAliasVarID());
+				
+				if(wVarID != null && wVarID.equals(varID)) {
+					return node;						
+				}
+				
+				if(wHeadID != null && wHeadID.equals(headID)) {
+					return node;
+				}
+			}
+		}
+		
+		return null;
 	}
 	
 	public List<TraceNode> findDataDependentee(TraceNode traceNode, VarValue writtenVar) {
@@ -920,9 +949,11 @@ public class Trace {
 	}
 	
 	public TraceNode findProducer(VarValue varValue, TraceNode startNode) {
-		
 		String varID = Variable.truncateSimpleID(varValue.getVarID());
 		String headID = Variable.truncateSimpleID(varValue.getAliasVarID());
+		if(varID == null || headID == null) {
+			return null;
+		}
 		
 		for(int i=startNode.getOrder()-1; i>=1; i--) {
 			TraceNode node = this.getTraceNode(i);
@@ -939,12 +970,38 @@ public class Trace {
 					return node;
 				}
 				
-				VarValue childValue = writtenValue.findVarValue(varID, headID);
-				if(childValue != null) {
-					return node;
-				}
-				
+//				VarValue childValue = writtenValue.findVarValue(varID, headID);
+//				if(childValue != null) {
+//					return node;
+//				}
+//				
+//				VarValue childValue_1 = varValue.findVarValue(wVarID,wHeadID);
+//				if(childValue_1 != null) {
+//					return node;
+//				}	
 			}
+			
+			// pending through varID
+//			Set<String> collectWrittenVarID = new HashSet<String>(node.collectWrittenVarID);
+//			Set<String> collectReadVarID = new HashSet<String>(startNode.collectReadVarID);
+//			collectReadVarID.add(varValue.getVarID());
+//			
+//			collectWrittenVarID.retainAll(collectReadVarID);
+//			if(!collectWrittenVarID.isEmpty()) {
+//				startNode.collectReadVarID.removeAll(collectWrittenVarID);
+//				return node;
+//			}
+//			
+//			Set<String> collectWrittenVarAliasID = new HashSet<String>(node.collectReadVarAliasID);
+//			Set<String> collectReadVarAliasID = new HashSet<String>(startNode.collectReadVarAliasID);
+//			collectReadVarAliasID.add(varValue.getAliasVarID());
+//			
+//			collectWrittenVarAliasID.retainAll(collectReadVarAliasID);
+//			if(!collectWrittenVarID.isEmpty()) {
+//				startNode.collectReadVarAliasID.removeAll(collectWrittenVarAliasID);
+//				return node;
+//			}
+			
 		}
 		
 		return null;

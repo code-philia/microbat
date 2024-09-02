@@ -85,20 +85,7 @@ public class StartDebugHandler extends AbstractHandler {
 				appClassPath.getAdditionalSourceFolders().add(srcFolder);
 			}
 		}
-		
-//		InstrumentationExecutor ex = new InstrumentationExecutor(appClassPath);
-//		ex.run();
-		
-//		try {
-//			new BehaviorReader().readXLSX();
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		};
-//		
-//		Behavior behavior = BehaviorData.getOrNewBehavior(Settings.launchClass);
-//		behavior.increaseGenerateTrace();
-//		new BehaviorReporter(Settings.launchClass).export(BehaviorData.projectBehavior);
-		
+			
 		this.generateTrace(appClassPath);
 		return null;
 	}
@@ -216,70 +203,4 @@ public class StartDebugHandler extends AbstractHandler {
 		
 		return methodSig;
 	}
-
-	/**
-	 * This method is used to build the scope of local variables.
-	 * @param classScope
-	 */
-//	private void parseLocalVariables(final List<String> classScope, AppJavaClassPath appPath) {
-//		VariableScopeParser vsParser = new VariableScopeParser();
-//		vsParser.parseLocalVariableScopes(classScope, appPath);
-//		List<LocalVariableScope> lvsList = vsParser.getVariableScopeList();
-////		System.out.println(lvsList);
-//		Settings.localVariableScopes.setVariableScopes(lvsList);
-//	}
-	
-	
-//	@SuppressWarnings("restriction")
-//	private List<String> getSourceLocation(){
-//		IProject iProject = JavaUtil.getSpecificJavaProjectInWorkspace();
-//		IJavaProject javaProject = JavaCore.create(iProject);
-//		
-//		List<String> paths = new ArrayList<String>();
-//		try {
-//			for(IPackageFragmentRoot root: javaProject.getAllPackageFragmentRoots()){
-//				if(!(root instanceof JarPackageFragmentRoot)){
-//					String path = root.getResource().getLocationURI().getPath();
-//					path = path.substring(1, path.length());
-//					//path = path.substring(0, path.length()-Settings.projectName.length()-1);
-//					path = path.replace("/", "\\");
-//					
-//					if(!paths.contains(path)){
-//						paths.add(path);
-//					}					
-//				}
-//			}
-//		} catch (JavaModelException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		return paths;
-//	}
-	
-//	private List<BreakPoint> testSlicing(){
-//		List<BreakPoint> breakpoints = new ArrayList<BreakPoint>();
-//		String clazz = "com.Main";
-//	
-//		BreakPoint bkp3 = new BreakPoint(clazz, null, 12);
-//		bkp3.addVars(new Variable("c"));
-//		bkp3.addVars(new Variable("tag", "tag", VarScope.THIS));
-//		bkp3.addVars(new Variable("output"));
-//		bkp3.addVars(new Variable("i"));
-//	
-//		BreakPoint bkp2 = new BreakPoint(clazz, null, 14);
-//		bkp2.addVars(new Variable("c"));
-//		bkp2.addVars(new Variable("tag", "tag", VarScope.THIS));
-//		bkp2.addVars(new Variable("output"));
-//	
-//		BreakPoint bkp1 = new BreakPoint(clazz, null, 17);
-//		bkp1.addVars(new Variable("c"));
-//		bkp1.addVars(new Variable("tag", "tag", VarScope.THIS));
-//		bkp1.addVars(new Variable("output"));
-//	
-//		breakpoints.add(bkp3);
-//		breakpoints.add(bkp2);
-//		breakpoints.add(bkp1);
-//	
-//		return breakpoints;
-//	}
 }

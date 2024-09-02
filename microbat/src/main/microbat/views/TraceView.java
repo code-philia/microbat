@@ -169,7 +169,7 @@ public class TraceView extends ViewPart {
 
 	public void jumpToNode(Trace trace, int order, boolean refreshProgramState) {
 		TraceNode node = trace.getExecutionList().get(order - 1);
-
+		
 		List<TraceNode> path = new ArrayList<>();
 		while (node != null) {
 			path.add(node);
@@ -349,12 +349,32 @@ public class TraceView extends ViewPart {
 					if (obj instanceof TraceNode) {
 						TraceNode node = (TraceNode) obj;
 
+						boolean showVarInfo = true;
+						if(showVarInfo) {
+							System.out.println("TraceNode:"+node.getOrder());
+							System.out.println("StepOverNext:"+(node.getStepOverNext()==null?-1:node.getStepOverNext().getOrder()));
+							System.out.println("InvokeMethods:"+node.getInvokingMethod());
+							System.out.println("");
+						}
+						
+						boolean showVar = false;
+						if(showVar) {
+							System.out.println("Node: "+node.getOrder());
+							System.out.println("===== Read Variables =====");
+							for(VarValue v : node.getReadVariables()) {
+								printVar(v,0);
+							}
+							System.out.println("===== Written Variables =====");
+							for(VarValue v : node.getWrittenVariables()) {
+								printVar(v,0);
+							}
+						}
+						
 //						String simpleSig = node.getMethodSign().substring(node.getMethodSign().indexOf("#")+1, node.getMethodSign().length());
 //						MethodFinderBySignature finder = new MethodFinderBySignature(simpleSig);
 //						ByteCodeParser.parse(node.getClassCanonicalName(), finder, node.getTrace().getAppJavaClassPath());
 //						System.currentTimeMillis();
-						
-//						 showDebuggingInfo(node);
+//						showDebuggingInfo(node);
 
 						if (!programmingSelection) {
 							Behavior behavior = BehaviorData.getOrNewBehavior(Settings.launchClass);
@@ -392,6 +412,13 @@ public class TraceView extends ViewPart {
 		});
 
 		appendMenuForTraceStep();
+	}
+	
+	public void printVar(VarValue var, int depth) {
+		System.out.println("   ".repeat(depth) + var.getVarName()+", "+var.getVarID()+", "+var.getAliasVarID()+", "+var.getHeapID());
+		for(VarValue child:var.getChildren()) {
+			printVar(child,depth+1);
+		}
 	}
 	
 	public void jumpToNode(TraceNode node) {

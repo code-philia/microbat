@@ -36,9 +36,12 @@ public class FeedbackSelectionManager {
 		}
 	}
 	
+	
+	//MODIFIED
 	public void verify(UserFeedback[] allAvaiableFeedbacks) {
 		if (this.feedbackYesNoButtonsMap.size() != allAvaiableFeedbacks.length) {
-			throw new RuntimeException(Log.genMsg(getClass(), "YesNoButtonPairs count mismatch with number of feedback"));
+			return;
+//			throw new RuntimeException(Log.genMsg(getClass(), "YesNoButtonPairs count mismatch with number of feedback"));
 		}
 		
 		for (Map.Entry<UserFeedback, YesNoButtonPair> entry : this.feedbackYesNoButtonsMap.entrySet()) {

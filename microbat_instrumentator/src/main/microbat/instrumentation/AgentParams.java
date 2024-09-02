@@ -44,6 +44,7 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_CODE_RANGE = "code_range";
 	public static final String OPT_TRACE_RECORDER = "trace_recorder";
 	public static final String OPT_RUN_ID = "run_id";
+	public static final String OPT_FULL_INSTRUMENTATION = "full_instrumentation";
 	
 	private boolean precheck;
 	private EntryPoint entryPoint;
@@ -64,6 +65,7 @@ public class AgentParams extends CommonParams {
 	private List<CodeRangeEntry> codeRanges;
 	private String recorderName;
 	private String runId;
+	private String full_inst;
 	
 	public AgentParams(CommandLine cmd) {
 		super(cmd);
@@ -100,6 +102,7 @@ public class AgentParams extends CommonParams {
 		codeRanges = CodeRangeEntry.parse(cmd.getStringList(OPT_CODE_RANGE));
 		recorderName = cmd.getString(OPT_TRACE_RECORDER);
 		runId = cmd.getString(OPT_RUN_ID);
+		full_inst = cmd.getString(OPT_FULL_INSTRUMENTATION);
 	}
 
 	public static AgentParams initFrom(CommandLine cmd) {
@@ -201,6 +204,10 @@ public class AgentParams extends CommonParams {
 	
 	public String getRunId() {
 		return this.runId;
+	}
+	
+	public boolean getFullInst() {
+		return "true".equals(this.full_inst);
 	}
 	
 	public AppJavaClassPath initAppClassPath() {

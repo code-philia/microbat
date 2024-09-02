@@ -91,7 +91,6 @@ public abstract class VarValue implements GraphNode, Serializable {
 					return value;
 				}
 				else{
-					
 					visitedIDs.add(value.getVarID());
 					VarValue targetValue = value.findVarValue(varID, visitedIDs);
 					

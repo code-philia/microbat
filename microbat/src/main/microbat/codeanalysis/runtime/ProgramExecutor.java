@@ -120,7 +120,7 @@ import sav.strategies.dto.AppJavaClassPath;
  * 
  */
 @SuppressWarnings("restriction")
-@Deprecated
+
 public class ProgramExecutor extends Executor {
 	public static final long DEFAULT_TIMEOUT = -1;
 	public static String returnVariableValue = "microbat_return_value";

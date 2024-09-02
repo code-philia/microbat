@@ -149,7 +149,7 @@ public class GlobalFilterChecker {
 	
 	public boolean checkExclusive(String className, String methodName) {
 		String classFName = className.replace(".", "/");
-		return !includes.contains(classFName) /* && !bootstrapIncludes.contains(classFName) */;
+		return !includes.contains(classFName) && !bootstrapIncludes.contains(classFName);
 	}
 	
 	public static boolean isExclusive(String className, String methodName) {

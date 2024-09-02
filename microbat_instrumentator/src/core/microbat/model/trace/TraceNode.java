@@ -45,6 +45,10 @@ public class TraceNode{
 	private List<VarValue> readVariables;
 	private List<VarValue> writtenVariables;
 	
+	// for recover data dependency through extra instrumentation
+	public Set<String> collectReadVarID;
+	public Set<String> collectWrittenVarID;
+	
 	private transient Map<String, VarValue> readVariableMap = new HashMap<>();
 	private transient Map<String, VarValue> writtenVariableMap = new HashMap<>();
 	
@@ -118,6 +122,10 @@ public class TraceNode{
 		} else {
 			writtenVariables = new ArrayList<>();
 		}
+		
+		this.collectReadVarID = new HashSet<>();
+		this.collectWrittenVarID = new HashSet<>();
+		
 		this.timestamp = timestamp;
 		this.bytecode = bytecode;
 	}

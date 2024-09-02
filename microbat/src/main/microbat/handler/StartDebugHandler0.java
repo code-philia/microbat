@@ -1,6 +1,7 @@
 package microbat.handler;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.bcel.Repository;
@@ -22,6 +23,8 @@ import microbat.behavior.Behavior;
 import microbat.behavior.BehaviorData;
 import microbat.behavior.BehaviorReader;
 import microbat.behavior.BehaviorReporter;
+import microbat.codeanalysis.ast.LocalVariableScope;
+import microbat.codeanalysis.ast.VariableScopeParser;
 import microbat.codeanalysis.bytecode.BPVariableRetriever;
 import microbat.codeanalysis.runtime.ExecutionStatementCollector;
 import microbat.codeanalysis.runtime.InstrumentationExecutor;

@@ -61,6 +61,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 //	private static int tolerantExpectedSteps = expectedSteps;
 	public static boolean avoidProxyToString = false;
 	private long threadId;
+	public static boolean full_inst = false;
 
 	private Trace trace;
 
@@ -230,6 +231,37 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		if (parent != null) {
 			parent.linkAchild(varValue);
 		}
+		
+		if(ExecutionTracer.full_inst && value != null) {
+			Class<?> clazz = value.getClass();
+			while (clazz != null && clazz != Object.class) {
+				Field[] fields = clazz.getDeclaredFields();
+				for (Field field : fields) {
+					field.setAccessible(true);
+					try {
+						boolean isStatic = Modifier.isStatic(field.getModifiers());
+						boolean isFinal = Modifier.isFinal(field.getModifiers());
+						if (isStatic || isFinal) {
+							continue;
+						}
+
+						String fieldName = field.getName();
+						String fieldType = field.getType().toString();
+						Object fieldValue = field.get(value);
+						Variable childVar = new FieldVar(isStatic, fieldName, fieldType, fieldType);
+						String fieldVarId = TraceUtils.getFieldVarId(varValue.getVarID(), fieldName, fieldType,
+								fieldValue);
+						childVar.setVarID(fieldVarId);
+
+						// add child
+						appendVarValue(fieldValue, childVar, varValue);
+					} catch (IllegalArgumentException | IllegalAccessException e) {
+						AgentLogger.error(e);
+					}
+				}
+				clazz = clazz.getSuperclass();
+			}
+		}		
 		return varValue;
 	}
 
