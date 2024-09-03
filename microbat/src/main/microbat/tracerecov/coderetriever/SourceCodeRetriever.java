@@ -88,7 +88,6 @@ public class SourceCodeRetriever {
 						inputs);
 			}
 
-			Files.delete(classFile);
 			return methodSourceCode;
 		} catch (ClassNotFoundException | IOException | CodeRetrieverException e) {
 			e.printStackTrace();
