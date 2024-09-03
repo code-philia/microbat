@@ -84,7 +84,15 @@ public class AliasInferenceUtils {
 		if (!invokedMethods.isEmpty()) {
 			question.append("\n\nGiven the source code of function calls in the code:\n");
 			for (String methodSig : invokedMethods) {
-				question.append(sourceCodeRetriever.getMethodCode(methodSig, step.getTrace().getAppJavaClassPath()));
+				String methodSourceCode = methodSig;
+				if (SourceCodeDatabase.sourceCodeMap.containsKey(methodSig)) {
+					methodSourceCode = SourceCodeDatabase.sourceCodeMap.get(methodSig);
+				} else {
+					methodSourceCode = sourceCodeRetriever.getMethodCode(methodSig,
+							step.getTrace().getAppJavaClassPath());
+					SourceCodeDatabase.sourceCodeMap.put(methodSig, methodSourceCode);
+				}
+				question.append(methodSourceCode);
 				question.append("\n");
 			}
 		}
@@ -234,10 +242,9 @@ public class AliasInferenceUtils {
 
 		return fieldsWithAddressRecovered;
 	}
-	
+
 	private static VarValue searchForVariableOnTrace(Set<VarValue> variablesInStep, String rootVariableName) {
-		return variablesInStep.stream().filter(v -> v.getVarName().equals(rootVariableName))
-				.findFirst().orElse(null);
+		return variablesInStep.stream().filter(v -> v.getVarName().equals(rootVariableName)).findFirst().orElse(null);
 	}
 
 	private static VarValue searchForField(String fieldName, VarValue rootVar) {
