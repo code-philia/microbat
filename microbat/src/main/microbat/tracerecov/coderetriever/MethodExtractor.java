@@ -119,7 +119,7 @@ public class MethodExtractor {
 
 	private boolean returnTypeMatches(MethodDeclaration method, String returnType) {
 		String actualReturnType = method.getType().resolve().describe();
-		return actualReturnType.equals(returnType);
+		return twoTypesAreMatched(actualReturnType, returnType);
 	}
 
 	private boolean parametersMatch(CallableDeclaration method, String[] paramTypes) {
@@ -129,14 +129,20 @@ public class MethodExtractor {
 
 		for (int i = 0; i < paramTypes.length; i++) {
 			String actualParamType = method.getParameter(i).getType().resolve().describe();
-			if (actualParamType.matches("[A-Z]") && paramTypes[i].equals("java.lang.Object")) {
-				continue;
-			}
-			if (!actualParamType.equals(paramTypes[i])) {
+			if (!twoTypesAreMatched(actualParamType, paramTypes[i])) {
 				return false;
 			}
 		}
 		return true;
+	}
+
+	private boolean twoTypesAreMatched(String actualType, String expectedType) {
+		if (actualType.matches("[A-Z]") && expectedType.equals("java.lang.Object")) {
+			return true;
+		} else if (actualType.contains("<") && actualType.contains(">")) {
+			actualType = actualType.substring(0, actualType.indexOf("<"));
+		}
+		return actualType.equals(expectedType);
 	}
 
 }
