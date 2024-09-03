@@ -129,6 +129,9 @@ public class MethodExtractor {
 
 		for (int i = 0; i < paramTypes.length; i++) {
 			String actualParamType = method.getParameter(i).getType().resolve().describe();
+			if (method.getParameter(i).isVarArgs()) {
+                actualParamType = actualParamType + "[]";
+            }
 			if (!twoTypesAreMatched(actualParamType, paramTypes[i])) {
 				return false;
 			}

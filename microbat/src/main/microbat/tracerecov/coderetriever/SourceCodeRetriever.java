@@ -6,7 +6,6 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-
 import org.benf.cfr.reader.Main;
 
 import microbat.tracerecov.TraceRecovUtils;
@@ -71,10 +70,10 @@ public class SourceCodeRetriever {
 
 		/* return type */
 		String returnType = inputsAndOutput.split("\\)")[1];
-		returnType = TraceRecovUtils.getReadableType(returnType);
 		if (returnType.endsWith(";")) {
 			returnType = returnType.substring(0, returnType.indexOf(";"));
 		}
+		returnType = TraceRecovUtils.getReadableType(returnType);
 
 		Path classFile = null;
 		try {
