@@ -32,11 +32,17 @@ public class SourceCodeRetriever {
 
 		System.setOut(ps);
 
-		Main.main(new String[] { classFilePath.toString() });
+		String[] options = { classFilePath.toString(), "--decodestringswitch", "--decodefinally" };
+
+		Main.main(options);
 
 		System.out.flush();
 		System.setOut(old);
-		return baos.toString();
+		return cleanDecompiledCode(baos.toString());
+	}
+
+	private String cleanDecompiledCode(String decompiledCode) {
+		return decompiledCode.replaceAll("\\d+\\.\\$SwitchMap\\$[^\\[]+\\[([^\\]]+)\\]", "$1.ordinal()");
 	}
 
 	private String getConstructorCode(AppJavaClassPath appJavaClassPath, String sourceCode, String className,
