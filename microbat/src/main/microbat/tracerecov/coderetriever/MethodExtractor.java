@@ -1,6 +1,9 @@
 package microbat.tracerecov.coderetriever;
 
+import java.util.Optional;
+
 import com.github.javaparser.ParseProblemException;
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ParserConfiguration.LanguageLevel;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -8,9 +11,12 @@ import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.type.Type;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
-import java.util.Optional;
+import sav.strategies.dto.AppJavaClassPath;
 
 /**
  * This class is used to extract the source code of a method given the source
@@ -21,8 +27,17 @@ public class MethodExtractor {
 	public MethodExtractor() {
 	}
 
-	public String getConstructorCode(String sourceCode, String className, String... paramTypes)
-			throws CodeRetrieverException {
+	public String getConstructorCode(AppJavaClassPath appJavaClassPath, String sourceCode, String className,
+			String... paramTypes) throws CodeRetrieverException {
+		// initialize TypeSolver to resolve generic types
+		CombinedTypeSolver typeSolver = new CombinedTypeSolver();
+		typeSolver.add(new ReflectionTypeSolver());
+		typeSolver.add(new JavaParserTypeSolver(appJavaClassPath.getSoureCodePath()));
+
+		// configure Parser with Symbol Resolver
+		JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
+		ParserConfiguration parserConfiguration = new ParserConfiguration().setSymbolResolver(symbolSolver);
+		StaticJavaParser.setConfiguration(parserConfiguration);
 
 		ClassOrInterfaceDeclaration classOrInterfaceDeclaration = getClass(sourceCode, className);
 
@@ -46,8 +61,17 @@ public class MethodExtractor {
 		return constructor.map(ConstructorDeclaration::toString).orElse(null);
 	}
 
-	public String getMethodCode(String sourceCode, String className, String returnType, String methodName,
-			String... paramTypes) throws CodeRetrieverException {
+	public String getMethodCode(AppJavaClassPath appJavaClassPath, String sourceCode, String className,
+			String returnType, String methodName, String... paramTypes) throws CodeRetrieverException {
+		// initialize TypeSolver to resolve generic types
+		CombinedTypeSolver typeSolver = new CombinedTypeSolver();
+		typeSolver.add(new ReflectionTypeSolver());
+		typeSolver.add(new JavaParserTypeSolver(appJavaClassPath.getSoureCodePath()));
+
+		// configure Parser with Symbol Resolver
+		JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
+		ParserConfiguration parserConfiguration = new ParserConfiguration().setSymbolResolver(symbolSolver);
+		StaticJavaParser.setConfiguration(parserConfiguration);
 
 		ClassOrInterfaceDeclaration classOrInterfaceDeclaration = getClass(sourceCode, className);
 
@@ -94,8 +118,8 @@ public class MethodExtractor {
 	}
 
 	private boolean returnTypeMatches(MethodDeclaration method, String returnType) {
-		Type methodReturnType = method.getType();
-		return methodReturnType.asString().equals(returnType);
+		String actualReturnType = method.getType().resolve().describe();
+		return actualReturnType.equals(returnType);
 	}
 
 	private boolean parametersMatch(CallableDeclaration method, String[] paramTypes) {
@@ -104,8 +128,11 @@ public class MethodExtractor {
 		}
 
 		for (int i = 0; i < paramTypes.length; i++) {
-			String paramType = method.getParameter(i).getType().asString();
-			if (!paramType.equals(paramTypes[i])) {
+			String actualParamType = method.getParameter(i).getType().resolve().describe();
+			if (actualParamType.matches("[A-Z]") && paramTypes[i].equals("java.lang.Object")) {
+				continue;
+			}
+			if (!actualParamType.equals(paramTypes[i])) {
 				return false;
 			}
 		}
