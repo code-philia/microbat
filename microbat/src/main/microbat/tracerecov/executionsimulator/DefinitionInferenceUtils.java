@@ -13,7 +13,7 @@ public class DefinitionInferenceUtils {
 	/* Request content */
 
 	private static final String DEFINITION_INFERENCE_BACKGROUND = "<Background>\n"
-			+ "You are a Java expert, you need to analyze whether a variable is written through static analysis.";
+			+ "You are a Java expert, you need to analyze whether a variable is written.";
 
 	/* Methods */
 
@@ -76,9 +76,9 @@ public class DefinitionInferenceUtils {
 			question.append("\",");
 		}
 
-		question.append("we know that `" + rootVarName + "` has the following structure:\n");
+		question.append("\n\nwe know that later `" + rootVarName + "` has the following structure and value:\n");
 		question.append(jsonString);
-		question.append("\n");
+		question.append("\n\nBut we don't know which step during the execution modified the value.\n");
 
 		boolean isFirstVar = true;
 		for (VarValue var : variablesInStep) {
