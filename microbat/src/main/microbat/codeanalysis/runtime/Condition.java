@@ -45,6 +45,22 @@ public class Condition {
 		return groundTruthVar == null ? null : groundTruthVar.toJSON();
 	}
 	
+	public VarValue getMatchedGroundTruthVar(Trace trace) {
+		VarValue groundTruthVar = null;
+		for (TraceNode step : trace.getExecutionList()) {
+			for (VarValue readVariable : step.getReadVariables()) {
+				if (matchBasicCondition(readVariable)) {
+					groundTruthVar = readVariable;
+					break;
+				}
+			}
+			if (groundTruthVar != null) {
+				break;
+			}
+		}
+		return groundTruthVar == null ? null : groundTruthVar;
+	}
+	
 	public List<String> getGroundTruthVariablesAndAliases(Trace trace) {
         List<String> variablesAndAliases = new ArrayList<>();
         for (TraceNode step : trace.getExecutionList()) {
