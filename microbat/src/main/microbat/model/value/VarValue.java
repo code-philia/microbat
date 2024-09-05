@@ -567,7 +567,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 	
 	public JSONObject toJSON() {
 		JSONObject jsonObject = new JSONObject();
-		String key = this.getVarName() + ":" + this.getType();
+		String key = this.getVarName() + "|" + this.getType();
 		
 		if (this instanceof PrimitiveValue || this.getChildren() == null || this.getChildren().isEmpty()) {
 			jsonObject.put(key, this.getStringValue());
@@ -585,7 +585,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 	private JSONObject getChildrenJSONObjectRecur() {
 		JSONObject childrenJSON = new JSONObject();
 		for (VarValue child : this.getChildren()) {
-			String key = child.getVarName() + ":" + child.getType();
+			String key = child.getVarName() + "|" + child.getType();
 			
 			if (child instanceof PrimitiveValue || child.getChildren() == null || child.getChildren().isEmpty()) {
 				childrenJSON.put(key, child.getStringValue());
