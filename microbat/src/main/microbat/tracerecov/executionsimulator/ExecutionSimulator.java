@@ -231,7 +231,11 @@ public class ExecutionSimulator {
 
 		for (int i = 0; i < 2; i++) {
 			try {
+				long timeStart = System.currentTimeMillis();
 				String response = sendRequest(background, content);
+				long timeEnd = System.currentTimeMillis();
+				LLMTimer.varExpansionTime += timeEnd - timeStart;
+				
 				response = TraceRecovUtils.processInputStringForLLM(response);
 				this.logger.printResponse(i, response);
 				VariableExpansionUtils.processResponse(selectedVar, response);
@@ -259,7 +263,11 @@ public class ExecutionSimulator {
 
 		for (int i = 0; i < 2; i++) {
 			try {
+				long timeStart = System.currentTimeMillis();
 				String response = sendRequest(background, content);
+				long timeEnd = System.currentTimeMillis();
+				LLMTimer.aliasInferTime += timeEnd - timeStart;
+				
 				this.logger.printResponse(i, response);
 				return AliasInferenceUtils.processResponse(response, rootVar, step);
 			} catch (org.json.JSONException | java.lang.StringIndexOutOfBoundsException e) {
@@ -343,7 +351,11 @@ public class ExecutionSimulator {
 
 		for (int i = 0; i < 2; i++) {
 			try {
+				long timeStart = System.currentTimeMillis();
 				String response = sendRequest(background, content);
+				long timeEnd = System.currentTimeMillis();
+				LLMTimer.defInferTime += timeEnd - timeStart;
+				
 				this.logger.printResponse(i, response);
 				return DefinitionInferenceUtils.isModified(response);
 			} catch (org.json.JSONException | IOException e) {
