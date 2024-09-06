@@ -79,7 +79,7 @@ public class VariableExpansionUtils {
 			+ "       },\r\n"
 			+ "     \"size| int\": 2\r\n"
 			+ "  },\r\n"
-			+ " }\r\n\n";
+			+ " }";
 
 	/* Methods */
 
@@ -146,7 +146,7 @@ public class VariableExpansionUtils {
 		String variableValue = TraceRecovUtils.processInputStringForLLM(selectedVariable.getStringValue());
 		String variableName = selectedVariable.getVarName();
 
-		StringBuilder question = new StringBuilder("<Question>\n" + "Given the following data structure:\n");
+		StringBuilder question = new StringBuilder("\n\n<Question>\n" + "Given the following data structure:\n");
 
 		for (VariableSkeleton v : variableSkeletons) {
 			if (v != null) {
@@ -154,23 +154,19 @@ public class VariableExpansionUtils {
 			}
 		}
 
-		System.currentTimeMillis();
-
 		question.append("with the input value of executing ```");
 		question.append(sourceCode + "```, ");
-		question.append("we have the value of *" + selectedVariable.getVarName() + "* of type ");
+		question.append("we have the value of *" + selectedVariable.getVarName() + "* of type `");
 		question.append(variableType);
-		question.append(": \"");
+		question.append("`, value \"");
 		question.append(variableValue);
-		question.append("\"" + " ");
-		question.append(" (\"<\", " + "\">\" is the content, we shall not escape it)");
-		question.append(", strictly return in JSON format for *" + variableName
+		question.append("\", strictly return in JSON format for *" + variableName
 				+ "* as the above example, each key must has a value and a type. "
 				+ "The JSON object must start with variable *" + variableName
 				+ "* as the root. Do not include explanation in your response.\n");
 
-		question.append("You must follow the JSON format as \"var_name:var_type\": var_value. "
-				+ "Do not include duplicate keys. You must infer all var_value. ");
+		question.append("You must follow the JSON format as \"var_name|var_type\": var_value. "
+				+ "Do not include duplicate keys. You must infer all var_value.");
 
 //		/*
 //		 * Added to enforce identical variable structure in buggy and correct trace
@@ -210,11 +206,11 @@ public class VariableExpansionUtils {
 				}
 				break;
 			} else {
-				String[] nameAndType = key.split(":");
-				String varName = key.split(":")[0].trim();
+				String[] nameAndType = key.split("\\|");
+				String varName = nameAndType[0].trim();
 				String varType = "";
 				if (nameAndType.length == 2) {
-					varType = key.split(":")[1].trim();
+					varType = nameAndType[1].trim();
 				}
 
 				Variable var = new FieldVar(false, varName, varType, varType);
@@ -226,7 +222,11 @@ public class VariableExpansionUtils {
 				Object value = jsonObject.get(key);
 				VarValue varValue = null;
 
-				if (value instanceof JSONArray) {
+				if (value instanceof JSONArray || varType.contains("[]")) {
+					if (value instanceof String && varType.contains("[]")) {
+						value = TraceRecovUtils.parseJSONArrayFromString((String) value);
+					}
+
 					varValue = new ArrayValue(false, false, var);
 					varValue.setStringValue(String.valueOf(value));
 
