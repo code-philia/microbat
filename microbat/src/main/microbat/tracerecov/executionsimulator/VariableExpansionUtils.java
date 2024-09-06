@@ -210,11 +210,11 @@ public class VariableExpansionUtils {
 				}
 				break;
 			} else {
-				String[] nameAndType = key.split(":");
-				String varName = key.split(":")[0].trim();
+				String[] nameAndType = key.split("|");
+				String varName = key.split("|")[0].trim();
 				String varType = "";
 				if (nameAndType.length == 2) {
-					varType = key.split(":")[1].trim();
+					varType = key.split("|")[1].trim();
 				}
 
 				Variable var = new FieldVar(false, varName, varType, varType);
