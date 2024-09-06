@@ -960,7 +960,7 @@ public class Trace {
 					return node;						
 				}
 				
-				if(wHeadID != null && wHeadID.equals(headID) && !wHeadID.equals("") && Integer.valueOf(wHeadID) != 0) {
+				if(wHeadID != null && wHeadID.equals(headID) && !wHeadID.equals("") && !wHeadID.equals("null") && Integer.valueOf(wHeadID) != 0) {
 					return node;
 				}
 				

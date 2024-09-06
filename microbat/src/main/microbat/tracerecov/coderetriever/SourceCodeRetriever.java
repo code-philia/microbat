@@ -6,7 +6,6 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-
 import org.benf.cfr.reader.Main;
 
 import microbat.tracerecov.TraceRecovUtils;
@@ -32,33 +31,34 @@ public class SourceCodeRetriever {
 
 		System.setOut(ps);
 
-		Main.main(new String[] { classFilePath.toString() });
+		String[] options = { classFilePath.toString(), "--decodestringswitch", "--decodefinally" };
+
+		Main.main(options);
 
 		System.out.flush();
 		System.setOut(old);
-		return baos.toString();
+		return cleanDecompiledCode(baos.toString());
 	}
 
-	private String getConstructorCode(String sourceCode, String className, String... paramTypes)
-			throws CodeRetrieverException {
-		return methodExtractor.getConstructorCode(sourceCode, className, paramTypes);
+	private String cleanDecompiledCode(String decompiledCode) {
+		return decompiledCode.replaceAll("\\d+\\.\\$SwitchMap\\$[^\\[]+\\[([^\\]]+)\\]", "$1.ordinal()");
 	}
 
-	private String getMethodCode(String sourceCode, String className, String returnType, String methodName,
+	private String getConstructorCode(AppJavaClassPath appJavaClassPath, String sourceCode, String className,
 			String... paramTypes) throws CodeRetrieverException {
-		return methodExtractor.getMethodCode(sourceCode, className, returnType, methodName, paramTypes);
+		return methodExtractor.getConstructorCode(appJavaClassPath, sourceCode, className, paramTypes);
+	}
+
+	private String getMethodCode(AppJavaClassPath appJavaClassPath, String sourceCode, String className,
+			String returnType, String methodName, String... paramTypes) throws CodeRetrieverException {
+		return methodExtractor.getMethodCode(appJavaClassPath, sourceCode, className, returnType, methodName,
+				paramTypes);
 	}
 
 	public String getMethodCode(String signature, AppJavaClassPath appJavaClassPath) {
 		/* class name */
 		String fullClassName = signature.split("#")[0];
 		String className = TraceRecovUtils.getSimplifiedTypeName(fullClassName);
-		
-		/* This is an issue with javaparser 3.26.1
-		 * TODO: update javaparser to newer version if released */
-		if (className.equals("CSVPrinter") || className.equals("POJOPropertyBuilder") || className.contains("$")) {
-			return signature;
-		}
 
 		/* method name */
 		String methodSignature = signature.split("#")[1];
@@ -70,7 +70,10 @@ public class SourceCodeRetriever {
 
 		/* return type */
 		String returnType = inputsAndOutput.split("\\)")[1];
-		returnType = TraceRecovUtils.getSimplifiedTypeName(TraceRecovUtils.getReadableType(returnType));
+		if (returnType.endsWith(";")) {
+			returnType = returnType.substring(0, returnType.indexOf(";"));
+		}
+		returnType = TraceRecovUtils.getReadableType(returnType);
 
 		Path classFile = null;
 		try {
@@ -80,16 +83,16 @@ public class SourceCodeRetriever {
 			if (classFile == null) {
 				return signature;
 			}
-			
+
 			String sourceCode = decompileClass(classFile);
 			String methodSourceCode = "";
 			if (methodName.equals("<init>")) {
-				methodSourceCode = getConstructorCode(sourceCode, className, inputs);
+				methodSourceCode = getConstructorCode(appJavaClassPath, sourceCode, className, inputs);
 			} else {
-				methodSourceCode = getMethodCode(sourceCode, className, returnType, methodName, inputs);
+				methodSourceCode = getMethodCode(appJavaClassPath, sourceCode, className, returnType, methodName,
+						inputs);
 			}
 
-			Files.delete(classFile);
 			return methodSourceCode;
 		} catch (ClassNotFoundException | IOException | CodeRetrieverException e) {
 			e.printStackTrace();
@@ -116,9 +119,21 @@ public class SourceCodeRetriever {
 				String readableType = TraceRecovUtils.getReadableType(type);
 				parameterTypes.add(readableType);
 				i++;
-			} else if (character == 'L' || character == '[') {
+			} else if (character == '[') {
+				String substring = inputs.substring(i);
+				String type = null;
+				if (substring.charAt(1) == 'L') {
+					type = substring.split(";")[0];
+					i += type.length() + 1;
+				} else {
+					type = inputs.substring(i, i + 2);
+					i += 2;
+				}
+				String readableType = TraceRecovUtils.getReadableType(type);
+				parameterTypes.add(readableType);
+			} else if (character == 'L') {
 				String type = inputs.substring(i).split(";")[0];
-				String readableType = TraceRecovUtils.getSimplifiedTypeName(TraceRecovUtils.getReadableType(type));
+				String readableType = TraceRecovUtils.getReadableType(type);
 				parameterTypes.add(readableType);
 				i += type.length() + 1;
 			}

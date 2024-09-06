@@ -6,13 +6,14 @@ import java.util.Set;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.TraceRecovUtils;
+import microbat.tracerecov.coderetriever.SourceCodeRetriever;
 
 public class DefinitionInferenceUtils {
 
 	/* Request content */
 
 	private static final String DEFINITION_INFERENCE_BACKGROUND = "<Background>\n"
-			+ "You are a Java expert, you need to analyze the runtime execution of a Java program.";
+			+ "You are a Java expert, you need to analyze whether a variable is written.";
 
 	/* Methods */
 
@@ -38,10 +39,33 @@ public class DefinitionInferenceUtils {
 		/* all variables */
 		Set<VarValue> variablesInStep = step.getAllVariables();
 
+		/* invoked methods to be checked */
+		Set<String> invokedMethods = TraceRecovUtils.getInvokedMethodsToBeChecked(step.getInvokingMethod());
+
 		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n```");
 		question.append(sourceCode);
-		question.append("```\n");
+		question.append("```");
 
+		// invoked methods
+		SourceCodeRetriever sourceCodeRetriever = new SourceCodeRetriever();
+		if (!invokedMethods.isEmpty()) {
+			question.append("\n\nGiven the source code of function calls in the code:\n");
+			for (String methodSig : invokedMethods) {
+				String methodSourceCode = methodSig;
+				if (SourceCodeDatabase.sourceCodeMap.containsKey(methodSig)) {
+					methodSourceCode = SourceCodeDatabase.sourceCodeMap.get(methodSig);
+				} else {
+					methodSourceCode = sourceCodeRetriever.getMethodCode(methodSig,
+							step.getTrace().getAppJavaClassPath());
+					SourceCodeDatabase.sourceCodeMap.put(methodSig, methodSourceCode);
+				}
+				question.append(methodSourceCode);
+				question.append("\n");
+			}
+		}
+
+		// variables information (name, type, value)
+		question.append("\nVariables involved:");
 		for (VarValue var : step.getReadVariables()) {
 			question.append("`");
 			question.append(var.getVarName());
@@ -52,9 +76,9 @@ public class DefinitionInferenceUtils {
 			question.append("\",");
 		}
 
-		question.append("we know that `" + rootVarName + "` has the following structure:\n");
+		question.append("\n\nwe know that later `" + rootVarName + "` has the following structure and value:\n");
 		question.append(jsonString);
-		question.append("\n");
+		question.append("\n\nBut we don't know which step during the execution modified the value.\n");
 
 		boolean isFirstVar = true;
 		for (VarValue var : variablesInStep) {
