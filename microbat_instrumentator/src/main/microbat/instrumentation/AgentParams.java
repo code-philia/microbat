@@ -44,7 +44,19 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_CODE_RANGE = "code_range";
 	public static final String OPT_TRACE_RECORDER = "trace_recorder";
 	public static final String OPT_RUN_ID = "run_id";
-	
+	/**
+	 * RQ1: Shorten Trace
+	 */
+	public static final String OPT_METHOD_LAYER = "methodLayer";
+	/**
+	 * RQ3: The condition (or query) to have additional instrumentation on the trace
+	 */
+	public static final String OPT_CONDITION = "condition";
+	public static final String OPT_CONDITION_VAR_NAME = "variable_name";
+	public static final String OPT_CONDITION_VAR_TYPE = "variable_type";
+	public static final String OPT_CONDITION_VAR_VALUE = "variable_value";
+	public static final String OPT_CONDITION_CLASS_STRUCTURE = "class_structure";
+
 	private boolean precheck;
 	private EntryPoint entryPoint;
 	
@@ -64,6 +76,9 @@ public class AgentParams extends CommonParams {
 	private List<CodeRangeEntry> codeRanges;
 	private String recorderName;
 	private String runId;
+
+	private int methodLayer;
+	private RuntimeCondition condition;
 	
 	public AgentParams(CommandLine cmd) {
 		super(cmd);
@@ -91,7 +106,8 @@ public class AgentParams extends CommonParams {
 		includesExpression = getFilterExpression(cmd, OPT_INCLUDES_FILE, OPT_INCLUDES);
 		excludesExpression = getFilterExpression(cmd, OPT_EXCLUDES_FILE, OPT_EXCLUDES);
 		variableLayer = cmd.getInt(OPT_VARIABLE_LAYER, 2);
-		
+		methodLayer = cmd.getInt(OPT_METHOD_LAYER, AgentConstants.UNSPECIFIED_INT_VALUE);
+		condition = cmd.getRuntimeCondition(OPT_CONDITION);
 		stepLimit = cmd.getInt(OPT_STEP_LIMIT, AgentConstants.UNSPECIFIED_INT_VALUE);
 		expectedSteps = cmd.getInt(OPT_EXPECTED_STEP, AgentConstants.UNSPECIFIED_INT_VALUE);
 		overlongMethods = cmd.getStringSet(OPT_OVER_LONG_METHODS);
@@ -170,6 +186,14 @@ public class AgentParams extends CommonParams {
 	
 	public int getVariableLayer() {
 		return variableLayer;
+	}
+
+	public int getMethodLayer() {
+		return methodLayer;
+	}
+	
+	public RuntimeCondition getRuntimeCondition() {
+		return condition;
 	}
 	
 	public boolean isPrecheck() {

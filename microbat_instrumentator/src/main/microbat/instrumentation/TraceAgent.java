@@ -41,7 +41,9 @@ public class TraceAgent extends Agent {
 		GlobalFilterChecker.setup(appPath, agentParams.getIncludesExpression(), agentParams.getExcludesExpression());
 		ExecutionTracer.appJavaClassPath = appPath;
 		ExecutionTracer.variableLayer = agentParams.getVariableLayer();
+		ExecutionTracer.condition = agentParams.getRuntimeCondition();
 		ExecutionTracer.setStepLimit(agentParams.getStepLimit());
+		ExecutionTracer.setMethodLayer(agentParams.getMethodLayer());
 		if (!agentParams.isRequireMethodSplit()) {
 			agentParams.getUserFilters().register(new OverLongMethodFilter(agentParams.getOverlongMethods()));
 		}
@@ -83,8 +85,7 @@ public class TraceAgent extends Agent {
 		}
 
 //		timer.newPoint("Saving trace");
-		TraceRecorder recorder = Recorder.create(agentParams);
-		recorder.store(traceList);
+		Recorder.create(agentParams).store(traceList);
 //		AgentLogger.debug(timer.getResultString());
 	}
 

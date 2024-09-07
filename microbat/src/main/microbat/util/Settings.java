@@ -12,6 +12,7 @@ import microbat.handler.CheckingState;
 import microbat.model.UserInterestedVariables;
 import microbat.model.trace.PotentialCorrectPatternList;
 import microbat.preference.MicrobatPreference;
+import microbat.preference.TraceRecovPreference;
 import microbat.views.ImageUI;
 
 public class Settings {
@@ -28,6 +29,10 @@ public class Settings {
 	public static String autoFeedbackMethod;
 	
 	private static Integer variableLayer;
+	
+	public static boolean isEnableGPTInference = false;
+	
+	public static boolean collectGroundTruth = false;
 	
 	/**
 	 * We divide the library code into two categories: the interesting ones (e.g., 
@@ -82,6 +87,11 @@ public class Settings {
 				String runWithDebugModeString = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.RUN_WITH_DEBUG_MODE);
 				isRunWtihDebugMode = runWithDebugModeString.equals("true");
 				
+				String isEnableGPTInferenceString = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.ENABLE_LLM);
+				isEnableGPTInference = isEnableGPTInferenceString.equals("true");
+				
+				String collectGroundTruthString = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.COLLECT_GROUND_TRUTH);
+				collectGroundTruth = collectGroundTruthString.equals("true");
 			}
 			catch(Exception e){
 				e.printStackTrace();

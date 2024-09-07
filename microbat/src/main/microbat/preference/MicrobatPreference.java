@@ -63,7 +63,6 @@ public class MicrobatPreference extends PreferencePage implements
 //		this.defaultConfigPath = Activator.getDefault().getPreferenceStore().getString(CONFIG_PATH_MICROBAT);
 //		this.defaultTestCaseID = Activator.getDefault().getPreferenceStore().getString(TEST_CASE_ID_MICROBAT);
 //		this.defaultUseTestCaseID = Activator.getDefault().getPreferenceStore().getString(USE_TEST_CASE_ID);
-		
 	}
 
 	public static String getStepLimit() {
@@ -98,6 +97,7 @@ public class MicrobatPreference extends PreferencePage implements
 //	public static final String PROJECT_PATH = "projectPath";
 //	public static final String TEST_CASE_ID_MICROBAT = "testCaseID";
 //	public static final String USE_TEST_CASE_ID = "useTestCaseID";
+	
 
 	private Combo projectCombo;
 	private Text lanuchClassText;

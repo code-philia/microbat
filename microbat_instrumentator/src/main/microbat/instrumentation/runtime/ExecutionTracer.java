@@ -6,11 +6,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.LocalVariable;
@@ -24,6 +27,7 @@ import microbat.codeanalysis.bytecode.MethodFinderBySignature;
 import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentLogger;
+import microbat.instrumentation.RuntimeCondition;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.utils.LoadClassUtils;
 import microbat.instrumentation.utils.MicrobatUtils;
@@ -60,6 +64,10 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public static int expectedSteps = Integer.MAX_VALUE;
 //	private static int tolerantExpectedSteps = expectedSteps;
 	public static boolean avoidProxyToString = false;
+	
+	public static int methodLayer = Integer.MAX_VALUE;
+	public static RuntimeCondition condition;
+	
 	private long threadId;
 
 	private Trace trace;
@@ -84,6 +92,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public static void setStepLimit(int stepLimit) {
 		if (stepLimit != AgentConstants.UNSPECIFIED_INT_VALUE) {
 			ExecutionTracer.stepLimit = stepLimit;
+		}
+	}
+	
+	public static void setMethodLayer(int methodLayer) {
+		if (methodLayer != AgentConstants.UNSPECIFIED_INT_VALUE) {
+			ExecutionTracer.methodLayer = methodLayer;
 		}
 	}
 
@@ -158,9 +172,31 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		} else if (PrimitiveUtils.isPrimitive(var.getType())) {
 			varValue = new PrimitiveValue(getStringValue(value, null), isRoot, var);
 		} else if (var.getType().endsWith("[]")) {
+			if(value != null) {
+				var.setType(value.getClass().getTypeName());				
+			}
+			
 			/* array */
 			ArrayValue arrVal = new ArrayValue(value == null, isRoot, var);
-			arrVal.setComponentType(var.getType().substring(0, var.getType().length() - 2)); // 2 = "[]".length
+			
+			// get component type (author: hongshu)
+			// TODO: get the closest common parent for all items
+			String componentType = var.getType().substring(0, var.getType().length() - 2); // 2 = "[]".length
+			if (componentType != null && componentType.equals("java.lang.Object")) {
+				Object[] array = (Object[]) value;
+				if (array != null) {
+					for (Object item : array) {
+						if (item != null) {
+							componentType = item.getClass().getTypeName();
+							break;
+						}
+					}
+				}
+			}
+			
+			arrVal.setComponentType(componentType);
+			var.setType(componentType + "[]");
+			
 			varValue = arrVal;
 			// varValue.setStringValue(getStringValue(value, arrVal.getComponentType()));
 			varValue.setStringValue(getStringValue(value, var.getType()));
@@ -183,6 +219,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				}
 			}
 		} else {
+			if(value != null) {
+				var.setType(value.getClass().getTypeName());
+			}
 			ReferenceValue refVal = new ReferenceValue(value == null, TraceUtils.getUniqueId(value), isRoot, var);
 			varValue = refVal;
 			// varValue.setStringValue(getStringValue(value, var.getType()));
@@ -230,6 +269,45 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		if (parent != null) {
 			parent.linkAchild(varValue);
 		}
+		
+		/**
+		 * @author hongshuwang
+		 * 
+		 * Used in TraceRecov RQ3: ground truth collection
+		 * If condition is matched, record children
+		 */
+		if (condition.matchBasicCondition(varValue) && value != null) {
+			// TODO: `matchBasicCondition` checks basic information
+			// shall we check class structure as well?
+			Class<?> clazz = value.getClass();
+			while (clazz != null && clazz != Object.class) {
+				Field[] fields = clazz.getDeclaredFields();
+				for (Field field : fields) {
+					field.setAccessible(true);
+					try {
+						boolean isStatic = Modifier.isStatic(field.getModifiers());
+						boolean isFinal = Modifier.isFinal(field.getModifiers());
+						if (isStatic || isFinal) {
+							continue;
+						}
+
+						String fieldName = field.getName();
+						String fieldType = field.getType().toString();
+						Object fieldValue = field.get(value);
+						Variable childVar = new FieldVar(isStatic, fieldName, fieldType, fieldType);
+						String fieldVarId = TraceUtils.getFieldVarId(varValue.getVarID(), fieldName, fieldType,
+								fieldValue);
+						childVar.setVarID(fieldVarId);
+
+						// add child
+						appendVarValue(fieldValue, childVar, varValue);
+					} catch (IllegalArgumentException | IllegalAccessException e) {
+						AgentLogger.error(e);
+					}
+				}
+				clazz = clazz.getSuperclass();
+			}
+		}
 		return varValue;
 	}
 
@@ -239,18 +317,6 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		try {
 			if (obj == null) {
 				return "null";
-			}
-
-			String simpleType = null;
-			if (type != null && type.contains("[]")) {
-				simpleType = type.substring(0, type.indexOf("[]"));
-			}
-
-			if (simpleType != null) {
-				if (simpleType.equals("char")) {
-					char[] charArray = (char[]) obj;
-					return String.valueOf(charArray);
-				}
 			}
 
 			// if (FilterChecker.isCustomizedToStringClass(obj.getClass().getName())) {
@@ -275,7 +341,157 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			}
 			
 			long t1 = System.currentTimeMillis();
-			String value = String.valueOf(obj);// obj.toString();
+			String value = "";
+			
+			if (obj != null && obj.getClass().isArray()) {
+				
+				if(obj instanceof int[]) {
+					value = Arrays.toString((int[])(obj));
+				}
+				else if(obj instanceof double[]) {
+					value = Arrays.toString((double[])(obj));
+				}
+				else if(obj instanceof short[]) {
+					value = Arrays.toString((short[])(obj));
+				}
+				else if(obj instanceof long[]) {
+					value = Arrays.toString((long[])(obj));			}
+				else if(obj instanceof char[]) {
+					value = Arrays.toString((char[])(obj));
+				}
+				else if(obj instanceof byte[]) {
+					value = Arrays.toString((byte[])(obj));
+				}
+				else if(obj instanceof float[]) {
+					value = Arrays.toString((float[])(obj));
+				}
+				else if(obj instanceof boolean[]) {
+					value = Arrays.toString((Object[])(obj));
+				}
+				else if(obj instanceof Object[]) {
+					value = Arrays.toString((Object[])(obj));
+				}
+			}
+			else {
+				value = String.valueOf(obj);// obj.toString();	
+				
+				if(isClassNameAndObjectId(value)) {
+					value = parseFields(obj);
+				}
+			}
+			
+			long t2 = System.currentTimeMillis();
+			if(t2-t1 > 1000) {
+				stringValueBlackList.add(obj.getClass());
+			}
+			
+			return value;
+		} catch (Throwable t) {
+			return null;
+		}
+	}
+	
+	private String parseFields(Object obj) {
+		
+		StringBuffer buffer = new StringBuffer();
+		buffer.append("{");
+		
+		// Get the class of the object
+        Class<?> objClass = obj.getClass();
+
+        // Iterate through all fields of the class, including private fields
+        while (objClass != null) {
+            Field[] fields = objClass.getDeclaredFields();
+            for (Field field : fields) {
+                field.setAccessible(true); // Make private fields accessible
+                
+                buffer.append(field.getName() + "=");
+                
+                try {
+                    // Get and print the value of the field
+                    Object value = field.get(obj);
+                    
+                    String valString = getStringValue(value);
+                    
+                    buffer.append(valString + ", ");
+                    
+                } catch (IllegalAccessException e) {
+                    System.out.println("Unable to access field: " + field.getName());
+                }
+            }
+            objClass = objClass.getSuperclass();
+        }
+        
+        
+        buffer.append("}");
+        
+        return buffer.toString();
+	}
+	
+	
+	private String getStringValue(final Object obj) {
+		try {
+			if (obj == null) {
+				return "null";
+			}
+
+			// if (FilterChecker.isCustomizedToStringClass(obj.getClass().getName())) {
+			// java.lang.reflect.Method toStringMethod = null;
+			// for (java.lang.reflect.Method method : obj.getClass().getDeclaredMethods()) {
+			// if (method.getName().equals(TraceInstrumenter.NEW_TO_STRING_METHOD)) {
+			// toStringMethod = method;
+			// break;
+			// }
+			// }
+			// if (toStringMethod != null) {
+			// return (String) toStringMethod.invoke(obj);
+			// }
+			// }
+
+			if (avoidProxyToString && isProxyClass(obj.getClass())) {
+				return obj.getClass().getName();
+			}
+
+			if(stringValueBlackList.contains(obj.getClass())) {
+				return "$unknown (estimated as too cost to have its value)";
+			}
+			
+			long t1 = System.currentTimeMillis();
+			String value = "";
+			
+			if (obj != null && obj.getClass().isArray()) {
+				
+				if(obj instanceof int[]) {
+					value = Arrays.toString((int[])(obj));
+				}
+				else if(obj instanceof double[]) {
+					value = Arrays.toString((double[])(obj));
+				}
+				else if(obj instanceof short[]) {
+					value = Arrays.toString((short[])(obj));
+				}
+				else if(obj instanceof long[]) {
+					value = Arrays.toString((long[])(obj));			}
+				else if(obj instanceof char[]) {
+					value = Arrays.toString((char[])(obj));
+				}
+				else if(obj instanceof byte[]) {
+					value = Arrays.toString((byte[])(obj));
+				}
+				else if(obj instanceof float[]) {
+					value = Arrays.toString((float[])(obj));
+				}
+				else if(obj instanceof boolean[]) {
+					value = Arrays.toString((Object[])(obj));
+				}
+				else if(obj instanceof Object[]) {
+					value = Arrays.toString((Object[])(obj));
+				}
+			}
+			else {
+				value = String.valueOf(obj);// obj.toString();	
+			}
+			
 			long t2 = System.currentTimeMillis();
 			if(t2-t1 > 500) {
 				stringValueBlackList.add(obj.getClass());
@@ -286,6 +502,19 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			return null;
 		}
 	}
+
+	public boolean isClassNameAndObjectId(String input) {
+        // Regular expression pattern for ClassName@ObjectId
+        String regex = "^[a-z]+(\\.[a-z0-9]+)*\\.[A-Z][a-zA-Z0-9]*(\\$[A-Z][a-zA-Z]*)?@[0-9a-fA-F]+$" ;
+
+        // Compile the pattern
+        Pattern pattern = Pattern.compile(regex);
+
+        // Create a matcher for the input string
+        Matcher matcher = pattern.matcher(input);
+
+        return matcher.matches();
+    }
 
 	private boolean isProxyClass(Class<? extends Object> clazz) {
 		if (Proxy.isProxyClass(clazz)) {
@@ -306,6 +535,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public void enterMethod(String className, String methodSignature, int methodStartLine, int methodEndLine,
 			String paramTypeSignsCode, String paramNamesCode, Object[] params) {
 		trackingDelegate.untrack();
+		methodLayer--;
 		TraceNode caller = trace.getLatestNode();
 		if (caller != null && caller.getMethodSign().contains("<clinit>")) {
 			caller = caller.getInvocationParent();
@@ -397,6 +627,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 
 	public void exitMethod(int line, String className, String methodSignature) {
 		trackingDelegate.untrack();
+		methodLayer++;
 		boolean exclusive = GlobalFilterChecker.isExclusive(className, methodSignature);
 		if (!exclusive) {
 			methodCallStack.safePop();
@@ -585,6 +816,65 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					// invokingMatchNode.setInvokingMatchNode(latestNode);
 					// latestNode.setInvokingMatchNode(invokingMatchNode);
 					// }
+				}
+				
+				/* Record return value for library calls (author: hongshuwang) */
+				String invokingClass = invokeMethodSig.split("#")[0];
+				boolean isAppClass = GlobalFilterChecker.isAppClass(invokingClass);
+				
+				if (!isAppClass) {
+					if (returnedValue != null) {
+						// invoking object is read before the method executes
+						// search for invoking object
+//						VarValue invokingObjVarValue = null;
+//						String invokingObjectType = invokeMethodSig.split("#")[0];
+//						String invokingObjectAliasID = TraceUtils.getObjectVarId(invokeObj, invokingObjectType);
+//						for (VarValue readVar : latestNode.getReadVariables()) {
+//							if (readVar != null && readVar.getAliasVarID() != null 
+//									&& readVar.getAliasVarID().equals(invokingObjectAliasID)) {
+//								invokingObjVarValue = readVar;
+//								break;
+//							}
+//						}
+//						
+//						// record returned value
+//						if (invokingObjVarValue != null) {
+//							String methodSigWithoutClassName = invokeMethodSig.split("#")[1];
+//							String returnVarName = "return_value_of:" + invokingObjVarValue.getVarName() 
+//								+ "#" + methodSigWithoutClassName;
+//							
+//							String returnTypeSign = returnedValue.getClass().getName();
+//							String returnType = SignatureUtils.signatureToName(returnTypeSign);
+//							
+//							String returnedAliasID = TraceUtils.getObjectVarId(returnedValue, returnTypeSign);
+//
+//							Variable returnedVariable = new LocalVar(returnVarName, returnType, residingClassName, line);
+//							returnedVariable.setAliasVarID(returnedAliasID);
+//							returnedVariable.setVarID(returnedAliasID);
+//
+//							VarValue returneVarValue = appendVarValue(returnedValue, returnedVariable, null);
+//							boolean isWrittenVar = false;
+//							addRWriteValue(latestNode, returneVarValue, isWrittenVar);
+//						}
+					} else if (invokeMethodSig.contains("<init>") && !invokingClass.equals("java.lang.StringBuffer") 
+							&& !invokingClass.equals("java.lang.StringBuilder")) {
+						// invoking object (initialized object) should be recorded
+						// don't record StringBuffer and StringBuilder to avoid recording results of string concatenation.
+						
+						// record invoking object
+						int splitIndex = invokingClass.lastIndexOf(".");
+						String shortReturnType = invokingClass.substring(splitIndex + 1);
+						String returnVarName = shortReturnType + "_instance";
+						String invokingObjectAliasID = TraceUtils.getObjectVarId(invokeObj, invokingClass);
+						
+						Variable returnedVariable = new LocalVar(returnVarName, invokingClass, residingClassName, line);
+						returnedVariable.setAliasVarID(invokingObjectAliasID);
+						returnedVariable.setVarID(invokingObjectAliasID);
+
+						VarValue returneVarValue = appendVarValue(invokeObj, returnedVariable, null);
+						boolean isWrittenVar = false;
+						addRWriteValue(latestNode, returneVarValue, isWrittenVar);
+					}
 				}
 
 				if (returnedValue != null && invokeMethodSig.contains("clone()")) {
@@ -1276,6 +1566,10 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		VarValue value = appendVarValue(eleValue, var, null);
 		return value;
 	}
+	
+	public static int _getMethodLayer() {
+		return methodLayer;
+	}
 
 	/**
 	 * BE VERY CAREFUL WHEN MODIFYING THIS FUNCTION! TO AVOID CREATING A LOOP, DO
@@ -1285,8 +1579,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	 * -> USE AN ARRAY INSTEAD!
 	 */
 	public synchronized static IExecutionTracer _getTracer(boolean isAppClass, String className, String methodSig,
-			int methodStartLine, int methodEndLine, String paramNamesCode, String paramTypeSignsCode, Object[] params) {
+			int methodStartLine, int methodEndLine, String paramNamesCode, String paramTypeSignsCode, Object[] params,
+			int methodLayer) {
 		try {
+			if (methodLayer <= 0) {
+				return EmptyExecutionTracer.getInstance();
+			}
 			if (state == TracingState.TEST_STARTED && isAppClass) {
 				state = TracingState.RECORDING;
 				rtStore.setMainThreadId(Thread.currentThread().getId());

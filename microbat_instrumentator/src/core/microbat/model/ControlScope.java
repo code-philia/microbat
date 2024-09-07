@@ -10,6 +10,7 @@ public class ControlScope implements Scope{
 	private boolean isCondition;
 	private boolean isBranch;
 	private boolean isLoop;
+	private boolean isCatch;
 	
 	public ControlScope() {
 		
@@ -77,6 +78,14 @@ public class ControlScope implements Scope{
 
 	public void setBranch(boolean isBranch) {
 		this.isBranch = isBranch;
+	}
+	
+	public boolean isCatch() {
+		return isCatch;
+	}
+
+	public void setCatch(boolean isCatch) {
+		this.isCatch = isCatch;
 	}
 	
 }

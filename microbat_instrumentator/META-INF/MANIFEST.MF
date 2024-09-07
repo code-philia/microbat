@@ -1,3 +1,4 @@
 Manifest-Version: 1.01
 Premain-Class: microbat.instrumentation.Premain
 Can-Retransform-Classes: true
+Bundle-SymbolicName: microbat.instrumentation

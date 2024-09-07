@@ -1,6 +1,5 @@
 package microbat.instrumentation.instr;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +28,7 @@ import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.GETFIELD;
 import org.apache.bcel.generic.GETSTATIC;
 import org.apache.bcel.generic.IINC;
+import org.apache.bcel.generic.ILOAD;
 import org.apache.bcel.generic.INVOKEINTERFACE;
 import org.apache.bcel.generic.INVOKESPECIAL;
 import org.apache.bcel.generic.INVOKESTATIC;
@@ -37,6 +37,7 @@ import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.InvokeInstruction;
+import org.apache.bcel.generic.ISTORE;
 import org.apache.bcel.generic.LocalVariableGen;
 import org.apache.bcel.generic.LocalVariableInstruction;
 import org.apache.bcel.generic.MethodGen;
@@ -50,7 +51,6 @@ import org.apache.bcel.generic.ReturnInstruction;
 import org.apache.bcel.generic.SWAP;
 import org.apache.bcel.generic.TargetLostException;
 import org.apache.bcel.generic.Type;
-
 import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentLogger;
@@ -67,7 +67,6 @@ import microbat.instrumentation.instr.instruction.info.SerializableLineInfo;
 import microbat.instrumentation.runtime.IExecutionTracer;
 import microbat.instrumentation.runtime.TraceUtils;
 import microbat.instrumentation.utils.MicrobatUtils;
-import microbat.model.BreakPoint;
 
 public class TraceInstrumenter extends AbstractInstrumenter {
 	protected static final String TRACER_VAR_NAME = "$tracer"; // local var
@@ -1032,6 +1031,12 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		newInsns.append(new PUSH(constPool, mSig));
 		newInsns.append(new ASTORE(methodSigVar.getIndex())); 
 		
+		/* invoke _getMethodLayer() */
+		LocalVariableGen methodLayer = methodGen.addLocalVariable("methodLayer", Type.INT, null, null);
+		int methodLayerIndex = methodLayer.getIndex();
+		appendTracerMethodInvoke(newInsns, TracerMethods.GET_METHOD_LAYER, constPool);
+		newInsns.append(new ISTORE(methodLayerIndex));
+
 		/* invoke _getTracer()  */
 		newInsns.append(new PUSH(constPool, isAppClass)); // startTracing
 		newInsns.append(new ALOAD(classNameVar.getIndex())); // startTracing, className
@@ -1047,6 +1052,9 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		LocalVariableGen argObjsVar = createMethodParamTypesObjectArrayVar(methodGen, constPool, startInsn, newInsns, nextTempVarName());
 		newInsns.append(new ALOAD(argObjsVar.getIndex()));
 		// className, String methodSig, int methodStartLine, methodEndLine, argNames, argTypes, argObjs
+		
+		newInsns.append(new ILOAD(methodLayerIndex));
+		// className, String methodSig, int methodStartLine, methodEndLine, argNames, argTypes, argObjs, int methodLayer
 		
 		appendTracerMethodInvoke(newInsns, TracerMethods.GET_TRACER, constPool);
 		InstructionHandle tracerStartPos = newInsns.append(new ASTORE(tracerVar.getIndex()));

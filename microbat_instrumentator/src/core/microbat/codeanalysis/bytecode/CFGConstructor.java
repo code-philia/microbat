@@ -1,5 +1,8 @@
 package microbat.codeanalysis.bytecode;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -123,6 +126,7 @@ public class CFGConstructor {
 			int end = exception.getEndPC();
 			int handle = exception.getHandlerPC();
 			CFGNode targetNode = cfg.findNode(handle);
+			targetNode.setCatch(true);
 			
 			for(int i=start; i<=end; i++){
 				CFGNode sourceNode = cfg.findNode(i);
@@ -328,6 +332,9 @@ public class CFGConstructor {
 			if(branchNode.isBranch()){
 				computeControlDependentees(branchNode, branchNode.getChildren(), bGraph);
 			}
+//			else if (branchNode.isCatch()) {
+//				computeControlDominators(branchNode, branchNode.getParents(), bGraph);
+//			}
 		}
 	}
 
@@ -344,14 +351,21 @@ public class CFGConstructor {
 		}
 	}
 
+//	private void computeControlDominators(CFGNode catchNode, List<CFGNode> list, BlockGraph bGraph) {
+//		for (CFGNode parent : list) {
+//			if (!parent.getControlDependentees().contains(catchNode)) {
+//
+//				boolean isChildPostDominateBranchNode = isChildPostDominateBranchNode(catchNode, parent, bGraph);
+//				if (!isChildPostDominateBranchNode) {
+//					parent.addControlDominatee(catchNode);
+//				}
+//			}
+//		}
+//	}
+	
 	private boolean isChildPostDominateBranchNode(CFGNode child, CFGNode branchNode, BlockGraph bGraph) {
 		BlockNode childBlock = child.getBlockNode();
 		BlockNode branchBlock = branchNode.getBlockNode();
-		
-//		Set<BlockNode> postDominators = bGraph.getPostDominanceMap().get(childBlock);
-//		
-//		return postDominators.contains(branchBlock);
-		
 		Set<BlockNode> postDominators = bGraph.getPostDominanceMap().get(branchBlock);
 		return postDominators.contains(childBlock);
 	}

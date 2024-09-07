@@ -2,11 +2,7 @@ package microbat.model.trace;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -22,6 +18,8 @@ import microbat.model.Scope;
 import microbat.model.value.VarValue;
 import microbat.model.value.VirtualValue;
 import microbat.model.variable.Variable;
+import microbat.tracerecov.TraceRecovUtils;
+import microbat.tracerecov.TraceRecoverer;
 import microbat.util.JavaUtil;
 import microbat.util.Settings;
 import sav.strategies.dto.AppJavaClassPath;
@@ -33,7 +31,7 @@ import sav.strategies.dto.AppJavaClassPath;
  */
 public class Trace {
 	
-	private int observingIndex = -1;
+	private int observingIndex = -1; 
 	private AppJavaClassPath appJavaClassPath;
 	private List<String> includedLibraryClasses = new ArrayList<>();
 	private List<String> excludedLibraryClasses = new ArrayList<>();
@@ -252,13 +250,36 @@ public class Trace {
 	}
 	
 	/**
-	 * Get the step where the read variable is defined. If we cannot find such a 
-	 * step, we find the step defining its (grand)parent of the read variable. 
+	 * Get the step where the read variable is defined. If we cannot find such a
+	 * step, we find the step defining its (grand)parent of the read variable.
+	 * 
+	 * This method will call GPT.
+	 * 
 	 * @param readVar
 	 * @return
 	 */
 	public TraceNode findDataDependency(TraceNode checkingNode, VarValue readVar) {
-		return findProducer(readVar, checkingNode);
+		TraceNode dataDominator = findProducer(readVar, checkingNode);
+		if (Settings.isEnableGPTInference) {
+			if (dataDominator == null && !checkingNode.getRecoveredDataDependency().contains(readVar)) {
+				// find parent node
+				VarValue rootVar = readVar;
+				while (!checkingNode.getReadVariables().contains(rootVar)) {
+					rootVar = rootVar.getParents().get(0); // TODO: multiple parents?
+				}
+
+				if (TraceRecovUtils.shouldBeChecked(rootVar.getType())) {
+					new TraceRecoverer().recoverDataDependency(checkingNode, readVar, rootVar);
+
+					checkingNode.addRecoveredDataDependency(readVar);
+					rootVar.setRecoveryPerformed(true);
+
+					dataDominator = findProducer(readVar, checkingNode);
+				}
+			}
+		}
+
+		return dataDominator;
 	}
 	
 	public List<TraceNode> findDataDependentee(TraceNode traceNode, VarValue writtenVar) {
@@ -921,6 +942,10 @@ public class Trace {
 	
 	public TraceNode findProducer(VarValue varValue, TraceNode startNode) {
 		
+		if (varValue == null || startNode == null) {
+			return null;
+		}
+
 		String varID = Variable.truncateSimpleID(varValue.getVarID());
 		String headID = Variable.truncateSimpleID(varValue.getAliasVarID());
 		
@@ -935,14 +960,14 @@ public class Trace {
 					return node;						
 				}
 				
-				if(wHeadID != null && wHeadID.equals(headID)) {
+				if(wHeadID != null && wHeadID.equals(headID) && !wHeadID.equals("") && !wHeadID.equals("null") && Integer.valueOf(wHeadID) != 0) {
 					return node;
 				}
 				
-				VarValue childValue = writtenValue.findVarValue(varID, headID);
-				if(childValue != null) {
-					return node;
-				}
+//				VarValue childValue = writtenValue.findVarValue(varID, headID);
+//				if(childValue != null) {
+//					return node;
+//				}
 				
 			}
 		}

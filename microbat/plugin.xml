@@ -174,6 +174,11 @@
             id="microbat.generateTraceCommand"
             name="Debug As DebugPilot">
       </command>
+      <command
+            defaultHandler="microbat.handler.RecovAllDependencyHandler"
+            id="microbat.allDependencyRecovery"
+            name="Recover All Data Dependency">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.menus">
@@ -247,6 +252,15 @@
                   commandId="microbat.command.startDebug"
                   icon="icons/microbat.png"
                   label="Start Debug"
+                  style="push">
+            </command>
+         </toolbar>
+         <toolbar
+               id="microbat.toolbar.allDependencyRecovery">
+            <command
+                  commandId="microbat.allDependencyRecovery"
+                  icon="icons/path_mark.png"
+                  label="Recover All Data Dependency"
                   style="push">
             </command>
          </toolbar>
@@ -422,6 +436,12 @@
             class="microbat.preference.DebugPilotPreference"
             id="microbat.preference.debugpilot"
             name="Debug Pilot Setting">
+      </page>
+      <page
+            category="microbat.preference"
+            class="microbat.preference.TraceRecovPreference"
+            id="microbat.preference.tracerecov"
+            name="Trace Recov Setting">
       </page>
    </extension>
    <extension

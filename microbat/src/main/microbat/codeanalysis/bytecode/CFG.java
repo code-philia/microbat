@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.bcel.classfile.Code;
+import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.LineNumber;
 import org.apache.bcel.generic.InstructionHandle;
 
@@ -106,5 +107,9 @@ public class CFG {
 		}
 		
 		return max;
+	}
+	
+	public ConstantPool getConstantPool() {
+		return this.code.getConstantPool();
 	}
 }
