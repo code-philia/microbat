@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -159,9 +160,8 @@ public class InstrumentationExecutor {
 			
 			DependencyRecoveryInfo dataFlowInfo = collectLibraryCalls(precheckInfomation);
 			
-//			RunningInfo rInfo = execute(precheckInfomation);
-//			return rInfo;
-			return null;
+			RunningInfo rInfo = execute(precheckInfomation, dataFlowInfo);
+			return rInfo;
 		} catch (SavException e1) {
 			e1.printStackTrace();
 		}
@@ -194,10 +194,40 @@ public class InstrumentationExecutor {
 	}
 	
 	public RunningInfo execute(PreCheckInformation info) {
+		return execute(info, null);
+	}
+
+	public RunningInfo execute(PreCheckInformation info, DependencyRecoveryInfo dataFlowInfo) {
 		try {
 			long start = System.currentTimeMillis();
 //			agentRunner.getConfig().setPort(8888);
 			agentRunner.addAgentParam(AgentParams.OPT_EXPECTED_STEP, info.getStepNum());
+
+			/* add includes */
+			if (dataFlowInfo != null) {
+				Set<String> libCalls = dataFlowInfo.libraryCalls.keySet();
+
+				Set<String> filter = new HashSet<>();
+				filter.add("java.lang.Object");
+				filter.add("java.lang.String");
+				filter.add("java.lang.Class");
+				filter.add("java.lang.System");
+				filter.add("java.lang.Thread");
+				filter.add("java.lang.ClassLoader");
+
+				String includes = "";
+				for (String className : libCalls) {
+					if (!filter.contains(className) && !className.contains("Exception")
+							&& !className.contains("Error")) {
+						includes += className + ";";
+					}
+				}
+				if (includes.length() > 0) {
+					includes = includes.substring(0, includes.length() - 1);
+				}
+				agentRunner.addAgentParam(AgentParams.OPT_INCLUDES, includes);
+			}
+
 			agentRunner.run(DatabasePreference.getReader());
 			// agentRunner.runWithSocket();
 			RunningInfo result = agentRunner.getRunningInfo();
