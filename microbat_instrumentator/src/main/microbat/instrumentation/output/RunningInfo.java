@@ -12,6 +12,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import microbat.instrumentation.instr.instruction.info.SerializableLineInfo;
 import microbat.model.trace.Trace;
@@ -62,7 +63,8 @@ public class RunningInfo {
 				programMsg = header; // for compatible reason with old version. TO BE REMOVED.
 			}
 			List<Trace> traceList = reader.readTrace();
-			return new RunningInfo(programMsg, traceList, expectedSteps, collectedSteps);
+			RunningInfo runningInfo = new RunningInfo(programMsg, traceList, expectedSteps, collectedSteps);
+			return runningInfo;
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new SavRtException(e);
@@ -171,4 +173,5 @@ public class RunningInfo {
 	public void setTraceList(List<Trace> traceList) {
 		this.traceList = traceList;
 	}
+	
 }

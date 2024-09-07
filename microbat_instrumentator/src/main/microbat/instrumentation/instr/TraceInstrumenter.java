@@ -72,10 +72,10 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 	protected static final String TRACER_VAR_NAME = "$tracer"; // local var
 	private static final String TEMP_VAR_NAME = "$tempVar"; // local var
 	
-	private int tempVarIdx = 0;
+	protected int tempVarIdx = 0;
 	private EntryPoint entryPoint;
 	private Set<String> requireSplittingMethods = Collections.emptySet();
-	private UserFilters userFilters;
+	protected UserFilters userFilters;
 
 	private HashMap<Integer, SerializableLineInfo> instructionTable;
 	
@@ -388,7 +388,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		newInsns.dispose();
 	}
 
-	private void injectCodeTracerInvokeMethod(MethodGen methodGen, InstructionList insnList, ConstantPoolGen constPool,
+	protected void injectCodeTracerInvokeMethod(MethodGen methodGen, InstructionList insnList, ConstantPoolGen constPool,
 			InstructionFactory instructionFactory, LocalVariableGen tracerVar, InstructionHandle insnHandler,
 			int line, LocalVariableGen classNameVar, LocalVariableGen methodSigVar, boolean isAppClass) {
 		InvokeInstruction insn = (InvokeInstruction) insnHandler.getInstruction();

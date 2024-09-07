@@ -34,6 +34,7 @@ public class PrecheckAgent extends Agent{
 		precheckInfo.setProgramMsg(Agent.getProgramMsg());
 		precheckInfo.setLoadedClasses(precheckTransformer.getLoadedClasses());
 //		precheckInfo.setThreadNum(Agent.getNumberOfThread());
+		precheckInfo.setLibraryCalls(precheckTransformer.getLibraryCalls());
 		AgentLogger.debug(precheckInfo.toString());
 		if (agentParams.getDumpFile() != null) {
 			precheckInfo.saveToFile(agentParams.getDumpFile(), false);

@@ -7,6 +7,7 @@ import java.security.CodeSource;
 import java.security.ProtectionDomain;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.AgentParams;
@@ -52,5 +53,9 @@ public class PrecheckTransformer extends AbstractTransformer implements ClassFil
 
 	public List<String> getLoadedClasses() {
 		return loadedClasses;
+	}
+	
+	public Set<String> getLibraryCalls() {
+		return instrumenter.getLibraryCalls();
 	}
 }

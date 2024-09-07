@@ -22,7 +22,7 @@ public class ExecTraceFileReader {
 	public PreCheckInformation readPrecheck(String precheckFile) {
 		PrecheckInfo info = PrecheckInfo.readFromFile(precheckFile);
 		PreCheckInformation result = new PreCheckInformation(info.getThreadNum(), info.getStepTotal(), info.isOverLong(),
-				new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), info.getLoadedClasses());
+				new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), info.getLoadedClasses(), info.getLibraryCalls());
 		return result;
 	}
 	

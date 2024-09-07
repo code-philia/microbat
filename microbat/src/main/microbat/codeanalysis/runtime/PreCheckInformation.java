@@ -1,7 +1,9 @@
 package microbat.codeanalysis.runtime;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import microbat.model.ClassLocation;
 
@@ -15,12 +17,14 @@ public class PreCheckInformation {
 	private boolean timeout = false;
 	private List<String> loadedClasses = new ArrayList<>();
 	private boolean undeterministic = false;
+	private Set<String> libraryCalls = new HashSet<>();
 	
 	public PreCheckInformation() {
 	}
 
 	public PreCheckInformation(int threadNum, int stepNum, boolean isOverLong, 
-			List<ClassLocation> visitedLocations, List<String> overLongMethods, List<String> loadedClasses) {
+			List<ClassLocation> visitedLocations, List<String> overLongMethods, 
+			List<String> loadedClasses, Set<String> libraryCalls) {
 		super();
 		this.threadNum = threadNum;
 		this.stepNum = stepNum;
@@ -28,8 +32,9 @@ public class PreCheckInformation {
 		this.visitedLocations = visitedLocations;
 		this.overLongMethods = overLongMethods;
 		this.loadedClasses = loadedClasses;
+		this.libraryCalls = libraryCalls;
 	}
-
+	
 	public int getThreadNum() {
 		return threadNum;
 	}
@@ -99,6 +104,14 @@ public class PreCheckInformation {
 
 	public void setUndeterministic(boolean undeterministic) {
 		this.undeterministic = undeterministic;
+	}
+	
+	public Set<String> getLibraryCalls() {
+		return libraryCalls;
+	}
+	
+	public void setLibraryCalls(Set<String> libraryCalls) {
+		this.libraryCalls = libraryCalls;
 	}
 
 	@Override

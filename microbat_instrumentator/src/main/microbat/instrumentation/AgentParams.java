@@ -25,6 +25,7 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_LOG = CommonParams.OPT_LOG;
 	
 	public static final String OPT_PRECHECK = "precheck";
+	public static final String OPT_DEPENDENCY_RECOVERY = "dependency_recovery";
 	public static final String OPT_ENTRY_POINT = "entry_point";
 	public static final String OPT_LAUNCH_CLASS = "launch_class";
 	public static final String OPT_JAVA_HOME = "java_home";
@@ -55,7 +56,7 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_CONDITION_VAR_TYPE = "variable_type";
 	public static final String OPT_CONDITION_VAR_VALUE = "variable_value";
 	public static final String OPT_CONDITION_CLASS_STRUCTURE = "class_structure";
-	
+
 	private boolean precheck;
 	private EntryPoint entryPoint;
 	
@@ -75,7 +76,7 @@ public class AgentParams extends CommonParams {
 	private List<CodeRangeEntry> codeRanges;
 	private String recorderName;
 	private String runId;
-	
+
 	private int methodLayer;
 	private RuntimeCondition condition;
 	
@@ -186,7 +187,7 @@ public class AgentParams extends CommonParams {
 	public int getVariableLayer() {
 		return variableLayer;
 	}
-	
+
 	public int getMethodLayer() {
 		return methodLayer;
 	}

@@ -7,8 +7,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jdt.core.dom.ASTNode;
@@ -19,6 +21,7 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import microbat.agent.TraceAgentRunner;
 import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.AgentParams.LogType;
+import microbat.instrumentation.dataflowrecovery.DependencyRecoveryInfo;
 import microbat.instrumentation.filter.CodeRangeEntry;
 import microbat.instrumentation.output.RunningInfo;
 import microbat.instrumentation.precheck.PrecheckInfo;
@@ -30,7 +33,6 @@ import microbat.model.value.VarValue;
 import microbat.preference.DatabasePreference;
 import microbat.preference.ExecutionRangePreference;
 import microbat.preference.MicrobatPreference;
-import microbat.preference.TraceRecovPreference;
 import microbat.sql.DBSettings;
 import microbat.sql.DbService;
 import microbat.util.JavaUtil;
@@ -52,7 +54,7 @@ public class InstrumentationExecutor {
 	
 	private List<String> includeLibs = Collections.emptyList();
 	private List<String> excludeLibs = Collections.emptyList();
-	
+
 	private Condition condition = new Condition();
 	
 	public InstrumentationExecutor(AppJavaClassPath appPath, String traceDir, String traceName, 
@@ -60,7 +62,7 @@ public class InstrumentationExecutor {
 		this(appPath, generateTraceFilePath(traceDir, traceName), includeLibs, excludeLibs);
 		agentRunner = createTraceAgentRunner();
 	}
-	
+
 	public InstrumentationExecutor(AppJavaClassPath appPath, String traceDir, String traceName, 
 			List<String> includeLibs, List<String> excludeLibs, Condition condition) {
 		this(appPath, generateTraceFilePath(traceDir, traceName), includeLibs, excludeLibs);
@@ -117,10 +119,10 @@ public class InstrumentationExecutor {
 		/* build includes & excludes params */
 		agentRunner.addIncludesParam(this.includeLibs);
 		agentRunner.addExcludesParam(this.excludeLibs);
-		
+
 		agentRunner.addAgentParam(AgentParams.OPT_METHOD_LAYER, TraceRecovPreference.getMethodLayer());
 		agentRunner.addAgentParam(AgentParams.OPT_CONDITION, condition.toString());
-		
+
 		agentRunner.addAgentParam(AgentParams.OPT_VARIABLE_LAYER, MicrobatPreference.getVariableValue());
 		agentRunner.addAgentParam(AgentParams.OPT_STEP_LIMIT, MicrobatPreference.getStepLimit());
 		agentRunner.addAgentParams(AgentParams.OPT_LOG, Arrays.asList(
@@ -154,7 +156,8 @@ public class InstrumentationExecutor {
 			PrecheckInfo info = agentRunner.getPrecheckInfo();
 			System.out.println(info);
 			PreCheckInformation precheckInfomation = new PreCheckInformation(info.getThreadNum(), info.getStepTotal(),
-					info.isOverLong(), new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), info.getLoadedClasses());
+					info.isOverLong(), new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), 
+					info.getLoadedClasses(), info.getLibraryCalls());
 			precheckInfomation.setPassTest(agentRunner.isTestSuccessful());
 //			precheckInfomation.setUndeterministic(firstPrecheckInfo.getStepTotal() != precheckInfomation.getStepTotal());
 			this.setPrecheckInfo(precheckInfomation);
@@ -172,7 +175,9 @@ public class InstrumentationExecutor {
 //			agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
 //			agentRunner.getConfig().setPort(8000);
 			
-			RunningInfo rInfo = execute(precheckInfomation);
+			DependencyRecoveryInfo dataFlowInfo = collectLibraryCalls(precheckInfomation);
+			
+			RunningInfo rInfo = execute(precheckInfomation, dataFlowInfo);
 			return rInfo;
 		} catch (SavException e1) {
 			e1.printStackTrace();
@@ -194,7 +199,7 @@ public class InstrumentationExecutor {
 //			System.out.println(info);
 			System.out.println("isPassTest: " + agentRunner.isTestSuccessful());
 			PreCheckInformation result = new PreCheckInformation(info.getThreadNum(), info.getStepTotal(), info.isOverLong(),
-					new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), info.getLoadedClasses());
+					new ArrayList<>(info.getVisitedLocs()), info.getExceedingLimitMethods(), info.getLoadedClasses(), info.getLibraryCalls());
 			result.setPassTest(agentRunner.isTestSuccessful());
 			result.setTimeout(agentRunner.isUnknownTestResult());
 			this.setPrecheckInfo(result);
@@ -202,14 +207,44 @@ public class InstrumentationExecutor {
 		} catch (SavException e1) {
 			e1.printStackTrace();
 		}
-		return new PreCheckInformation(-1, -1, false, new ArrayList<ClassLocation>(), new ArrayList<String>(), new ArrayList<String>());
+		return new PreCheckInformation(-1, -1, false, new ArrayList<ClassLocation>(), new ArrayList<String>(), new ArrayList<String>(), new HashSet<String>());
 	}
 	
 	public RunningInfo execute(PreCheckInformation info) {
+		return execute(info, null);
+	}
+
+	public RunningInfo execute(PreCheckInformation info, DependencyRecoveryInfo dataFlowInfo) {
 		try {
 			long start = System.currentTimeMillis();
 //			agentRunner.getConfig().setPort(8888);
 			agentRunner.addAgentParam(AgentParams.OPT_EXPECTED_STEP, info.getStepNum());
+
+			/* add includes */
+			if (dataFlowInfo != null) {
+				Set<String> libCalls = dataFlowInfo.libraryCalls.keySet();
+
+				Set<String> filter = new HashSet<>();
+				filter.add("java.lang.Object");
+				filter.add("java.lang.String");
+				filter.add("java.lang.Class");
+				filter.add("java.lang.System");
+				filter.add("java.lang.Thread");
+				filter.add("java.lang.ClassLoader");
+
+				String includes = "";
+				for (String className : libCalls) {
+					if (!filter.contains(className) && !className.contains("Exception")
+							&& !className.contains("Error")) {
+						includes += className + ";";
+					}
+				}
+				if (includes.length() > 0) {
+					includes = includes.substring(0, includes.length() - 1);
+				}
+				agentRunner.addAgentParam(AgentParams.OPT_INCLUDES, includes);
+			}
+
 			agentRunner.run(DatabasePreference.getReader());
 			// agentRunner.runWithSocket();
 			RunningInfo result = agentRunner.getRunningInfo();
@@ -233,6 +268,19 @@ public class InstrumentationExecutor {
 			e1.printStackTrace();
 		}
 
+		return null;
+	}
+	
+	public DependencyRecoveryInfo collectLibraryCalls(PreCheckInformation info) {
+		try {
+			agentRunner.addAgentParam(AgentParams.OPT_EXPECTED_STEP, info.getStepNum());
+			String filePath = TraceAgentRunner.getlibCallsPath();
+			agentRunner.recoverDependency(filePath);
+			return agentRunner.getDependencyRecoveryInfo();
+		} catch (SavException e1) {
+			e1.printStackTrace();
+		}
+		
 		return null;
 	}
 	

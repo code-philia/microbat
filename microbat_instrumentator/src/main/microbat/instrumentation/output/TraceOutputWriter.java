@@ -62,6 +62,23 @@ public class TraceOutputWriter extends OutputWriter {
 		writeStepVariableRelation(trace);
 	}
 	
+	public void writeLibraryCalls(Map<String, Set<String>> libraryCalls) throws IOException {
+		/* calculate number of rows */
+		int size = 0;
+		for (String key : libraryCalls.keySet()) {
+			size++;
+			size += libraryCalls.get(key).size();
+		}
+		writeVarInt(size);
+		
+		for (String className  : libraryCalls.keySet()) {
+			writeString("#" + className);
+			for (String method : libraryCalls.get(className)) {
+				writeString(method);
+			}
+		}
+	}
+	
 	private void writeFilterInfo(List<String> libClasses, boolean isInclusive) throws IOException {
 		if (libClasses.size() > 300 && (traceExecFolder != null)) {
 			writeBoolean(true); // write file

@@ -1,5 +1,6 @@
 package microbat.instrumentation.runtime;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -28,6 +29,8 @@ import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.RuntimeCondition;
 import microbat.instrumentation.filter.GlobalFilterChecker;
+import microbat.instrumentation.utils.LoadClassUtils;
+import microbat.instrumentation.utils.MicrobatUtils;
 import microbat.model.BreakPoint;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
@@ -75,6 +78,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	 * indicate whether the execution of the thread should be recorded 
 	 */
 	private TrackingDelegate trackingDelegate;
+	
+	public static boolean isRecordingLibCalls = false;
+	private Map<String, Set<String>> libraryCalls = new HashMap<>();
 
 	public static void setExpectedSteps(int expectedSteps) {
 		if (expectedSteps != AgentConstants.UNSPECIFIED_INT_VALUE) {
@@ -676,6 +682,28 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				latestNode.setInvokingDetail(invokeDetail);
 			}
 			invokeDetail.initRelevantVars(invokeObj, params, paramTypeSignsCode);
+			
+			if (isRecordingLibCalls) {
+				recordLibraryCalls(methodSig);
+			}
+			
+		}
+	}
+	
+	private void recordLibraryCalls(String methodSig) {
+		try {
+			String className = methodSig.split("#")[0];
+			String methodSignature = className + "#" + methodSig.split("#")[1].replace(";", ":");
+			Map<String, Set<String>> relevantMethods = LoadClassUtils.getRelevantMethods(className, methodSignature);
+			for (String key : relevantMethods.keySet()) {
+				Set<String> methods = relevantMethods.get(key);
+				if (!libraryCalls.containsKey(key) && !methods.isEmpty()) {
+					libraryCalls.put(key, new HashSet<String>());
+				}
+				libraryCalls.get(key).addAll(methods);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -1713,6 +1741,8 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public String getThreadName() {
 		return this.trace.getThreadName();
 	}
-
-
+	
+	public Map<String, Set<String>> getLibraryCalls() {
+		return libraryCalls;
+	}
 }

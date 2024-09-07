@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.bcel.generic.InstructionHandle;
 
@@ -51,7 +52,6 @@ public class FileRecorder implements TraceRecorder {
 		
 	}
 	
-
 	@Override
 	public void serialize(HashMap<Integer, SerializableLineInfo> instructionTable) {
 		try {
