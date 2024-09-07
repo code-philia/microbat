@@ -19,6 +19,7 @@ import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.Code;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.classfile.Method;
+import org.json.JSONArray;
 import org.objectweb.asm.Type;
 
 import microbat.Activator;
@@ -381,5 +382,10 @@ public class TraceRecovUtils {
 	public static String[] parseArrayFromString(String stringValue) {
 		stringValue = stringValue.substring(1, stringValue.length() - 1);
 		return stringValue.split(",");
+	}
+	
+	public static JSONArray parseJSONArrayFromString(String stringValue) {
+		String[] array = parseArrayFromString(stringValue);
+		return new JSONArray(array);
 	}
 }
