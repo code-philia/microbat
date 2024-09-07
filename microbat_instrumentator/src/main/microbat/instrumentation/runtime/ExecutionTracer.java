@@ -276,7 +276,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		 * Used in TraceRecov RQ3: ground truth collection
 		 * If condition is matched, record children
 		 */
-		if (condition.matchBasicCondition(varValue) && value != null) {
+		if (condition != null && condition.matchBasicCondition(varValue) && value != null) {
 			// TODO: `matchBasicCondition` checks basic information
 			// shall we check class structure as well?
 			Class<?> clazz = value.getClass();
