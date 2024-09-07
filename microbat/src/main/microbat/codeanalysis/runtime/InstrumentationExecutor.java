@@ -33,6 +33,7 @@ import microbat.model.value.VarValue;
 import microbat.preference.DatabasePreference;
 import microbat.preference.ExecutionRangePreference;
 import microbat.preference.MicrobatPreference;
+import microbat.preference.TraceRecovPreference;
 import microbat.sql.DBSettings;
 import microbat.sql.DbService;
 import microbat.util.JavaUtil;
