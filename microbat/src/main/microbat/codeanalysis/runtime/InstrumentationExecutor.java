@@ -220,7 +220,7 @@ public class InstrumentationExecutor {
 				String includes = "";
 				for (String className : libCalls) {
 					if (!filter.contains(className) && !className.contains("Exception")
-							&& !className.contains("Error")) {
+							&& !className.contains("Error") && !className.startsWith("java.lang.")) {
 						includes += className + AgentConstants.AGENT_PARAMS_MULTI_VALUE_SEPARATOR;
 					}
 				}
