@@ -19,6 +19,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
 import microbat.agent.TraceAgentRunner;
+import microbat.instrumentation.AgentConstants;
 import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.AgentParams.LogType;
 import microbat.instrumentation.dataflowrecovery.DependencyRecoveryInfo;
@@ -237,7 +238,7 @@ public class InstrumentationExecutor {
 				for (String className : libCalls) {
 					if (!filter.contains(className) && !className.contains("Exception")
 							&& !className.contains("Error")) {
-						includes += className + ";";
+						includes += className + AgentConstants.AGENT_PARAMS_MULTI_VALUE_SEPARATOR;
 					}
 				}
 				if (includes.length() > 0) {

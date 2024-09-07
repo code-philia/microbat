@@ -1,5 +1,6 @@
 package microbat.instrumentation.utils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -57,7 +58,12 @@ public class LoadClassUtils {
 		String fileName = getFileName(classFName);
 		byte[] bytecode = loadByteCode(fileName);
 		
-		ClassParser cp = new ClassParser(new java.io.ByteArrayInputStream(bytecode), classFName);
+		ByteArrayInputStream stream = new ByteArrayInputStream(bytecode);
+		if (stream == null) {
+			return null;
+		}
+		
+		ClassParser cp = new ClassParser(stream, classFName);
 		JavaClass jc = cp.parse();
 		return new ClassGen(jc);
 	}
