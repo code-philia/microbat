@@ -155,6 +155,11 @@
             name="Restore Trace">
       </command>
       <command
+            defaultHandler="microbat.handler.ComponentEvaluationHandler"
+            id="microbat.command.ComponentEvaluation"
+            name="Component Evaluation">
+      </command>
+      <command
             defaultHandler="microbat.handler.TestHandler"
             id="microbat.testing"
             name="Testing Microbat">
@@ -239,6 +244,11 @@
             <command
                   commandId="microbat.command.RestoreTrace"
                   label="Restore Trace"
+                  style="push">
+            </command>
+            <command
+                  commandId="microbat.command.ComponentEvaluation"
+                  label="Component Evaluation"
                   style="push">
             </command>
          </menu>
