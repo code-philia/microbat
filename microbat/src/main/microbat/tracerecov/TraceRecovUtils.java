@@ -386,6 +386,9 @@ public class TraceRecovUtils {
 	
 	public static JSONArray parseJSONArrayFromString(String stringValue) {
 		String[] array = parseArrayFromString(stringValue);
+		for (int i = 0; i < array.length; i++) {
+			array[i] = array[i].strip();
+		}
 		return new JSONArray(array);
 	}
 }

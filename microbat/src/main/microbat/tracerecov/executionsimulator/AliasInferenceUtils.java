@@ -209,7 +209,12 @@ public class AliasInferenceUtils {
 			if (variableOnTrace == null) {
 				String rootVariableOnTrace = "";
 				if (variableName.contains(".")) {
-					rootVariableOnTrace = variableName.split("\\.")[0];
+					String[] fieldNames = variableName.split("\\.");
+					if (fieldNames.length > 1) {
+						rootVariableOnTrace = fieldNames[0];
+					} else {
+						rootVariableOnTrace = variableName;
+					}
 				} else {
 					rootVariableOnTrace = variableName;
 				}
