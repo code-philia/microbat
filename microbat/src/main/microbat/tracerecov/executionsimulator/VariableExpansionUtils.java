@@ -222,7 +222,7 @@ public class VariableExpansionUtils {
 				Object value = jsonObject.get(key);
 				VarValue varValue = null;
 
-				if (value instanceof JSONArray || varType.contains("[]")) {
+				if (value instanceof JSONArray || (value instanceof String && varType.contains("[]"))) {
 					if (value instanceof String && varType.contains("[]")) {
 						value = TraceRecovUtils.parseJSONArrayFromString((String) value);
 					}
