@@ -250,7 +250,7 @@ public class ExecutionSimulator {
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.varExpansionTime += timeEnd - timeStart;
 
-				response = TraceRecovUtils.processInputStringForLLM(response);
+				response = TraceRecovUtils.processOutputStringForLLM(response);
 				this.logger.printResponse(i, response);
 				VariableExpansionUtils.processResponse(selectedVar, response);
 				return response;
