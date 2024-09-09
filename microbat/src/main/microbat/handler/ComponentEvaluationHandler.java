@@ -1,6 +1,7 @@
 package microbat.handler;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,12 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.swt.widgets.Display;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -33,11 +36,14 @@ import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.preference.AnalysisScopePreference;
-import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.TraceRecoverer;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
+import microbat.tracerecov.executionsimulator.SimulatorConstants;
+import microbat.tracerecov.executionsimulator.VariableExpansionUtils;
 import microbat.util.MicroBatUtil;
 import microbat.util.Settings;
+import microbat.views.MicroBatViews;
+import microbat.views.TraceView;
 import sav.strategies.dto.AppJavaClassPath;
 import sav.common.core.Pair;
 
@@ -45,8 +51,7 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 	private int matchedNum;
 	private int notPredictedNum;
 	private int wrongPredictionNum;
-	
-	
+
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		Job job = new Job(DebugPilotHandler.JOB_FAMALY_NAME) {
@@ -71,6 +76,8 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		Log.printMsg(getClass(), "Component Evaluation of Tracerecov");
 		Log.printMsg(getClass(), "=====================================");
 		Log.printMsg(getClass(), "");
+		
+		Log.printMsg(getClass(), "Using model: "+SimulatorConstants.getSelectedModel());
 
 		final AppJavaClassPath appClassPath = MicroBatUtil.constructClassPaths();
 		if (Settings.isRunTest) {
@@ -80,7 +87,8 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 			appClassPath.setTestCodePath(MicroBatUtil.getSourceFolder(Settings.launchClass, Settings.projectName));
 		}
 		List<String> srcFolders = MicroBatUtil.getSourceFolders(Settings.projectName);
-		appClassPath.setSourceCodePath(appClassPath.getTestCodePath());
+		appClassPath.setSourceCodePath(MicroBatUtil.getSourceFolder(Settings.launchClass, Settings.projectName));
+
 		for (String srcFolder : srcFolders) {
 			if (!srcFolder.equals(appClassPath.getTestCodePath())) {
 				appClassPath.getAdditionalSourceFolders().add(srcFolder);
@@ -88,6 +96,14 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		}
 
 		Trace trace = this.generateTrace(appClassPath, null);
+		Display.getDefault().asyncExec(new Runnable() {
+			@Override
+			public void run() {
+				TraceView traceView = MicroBatViews.getTraceView();
+				traceView.setMainTrace(trace);
+				traceView.updateData();
+			}
+		});
 
 		String className = Settings.launchClass.substring(Settings.launchClass.indexOf(".") + 1);
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -114,9 +130,15 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		matchedNum = 0;
 		notPredictedNum = 0;
 		wrongPredictionNum = 0;
-		
-		evaluateComponent(appClassPath,trace, benchmark, groundtruth);
 
+		String result = evaluateComponent(appClassPath, trace, benchmark, groundtruth);
+
+		String filePath = Paths.get("C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_result_var", className + ".txt").toString();
+		try (FileWriter writer = new FileWriter(filePath)) {
+			writer.write(result);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected Trace generateTrace(final AppJavaClassPath appClassPath, Condition condition) {
@@ -145,120 +167,141 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		return null;
 	}
 
-	protected void evaluateComponent(final AppJavaClassPath appClassPath ,Trace trace, List<Map<String, String>> benchmark,
-			Map<String, List<String>> groundtruth) {
+	protected String evaluateComponent(final AppJavaClassPath appClassPath, Trace trace,
+			List<Map<String, String>> benchmark, Map<String, List<String>> groundtruth) {
 		// var-expansion
-		Set<String> checkedVar = new HashSet<String>();
+		HashMap<String,String> checkedVar = new HashMap<String,String>();
 		List<Double> precisionList = new ArrayList<Double>();
 		List<Double> recallList = new ArrayList<Double>();
 
 		// def-inference
 		Map<Integer, Set<Integer>> predictedDataDep = new HashMap<>();
-		int succ = 0;
+		int var_succ = 0;
+		int def_succ = 0;
+		
+		ExecutionSimulator simulator = new ExecutionSimulator();
 
 		// for each selected data dependency to be recovered
 		for (Map<String, String> element : benchmark) {
 			int currentOrder = Integer.valueOf(element.get("Order"));
 			TraceNode currentStep = trace.getExecutionList().get(currentOrder - 1);
 
-			// variable expansion score
+			// 1. Variable expansion score (P&R)
 			VarValue readVar = null;
 			for (VarValue var : currentStep.getReadVariables()) {
 				if (var.getVarName().equals(element.get("Name"))) {
-					String gtExpansion = element.get("Expansion");
-					String prediction = null;
-
-					ExecutionSimulator simulator = new ExecutionSimulator();
-					try {
-						Log.printMsg(getClass(), "Getting expansion prediction at var: "+var.toString()+", on step "+currentStep.getOrder());
-						prediction = simulator.expandVariable(var, currentStep, null);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
-					if (prediction == null) {
-						Log.printMsg(getClass(), "ERROR: no proper prediction!");
-						break;
-					}
-					Pair<Double, Double> pr = calculatePR(gtExpansion, prediction);
-					precisionList.add(pr.first());
-					recallList.add(pr.second());
-					checkedVar.add(var.getVarName() + ":" + var.getStringValue());
-
 					readVar = var;
+					if (!checkedVar.containsKey(var.getType() + "|" + var.getVarName() + ":" + var.getStringValue())
+							&& !var.isExpanded()) {
+						String gtExpansion = element.get("Expansion");
+						String prediction = null;
+						try {
+							Log.printMsg(getClass(), "Getting expansion prediction at var: " + var.toString()
+									+ ", on step " + currentStep.getOrder());
+							// prediction = simulator.expandVariable(var, currentStep, null);
+							prediction = simulator.expandVariable(var, currentStep, null, false);
+							var.setExpanded(true);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+
+						if (prediction == null) {
+							Log.printMsg(getClass(), "ERROR: no proper prediction!");
+							break;
+						}
+						Pair<Double, Double> pr = calculatePR(gtExpansion, prediction);
+						precisionList.add(pr.first());
+						recallList.add(pr.second());
+						checkedVar.put(var.getType() + "|" + var.getVarName() + ":" + var.getStringValue(), prediction);
+					}
 					break;
 				}
 			}
 
-			// definition inference precision & score(pr)
-			if (!predictedDataDep.containsKey(currentOrder)) {
-				TraceRecoverer traceRecoverer = new TraceRecoverer();
-				Set<Integer> dataDominatorsAfterRecovery = new HashSet<>();
-				
-				Condition condition = new Condition(readVar.getVarName(), readVar.getType(), readVar.getStringValue(), "null");
-				System.out.println("Re-execution of condition: "+condition);
-				Trace newTrace = generateTrace(appClassPath, condition);
-				VarValue varExpanded = condition.getMatchedGroundTruthVar(newTrace);
-				if(varExpanded == null) {
-					continue;
-				}
-
-				for (VarValue targetVar : varExpanded.getAllDescedentChildren()) {
-					traceRecoverer.recoverDataDependency(currentStep, targetVar, readVar);
-					TraceNode dataDominator = trace.findProducer(readVar, currentStep);
-					if (dataDominator != null) {
-						dataDominatorsAfterRecovery.add(dataDominator.getOrder());
-					}
-				}
-
-				predictedDataDep.put(currentOrder, dataDominatorsAfterRecovery);
-
+			// 2. Variable expansion score(Recovery rate)
+			String prediction = checkedVar.get(readVar.getType() + "|" + readVar.getVarName() + ":" + readVar.getStringValue());
+			if(successfullyRecovField(prediction, element.get("Field"))) {
+				var_succ += 1;
 			}
-			Set<Integer> dds = predictedDataDep.get(currentOrder);
-			if (dds.contains(Integer.valueOf(element.get("Dependency")))) {
-				succ += 1;
-			}
+			
+			// 3. Definition inference precision
+//			Set<Integer> dataDominatorsAfterRecovery;
+//			if (predictedDataDep.containsKey(currentOrder)) {
+//				dataDominatorsAfterRecovery = predictedDataDep.get(currentOrder);
+//				if (dataDominatorsAfterRecovery.contains(Integer.valueOf(element.get("Dependency")))) {
+//					def_succ += 1;
+//					continue;
+//				}
+//			} else {
+//				dataDominatorsAfterRecovery = new HashSet<>();
+//			}
+//
+//			// assume variable is correct
+//			Condition condition = new Condition(readVar.getVarName(), readVar.getType(), readVar.getStringValue(),"null");
+//			System.out.println("Re-execution of condition: " + condition);
+//			Trace newTrace = generateTrace(appClassPath, condition);
+//			JSONObject varExpandedJson = condition.getMatchedGroundTruth(newTrace);
+//			if (varExpandedJson == null) {
+//				continue;
+//			}
+//			VariableExpansionUtils.processResponse(readVar, varExpandedJson.toString());
+//			
+//			TraceRecoverer traceRecoverer = new TraceRecoverer();
+//			for (VarValue targetVar : readVar.getAllDescedentChildren()) {
+//				if (targetVar.getVarName().equals(element.get("Field"))) {
+//					traceRecoverer.recoverDataDependency(currentStep, targetVar, readVar);
+//					TraceNode dataDominator = trace.findProducer(targetVar,currentStep);
+//					TraceNode dataDominator1 = trace.findProducer(readVar, currentStep);
+//					if (dataDominator != null) {
+//						dataDominatorsAfterRecovery.add(dataDominator.getOrder());
+//					}
+//					if(dataDominator1 != null){
+//						dataDominatorsAfterRecovery.add(dataDominator1.getOrder());
+//					}
+//				}
+//			}
+//			predictedDataDep.put(currentOrder, dataDominatorsAfterRecovery);
+//			if (dataDominatorsAfterRecovery.contains(Integer.valueOf(element.get("Dependency")))) {
+//				def_succ += 1;
+//			}
 		}
-		
+
 		StringBuilder result = new StringBuilder();
-		result.append("Checked var_value number:"+checkedVar.size()+"\n");
-		result.append("Variable expansion precision list:"+precisionList.toString()+"\n");
-		result.append("Variable expansion average precision:"+getAvg(precisionList)+"\n");
-		result.append("Variable expansion recall list:"+recallList.toString()+"\n");
-		result.append("Variable expansion average recall:"+getAvg(recallList)+"\n");
-		
+		result.append("Checked variable:\n");
+		result.append(checkedVar + "\n");
+		result.append("Predicted data dependency:\n");
+		result.append(predictedDataDep + "\n");
+		result.append("************ Result ***********\n");
+		result.append("Checked var_value number:" + checkedVar.size() + "\n");
+		result.append("Variable expansion precision list:" + precisionList.toString() + "\n");
+		result.append("Variable expansion average precision:" + getAvg(precisionList) + "\n");
+		result.append("Variable expansion recall list:" + recallList.toString() + "\n");
+		result.append("Variable expansion average recall:" + getAvg(recallList) + "\n");
 		int total = benchmark.size();
-		double rate = (double)succ/total;
-		result.append("Checked data dependency number:"+total+"\n");
-		result.append("Definition inference successfull number:"+succ+"\n");
-		result.append("Definition inference successfull rate:"+rate+"\n");
+		double var_recov_rate = (double) var_succ / total;
+		result.append("Variable expansion recovery successfull number: " + var_succ + "\n");
+		result.append("Variable expansion recovery successfull rate: " + var_recov_rate + "\n");
 		
+//		double def_infer_rate = (double) def_succ / total;
+//		result.append("Checked data dependency number:" + total + "\n");
+//		result.append("Definition inference successfull number:" + def_succ + "\n");
+//		result.append("Definition inference successfull rate:" + def_infer_rate + "\n");
+
 		System.out.println(result.toString());
+		return result.toString();
 	}
 
 	protected Pair<Double, Double> calculatePR(String groundtruth, String prediction) {
 		// parse to json object
 		System.out.println("Original string: ");
-		System.out.println("groundtruth: "+groundtruth);
-		System.out.println("prediction: "+prediction);
-		
+		System.out.println("groundtruth: " + groundtruth);
+		System.out.println("prediction: " + prediction);
+
 		JSONObject groundtruthJson = processResponse(groundtruth);
 		JSONObject predictionJson = processResponse(prediction);
-		
-//		Object expansion1 = null;
-//		for(String key : groundtruthJson.keySet()) {
-//			expansion1 = groundtruthJson.get(key);
-//			break; // only contains one (root var)
-//		}
-//		
-//		Object expansion2 = null;
-//		for(String key : predictionJson.keySet()) {
-//			expansion2 = predictionJson.get(key);
-//			break;
-//		}
-		
-		matchJsonTree(groundtruthJson,predictionJson);
-		
+
+		matchJsonTree(groundtruthJson, predictionJson);
+
 		double precision = 0;
 		if (matchedNum + wrongPredictionNum != 0) {
 			precision = (double) matchedNum / (matchedNum + wrongPredictionNum);
@@ -267,13 +310,12 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		if (matchedNum + notPredictedNum != 0) {
 			recall = (double) matchedNum / (matchedNum + notPredictedNum);
 		}
-		
-		System.out.println("PR: "+precision+", "+recall );
-		
+
+		System.out.println("PR: " + precision + ", " + recall);
+
 		return Pair.of(precision, recall);
 	}
-	
-	
+
 	protected JSONObject processResponse(String response) {
 		int begin = response.indexOf("{");
 		int end = response.lastIndexOf("}");
@@ -283,98 +325,193 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 	}
 
 	protected void matchJsonTree(Object json1, Object json2) {
-		if(json1 instanceof JSONObject && json2 instanceof JSONObject) {
-			Set<String> keySet1 = ((JSONObject)json1).keySet();
-			Set<String> keySet2 = ((JSONObject)json2).keySet();
+		if (json1 instanceof JSONObject && json2 instanceof JSONObject) {
+			Set<String> keySet1 = ((JSONObject) json1).keySet();
+			Set<String> keySet2 = ((JSONObject) json2).keySet();
 			Set<String> matched1 = new HashSet<String>();
 			Set<String> matched2 = new HashSet<String>();
 
-			for(String key1 : keySet1) {
-				for(String key2 : keySet2) {
-					if(matched2.contains(key2)) {
+			for (String key1 : keySet1) {
+				if(isAllUpperCase(key1.split("\\|")[0])) {
+					continue;
+				}
+				for (String key2 : keySet2) {
+					if(isAllUpperCase(key2.split("\\|")[0])) {
+						continue;
+					}
+					if (matched2.contains(key2)) {
 						continue;
 					}
 					// successfully matched
-					if(nameTypeMatch(key1,key2)) {
-						matchedNum+=1;
-						matched1.add(key1);
-						matched2.add(key2);
-						matchJsonTree(((JSONObject)json1).get(key1),((JSONObject)json2).get(key2));
+					if (nameTypeMatch(key1, key2)) {
+						Object child1 = ((JSONObject) json1).get(key1);
+						Object child2 = ((JSONObject) json2).get(key2);
+						if (child1 instanceof JSONObject && child2 instanceof JSONObject) {
+							matchedNum += 1;
+							matched1.add(key1);
+							matched2.add(key2);
+						} else if (valueMatch(child1, child2)) {
+							matchedNum += 1;
+							matched1.add(key1);
+							matched2.add(key2);
+						}
+						matchJsonTree(child1, child2);
 						break;
 					}
 				}
 			}
-			
-			for(String key1 : keySet1) {
-				if(!matched1.contains(key1)) {
-					notPredictedNum+=1;
-					processNotMatchedNode(((JSONObject)json1).get(key1), true);
+
+			for (String key1 : keySet1) {
+				if (!matched1.contains(key1) && !isAllUpperCase(key1.split("\\|")[0])) {
+					notPredictedNum += 1;
+					processNotMatchedNode(((JSONObject) json1).get(key1), true);
 				}
 			}
-			for(String key2 : keySet2) {
-				if(!matched2.contains(key2)) {
-					wrongPredictionNum+=1;
-					processNotMatchedNode(((JSONObject)json2).get(key2), false);
+			for (String key2 : keySet2) {
+				if (!matched2.contains(key2) && !isAllUpperCase(key2.split("\\|")[0])) {
+					wrongPredictionNum += 1;
+					processNotMatchedNode(((JSONObject) json2).get(key2), false);
 				}
 			}
-			
-		}
-		else if(json1 instanceof JSONObject) {
-			notPredictedNum += ((JSONObject)json1).keySet().size();
-			for(String key : ((JSONObject)json1).keySet()) {
-				processNotMatchedNode(((JSONObject)json1).get(key),true);
+
+		} else if (json1 instanceof JSONObject) {
+			notPredictedNum += ((JSONObject) json1).keySet().size();
+			for (String key : ((JSONObject) json1).keySet()) {
+				processNotMatchedNode(((JSONObject) json1).get(key), true);
+			}
+		} else if (json2 instanceof JSONObject) {
+			wrongPredictionNum += ((JSONObject) json2).keySet().size();
+			for (String key : ((JSONObject) json2).keySet()) {
+				processNotMatchedNode(((JSONObject) json2).get(key), false);
 			}
 		}
-		else if(json2 instanceof JSONObject) {
-			wrongPredictionNum += ((JSONObject)json2).keySet().size();
-			for(String key : ((JSONObject)json2).keySet()) {
-				processNotMatchedNode(((JSONObject)json2).get(key),false);
-			}
-		}
-		
+
 	}
-	
+
 	protected double getAvg(List<Double> precisionList) {
 		double sum = 0.0;
-        if (!precisionList.isEmpty()) {
-            for (Double number : precisionList) {
-                sum += number;
-            }
-            double average = sum / precisionList.size();
-            return average;
-        } else {
-            return 0.0;
-        }
+		if (!precisionList.isEmpty()) {
+			for (Double number : precisionList) {
+				sum += number;
+			}
+			double average = sum / precisionList.size();
+			return average;
+		} else {
+			return 0.0;
+		}
 	}
-	
+
 	protected boolean nameTypeMatch(String key1, String key2) {
-		String[] name_type1 = key1.split("|");
-		String[] name_type2 = key2.split("|");
-		
+		String[] name_type1 = key1.split("\\|");
+		String[] name_type2 = key2.split("\\|");
+
 		String name1 = name_type1[0];
-		String type1 = name_type1.length==2?name_type1[1]:"null";
+		String type1 = name_type1.length == 2 ? name_type1[1] : "null";
 		String name2 = name_type2[0];
-		String type2 = name_type2.length==2?name_type2[1]:"null";
-		
-		boolean nameMatch = (name1.equals(name2) || name1.contains(name2));
-		boolean typeMatch = (type1.equals(type2) || type1.contains(type2));
-		
+		String type2 = name_type2.length == 2 ? name_type2[1] : "null";
+
+		boolean nameMatch = (name1.equals(name2) || name1.contains(name2)) || name2.contains(name1);
+		boolean typeMatch = (type1.equals(type2) || type1.contains(type2)) || type2.contains(type1);
+
 		return nameMatch && typeMatch;
 	}
-	
+
+	protected boolean valueMatch(Object value1, Object value2) {
+		if(value1.toString().equals("null") ||  calStringSim(value1.toString(),value2.toString())>0.75) {
+			return true;
+		}
+		if (value1 instanceof JSONObject || value2 instanceof JSONObject) {
+			return false;
+		} else if (value1 instanceof JSONArray && value2 instanceof JSONArray) {
+			return calJSONArraySim((JSONArray) value1, (JSONArray) value2) > 0.75;
+		} else if ((!(value1 instanceof JSONArray)) && (!(value2 instanceof JSONArray))) {
+			return calStringSim(value1.toString(), value2.toString()) > 0.75;
+		}
+		return false;
+	}
+
 	protected void processNotMatchedNode(Object child, boolean isOnGt) {
-		if(!(child instanceof JSONObject)) {
+		if (!(child instanceof JSONObject)) {
 			return;
 		}
-		if(isOnGt) {
-			notPredictedNum+=((JSONObject)child).keySet().size();
+		
+		for (String key : ((JSONObject) child).keySet()) {
+			if (!isAllUpperCase(key.split("\\|")[0])) {
+				if(isOnGt) {
+					notPredictedNum += 1;
+				}
+				else {
+					wrongPredictionNum += 1;
+				}
+			}
 		}
-		else {
-			wrongPredictionNum+=((JSONObject)child).keySet().size();
-		}
-		for(String key : ((JSONObject)child).keySet()) {
-			processNotMatchedNode(((JSONObject)child).get(key),isOnGt);
+		for (String key : ((JSONObject) child).keySet()) {
+			processNotMatchedNode(((JSONObject) child).get(key), isOnGt);
 		}
 	}
+
+	public boolean isAllUpperCase(String str) {
+		return str.chars().filter(Character::isLetter).allMatch(Character::isUpperCase);
+	}
+
+	public double calJSONArraySim(JSONArray array1, JSONArray array2) {
+		if(array1.toString().contains(array2.toString()) || array2.toString().contains(array1.toString())) {
+			return 1.0;
+		}
+		int matchCount = 0;
+		for (int i = 0; i < array1.length(); i++) {
+			Object element = array1.get(i);
+			if (array2.toList().contains(element)) {
+				matchCount++;
+			}
+		}
+		int maxSize = Math.max(array1.length(), array2.length());
+		return (double) matchCount / maxSize;
+	}
+
+	public double calStringSim(String str1, String str2) {
+		if(str1.contains(str2) || str2.contains(str1)) {
+			return 1.0;
+		}
+		LevenshteinDistance levenshtein = new LevenshteinDistance();
+		int distance = levenshtein.apply(str1, str2);
+
+		int maxLength = Math.max(str1.length(), str2.length());
+		return 1.0 - (double) distance / maxLength;
+	}
 	
+	public boolean successfullyRecovField(String prediction, String field) {
+		int begin = prediction.indexOf("{");
+		int end = prediction.lastIndexOf("}");
+		prediction = prediction.substring(begin, end + 1);
+		JSONObject jsonObj = new JSONObject(prediction);
+		
+		return successfullyRecovFieldRecur(jsonObj,field);
+	}
+	
+	public boolean successfullyRecovFieldRecur(JSONObject jsonObj, String field) {
+		for(String key : jsonObj.keySet()) {
+			String name = null;
+			if(key.contains("|")) {
+				name = key.split("\\|")[0];
+			}
+			else {
+				name = key;
+			}
+			if(name.contains(field)) {
+				return true;
+			}
+		}
+		
+		for(String key : jsonObj.keySet()) {
+			Object value = jsonObj.get(key);
+			if(value instanceof JSONObject) {
+				if(successfullyRecovFieldRecur((JSONObject)value,field)) {
+					return true;
+				}
+			}
+		}
+		
+		return false;
+	}
 }

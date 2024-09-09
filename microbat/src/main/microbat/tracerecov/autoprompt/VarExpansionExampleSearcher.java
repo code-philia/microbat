@@ -24,6 +24,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 		DatasetReader datasetReader = new VarExpansionDatasetReader();
 		ArrayList<ArrayList<HashMap<String, String>>> datasets = datasetReader.getTrainingAndTestingDataset();
 		trainingDataset = datasets.get(0);
+		trainingDataset.addAll(datasets.get(1)); // remove this when not conducting rq2
 		testingDataset = datasets.get(1);
 		varSkeletonParser = new VarSkeletonParser();
 		promptTemplateFiller = new VarExpansionPromptTemplateFiller();
@@ -39,8 +40,19 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 		double minDiffScore = 1;
 		int datapointIndex = 0;
+		int exactlyMatch = -1;
+		
 		for (int i = 0; i < trainingDataset.size(); i++) {
 			HashMap<String, String> example = trainingDataset.get(i);
+
+			if(example.get(DatasetReader.VAR_NAME).equals(datapoint.get(DatasetReader.VAR_NAME))
+					&& example.get(DatasetReader.VAR_TYPE).equals(datapoint.get(DatasetReader.VAR_TYPE))
+					&& example.get(DatasetReader.VAR_VALUE).equals(datapoint.get(DatasetReader.VAR_VALUE))) {
+				System.out.println("Exactly match one example.");
+				exactlyMatch = i;
+				break;
+			}
+			
 			String exampleClassStructure = example.get(classStructureKey);
 			VariableSkeleton exampleVarSkeleton = varSkeletonParser.parseClassStructure(exampleClassStructure);
 
@@ -48,9 +60,10 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			if (diffScore < minDiffScore) {
 				minDiffScore = diffScore;
 				datapointIndex = i;
-			}
+			}			
 		}
-
+		datapointIndex = (exactlyMatch==-1)?datapointIndex:exactlyMatch;
+		
 		HashMap<String, String> closestExample = trainingDataset.get(datapointIndex);
 		String groundTruth = TraceRecovUtils.processInputStringForLLM(closestExample.get(groundTruthKey));
 		return promptTemplateFiller.getExample(closestExample, groundTruth);

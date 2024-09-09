@@ -91,14 +91,14 @@ public class ConstructBenchmarkHandler extends AbstractHandler {
 				}
 
 				for (VarValue readVar : node.getReadVariables()) {
-					Condition condition = new Condition(readVar.getVarName(), readVar.getType(), readVar.getStringValue(), "null");
-					System.out.println("Re-execution of condition: "+condition);
-					Trace newTrace = generateTrace(appClassPath, condition);
-					VarValue varExpanded = condition.getMatchedGroundTruthVar(newTrace);
-					if(varExpanded == null) {
-						continue;
-					}
-					if (containVar(d.get(2), varExpanded)) {
+					if(readVar.getVarName().equals(d.get(3))) {
+						Condition condition = new Condition(readVar.getVarName(), readVar.getType(), readVar.getStringValue(), "null");
+						System.out.println("Re-execution of condition: "+condition);
+						Trace newTrace = generateTrace(appClassPath, condition);
+						VarValue varExpanded = condition.getMatchedGroundTruthVar(newTrace);
+						if(varExpanded == null) {
+							continue;
+						}
 						HashMap<String, String> mp = new HashMap<>();
 						mp.put("Order", d.get(0));
 						mp.put("Dependency", d.get(1));
@@ -110,6 +110,25 @@ public class ConstructBenchmarkHandler extends AbstractHandler {
 						result.add(mp);
 						break;
 					}
+//					Condition condition = new Condition(readVar.getVarName(), readVar.getType(), readVar.getStringValue(), "null");
+//					System.out.println("Re-execution of condition: "+condition);
+//					Trace newTrace = generateTrace(appClassPath, condition);
+//					VarValue varExpanded = condition.getMatchedGroundTruthVar(newTrace);
+//					if(varExpanded == null) {
+//						continue;
+//					}
+//					if (containVar(d.get(2), varExpanded)) {
+//						HashMap<String, String> mp = new HashMap<>();
+//						mp.put("Order", d.get(0));
+//						mp.put("Dependency", d.get(1));
+//						mp.put("Name", readVar.getVarName());
+//						mp.put("Type", readVar.getType());
+//						mp.put("Value", readVar.getStringValue());
+//						mp.put("Expansion", varExpanded.toJSON().toString());
+//						mp.put("Field", d.get(2));
+//						result.add(mp);
+//						break;
+//					}
 				}
 
 			}

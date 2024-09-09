@@ -155,6 +155,11 @@
             name="Restore Trace">
       </command>
       <command
+            defaultHandler="microbat.handler.ConstructBenchmarkHandler"
+            id="microbat.command.ConstructBenchmark"
+            name="Construct Benchmark">
+      </command>
+      <command
             defaultHandler="microbat.handler.ComponentEvaluationHandler"
             id="microbat.command.ComponentEvaluation"
             name="Component Evaluation">
@@ -244,6 +249,11 @@
             <command
                   commandId="microbat.command.RestoreTrace"
                   label="Restore Trace"
+                  style="push">
+            </command>
+            <command
+                  commandId="microbat.command.ConstructBenchmark"
+                  label="Construct Benchmark"
                   style="push">
             </command>
             <command

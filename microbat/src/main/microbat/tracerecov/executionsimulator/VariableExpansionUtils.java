@@ -154,8 +154,8 @@ public class VariableExpansionUtils {
 			}
 		}
 
-		question.append("with the input value of executing ```");
-		question.append(sourceCode + "```, ");
+//		question.append("*BEFORE* executing ```");
+//		question.append(sourceCode + "```, ");
 		question.append("we have the value of *" + selectedVariable.getVarName() + "* of type `");
 		question.append(variableType);
 		question.append("`, value \"");
@@ -166,7 +166,7 @@ public class VariableExpansionUtils {
 				+ "* as the root. Do not include explanation in your response.\n");
 
 		question.append("You must follow the JSON format as \"var_name|var_type\": var_value. "
-				+ "Do not include duplicate keys. You must infer all var_value.");
+				+ "Do not include duplicate keys. You must infer all var_value. Remember to follow the given example and return a json object.");
 
 //		/*
 //		 * Added to enforce identical variable structure in buggy and correct trace

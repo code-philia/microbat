@@ -20,6 +20,7 @@
 	<classpathentry kind="lib" path="lib/jackson-annotations-2.17.2.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-core-2.17.2.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-databind-2.17.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-text-1.9.jar"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="lib/sqlite-jdbc-3.32.3.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">

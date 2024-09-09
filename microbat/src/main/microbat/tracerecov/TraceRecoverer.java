@@ -68,6 +68,7 @@ public class TraceRecoverer {
 
 		// definition inference
 		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables, variablesToCheck);
+//		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables);
 	}
 
 	/**
@@ -208,6 +209,23 @@ public class TraceRecoverer {
 		for (int i = end; i >= start; i--) {
 			TraceNode step = trace.getTraceNode(i);
 			if (isRelevantStep(step, variablesToCheck) && step.isCallingAPI()) {
+				// INFER DEFINITION STEP
+				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
+
+				if (def && !step.getWrittenVariables().contains(targetVar)) {
+					step.getWrittenVariables().add(targetVar);
+					break;
+				}
+			}
+		}
+	}
+	
+	private void inferDefinition(Trace trace, int start, int end, VarValue rootVar, VarValue targetVar,
+			List<VarValue> criticalVariables) {
+
+		for (int i = end; i >= start; i--) {
+			TraceNode step = trace.getTraceNode(i);
+			if (step.isCallingAPI()) {
 				// INFER DEFINITION STEP
 				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
 
