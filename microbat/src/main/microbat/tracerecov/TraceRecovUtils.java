@@ -320,8 +320,10 @@ public class TraceRecovUtils {
 		if (generalType.contains("class ")) {
 			generalType = generalType.split(" ")[1];
 		}
+		String generalName = variableWithGeneralType.getVarName();
+		boolean isArrayElement = generalType == null || generalType.equals("") || (generalName.contains("[") && generalName.contains("]"));
 		// element in array doesn't have an inferred type (TODO: type of each element?)
-		if (generalType == null || generalType.equals("")) {
+		if (isArrayElement) {
 			return true;
 		}
 

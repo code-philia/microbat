@@ -260,7 +260,26 @@ public class AliasInferenceUtils {
 			// fieldName has <= 1 layers OR rootVar not matched
 			return field;
 		}
-
+		
+		int lastIndex = fields.length - 1;
+		String lastField = fields[lastIndex];
+		if (lastField.contains("[") && lastField.contains("]")) {
+			// is array element
+			String arrayName = lastField.substring(0, lastField.indexOf("["));
+			if (lastIndex != 0 && !fields[lastIndex - 1].equals(arrayName)) {
+				// add array name
+				StringBuilder nameBuilder = new StringBuilder();
+				for (int i = 0; i < lastIndex; i++) {
+					nameBuilder.append(fields[i]);
+					nameBuilder.append(".");
+				}
+				nameBuilder.append(arrayName);
+				nameBuilder.append(".");
+				nameBuilder.append(lastField);
+				return searchForField(nameBuilder.toString(), rootVar);
+			}
+		}
+		
 		int splitIndex = fieldName.indexOf(".");
 		if (splitIndex >= 0) {
 			String fName = fieldName.substring(fieldName.indexOf("."));
