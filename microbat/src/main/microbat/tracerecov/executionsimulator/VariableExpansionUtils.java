@@ -166,7 +166,7 @@ public class VariableExpansionUtils {
 				+ "* as the root. Do not include explanation in your response.\n");
 
 		question.append("You must follow the JSON format as \"var_name|var_type\": var_value. "
-				+ "Do not include duplicate keys. You must infer all var_value.");
+				+ "Do not include duplicate keys. Do not include extra characters like `\\t`, `\\n` or `\\r`. You must infer all var_value.");
 
 //		/*
 //		 * Added to enforce identical variable structure in buggy and correct trace
