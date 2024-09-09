@@ -17,13 +17,14 @@ import microbat.model.value.VarValue;
 import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
+import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 
 public class TraceRecoverer {
 
 	private ExecutionSimulator executionSimulator;
 
 	public TraceRecoverer() {
-		this.executionSimulator = new ExecutionSimulator();
+		this.executionSimulator = ExecutionSimulatorFactory.getExecutionSimulator();
 	}
 
 	/**

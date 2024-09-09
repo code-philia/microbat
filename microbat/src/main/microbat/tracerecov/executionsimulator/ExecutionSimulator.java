@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,7 +31,7 @@ import sav.common.core.Pair;
  * 
  * @author hongshuwang
  */
-public class ExecutionSimulator {
+public abstract class ExecutionSimulator {
 
 	protected ExecutionSimulationLogger logger;
 
@@ -38,7 +39,19 @@ public class ExecutionSimulator {
 		this.logger = new ExecutionSimulationLogger();
 	}
 
-	public String sendRequest(String backgroundContent, String questionContent, String responseType)
+	/* abstract methods to be implemented */
+	protected abstract String getUrl();
+
+	protected abstract HttpURLConnection getConnection() throws IOException;
+
+	protected abstract String getResponseTypeString(LLMResponseType responseType);
+
+	protected abstract JSONObject getSingleRequest(String combinedPrompt, LLMResponseType responseType);
+
+	protected abstract String getSingleResponse(JSONObject responseObject);
+
+	/* concrete methods */
+	public String sendRequest(String backgroundContent, String questionContent, LLMResponseType responseType)
 			throws IOException {
 		String combinedPrompt = backgroundContent + questionContent;
 
@@ -51,34 +64,9 @@ public class ExecutionSimulator {
 	}
 
 	// Method to send the complete prompt in a single request
-	private String sendSingleRequest(String combinedPrompt, String responseType) throws IOException {
-		URL url = new URL(SimulatorConstants.API_URL);
-		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-		connection.setRequestMethod("POST");
-		connection.setRequestProperty("Content-Type", "application/json");
-		connection.setRequestProperty("Authorization", "Bearer " + SimulatorConstants.API_KEY);
-		connection.setDoOutput(true);
-
-		JSONObject question = new JSONObject();
-		question.put("role", "user");
-		question.put("content", combinedPrompt);
-
-		JSONArray messages = new JSONArray();
-		messages.put(question);
-
-		JSONObject responseFormat = new JSONObject();
-		responseFormat.put("type", responseType);
-
-		JSONObject request = new JSONObject();
-		request.put("model", SimulatorConstants.getSelectedModel());
-		request.put("messages", messages);
-		request.put("temperature", SimulatorConstants.TEMPERATURE);
-		request.put("max_tokens", SimulatorConstants.MAX_TOKENS);
-		request.put("top_p", SimulatorConstants.TOP_P);
-		request.put("frequency_penalty", SimulatorConstants.FREQUENCY_PENALTY);
-		request.put("presence_penalty", SimulatorConstants.PRESENCE_PENALTY);
-		request.put("response_format", responseFormat);
+	private String sendSingleRequest(String combinedPrompt, LLMResponseType responseType) throws IOException {
+		HttpURLConnection connection = getConnection();
+		JSONObject request = getSingleRequest(combinedPrompt, responseType);
 
 		try (OutputStream os = connection.getOutputStream()) {
 			byte[] input = request.toString().getBytes("utf-8");
@@ -95,8 +83,7 @@ public class ExecutionSimulator {
 				}
 
 				JSONObject responseObject = new JSONObject(response.toString());
-				return responseObject.getJSONArray("choices").getJSONObject(0).getJSONObject("message")
-						.getString("content").trim();
+				return getSingleResponse(responseObject);
 			}
 		} else {
 			throw new RuntimeException("Failed : HTTP error code : " + responseCode);
@@ -104,7 +91,7 @@ public class ExecutionSimulator {
 	}
 
 	// Method to send the prompt in segments
-	private String sendInSegments(String backgroundContent, String questionContent, String responseType)
+	private String sendInSegments(String backgroundContent, String questionContent, LLMResponseType responseType)
 			throws IOException {
 		List<String> promptSegments = splitPrompt(backgroundContent + questionContent);
 
@@ -113,7 +100,7 @@ public class ExecutionSimulator {
 		for (int i = 0; i < promptSegments.size(); i++) {
 			String segment = promptSegments.get(i);
 
-			URL url = new URL(SimulatorConstants.API_URL);
+			URL url = new URL(getUrl());
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
 			connection.setRequestMethod("POST");
@@ -246,7 +233,7 @@ public class ExecutionSimulator {
 		for (int i = 0; i < 2; i++) {
 			try {
 				long timeStart = System.currentTimeMillis();
-				String response = sendRequest(background, content, "json_object");
+				String response = sendRequest(background, content, LLMResponseType.JSON);
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.varExpansionTime += timeEnd - timeStart;
 
@@ -278,7 +265,7 @@ public class ExecutionSimulator {
 		for (int i = 0; i < 2; i++) {
 			try {
 				long timeStart = System.currentTimeMillis();
-				String response = sendRequest(background, content, "json_object");
+				String response = sendRequest(background, content, LLMResponseType.JSON);
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.aliasInferTime += timeEnd - timeStart;
 
@@ -366,7 +353,7 @@ public class ExecutionSimulator {
 		for (int i = 0; i < 2; i++) {
 			try {
 				long timeStart = System.currentTimeMillis();
-				String response = sendRequest(background, content, "text");
+				String response = sendRequest(background, content, LLMResponseType.TEXT);
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.defInferTime += timeEnd - timeStart;
 
