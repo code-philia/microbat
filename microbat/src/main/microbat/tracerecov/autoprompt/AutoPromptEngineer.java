@@ -83,7 +83,7 @@ public class AutoPromptEngineer {
 		String originalAdjustmentPrompt = promptTemplateFiller.getAdjustmentPrompt(datapoint, originalExample);
 		String updatedExample = null;
 		try {
-			updatedExample = executionSimulator.sendRequest("", originalAdjustmentPrompt);
+			updatedExample = executionSimulator.sendRequest("", originalAdjustmentPrompt,"json_object");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -125,7 +125,7 @@ public class AutoPromptEngineer {
 				datapoint, output, textualLoss);
 		String updatedExample = null;
 		try {
-			updatedExample = executionSimulator.sendRequest("", adjustmentPromptWithTextualLoss);
+			updatedExample = executionSimulator.sendRequest("", adjustmentPromptWithTextualLoss,"json_object");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -197,7 +197,7 @@ public class AutoPromptEngineer {
 	private String getLLMOutput(String request) {
 		String output;
 		try {
-			output = executionSimulator.sendRequest("", request);
+			output = executionSimulator.sendRequest("", request,"json_object");
 			int begin = output.indexOf("{");
 			int end = output.lastIndexOf("}");
 			return output.substring(begin, end + 1);

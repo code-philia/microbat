@@ -35,7 +35,7 @@ public abstract class ExampleSearcher {
 		String output;
 		try {
 			ExecutionSimulator executionSimulator = new ExecutionSimulator();
-			output = executionSimulator.sendRequest("", request);
+			output = executionSimulator.sendRequest("", request,"json_object");
 			int begin = output.indexOf("{");
 			int end = output.lastIndexOf("}");
 			return output.substring(begin, end + 1);

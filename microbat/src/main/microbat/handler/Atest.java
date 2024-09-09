@@ -16,11 +16,15 @@ public class Atest {
 	private static int notPredictedNum = 0;
 	
 	public static void main(String[] args) {
+		String s = "{\\n  \"sb|java.lang.StringBuffer\": {\\n    \"value|byte[]\": \"[98, 0, 0, 0, 0, 0, 0, 0]\",\\n    \"count|int\": \"1\",\\n    \"toStringCache|java.lang.String\": \"b\"\\n  }\\n}\r\n";
+		String str = s.replace("\\n", "");
+		System.out.println(s);
+		System.out.println(str);
 		
-		String a = "{\"hashMap|java.util.HashMap\":{\"TREEIFY_THRESHOLD|int\":\"8\",\"entrySet|java.util.HashMap$EntrySet\":{\"this$0|java.util.HashMap\":{\"TREEIFY_THRESHOLD|int\":\"8\",\"entrySet|java.util.HashMap$EntrySet\":\"[a=3, r=1, g=1, m=1, n=1]\",\"UNTREEIFY_THRESHOLD|int\":\"6\",\"MIN_TREEIFY_CAPACITY|int\":\"64\",\"table|java.util.HashMap$Node[]\":[\"null\",\"a=3\",\"r=1\",\"null\",\"null\",\"null\",\"null\",\"g=1\",\"null\",\"null\",\"null\",\"null\",\"null\",\"m=1\",\"n=1\",\"null\"],\"size|int\":\"5\"}},\"values|interface java.util.Collection\":\"null\",\"UNTREEIFY_THRESHOLD|int\":\"6\",\"MIN_TREEIFY_CAPACITY|int\":\"64\",\"modCount|int\":\"5\",\"keySet|interface java.util.Set\":\"null\",\"table|java.util.HashMap$Node[]\":\"[null, a=3, r=1, null, null, null, null, g=1, null, null, null, null, null, m=1, n=1, null]\",\"size|int\":\"5\",\"threshold|int\":\"12\"}}";
-		String b = "{\"hashMap|java.util.HashMap\":{\"entrySet|java.util.HashMap$EntrySet\":{\"this$0|java.util.HashMap\":{\"table|java.util.HashMap$Node[]\":[\"null\",\"a=3\",\"r=1\",\"null\",\"null\",\"null\",\"null\",\"g=1\",\"null\",\"null\",\"null\",\"null\",\"null\",\"m=1\",\"n=1\"],\"size|int\":\"5\"},\"size|int\":\"5\"},\"values|interface java.util.Collection\":\"[3, 1, 1, 1, 1]\",\"modCount|int\":\"5\",\"keySet|interface java.util.Set\":\"[a, r, g, m, n]\",\"table|java.util.HashMap$Node[]\":\"[null, a=3, r=1, null, null, null, null, g=1, null, null, null,null,null,m=1,n=1,null] \",\"size|int\":\"5\", \"threshold|int\": \"12\"}}";
-		
-		calculatePR(a,b);
+//		String a = "{\"hashMap|java.util.HashMap\":{\"TREEIFY_THRESHOLD|int\":\"8\",\"entrySet|java.util.HashMap$EntrySet\":{\"this$0|java.util.HashMap\":{\"TREEIFY_THRESHOLD|int\":\"8\",\"entrySet|java.util.HashMap$EntrySet\":\"[a=3, r=1, g=1, m=1, n=1]\",\"UNTREEIFY_THRESHOLD|int\":\"6\",\"MIN_TREEIFY_CAPACITY|int\":\"64\",\"table|java.util.HashMap$Node[]\":[\"null\",\"a=3\",\"r=1\",\"null\",\"null\",\"null\",\"null\",\"g=1\",\"null\",\"null\",\"null\",\"null\",\"null\",\"m=1\",\"n=1\",\"null\"],\"size|int\":\"5\"}},\"values|interface java.util.Collection\":\"null\",\"UNTREEIFY_THRESHOLD|int\":\"6\",\"MIN_TREEIFY_CAPACITY|int\":\"64\",\"modCount|int\":\"5\",\"keySet|interface java.util.Set\":\"null\",\"table|java.util.HashMap$Node[]\":\"[null, a=3, r=1, null, null, null, null, g=1, null, null, null, null, null, m=1, n=1, null]\",\"size|int\":\"5\",\"threshold|int\":\"12\"}}";
+//		String b = "{\"hashMap|java.util.HashMap\":{\"entrySet|java.util.HashMap$EntrySet\":{\"this$0|java.util.HashMap\":{\"table|java.util.HashMap$Node[]\":[\"null\",\"a=3\",\"r=1\",\"null\",\"null\",\"null\",\"null\",\"g=1\",\"null\",\"null\",\"null\",\"null\",\"null\",\"m=1\",\"n=1\"],\"size|int\":\"5\"},\"size|int\":\"5\"},\"values|interface java.util.Collection\":\"[3, 1, 1, 1, 1]\",\"modCount|int\":\"5\",\"keySet|interface java.util.Set\":\"[a, r, g, m, n]\",\"table|java.util.HashMap$Node[]\":\"[null, a=3, r=1, null, null, null, null, g=1, null, null, null,null,null,m=1,n=1,null] \",\"size|int\":\"5\", \"threshold|int\": \"12\"}}";
+//		
+//		calculatePR(a,b);
 		
 	}
 	

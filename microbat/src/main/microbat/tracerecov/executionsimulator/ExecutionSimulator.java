@@ -305,7 +305,7 @@ public class ExecutionSimulator {
 		for (int i = 0; i < 5; i++) {
 			try {
 				long timeStart = System.currentTimeMillis();
-				String response = sendRequest(background, content);
+				String response = sendRequest(background, content,"json_object");
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.varExpansionTime += timeEnd - timeStart;
 
@@ -446,6 +446,9 @@ public class ExecutionSimulator {
 		int begin = response.indexOf("{");
 		int end = response.lastIndexOf("}");
 		response = response.substring(begin, end + 1);
+		response = response.replace("\\n", "");
+		
+		System.out.println(response);
 		JSONObject variable = new JSONObject(response);
 		return variable;
 	}

@@ -320,6 +320,7 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		int begin = response.indexOf("{");
 		int end = response.lastIndexOf("}");
 		response = response.substring(begin, end + 1);
+		response = response.replace("\\n", "");
 		JSONObject variable = new JSONObject(response);
 		return variable;
 	}
@@ -484,6 +485,7 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		int begin = prediction.indexOf("{");
 		int end = prediction.lastIndexOf("}");
 		prediction = prediction.substring(begin, end + 1);
+		prediction = prediction.replace("\\n", "");
 		JSONObject jsonObj = new JSONObject(prediction);
 		
 		return successfullyRecovFieldRecur(jsonObj,field);
