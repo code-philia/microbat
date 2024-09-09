@@ -154,6 +154,7 @@ public class VariableExpansionUtils {
 			}
 		}
 
+
 //		question.append("*BEFORE* executing ```");
 //		question.append(sourceCode + "```, ");
 		question.append("we have the value of *" + selectedVariable.getVarName() + "* of type `");
@@ -166,7 +167,7 @@ public class VariableExpansionUtils {
 				+ "* as the root. Do not include explanation in your response.\n");
 
 		question.append("You must follow the JSON format as \"var_name|var_type\": var_value. "
-				+ "Do not include duplicate keys. You must infer all var_value. Remember to follow the given example and return a json object.");
+				+ "Do not include duplicate keys. Do not include extra characters like `\\t`, `\\n` or `\\r`. You must infer all var_value.");
 
 //		/*
 //		 * Added to enforce identical variable structure in buggy and correct trace
@@ -222,7 +223,7 @@ public class VariableExpansionUtils {
 				Object value = jsonObject.get(key);
 				VarValue varValue = null;
 
-				if (value instanceof JSONArray || varType.contains("[]")) {
+				if (value instanceof JSONArray || (value instanceof String && varType.contains("[]"))) {
 					if (value instanceof String && varType.contains("[]")) {
 						value = TraceRecovUtils.parseJSONArrayFromString((String) value);
 					}

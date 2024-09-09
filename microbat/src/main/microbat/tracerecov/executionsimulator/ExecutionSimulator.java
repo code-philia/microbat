@@ -39,19 +39,20 @@ public class ExecutionSimulator {
 		this.logger = new ExecutionSimulationLogger();
 	}
 
-	public String sendRequest(String backgroundContent, String questionContent) throws IOException {
+	public String sendRequest(String backgroundContent, String questionContent, String responseType)
+			throws IOException {
 		String combinedPrompt = backgroundContent + questionContent;
 
 		// Check if prompt exceeds max token
 		if (isExceedingMaxTokens(combinedPrompt)) {
-			return sendInSegments(backgroundContent, questionContent);
+			return sendInSegments(backgroundContent, questionContent, responseType);
 		} else {
-			return sendSingleRequest(combinedPrompt);
+			return sendSingleRequest(combinedPrompt, responseType);
 		}
 	}
 
 	// Method to send the complete prompt in a single request
-	private String sendSingleRequest(String combinedPrompt) throws IOException {
+	private String sendSingleRequest(String combinedPrompt, String responseType) throws IOException {
 		URL url = new URL(SimulatorConstants.API_URL);
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -67,6 +68,9 @@ public class ExecutionSimulator {
 		JSONArray messages = new JSONArray();
 		messages.put(question);
 
+		JSONObject responseFormat = new JSONObject();
+		responseFormat.put("type", responseType);
+
 		JSONObject request = new JSONObject();
 		request.put("model", SimulatorConstants.getSelectedModel());
 		request.put("messages", messages);
@@ -75,6 +79,7 @@ public class ExecutionSimulator {
 		request.put("top_p", SimulatorConstants.TOP_P);
 		request.put("frequency_penalty", SimulatorConstants.FREQUENCY_PENALTY);
 		request.put("presence_penalty", SimulatorConstants.PRESENCE_PENALTY);
+		request.put("response_format", responseFormat);
 
 		try (OutputStream os = connection.getOutputStream()) {
 			byte[] input = request.toString().getBytes("utf-8");
@@ -100,7 +105,8 @@ public class ExecutionSimulator {
 	}
 
 	// Method to send the prompt in segments
-	private String sendInSegments(String backgroundContent, String questionContent) throws IOException {
+	private String sendInSegments(String backgroundContent, String questionContent, String responseType)
+			throws IOException {
 		List<String> promptSegments = splitPrompt(backgroundContent + questionContent);
 
 		StringBuilder combinedResponse = new StringBuilder();
@@ -130,6 +136,9 @@ public class ExecutionSimulator {
 			JSONArray messages = new JSONArray();
 			messages.put(question);
 
+			JSONObject responseFormat = new JSONObject();
+			responseFormat.put("type", responseType);
+
 			JSONObject request = new JSONObject();
 			request.put("model", SimulatorConstants.getSelectedModel());
 			request.put("messages", messages);
@@ -138,6 +147,7 @@ public class ExecutionSimulator {
 			request.put("top_p", SimulatorConstants.TOP_P);
 			request.put("frequency_penalty", SimulatorConstants.FREQUENCY_PENALTY);
 			request.put("presence_penalty", SimulatorConstants.PRESENCE_PENALTY);
+			request.put("response_format", responseFormat);
 
 			try (OutputStream os = connection.getOutputStream()) {
 				byte[] input = request.toString().getBytes("utf-8");
@@ -237,11 +247,11 @@ public class ExecutionSimulator {
 		for (int i = 0; i < 2; i++) {
 			try {
 				long timeStart = System.currentTimeMillis();
-				String response = sendRequest(background, content);
+				String response = sendRequest(background, content, "json_object");
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.varExpansionTime += timeEnd - timeStart;
 
-				response = TraceRecovUtils.processInputStringForLLM(response);
+//				response = TraceRecovUtils.processOutputStringForLLM(response);
 				this.logger.printResponse(i, response);
 				VariableExpansionUtils.processResponse(selectedVar, response);
 				return response;
@@ -330,7 +340,7 @@ public class ExecutionSimulator {
 		for (int i = 0; i < 2; i++) {
 			try {
 				long timeStart = System.currentTimeMillis();
-				String response = sendRequest(background, content);
+				String response = sendRequest(background, content, "json_object");
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.aliasInferTime += timeEnd - timeStart;
 
@@ -418,7 +428,7 @@ public class ExecutionSimulator {
 		for (int i = 0; i < 2; i++) {
 			try {
 				long timeStart = System.currentTimeMillis();
-				String response = sendRequest(background, content);
+				String response = sendRequest(background, content, "text");
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.defInferTime += timeEnd - timeStart;
 

@@ -172,7 +172,7 @@ public class AliasInferenceUtils {
 		question.append("\n\nPerform static analysis. From the given code, identify all the aliases of `" + rootVarName
 				+ "` and the fields in `" + rootVarName + "`.");
 
-		question.append("\n\nIn your response, strictly follow this format. Do not include explanation.");
+		question.append("\n\nIn your response, strictly follow the JSON format. Do not include explanation.");
 
 		return question.toString();
 	}
@@ -209,7 +209,12 @@ public class AliasInferenceUtils {
 			if (variableOnTrace == null) {
 				String rootVariableOnTrace = "";
 				if (variableName.contains(".")) {
-					rootVariableOnTrace = variableName.split("\\.")[0];
+					String[] fieldNames = variableName.split("\\.");
+					if (fieldNames.length > 1) {
+						rootVariableOnTrace = fieldNames[0];
+					} else {
+						rootVariableOnTrace = variableName;
+					}
 				} else {
 					rootVariableOnTrace = variableName;
 				}
@@ -255,7 +260,26 @@ public class AliasInferenceUtils {
 			// fieldName has <= 1 layers OR rootVar not matched
 			return field;
 		}
-
+		
+		int lastIndex = fields.length - 1;
+		String lastField = fields[lastIndex];
+		if (lastField.contains("[") && lastField.contains("]")) {
+			// is array element
+			String arrayName = lastField.substring(0, lastField.indexOf("["));
+			if (lastIndex != 0 && !fields[lastIndex - 1].equals(arrayName)) {
+				// add array name
+				StringBuilder nameBuilder = new StringBuilder();
+				for (int i = 0; i < lastIndex; i++) {
+					nameBuilder.append(fields[i]);
+					nameBuilder.append(".");
+				}
+				nameBuilder.append(arrayName);
+				nameBuilder.append(".");
+				nameBuilder.append(lastField);
+				return searchForField(nameBuilder.toString(), rootVar);
+			}
+		}
+		
 		int splitIndex = fieldName.indexOf(".");
 		if (splitIndex >= 0) {
 			String fName = fieldName.substring(fieldName.indexOf("."));

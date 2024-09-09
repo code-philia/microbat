@@ -228,6 +228,10 @@ public class TraceRecovUtils {
 //		return input.replace("\n", "\\n").replace("\r", "\\r").replace("<>", "\\<\\>");
 		return input.replace("\n", "\\n").replace("\r", "\\r");
 	}
+	
+	public static String processOutputStringForLLM(String output) {
+		return output.replace("\n", "").replace("\r", "").replace("\t", "");
+	}
 
 	public static CFG getCFGFromMethodSignature(String className, String methodSig) throws CannotBuildCFGException {
 		className = className.replace(".", "/");
@@ -316,8 +320,10 @@ public class TraceRecovUtils {
 		if (generalType.contains("class ")) {
 			generalType = generalType.split(" ")[1];
 		}
+		String generalName = variableWithGeneralType.getVarName();
+		boolean isArrayElement = generalType == null || generalType.equals("") || (generalName.contains("[") && generalName.contains("]"));
 		// element in array doesn't have an inferred type (TODO: type of each element?)
-		if (generalType == null || generalType.equals("")) {
+		if (isArrayElement) {
 			return true;
 		}
 
@@ -386,6 +392,9 @@ public class TraceRecovUtils {
 	
 	public static JSONArray parseJSONArrayFromString(String stringValue) {
 		String[] array = parseArrayFromString(stringValue);
+		for (int i = 0; i < array.length; i++) {
+			array[i] = array[i].strip();
+		}
 		return new JSONArray(array);
 	}
 }
