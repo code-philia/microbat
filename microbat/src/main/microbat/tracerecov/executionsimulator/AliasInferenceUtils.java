@@ -174,7 +174,7 @@ public class AliasInferenceUtils {
 		question.append("\n\nPerform static analysis. From the given code, identify all the aliases of `" + rootVarName
 				+ "` and the fields in `" + rootVarName + "`.");
 
-		question.append("\n\nIn your response, strictly follow the JSON format. The JSON keys are from the listed fields, JSON values are variables that are the corresponding aliases of the fields. Do not include explanation.");
+		question.append("\n\nIn your response, strictly follow the JSON format. The JSON keys are from the listed fields, JSON values are variables or their fields that are the corresponding aliases of the fields. Do not include explanation.");
 
 		return question.toString();
 	}
