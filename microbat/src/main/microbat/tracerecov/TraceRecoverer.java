@@ -176,7 +176,7 @@ public class TraceRecoverer {
 						if (isCriticalVariable(criticalVariables, writtenField)) {
 							VarValue variableOnTrace = fieldToVarOnTraceMap.get(writtenField);
 							String aliasIdOfCriticalVar = variableOnTrace.getAliasVarID();
-							if (aliasIdOfCriticalVar.contains(":")) {
+							if (aliasIdOfCriticalVar != null && aliasIdOfCriticalVar.contains(":")) {
 								aliasIdOfCriticalVar = aliasIdOfCriticalVar.split(":")[0];
 							}
 
@@ -190,7 +190,7 @@ public class TraceRecoverer {
 							 */
 							if (isValidAliasID(writtenField.getAliasVarID())) {
 								String aliasIdOfCriticalVar = writtenField.getAliasVarID();
-								if (aliasIdOfCriticalVar.contains(":")) {
+								if (aliasIdOfCriticalVar != null && aliasIdOfCriticalVar.contains(":")) {
 									aliasIdOfCriticalVar = aliasIdOfCriticalVar.split(":")[0];
 								}
 								variablesToCheck.add(aliasIdOfCriticalVar);
