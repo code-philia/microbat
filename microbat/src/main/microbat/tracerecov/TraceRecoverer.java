@@ -222,7 +222,7 @@ public class TraceRecoverer {
 	}
 
 	/**
-	 * only check steps containing variablesToCheck AND are calling API
+	 * only check steps containing variablesToCheck
 	 */
 	private boolean isRelevantStep(TraceNode step, Set<String> variablesToCheck) {
 		Set<VarValue> variablesInStep = step.getAllVariables();
@@ -232,7 +232,32 @@ public class TraceRecoverer {
 	}
 
 	private boolean isStepToCheck(TraceNode step) {
-		return step.isCallingAPI() && step.getInvokingMethod() != null && !step.getInvokingMethod().equals("%");
+		if (!step.isCallingAPI()) {
+			return false;
+		}
+		
+		String invokingMethod = step.getInvokingMethod();
+		if (invokingMethod == null || invokingMethod.equals("%")) {
+			return false;
+		}
+		
+		if (invokingMethod.contains("%")) {
+			String[] invokedMethods = invokingMethod.split("%");
+			List<TraceNode> children = step.getInvocationChildren();
+			if (children == null || children.isEmpty()) {
+				return true;
+			}
+			String expandedMethod = children.get(0).getMethodSign();
+			int unrecordedMethods = 0;
+			for (String m : invokedMethods) {
+				if (!m.equals(expandedMethod)) {
+					unrecordedMethods++;
+				}
+			}
+			return unrecordedMethods > 0;
+		}
+
+		return true;
 	}
 
 	/**
