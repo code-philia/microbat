@@ -31,10 +31,10 @@ public class AliasInferenceUtils {
 			+ "\n"
 			+ "Given the source code of function calls in the code:\n"
 			+ "public boolean add(E e) {\n"
-			+ "        modCount++;\n"
-			+ "        add(e, elementData, size);\n"
-			+ "        return true;\n"
-			+ "    }\n"
+			+ "modCount++;\n"
+			+ "add(e, elementData, size);\n"
+			+ "return true;\n"
+			+ "}\n"
 			+ "\n"
 			+ "Variables involved:\n"
 			+ "`list` is of type `java.util.ArrayList`,\n"
@@ -43,9 +43,11 @@ public class AliasInferenceUtils {
 			+ "We know that another variable not in the code, `list`, with the following structure:\n"
 			+ "{\"list:java.util.ArrayList\":{\"elementData:java.lang.Object[]\":\"[]\",\"size:int\":\"0\"}}\n"
 			+ "\n"
+			+ "We are interested in the fields `list.elementData.elementData[0]`\n"
+			+ "\n"
 			+ "Your response should be:\n"
 			+ "{\n"
-			+ "\"list.elementData[0]\":\"element\"\n"
+			+ "\"list.elementData.elementData[0]\":\"element\"\n"
 			+ "}\n\n";
 
 	/* Methods */
@@ -171,7 +173,7 @@ public class AliasInferenceUtils {
 		question.append("\n\nPerform static analysis. From the given code, identify all the aliases of `" + rootVarName
 				+ "` and the fields in `" + rootVarName + "`.");
 
-		question.append("\n\nIn your response, strictly follow the JSON format. Do not include explanation.");
+		question.append("\n\nIn your response, strictly follow the JSON format. Don't include a field if alias relationship is not found. Do not include explanation.");
 
 		return question.toString();
 	}
