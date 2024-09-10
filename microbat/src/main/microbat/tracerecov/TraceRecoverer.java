@@ -176,6 +176,9 @@ public class TraceRecoverer {
 						if (isCriticalVariable(criticalVariables, writtenField)) {
 							VarValue variableOnTrace = fieldToVarOnTraceMap.get(writtenField);
 							String aliasIdOfCriticalVar = variableOnTrace.getAliasVarID();
+							if (aliasIdOfCriticalVar.contains(":")) {
+								aliasIdOfCriticalVar = aliasIdOfCriticalVar.split(":")[0];
+							}
 
 							if (isValidAliasID(aliasIdOfCriticalVar)) {
 								updateAliasIDOfField(writtenField, variableOnTrace, criticalVariables);
@@ -186,7 +189,11 @@ public class TraceRecoverer {
 							 * key and value: variable on trace. Field in variable is not recorded.
 							 */
 							if (isValidAliasID(writtenField.getAliasVarID())) {
-								variablesToCheck.add(writtenField.getAliasVarID());
+								String aliasIdOfCriticalVar = writtenField.getAliasVarID();
+								if (aliasIdOfCriticalVar.contains(":")) {
+									aliasIdOfCriticalVar = aliasIdOfCriticalVar.split(":")[0];
+								}
+								variablesToCheck.add(aliasIdOfCriticalVar);
 							}
 						}
 					}
@@ -226,9 +233,14 @@ public class TraceRecoverer {
 	 */
 	private boolean isRelevantStep(TraceNode step, Set<String> variablesToCheck) {
 		Set<VarValue> variablesInStep = step.getAllVariables();
-		Set<String> aliasIDsInStep = new HashSet<>(variablesInStep.stream().map(v -> v.getAliasVarID()).toList());
+		for (VarValue variable : variablesInStep) {
+			if (variablesToCheck.contains(variable.getAliasVarID())
+					&& (variable.getVarName() != null && !variable.getVarName().contains("this"))) {
+				return true;
+			}
+		}
 
-		return aliasIDsInStep.stream().anyMatch(id -> variablesToCheck.contains(id));
+		return false;
 	}
 
 	private boolean isStepToCheck(TraceNode step) {
