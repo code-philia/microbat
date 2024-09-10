@@ -30,6 +30,7 @@ import microbat.preference.AnalysisScopePreference;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.TraceRecoverer;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
+import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 import microbat.util.MicroBatUtil;
 import microbat.util.Settings;
 import microbat.views.DebugFeedbackView;
@@ -116,7 +117,7 @@ public class RecovAllDependencyHandler extends StartDebugHandler {
 			System.out.println("Start Recovering Data Dependency Exhaustively");
 			System.out.println("==============================================");
 
-			ExecutionSimulator executionSimulator = new ExecutionSimulator();
+			ExecutionSimulator executionSimulator = ExecutionSimulatorFactory.getExecutionSimulator();
 			TraceRecoverer traceRecoverer = new TraceRecoverer();
 			AppJavaClassPath appJavaClassPath = trace.getAppJavaClassPath();
 

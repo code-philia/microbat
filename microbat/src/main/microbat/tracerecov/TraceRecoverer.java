@@ -17,13 +17,14 @@ import microbat.model.value.VarValue;
 import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
+import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 
 public class TraceRecoverer {
 
 	private ExecutionSimulator executionSimulator;
 
 	public TraceRecoverer() {
-		this.executionSimulator = new ExecutionSimulator();
+		this.executionSimulator = ExecutionSimulatorFactory.getExecutionSimulator();
 	}
 
 	/**
@@ -165,7 +166,8 @@ public class TraceRecoverer {
 
 		for (int i = scopeStart; i <= scopeEnd; i++) {
 			TraceNode step = trace.getTraceNode(i);
-			if (isRelevantStep(step, variablesToCheck) && isRequiringAliasInference(step, variablesToCheck)) {
+			if (isRelevantStep(step, variablesToCheck) && isRequiringAliasInference(step, variablesToCheck)
+					&& isStepToCheck(step)) {
 				// INFER ADDERSS
 				try {
 					Map<VarValue, VarValue> fieldToVarOnTraceMap = this.executionSimulator.inferAliasRelations(step,
@@ -208,7 +210,7 @@ public class TraceRecoverer {
 
 		for (int i = end; i >= start; i--) {
 			TraceNode step = trace.getTraceNode(i);
-			if (isRelevantStep(step, variablesToCheck) && step.isCallingAPI()) {
+			if (isRelevantStep(step, variablesToCheck) && isStepToCheck(step)) {
 				// INFER DEFINITION STEP
 				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
 
@@ -247,6 +249,10 @@ public class TraceRecoverer {
 		return aliasIDsInStep.stream().anyMatch(id -> variablesToCheck.contains(id));
 	}
 
+	private boolean isStepToCheck(TraceNode step) {
+		return step.isCallingAPI() && step.getInvokingMethod() != null && !step.getInvokingMethod().equals("%");
+	}
+
 	/**
 	 * only infer address when there are new variables at the current step.
 	 * 
@@ -254,11 +260,11 @@ public class TraceRecoverer {
 	 */
 	private boolean isRequiringAliasInference(TraceNode step, Set<String> variablesToCheck) {
 		Set<VarValue> variablesInStep = step.getAllVariables();
-		Set<String> aliasIDsInStep = new HashSet<>(variablesInStep.stream().map(v -> v.getAliasVarID()).toList());
 
 		int numOfNewVars = 0;
-		for (String id : aliasIDsInStep) {
-			if (!variablesToCheck.contains(id)) {
+		for (VarValue varInStep : variablesInStep) {
+			if (!variablesToCheck.contains(varInStep.getAliasVarID())
+					&& !varInStep.getVarName().contains("ConditionResult")) {
 				numOfNewVars++;
 			}
 		}

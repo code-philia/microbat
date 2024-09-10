@@ -9,6 +9,8 @@ import org.json.JSONObject;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetReader;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
+import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
+import microbat.tracerecov.executionsimulator.LLMResponseType;
 
 /**
  * This class is used to adjust prompt automatically.
@@ -30,7 +32,7 @@ public class AutoPromptEngineer {
 		ArrayList<ArrayList<HashMap<String, String>>> datasets = readVarExpansionDatasets();
 		trainingDataset = datasets.get(0);
 		testingDataset = datasets.get(1);
-		executionSimulator = new ExecutionSimulator();
+		executionSimulator = ExecutionSimulatorFactory.getExecutionSimulator();
 		promptTemplateFiller = new VarExpansionPromptTemplateFiller();
 		lossCalculator = new VarExpansionLossCalculator();
 		textualLossGeneartor = new TextualLossGenerator();
@@ -83,7 +85,7 @@ public class AutoPromptEngineer {
 		String originalAdjustmentPrompt = promptTemplateFiller.getAdjustmentPrompt(datapoint, originalExample);
 		String updatedExample = null;
 		try {
-			updatedExample = executionSimulator.sendRequest("", originalAdjustmentPrompt,"json_object");
+			updatedExample = executionSimulator.sendRequest("", originalAdjustmentPrompt, LLMResponseType.JSON);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -125,7 +127,7 @@ public class AutoPromptEngineer {
 				datapoint, output, textualLoss);
 		String updatedExample = null;
 		try {
-			updatedExample = executionSimulator.sendRequest("", adjustmentPromptWithTextualLoss,"json_object");
+			updatedExample = executionSimulator.sendRequest("", adjustmentPromptWithTextualLoss, LLMResponseType.JSON);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -197,7 +199,7 @@ public class AutoPromptEngineer {
 	private String getLLMOutput(String request) {
 		String output;
 		try {
-			output = executionSimulator.sendRequest("", request,"json_object");
+			output = executionSimulator.sendRequest("", request, LLMResponseType.JSON);
 			int begin = output.indexOf("{");
 			int end = output.lastIndexOf("}");
 			return output.substring(begin, end + 1);

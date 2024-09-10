@@ -12,6 +12,7 @@ import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.dataset.AliasInferenceDatasetReader;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.autoprompt.dataset.LossDataCollector;
+import microbat.tracerecov.executionsimulator.LLMResponseType;
 import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 
@@ -113,7 +114,7 @@ public class AliasInferenceExampleSearcher extends ExampleSearcher {
 		System.out.println(request);
 		System.out.println();
 
-		String output = getLLMOutput(request);
+		String output = getLLMOutput(request, LLMResponseType.JSON);
 		System.out.println(output);
 		System.out.println();
 

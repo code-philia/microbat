@@ -10,7 +10,7 @@ import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.common.core.Pair;
 
-public class ExecutionSimulatorForPromptCollection extends ExecutionSimulator {
+public class ExecutionSimulatorForPromptCollection extends GPTExecutionSimulator {
 	
 	public ExecutionSimulatorForPromptCollection() {
 		this.logger = new ExecutionSimulationFileLogger();

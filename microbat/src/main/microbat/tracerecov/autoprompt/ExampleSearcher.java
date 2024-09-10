@@ -13,6 +13,8 @@ import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.autoprompt.dataset.LossDataCollector;
 import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetReader;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
+import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
+import microbat.tracerecov.executionsimulator.LLMResponseType;
 import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 
@@ -31,11 +33,11 @@ public abstract class ExampleSearcher {
 	/**
 	 * Copied from {@code AutoPromptEngineer}
 	 */
-	protected String getLLMOutput(String request) {
+	protected String getLLMOutput(String request, LLMResponseType responseType) {
 		String output;
 		try {
-			ExecutionSimulator executionSimulator = new ExecutionSimulator();
-			output = executionSimulator.sendRequest("", request,"json_object");
+			ExecutionSimulator executionSimulator = ExecutionSimulatorFactory.getExecutionSimulator();
+			output = executionSimulator.sendRequest("", request, responseType);
 			int begin = output.indexOf("{");
 			int end = output.lastIndexOf("}");
 			return output.substring(begin, end + 1);
