@@ -38,6 +38,7 @@ import microbat.model.value.VarValue;
 import microbat.preference.AnalysisScopePreference;
 import microbat.tracerecov.TraceRecoverer;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
+import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 import microbat.tracerecov.executionsimulator.SimulatorConstants;
 import microbat.tracerecov.executionsimulator.VariableExpansionUtils;
 import microbat.util.MicroBatUtil;
@@ -179,8 +180,9 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		int var_succ = 0;
 		int def_succ = 0;
 		
-		ExecutionSimulator simulator = new ExecutionSimulator();
-
+		ExecutionSimulator simulator = ExecutionSimulatorFactory.getExecutionSimulator();
+		System.out.println(simulator.getClass());
+		
 		// for each selected data dependency to be recovered
 		for (Map<String, String> element : benchmark) {
 			int currentOrder = Integer.valueOf(element.get("Order"));

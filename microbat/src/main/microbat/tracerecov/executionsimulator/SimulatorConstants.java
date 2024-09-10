@@ -54,6 +54,6 @@ public class SimulatorConstants {
 	public static final double PRESENCE_PENALTY = 0;
 	
 	/* Gemini parameters */
-	public static final int GEMINI_TOP_P = 0;
-	public static final int GEMINI_TOP_K = 0;
+	public static final double GEMINI_TOP_P = 0.9;
+	public static final int GEMINI_TOP_K = 20;
 }

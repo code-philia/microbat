@@ -61,8 +61,8 @@ public class GeminiExecutionSimulator extends ExecutionSimulator {
 //		generationConfig.put("responseMimeType", getResponseTypeString(responseType));
 		generationConfig.put("maxOutputTokens", SimulatorConstants.MAX_TOKENS);
 		generationConfig.put("temperature", SimulatorConstants.TEMPERATURE);
-//		generationConfig.put("topP", SimulatorConstants.GEMINI_TOP_P);
-//		generationConfig.put("topK", SimulatorConstants.GEMINI_TOP_K);
+		generationConfig.put("topP", SimulatorConstants.GEMINI_TOP_P);
+		generationConfig.put("topK", SimulatorConstants.GEMINI_TOP_K);
 
 		/* request */
 		JSONObject request = new JSONObject();
