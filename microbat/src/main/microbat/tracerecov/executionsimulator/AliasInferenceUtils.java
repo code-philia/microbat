@@ -27,7 +27,7 @@ public class AliasInferenceUtils {
 			+ "You are a Java expert, you need to analyze the alias relationships through static analysis. Given a variable and a method call, your task is to identify any alias relationship between (*Set 1*) the listed fields of the given variable and (*Set 2*) the variables involved in the method call and the return value of the method call."
 			+ "\n\n<Example>\n"
 			+ "Given code:\n"
-			+ "```list.add(element);```\n"
+			+ "```list.add(item);```\n"
 			+ "\n"
 			+ "Given the source code of function calls in the code:\n"
 			+ "public boolean add(E e) {\n"
@@ -38,7 +38,7 @@ public class AliasInferenceUtils {
 			+ "\n"
 			+ "Variables involved:\n"
 			+ "`list` is of type `java.util.ArrayList`,\n"
-			+ "`element` is of type `Integer`,\n"
+			+ "`item` is of type `Integer`,\n"
 			+ "\n"
 			+ "We know that another variable not in the code, `list`, with the following structure:\n"
 			+ "{\"list:java.util.ArrayList\":{\"elementData:java.lang.Object[]\":\"[]\",\"size:int\":\"0\"}}\n"
@@ -47,7 +47,7 @@ public class AliasInferenceUtils {
 			+ "\n"
 			+ "Your response should be:\n"
 			+ "{\n"
-			+ "\"list.elementData.elementData[0]\":\"element\"\n"
+			+ "\"list.elementData.elementData[0]\":\"item\"\n"
 			+ "}\n\n";
 
 	/* Methods */
@@ -125,7 +125,8 @@ public class AliasInferenceUtils {
 			question.append(",");
 		}
 		question.append(
-				"\n\nIf a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of `<TYPE>`.");
+				"\n\nIf a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of `<TYPE>`.\n"
+				+ "If a variable has name of format `return_of_<method_signature>`, it refers to the variable returned by a method call of `<method_signature>`.");
 
 		// target variable structure
 		question.append("\n\nWe know that another variable not in the code, `");
@@ -173,7 +174,7 @@ public class AliasInferenceUtils {
 		question.append("\n\nPerform static analysis. From the given code, identify all the aliases of `" + rootVarName
 				+ "` and the fields in `" + rootVarName + "`.");
 
-		question.append("\n\nIn your response, strictly follow the JSON format. Don't include a field if alias relationship is not found. Do not include explanation.");
+		question.append("\n\nIn your response, strictly follow the JSON format. The JSON keys are from the listed fields, JSON values are variables that are the corresponding aliases of the fields. Do not include explanation.");
 
 		return question.toString();
 	}
