@@ -24,9 +24,8 @@ public class AliasInferenceUtils {
 	/* Request content */
 
 	private static final String ALIAS_INFERENCE_BACKGROUND = "<Background>\n"
-			+ "You are a Java expert, you need to analyze the alias relationships through static analysis.\n"
-			+ "\n"
-			+ "<Example>\n"
+			+ "You are a Java expert, you need to analyze the alias relationships through static analysis. Given a variable and a method call, your task is to identify any alias relationship between (*Set 1*) the listed fields of the given variable and (*Set 2*) the variables involved in the method call and the return value of the method call."
+			+ "\n\n<Example>\n"
 			+ "Given code:\n"
 			+ "```list.add(element);```\n"
 			+ "\n"
