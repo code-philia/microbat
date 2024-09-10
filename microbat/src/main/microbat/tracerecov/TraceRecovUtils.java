@@ -198,7 +198,7 @@ public class TraceRecovUtils {
 			return type.getDescriptor();
 		}
 	}
-	
+
 	public static String getSimplifiedTypeName(String fullTypeName) {
 		if (fullTypeName.contains(".")) {
 			String[] entries = fullTypeName.split("\\.");
@@ -228,7 +228,7 @@ public class TraceRecovUtils {
 //		return input.replace("\n", "\\n").replace("\r", "\\r").replace("<>", "\\<\\>");
 		return input.replace("\n", "\\n").replace("\r", "\\r");
 	}
-	
+
 	public static String processOutputStringForLLM(String output) {
 		return output.replace("\n", "").replace("\r", "").replace("\t", "");
 	}
@@ -317,17 +317,19 @@ public class TraceRecovUtils {
 	public static boolean isAssignable(VarValue variableWithGeneralType, VarValue variableWithSpecificType,
 			AppJavaClassPath appJavaClassPath) {
 		String generalType = variableWithGeneralType.getType();
+		String specificType = variableWithSpecificType.getType();
+
 		if (generalType.contains("class ")) {
 			generalType = generalType.split(" ")[1];
 		}
 		String generalName = variableWithGeneralType.getVarName();
-		boolean isArrayElement = generalType == null || generalType.equals("") || (generalName.contains("[") && generalName.contains("]"));
+		boolean isArrayElement = generalType == null || generalType.equals("")
+				|| (generalName.contains("[") && generalName.contains("]"));
 		// element in array doesn't have an inferred type (TODO: type of each element?)
-		if (isArrayElement) {
+		if (isArrayElement && isPrimitiveType(specificType)) {
 			return true;
 		}
 
-		String specificType = variableWithSpecificType.getType();
 		if (specificType.contains("class ")) {
 			specificType = specificType.split(" ")[1];
 		}
@@ -389,7 +391,7 @@ public class TraceRecovUtils {
 		stringValue = stringValue.substring(1, stringValue.length() - 1);
 		return stringValue.split(",");
 	}
-	
+
 	public static JSONArray parseJSONArrayFromString(String stringValue) {
 		String[] array = parseArrayFromString(stringValue);
 		for (int i = 0; i < array.length; i++) {
