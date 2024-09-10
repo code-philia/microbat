@@ -912,7 +912,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			String returnGeneralType = SignatureUtils.signatureToName(returnGeneralTypeSign);
 			
 			/* changed by {@author HongshuW} for TraceRecov prompt */
-			String variableName = "return_of_" + methodSignature.substring(methodSignature.indexOf("#") + 1, methodSignature.indexOf("("));
+			String variableName = "return_of_" + methodSignature;
 //			Variable returnVar = new VirtualVar(methodSignature, returnGeneralType);
 			Variable returnVar = new VirtualVar(variableName, returnGeneralType);
 
