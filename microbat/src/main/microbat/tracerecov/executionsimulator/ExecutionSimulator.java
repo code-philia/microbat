@@ -345,7 +345,7 @@ public abstract class ExecutionSimulator {
 	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar,
 			List<VarValue> criticalVariables) {
 
-		String background = DefinitionInferenceUtils.getBackgroundContent();
+		String background = DefinitionInferenceUtils.getBackgroundContent(rootVar);
 		String content = DefinitionInferenceUtils.getQuestionContent(step, rootVar, targetVar, criticalVariables);
 
 		this.logger.printInfoBeforeQuery("Definition Inference", targetVar, step, background + content);

@@ -18,6 +18,7 @@ import microbat.model.variable.Variable;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.ExampleSearcher;
 import microbat.tracerecov.autoprompt.VarExpansionExampleSearcher;
+import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.common.core.Pair;
 
@@ -95,12 +96,12 @@ public class VariableExpansionUtils {
 			TraceNode step) {
 		HashMap<String, String> datapoint = new HashMap<>();
 
-		datapoint.put("var_name", varValue.getVarName());
-		datapoint.put("var_type", varValue.getType());
-		datapoint.put("var_value", TraceRecovUtils.processInputStringForLLM(varValue.getStringValue()));
-		datapoint.put("class_structure", varSkeleton.toString());
-		datapoint.put("source_code", getSourceCode(step));
-		datapoint.put("ground_truth", ""); // not available yet
+		datapoint.put(DatasetReader.VAR_NAME, varValue.getVarName());
+		datapoint.put(DatasetReader.VAR_TYPE, varValue.getType());
+		datapoint.put(DatasetReader.VAR_VALUE, TraceRecovUtils.processInputStringForLLM(varValue.getStringValue()));
+		datapoint.put(DatasetReader.CLASS_STRUCTURE, varSkeleton.toString());
+		datapoint.put(DatasetReader.SOURCE_CODE, getSourceCode(step));
+		datapoint.put(DatasetReader.GROUND_TRUTH, ""); // not available yet
 
 		return datapoint;
 	}

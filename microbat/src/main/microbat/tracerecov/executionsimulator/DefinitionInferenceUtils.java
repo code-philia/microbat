@@ -1,11 +1,15 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.TraceRecovUtils;
+import microbat.tracerecov.autoprompt.DefinitionInferenceExampleSearcher;
+import microbat.tracerecov.autoprompt.ExampleSearcher;
+import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.coderetriever.SourceCodeRetriever;
 
 public class DefinitionInferenceUtils {
@@ -19,6 +23,40 @@ public class DefinitionInferenceUtils {
 
 	public static String getBackgroundContent() {
 		return DEFINITION_INFERENCE_BACKGROUND;
+	}
+
+	public static String getBackgroundContent(VarValue rootVar) {
+		return DEFINITION_INFERENCE_BACKGROUND + getExample(rootVar);
+	}
+
+	private static HashMap<String, String> getDatapointFromStep(VarValue rootVar) {
+
+		// TARGET_VAR
+		String jsonString = TraceRecovUtils.processInputStringForLLM(rootVar.toJSON().toString());
+
+		HashMap<String, String> datapoint = new HashMap<>();
+		datapoint.put(DatasetReader.TARGET_FIELD, "");
+		datapoint.put(DatasetReader.VAR_NAME, "");
+		datapoint.put(DatasetReader.TARGET_VAR, jsonString);
+		datapoint.put(DatasetReader.SOURCE_CODE, "");
+		datapoint.put(DatasetReader.INVOKED_METHODS, "");
+		datapoint.put(DatasetReader.VARS_IN_STEP, "");
+		datapoint.put(DatasetReader.GROUND_TRUTH, ""); // not available yet
+
+		return datapoint;
+	}
+
+	private static String getExample(VarValue rootVar) {
+		HashMap<String, String> datapoint = getDatapointFromStep(rootVar);
+
+		ExampleSearcher exampleSearcher = new DefinitionInferenceExampleSearcher();
+		String closestExample = exampleSearcher.searchForExample(datapoint);
+
+		// TODO: add default example
+		if (closestExample == null || closestExample.equals("")) {
+			return "";
+		}
+		return closestExample;
 	}
 
 	public static String getQuestionContent(TraceNode step, VarValue rootVar, VarValue targetVar,

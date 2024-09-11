@@ -22,6 +22,10 @@ public class VarSkeletonParser {
 		String varType = keyValuePair[0];
 		String varValue = keyValuePair[1];
 
+		if (varType.contains("|")) {
+			varType = varType.split("\\|")[1];
+		}
+
 		VariableSkeleton variableSkeleton = new VariableSkeleton(varType);
 		parseClassStructureRecur(varValue, variableSkeleton);
 
@@ -77,7 +81,7 @@ public class VarSkeletonParser {
 
 	public VariableSkeleton parseVariableValueJSONObject(JSONObject variable) {
 		String key = variable.keys().next(); // assume root layer has one key
-		String[] nameAndType = key.split(":");
+		String[] nameAndType = key.split("\\|");
 		Object value = variable.get(key);
 
 		VariableSkeleton varSkeleton = new VariableSkeleton(nameAndType[1], nameAndType[0]);
@@ -94,7 +98,7 @@ public class VarSkeletonParser {
 
 	private void parseVariableValueJSONObjectRecur(JSONObject variable, VariableSkeleton parentVar) {
 		for (String key : variable.keySet()) {
-			String[] nameAndType = key.split(":");
+			String[] nameAndType = key.split("\\|");
 			Object value = variable.get(key);
 
 			VariableSkeleton childVar = new VariableSkeleton(nameAndType[1], nameAndType[0]);
@@ -111,7 +115,27 @@ public class VarSkeletonParser {
 	}
 
 	private void parseVariableValueJSONArrayRecur(JSONArray variable, VariableSkeleton parentVar) {
-		// TODO: implement this
+		String arrayElementType = "Object";
+		if (parentVar.getType().contains("[")) {
+			parentVar.getType().substring(0, parentVar.getType().lastIndexOf("["));
+		}
+		String arrayName = parentVar.getName();
+		int length = variable.length();
+		for (int i = 0; i < length; i++) {
+			String arrayElementName = arrayName + "[" + i + "]";
+			Object value = variable.get(i);
+			
+			VariableSkeleton childVar = new VariableSkeleton(arrayElementType, arrayElementName);
+			parentVar.addChild(childVar);
+			
+			if (value instanceof JSONObject) {
+				parseVariableValueJSONObjectRecur((JSONObject) value, childVar);
+			} else if (value instanceof JSONArray) {
+				parseVariableValueJSONArrayRecur((JSONArray) value, childVar);
+			} else {
+				parseVariableValueOthersRecur(value, childVar);
+			}
+		}
 	}
 
 	private void parseVariableValueOthersRecur(Object value, VariableSkeleton parentVar) {

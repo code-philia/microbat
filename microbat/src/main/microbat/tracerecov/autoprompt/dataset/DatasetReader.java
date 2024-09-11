@@ -20,7 +20,7 @@ public abstract class DatasetReader {
 	public static final String SOURCE_CODE = "source_code";
 	public static final String GROUND_TRUTH = "ground_truth";
 
-	/* alias inference keys */
+	/* alias inference and definition inference keys */
 	public static final String VARS_IN_STEP = "vars_in_step";
 	public static final String TARGET_VAR = "target_var";
 	public static final String CURRENT_ALIASES = "current_aliases";
@@ -28,6 +28,7 @@ public abstract class DatasetReader {
 	public static final String INVOKED_METHODS = "invoked_methods";
 	public static final String CRITICAL_VARS = "critical_vars";
 	public static final String SOURCE_FILE = "source_file";
+	public static final String TARGET_FIELD = "target_field";
 
 	private long seed = 2024L;
 
