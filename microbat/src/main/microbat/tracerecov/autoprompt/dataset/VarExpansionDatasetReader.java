@@ -19,7 +19,7 @@ public class VarExpansionDatasetReader extends DatasetReader {
 		String variableExpansionFile = "var_expansion.txt";
 
 		this.variableExpansionPath = Activator.getDefault().getPreferenceStore()
-				.getString(TraceRecovPreference.PROMPT_GT_PATH) + File.separator + variableExpansionFile;
+				.getString(TraceRecovPreference.VAR_EXPAND_FILE_PATH) + File.separator + variableExpansionFile;
 	}
 
 	/**
@@ -28,7 +28,7 @@ public class VarExpansionDatasetReader extends DatasetReader {
 	 * var_name, var_type, var_value, class_structure, source_code, ground_truth
 	 */
 	@Override
-	protected ArrayList<HashMap<String, String>> readCompleteDataset() {
+	public ArrayList<HashMap<String, String>> readCompleteDataset() {
 		ArrayList<HashMap<String, String>> dataset = new ArrayList<>();
 
 		try {

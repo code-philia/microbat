@@ -14,7 +14,7 @@ public abstract class PromptTemplateFiller {
 
 	public abstract String getDefaultPrompt(HashMap<String, String> datapoint);
 
-	public abstract String getExample(HashMap<String, String> datapoint, String structure);
+	public abstract String getExample(HashMap<String, String> datapoint, String groundTruth);
 
 	/* Adjustment Prompt */
 

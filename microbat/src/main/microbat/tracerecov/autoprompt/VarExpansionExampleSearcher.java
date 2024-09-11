@@ -22,23 +22,35 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 	private PromptTemplateFiller promptTemplateFiller;
 
 	public VarExpansionExampleSearcher() {
+		this(false);
+	}
+
+	public VarExpansionExampleSearcher(boolean useFullDataset) {
 		DatasetReader datasetReader = new VarExpansionDatasetReader();
-		ArrayList<ArrayList<HashMap<String, String>>> datasets = datasetReader.getTrainingAndTestingDataset();
-		trainingDataset = datasets.get(0);
-		trainingDataset.addAll(datasets.get(1)); // remove this when not conducting rq2
-		testingDataset = datasets.get(1);
+		if (useFullDataset) {
+			trainingDataset = datasetReader.readCompleteDataset();
+			testingDataset = new ArrayList<>();
+		} else {
+			ArrayList<ArrayList<HashMap<String, String>>> datasets = datasetReader.getTrainingAndTestingDataset();
+			trainingDataset = datasets.get(0);
+			testingDataset = datasets.get(1);
+		}
+
 		varSkeletonParser = new VarSkeletonParser();
 		promptTemplateFiller = new VarExpansionPromptTemplateFiller();
 	}
 
 	@Override
 	public String searchForExample(HashMap<String, String> datapoint) {
+		/* keys */
 		String classStructureKey = DatasetReader.CLASS_STRUCTURE;
 		String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
+		/* datapoint features */
 		String classStructure = datapoint.get(classStructureKey);
 		VariableSkeleton varSkeleton = varSkeletonParser.parseClassStructure(classStructure);
 
+		/* search for closest example */
 		double minDiffScore = 1;
 		int datapointIndex = 0;
 		int exactlyMatch = -1;
@@ -70,9 +82,6 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 		return promptTemplateFiller.getExample(closestExample, groundTruth);
 	}
 
-	/**
-	 * For testing purpose
-	 */
 	@Override
 	public void recordLoss() {
 		LossDataCollector lossDataCollector = new LossDataCollector();

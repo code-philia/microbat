@@ -14,6 +14,7 @@ import microbat.tracerecov.executionsimulator.LLMResponseType;
 
 /**
  * This class is used to adjust prompt automatically.
+ * TODO: update later (not used for now)
  */
 public class AutoPromptEngineer {
 

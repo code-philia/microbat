@@ -16,7 +16,7 @@ public class LossDataCollector {
 	public LossDataCollector() {
 		// TODO: move this to preference page
 		String resultFile = "var_expansion_result.txt";
-		this.resultPath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.PROMPT_GT_PATH)
+		this.resultPath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.VAR_EXPAND_FILE_PATH)
 				+ File.separator + resultFile;
 	}
 

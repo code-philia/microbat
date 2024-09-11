@@ -7,10 +7,9 @@ import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 
 public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 
-	private static String variableExpansionPromptBackground = 
-			"<Background>\n"
-			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \n"
-			+ "\n";
+	private static String variableExpansionPromptBackground = "<Background>\r\n"
+			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \r\n"
+			+ "\r\n";
 
 	private static String variableExpansionPromptExample = 
 			"<Example>\r\n"
@@ -32,37 +31,38 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 			+ "We can summarize the structure as \r\n"
 			+ "Here is the given structure converted to JSON format (every variable shall strictly have a Java type, followed by its value):\r\n"
 			+ "{\r\n"
-			+ "  \"map: java.util.HashMap<HashMap, ArrayList>\": {\r\n"
-			+ "    \"key[0]: HashMap\": {\r\n"
-			+ "      {\r\n"
-			+ "        \"key[0]: java.lang.String\": \"k1\",\r\n"
-			+ "        \"key[1]: java.lang.String\": \"k2\",\r\n"
-			+ "        \"value[0]: java.lang.Integer\": 1,\r\n"
-			+ "        \"value[1]: java.lang.Integer\": 2,\r\n"
-			+ "        \"size: int\": 2	\r\n"
-			+ "      }\r\n"
+			+ "  \"map| java.util.HashMap<HashMap, ArrayList>\": {\r\n"
+			+ "    \"key[0]| java.util.HashMap\": {\r\n"
+			+ "      \"map\":{\r\n"
+			+ "        \"key[0]| java.lang.String\": \"k1\",\r\n"
+			+ "        \"key[1]| java.lang.String\": \"k2\",\r\n"
+			+ "        \"value[0]| java.lang.Integer\": 1,\r\n"
+			+ "        \"value[1]| java.lang.Integer\": 2,\r\n"
+			+ "        \"size| int\": 2	\r\n"
+			+ "       }\r\n"
 			+ "    },\r\n"
-			+ "    \"key[1]: java.util.HashMap\": {\r\n"
+			+ "    \"key[1]| java.util.HashMap\": {\r\n"
 			+ "      \"map\": {\r\n"
-			+ "        \"key[0]: java.lang.String\": \"kA\",\r\n"
-			+ "        \"key[1]: java.lang.String\": \"kB\",\r\n"
-			+ "        \"value[0]: java.lang.Integer\": 100,\r\n"
-			+ "        \"value[1]: java.lang.Integer\": 200,\r\n"
-			+ "         \"size: int\": 2\r\n"
+			+ "        \"key[0]| java.lang.String\": \"kA\",\r\n"
+			+ "        \"key[1]| java.lang.String\": \"kB\",\r\n"
+			+ "        \"value[0]| java.lang.Integer\": 100,\r\n"
+			+ "        \"value[1]| java.lang.Integer\": 200,\r\n"
+			+ "         \"size| int\": 2\r\n"
 			+ "       }\r\n"
 			+ "     },\r\n"
-			+ "     \"value[0]: java.util.ArrayList<String>\": { \r\n"
-			+ "\"elementData: java.lang.Object[]\": [ \"v1\", \"v2\"], \r\n"
-			+ "  \"size: int\": 2 \r\n"
+			+ "     \"value[0]| java.util.ArrayList<String>\": { \r\n"
+			+ "			\"elementData| java.lang.Object[]\": [ \"v1\", \"v2\"], \r\n"
+			+ "  		\"size| int\": 2 \r\n"
 			+ "       }, \r\n"
-			+ "      \"value[1]: java.util.ArrayList<String>\": { \r\n"
-			+ "\"elementData: java.lang.Object[]\": [ \"vA\", \"vB\"], \r\n"
-			+ "  \"size: int\": 2 \r\n"
+			+ "     \"value[1]| java.util.ArrayList<String>\": { \r\n"
+			+ "			\"elementData| java.lang.Object[]\": [ \"vA\", \"vB\"], \r\n"
+			+ "  		\"size| int\": 2 \r\n"
 			+ "       },\r\n"
-			+ "      \"size\": 2\r\n"
+			+ "     \"size| int\": 2\r\n"
 			+ "  },\r\n"
-			+ " }\r\n";
+			+ " }";
 
+	// TODO: update later (not used for now)
 	private static String variableExpansionAdjustmentPromptPrefix = 
 			"You are given a prompt template with examples which might be inaccurate.\n"
 			+ "\n"
@@ -80,6 +80,7 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		return variableExpansionPromptExample;
 	}
 
+	// TODO: update later (not used for now)
 	@Override
 	public String getPromptQuestion(HashMap<String, String> datapoint) {
 		/* datapoint features */
@@ -101,18 +102,20 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		return stringBuilder.toString();
 	}
 
+	// TODO: update later (not used for now)
 	@Override
 	public String getPrompt(HashMap<String, String> datapoint, String example) {
 		return variableExpansionPromptBackground + example + getPromptQuestion(datapoint);
 	}
 
+	// TODO: update later (not used for now)
 	@Override
 	public String getDefaultPrompt(HashMap<String, String> datapoint) {
 		return variableExpansionPromptBackground + variableExpansionPromptExample + getPromptQuestion(datapoint);
 	}
 
 	@Override
-	public String getExample(HashMap<String, String> datapoint, String groundTruthExample) {
+	public String getExample(HashMap<String, String> datapoint, String groundTruth) {
 		String varType = datapoint.get(DatasetReader.VAR_TYPE);
 		String varValue = TraceRecovUtils.processInputStringForLLM(datapoint.get(DatasetReader.VAR_VALUE));
 		String classStructure = datapoint.get(DatasetReader.CLASS_STRUCTURE);
@@ -123,12 +126,13 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		stringBuilder.append("\nStructure: " + classStructure);
 		stringBuilder.append("\nVariable Value: " + varValue);
 
-		stringBuilder.append("\nWe can summarize the structure as:\n```json\n" + groundTruthExample + "\n```");
+		stringBuilder.append("\nWe can summarize the structure as:\n```json\n" + groundTruth + "\n```");
 
 		return stringBuilder.toString();
 	}
 
-	/* Adjustment Prompt */
+	/* Adjustment Prompt
+	 * TODO: update later (not used for now) */
 
 	/**
 	 * datapoint features:
@@ -157,7 +161,8 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		return getAdjustmentPrompt(datapoint, variableExpansionPromptExample);
 	}
 
-	/* Adjustment Prompt Incorporating Textual Loss */
+	/* Adjustment Prompt Incorporating Textual Loss
+	 * TODO: update later (not used for now) */
 
 	@Override
 	public String getAdjustmentPromptWithLoss(String example, HashMap<String, String> datapoint, String output,
