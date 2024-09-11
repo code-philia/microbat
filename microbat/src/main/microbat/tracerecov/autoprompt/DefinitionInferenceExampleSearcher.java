@@ -13,6 +13,9 @@ import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 
 public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
+
+	private static double DIFF_SCORE_THRESHOLD = 0.5;
+
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
 	private VarSkeletonParser varSkeletonParser;
@@ -66,9 +69,13 @@ public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 			}
 		}
 
-		HashMap<String, String> closestExample = trainingDataset.get(datapointIndex);
-		String groundTruth = TraceRecovUtils.processInputStringForLLM(closestExample.get(groundTruthKey));
-		return promptTemplateFiller.getExample(closestExample, groundTruth);
+		if (minDiffScore < DIFF_SCORE_THRESHOLD) {
+			HashMap<String, String> closestExample = trainingDataset.get(datapointIndex);
+			String groundTruth = TraceRecovUtils.processInputStringForLLM(closestExample.get(groundTruthKey));
+			return promptTemplateFiller.getExample(closestExample, groundTruth);
+		} else {
+			return "";
+		}
 	}
 
 	// TODO: update later (not used for now)
