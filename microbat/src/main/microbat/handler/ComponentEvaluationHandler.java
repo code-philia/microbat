@@ -54,6 +54,8 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 	private int notPredictedNum;
 	private int wrongPredictionNum;
 
+	private final String RESULT_PATH = "C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_result_def";
+	
 	private static ArrayList<String> classes = new ArrayList<>(Arrays.asList(
             "leetbugs.ANAGRAM",
             "leetbugs.ANAGRAMS",
@@ -111,11 +113,10 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		Log.printMsg(getClass(), "Launch Class: "+launchClass);
 		Log.printMsg(getClass(), "=====================================");
 		Log.printMsg(getClass(), "");
-		
 		Log.printMsg(getClass(), "Using model: "+SimulatorConstants.getSelectedModel());
-
 		Settings.launchClass = launchClass;
 		
+		// preparation for generating trace
 		final AppJavaClassPath appClassPath = MicroBatUtil.constructClassPaths();
 		List<String> srcFolders = MicroBatUtil.getSourceFolders(Settings.projectName);
 		appClassPath.setSourceCodePath(MicroBatUtil.getSourceFolder(Settings.launchClass, Settings.projectName));
@@ -125,7 +126,8 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 				appClassPath.getAdditionalSourceFolders().add(srcFolder);
 			}
 		}
-
+		
+		// generate trace
 		Trace trace = this.generateTrace(appClassPath, null);
 		Display.getDefault().asyncExec(new Runnable() {
 			@Override
@@ -136,6 +138,9 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 			}
 		});
 
+		/*
+		 * This is preparation for evaluating both var_exp and def_infer, now we have finished var_exp
+		 */
 		// String className = Settings.launchClass.substring(Settings.launchClass.indexOf(".") + 1);
 		// ObjectMapper objectMapper = new ObjectMapper();
 		// Path bmPath = Paths.get("C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_benchmark", className + ".json");
@@ -160,6 +165,8 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 
 		// String result = evaluateComponent(appClassPath, trace, benchmark, groundtruth);
 
+		
+		// preparation for evaluating def_infer
 		String className = Settings.launchClass.substring(Settings.launchClass.indexOf(".") + 1);
 		ObjectMapper objectMapper = new ObjectMapper();
 		Path bmPath1 = Paths.get("C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_benchmark_def", className + ".json");
@@ -182,40 +189,15 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 			return;
 		}
         benchmark_positive.addAll(benchmark_negtive);
+        
         String result = evaluateDefInference(appClassPath, trace, benchmark_positive);
 
-		String filePath = Paths.get("C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_result_def", className + ".txt").toString();
+		String filePath = Paths.get(RESULT_PATH, className + ".txt").toString();
 		try (FileWriter writer = new FileWriter(filePath)) {
 			writer.write(result);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	protected Trace generateTrace(final AppJavaClassPath appClassPath, Condition condition) {
-		List<String> includedClassNames = AnalysisScopePreference.getIncludedLibList();
-		List<String> excludedClassNames = AnalysisScopePreference.getExcludedLibList();
-		InstrumentationExecutor executor;
-		if (condition == null) {
-			executor = new InstrumentationExecutor(appClassPath, generateTraceDir(appClassPath), "trace",
-					includedClassNames, excludedClassNames);
-		} else {
-			executor = new InstrumentationExecutor(appClassPath, generateTraceDir(appClassPath), "trace",
-					includedClassNames, excludedClassNames, condition);
-		}
-
-		try {
-			final RunningInfo result = executor.run();
-			if (result == null) {
-				return null;
-			}
-			Trace trace = result.getMainTrace();
-			trace.setAppJavaClassPath(appClassPath);
-			return trace;
-		} catch (StepLimitException e) {
-			e.printStackTrace();
-		}
-		return null;
 	}
 
     protected String evaluateDefInference(final AppJavaClassPath appClassPath, Trace trace, List<Map<String, String>> benchmark){
@@ -257,8 +239,9 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 			VariableExpansionUtils.processResponse(rootVar, varExpandedJson.toString());
 
             List<VarValue> criticalVariables = new ArrayList<>();
-            // find target var
+            // find target var (field)
             VarValue targetVar = rootVar;
+            
             String[] varNames = element.get("FieldName").split("\\.");
             if(!rootVar.getVarName().equals(varNames[0])){
                 element.put("SkipReason","root var name not match");
@@ -266,6 +249,8 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
                 continue;
             }
 
+            //varNams: list.elementData.elementData[0]
+            //          ^       ^            ^
             criticalVariables.add(rootVar);
             int i;
             for(i = 1;i<varNames.length;i++){
@@ -315,7 +300,11 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		return result.toString();
     }
 
-
+    
+	/*
+	 * These are for evaluating both var_exp and def_infer, now we have finished var_exp, 
+	 * so ** IGNORE ** the functions below
+	 */
 	protected String evaluateComponent(final AppJavaClassPath appClassPath, Trace trace,
 			List<Map<String, String>> benchmark, Map<String, List<String>> groundtruth) {
 		// var-expansion
@@ -377,45 +366,45 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 			}
 			
 			// 3. Definition inference precision
-//			Set<Integer> dataDominatorsAfterRecovery;
-//			if (predictedDataDep.containsKey(currentOrder)) {
-//				dataDominatorsAfterRecovery = predictedDataDep.get(currentOrder);
-//				if (dataDominatorsAfterRecovery.contains(Integer.valueOf(element.get("Dependency")))) {
-//					def_succ += 1;
-//					continue;
-//				}
-//			} else {
-//				dataDominatorsAfterRecovery = new HashSet<>();
-//			}
-//
-//			// assume variable is correct
-//			Condition condition = new Condition(readVar.getVarName(), readVar.getType(), readVar.getStringValue(),"null");
-//			System.out.println("Re-execution of condition: " + condition);
-//			Trace newTrace = generateTrace(appClassPath, condition);
-//			JSONObject varExpandedJson = condition.getMatchedGroundTruth(newTrace);
-//			if (varExpandedJson == null) {
-//				continue;
-//			}
-//			VariableExpansionUtils.processResponse(readVar, varExpandedJson.toString());
-//			
-//			TraceRecoverer traceRecoverer = new TraceRecoverer();
-//			for (VarValue targetVar : readVar.getAllDescedentChildren()) {
-//				if (targetVar.getVarName().equals(element.get("Field"))) {
-//					traceRecoverer.recoverDataDependency(currentStep, targetVar, readVar);
-//					TraceNode dataDominator = trace.findProducer(targetVar,currentStep);
-//					TraceNode dataDominator1 = trace.findProducer(readVar, currentStep);
-//					if (dataDominator != null) {
-//						dataDominatorsAfterRecovery.add(dataDominator.getOrder());
-//					}
-//					if(dataDominator1 != null){
-//						dataDominatorsAfterRecovery.add(dataDominator1.getOrder());
-//					}
-//				}
-//			}
-//			predictedDataDep.put(currentOrder, dataDominatorsAfterRecovery);
-//			if (dataDominatorsAfterRecovery.contains(Integer.valueOf(element.get("Dependency")))) {
-//				def_succ += 1;
-//			}
+			Set<Integer> dataDominatorsAfterRecovery;
+			if (predictedDataDep.containsKey(currentOrder)) {
+				dataDominatorsAfterRecovery = predictedDataDep.get(currentOrder);
+				if (dataDominatorsAfterRecovery.contains(Integer.valueOf(element.get("Dependency")))) {
+					def_succ += 1;
+					continue;
+				}
+			} else {
+				dataDominatorsAfterRecovery = new HashSet<>();
+			}
+
+			// assume variable is correct
+			Condition condition = new Condition(readVar.getVarName(), readVar.getType(), readVar.getStringValue(),"null");
+			System.out.println("Re-execution of condition: " + condition);
+			Trace newTrace = generateTrace(appClassPath, condition);
+			JSONObject varExpandedJson = condition.getMatchedGroundTruth(newTrace);
+			if (varExpandedJson == null) {
+				continue;
+			}
+			VariableExpansionUtils.processResponse(readVar, varExpandedJson.toString());
+			
+			TraceRecoverer traceRecoverer = new TraceRecoverer();
+			for (VarValue targetVar : readVar.getAllDescedentChildren()) {
+				if (targetVar.getVarName().equals(element.get("Field"))) {
+					traceRecoverer.recoverDataDependency(currentStep, targetVar, readVar);
+					TraceNode dataDominator = trace.findProducer(targetVar,currentStep);
+					TraceNode dataDominator1 = trace.findProducer(readVar, currentStep);
+					if (dataDominator != null) {
+						dataDominatorsAfterRecovery.add(dataDominator.getOrder());
+					}
+					if(dataDominator1 != null){
+						dataDominatorsAfterRecovery.add(dataDominator1.getOrder());
+					}
+				}
+			}
+			predictedDataDep.put(currentOrder, dataDominatorsAfterRecovery);
+			if (dataDominatorsAfterRecovery.contains(Integer.valueOf(element.get("Dependency")))) {
+				def_succ += 1;
+			}
 		}
 
 		StringBuilder result = new StringBuilder();
@@ -434,15 +423,41 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		result.append("Variable expansion recovery successfull number: " + var_succ + "\n");
 		result.append("Variable expansion recovery successfull rate: " + var_recov_rate + "\n");
 		
-//		double def_infer_rate = (double) def_succ / total;
-//		result.append("Checked data dependency number:" + total + "\n");
-//		result.append("Definition inference successfull number:" + def_succ + "\n");
-//		result.append("Definition inference successfull rate:" + def_infer_rate + "\n");
+		double def_infer_rate = (double) def_succ / total;
+		result.append("Checked data dependency number:" + total + "\n");
+		result.append("Definition inference successfull number:" + def_succ + "\n");
+		result.append("Definition inference successfull rate:" + def_infer_rate + "\n");
 
 		System.out.println(result.toString());
 		return result.toString();
 	}
+	
+	protected Trace generateTrace(final AppJavaClassPath appClassPath, Condition condition) {
+		List<String> includedClassNames = AnalysisScopePreference.getIncludedLibList();
+		List<String> excludedClassNames = AnalysisScopePreference.getExcludedLibList();
+		InstrumentationExecutor executor;
+		if (condition == null) {
+			executor = new InstrumentationExecutor(appClassPath, generateTraceDir(appClassPath), "trace",
+					includedClassNames, excludedClassNames);
+		} else {
+			executor = new InstrumentationExecutor(appClassPath, generateTraceDir(appClassPath), "trace",
+					includedClassNames, excludedClassNames, condition);
+		}
 
+		try {
+			final RunningInfo result = executor.run();
+			if (result == null) {
+				return null;
+			}
+			Trace trace = result.getMainTrace();
+			trace.setAppJavaClassPath(appClassPath);
+			return trace;
+		} catch (StepLimitException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	protected Pair<Double, Double> calculatePR(String groundtruth, String prediction) {
 		// parse to json object
 		System.out.println("Original string: ");
