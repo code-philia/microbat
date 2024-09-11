@@ -25,6 +25,9 @@ public abstract class ExampleSearcher {
 
 	public abstract String searchForExample(HashMap<String, String> datapoint);
 
+	/**
+	 * For testing purpose
+	 */
 	public abstract void recordLoss();
 
 	protected abstract double getLoss(HashMap<String, String> datapoint,

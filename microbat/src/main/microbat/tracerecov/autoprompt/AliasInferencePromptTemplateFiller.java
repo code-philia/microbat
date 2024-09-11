@@ -7,27 +7,37 @@ import org.json.JSONObject;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 
+// TODO: update later (not used for now)
 public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
 
-	private static String aliasInferencePromptBackground = 
-			"<Background>\n"
-			+ "You are a Java expert, you need to analyze the runtime execution of a Java program. You need to identify when there is a relationship between two variables.\n"
-			+ "\n";
+	private static String aliasInferencePromptBackground = "<Background>\n"
+			+ "You are a Java expert, you need to analyze the alias relationships through static analysis. Given a variable and a method call, your task is to identify any alias relationship between (*Set 1*) the listed fields of the given variable and (*Set 2*) the variables involved in the method call and the return value of the method call.";
 
-	private static String aliasInferencePromptExample = 
-			"<Example>\n"
-			+ "Given the code as:\n"
-			+ "```list.add(element);```\n"
-			+ "`list` is of type `java.util.ArrayList`, of runtime value \"[]\",\n"
-			+ "`element` is of type `Integer`, of runtime value \" 1\",\n"
-			+ "We know that `list` has the following structure:\n"
+	private static String aliasInferencePromptExample = "\n\n<Example>\n"
+			+ "Given code:\n"
+			+ "```list.add(item);```\n"
+			+ "\n"
+			+ "Given the source code of function calls in the code:\n"
+			+ "public boolean add(E e) {\n"
+			+ "modCount++;\n"
+			+ "add(e, elementData, size);\n"
+			+ "return true;\n"
+			+ "}\n"
+			+ "\n"
+			+ "Variables involved:\n"
+			+ "`list` is of type `java.util.ArrayList`,\n"
+			+ "`item` is of type `Integer`,\n"
+			+ "\n"
+			+ "We know that another variable not in the code, `list`, with the following structure:\n"
 			+ "{\"list:java.util.ArrayList\":{\"elementData:java.lang.Object[]\":\"[]\",\"size:int\":\"0\"}}\n"
+			+ "\n"
+			+ "We are interested in the fields `list.elementData.elementData[0]`\n"
 			+ "\n"
 			+ "Your response should be:\n"
 			+ "{\n"
-			+ "\"list.elementData[0]\":\"element\"\n"
-			+ "}";
-
+			+ "\"list.elementData.elementData[0]\":\"item\"\n"
+			+ "}\n\n";
+	
 	// TODO: prompt engineering
 	private static String aliasInferenceAdjustmentPromptPrefix = "";
 

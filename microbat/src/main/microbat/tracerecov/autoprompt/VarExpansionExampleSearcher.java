@@ -32,12 +32,15 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 	@Override
 	public String searchForExample(HashMap<String, String> datapoint) {
+		/* keys */
 		String classStructureKey = DatasetReader.CLASS_STRUCTURE;
 		String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
+		/* datapoint features */
 		String classStructure = datapoint.get(classStructureKey);
 		VariableSkeleton varSkeleton = varSkeletonParser.parseClassStructure(classStructure);
 
+		/* search for closest example */
 		double minDiffScore = 1;
 		int datapointIndex = 0;
 		for (int i = 0; i < trainingDataset.size(); i++) {
@@ -57,9 +60,6 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 		return promptTemplateFiller.getExample(closestExample, groundTruth);
 	}
 
-	/**
-	 * For testing purpose
-	 */
 	@Override
 	public void recordLoss() {
 		LossDataCollector lossDataCollector = new LossDataCollector();

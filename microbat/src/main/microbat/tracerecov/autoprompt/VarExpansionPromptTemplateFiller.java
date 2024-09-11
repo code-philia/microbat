@@ -7,10 +7,9 @@ import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 
 public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 
-	private static String variableExpansionPromptBackground = 
-			"<Background>\n"
-			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \n"
-			+ "\n";
+	private static String variableExpansionPromptBackground = "<Background>\r\n"
+			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \r\n"
+			+ "\r\n";
 
 	private static String variableExpansionPromptExample = 
 			"<Example>\r\n"
@@ -63,6 +62,7 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 			+ "  },\r\n"
 			+ " }\r\n";
 
+	// TODO: update later (not used for now)
 	private static String variableExpansionAdjustmentPromptPrefix = 
 			"You are given a prompt template with examples which might be inaccurate.\n"
 			+ "\n"
