@@ -177,6 +177,9 @@ public class TraceRecoverer {
 						if (isCriticalVariable(criticalVariables, writtenField)) {
 							VarValue variableOnTrace = fieldToVarOnTraceMap.get(writtenField);
 							String aliasIdOfCriticalVar = variableOnTrace.getAliasVarID();
+							if (aliasIdOfCriticalVar != null && aliasIdOfCriticalVar.contains(":")) {
+								aliasIdOfCriticalVar = aliasIdOfCriticalVar.split(":")[0];
+							}
 
 							if (isValidAliasID(aliasIdOfCriticalVar)) {
 								updateAliasIDOfField(writtenField, variableOnTrace, criticalVariables);
@@ -187,7 +190,11 @@ public class TraceRecoverer {
 							 * key and value: variable on trace. Field in variable is not recorded.
 							 */
 							if (isValidAliasID(writtenField.getAliasVarID())) {
-								variablesToCheck.add(writtenField.getAliasVarID());
+								String aliasIdOfCriticalVar = writtenField.getAliasVarID();
+								if (aliasIdOfCriticalVar != null && aliasIdOfCriticalVar.contains(":")) {
+									aliasIdOfCriticalVar = aliasIdOfCriticalVar.split(":")[0];
+								}
+								variablesToCheck.add(aliasIdOfCriticalVar);
 							}
 						}
 					}
@@ -240,17 +247,47 @@ public class TraceRecoverer {
 	}
 
 	/**
-	 * only check steps containing variablesToCheck AND are calling API
+	 * only check steps containing variablesToCheck
 	 */
 	private boolean isRelevantStep(TraceNode step, Set<String> variablesToCheck) {
 		Set<VarValue> variablesInStep = step.getAllVariables();
-		Set<String> aliasIDsInStep = new HashSet<>(variablesInStep.stream().map(v -> v.getAliasVarID()).toList());
+		for (VarValue variable : variablesInStep) {
+			if (variablesToCheck.contains(variable.getAliasVarID())
+					&& (variable.getVarName() != null && !variable.getVarName().contains("this"))) {
+				return true;
+			}
+		}
 
-		return aliasIDsInStep.stream().anyMatch(id -> variablesToCheck.contains(id));
+		return false;
 	}
 
 	private boolean isStepToCheck(TraceNode step) {
-		return step.isCallingAPI() && step.getInvokingMethod() != null && !step.getInvokingMethod().equals("%");
+		if (!step.isCallingAPI()) {
+			return false;
+		}
+		
+		String invokingMethod = step.getInvokingMethod();
+		if (invokingMethod == null || invokingMethod.equals("%")) {
+			return false;
+		}
+		
+		if (invokingMethod.contains("%")) {
+			String[] invokedMethods = invokingMethod.split("%");
+			List<TraceNode> children = step.getInvocationChildren();
+			if (children == null || children.isEmpty()) {
+				return true;
+			}
+			String expandedMethod = children.get(0).getMethodSign();
+			int unrecordedMethods = 0;
+			for (String m : invokedMethods) {
+				if (!m.equals(expandedMethod)) {
+					unrecordedMethods++;
+				}
+			}
+			return unrecordedMethods > 0;
+		}
+
+		return true;
 	}
 
 	/**

@@ -908,8 +908,13 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		trackingDelegate.untrack();
 		try {
 			hitLine(line, className, methodSignature);
+			
 			String returnGeneralType = SignatureUtils.signatureToName(returnGeneralTypeSign);
-			Variable returnVar = new VirtualVar(methodSignature, returnGeneralType);
+			
+			/* changed by {@author HongshuW} for TraceRecov prompt */
+			String variableName = "return_of_" + methodSignature;
+//			Variable returnVar = new VirtualVar(methodSignature, returnGeneralType);
+			Variable returnVar = new VirtualVar(variableName, returnGeneralType);
 
 			String varID = VirtualVar.VIRTUAL_PREFIX + methodSignature;
 			returnVar.setVarID(varID);
