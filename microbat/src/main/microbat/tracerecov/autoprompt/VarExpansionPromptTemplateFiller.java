@@ -115,7 +115,7 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 	}
 
 	@Override
-	public String getExample(HashMap<String, String> datapoint, String groundTruthExample) {
+	public String getExample(HashMap<String, String> datapoint, String groundTruth) {
 		String varType = datapoint.get(DatasetReader.VAR_TYPE);
 		String varValue = TraceRecovUtils.processInputStringForLLM(datapoint.get(DatasetReader.VAR_VALUE));
 		String classStructure = datapoint.get(DatasetReader.CLASS_STRUCTURE);
@@ -126,7 +126,7 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		stringBuilder.append("\nStructure: " + classStructure);
 		stringBuilder.append("\nVariable Value: " + varValue);
 
-		stringBuilder.append("\nWe can summarize the structure as:\n```json\n" + groundTruthExample + "\n```");
+		stringBuilder.append("\nWe can summarize the structure as:\n```json\n" + groundTruth + "\n```");
 
 		return stringBuilder.toString();
 	}

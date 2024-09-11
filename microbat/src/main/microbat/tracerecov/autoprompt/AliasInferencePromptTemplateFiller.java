@@ -152,7 +152,7 @@ public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
 	}
 
 	@Override
-	public String getExample(HashMap<String, String> datapoint, String structure) {
+	public String getExample(HashMap<String, String> datapoint, String groundTruth) {
 		/* datapoint features */
 		String sourceCode = datapoint.get(DatasetReader.SOURCE_CODE);
 		JSONObject variablesInStep = new JSONObject(datapoint.get(DatasetReader.VARS_IN_STEP));
@@ -161,8 +161,6 @@ public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
 		String[] targetVarNameAndValue = targetVar.split(":", 2);
 		String rootVarName = targetVarNameAndValue[0];
 		String jsonString = targetVarNameAndValue[1];
-
-		String groundTruthExample = datapoint.get(DatasetReader.GROUND_TRUTH);
 
 		// source code
 		StringBuilder stringBuilder = new StringBuilder("<Example>\n" + "Given the code as:\n```");
@@ -190,7 +188,7 @@ public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
 		stringBuilder.append(jsonString);
 		stringBuilder.append("\n");
 
-		stringBuilder.append("Your response should be:\n```json" + groundTruthExample + "\n```");
+		stringBuilder.append("Your response should be:\n```json" + groundTruth + "\n```");
 
 		return stringBuilder.toString();
 	}
