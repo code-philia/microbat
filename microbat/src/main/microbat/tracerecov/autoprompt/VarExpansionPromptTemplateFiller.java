@@ -31,36 +31,36 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 			+ "We can summarize the structure as \r\n"
 			+ "Here is the given structure converted to JSON format (every variable shall strictly have a Java type, followed by its value):\r\n"
 			+ "{\r\n"
-			+ "  \"map: java.util.HashMap<HashMap, ArrayList>\": {\r\n"
-			+ "    \"key[0]: HashMap\": {\r\n"
-			+ "      {\r\n"
-			+ "        \"key[0]: java.lang.String\": \"k1\",\r\n"
-			+ "        \"key[1]: java.lang.String\": \"k2\",\r\n"
-			+ "        \"value[0]: java.lang.Integer\": 1,\r\n"
-			+ "        \"value[1]: java.lang.Integer\": 2,\r\n"
-			+ "        \"size: int\": 2	\r\n"
-			+ "      }\r\n"
+			+ "  \"map| java.util.HashMap<HashMap, ArrayList>\": {\r\n"
+			+ "    \"key[0]| java.util.HashMap\": {\r\n"
+			+ "      \"map\":{\r\n"
+			+ "        \"key[0]| java.lang.String\": \"k1\",\r\n"
+			+ "        \"key[1]| java.lang.String\": \"k2\",\r\n"
+			+ "        \"value[0]| java.lang.Integer\": 1,\r\n"
+			+ "        \"value[1]| java.lang.Integer\": 2,\r\n"
+			+ "        \"size| int\": 2	\r\n"
+			+ "       }\r\n"
 			+ "    },\r\n"
-			+ "    \"key[1]: java.util.HashMap\": {\r\n"
+			+ "    \"key[1]| java.util.HashMap\": {\r\n"
 			+ "      \"map\": {\r\n"
-			+ "        \"key[0]: java.lang.String\": \"kA\",\r\n"
-			+ "        \"key[1]: java.lang.String\": \"kB\",\r\n"
-			+ "        \"value[0]: java.lang.Integer\": 100,\r\n"
-			+ "        \"value[1]: java.lang.Integer\": 200,\r\n"
-			+ "         \"size: int\": 2\r\n"
+			+ "        \"key[0]| java.lang.String\": \"kA\",\r\n"
+			+ "        \"key[1]| java.lang.String\": \"kB\",\r\n"
+			+ "        \"value[0]| java.lang.Integer\": 100,\r\n"
+			+ "        \"value[1]| java.lang.Integer\": 200,\r\n"
+			+ "         \"size| int\": 2\r\n"
 			+ "       }\r\n"
 			+ "     },\r\n"
-			+ "     \"value[0]: java.util.ArrayList<String>\": { \r\n"
-			+ "\"elementData: java.lang.Object[]\": [ \"v1\", \"v2\"], \r\n"
-			+ "  \"size: int\": 2 \r\n"
+			+ "     \"value[0]| java.util.ArrayList<String>\": { \r\n"
+			+ "			\"elementData| java.lang.Object[]\": [ \"v1\", \"v2\"], \r\n"
+			+ "  		\"size| int\": 2 \r\n"
 			+ "       }, \r\n"
-			+ "      \"value[1]: java.util.ArrayList<String>\": { \r\n"
-			+ "\"elementData: java.lang.Object[]\": [ \"vA\", \"vB\"], \r\n"
-			+ "  \"size: int\": 2 \r\n"
+			+ "     \"value[1]| java.util.ArrayList<String>\": { \r\n"
+			+ "			\"elementData| java.lang.Object[]\": [ \"vA\", \"vB\"], \r\n"
+			+ "  		\"size| int\": 2 \r\n"
 			+ "       },\r\n"
-			+ "      \"size\": 2\r\n"
+			+ "     \"size| int\": 2\r\n"
 			+ "  },\r\n"
-			+ " }\r\n";
+			+ " }";
 
 	// TODO: update later (not used for now)
 	private static String variableExpansionAdjustmentPromptPrefix = 
@@ -80,6 +80,7 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		return variableExpansionPromptExample;
 	}
 
+	// TODO: update later (not used for now)
 	@Override
 	public String getPromptQuestion(HashMap<String, String> datapoint) {
 		/* datapoint features */
@@ -128,7 +129,8 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		return stringBuilder.toString();
 	}
 
-	/* Adjustment Prompt */
+	/* Adjustment Prompt
+	 * TODO: update later (not used for now) */
 
 	/**
 	 * datapoint features:
@@ -157,7 +159,8 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		return getAdjustmentPrompt(datapoint, variableExpansionPromptExample);
 	}
 
-	/* Adjustment Prompt Incorporating Textual Loss */
+	/* Adjustment Prompt Incorporating Textual Loss
+	 * TODO: update later (not used for now) */
 
 	@Override
 	public String getAdjustmentPromptWithLoss(String example, HashMap<String, String> datapoint, String output,
