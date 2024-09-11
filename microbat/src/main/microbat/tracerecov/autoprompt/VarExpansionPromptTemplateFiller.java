@@ -102,11 +102,13 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		return stringBuilder.toString();
 	}
 
+	// TODO: update later (not used for now)
 	@Override
 	public String getPrompt(HashMap<String, String> datapoint, String example) {
 		return variableExpansionPromptBackground + example + getPromptQuestion(datapoint);
 	}
 
+	// TODO: update later (not used for now)
 	@Override
 	public String getDefaultPrompt(HashMap<String, String> datapoint) {
 		return variableExpansionPromptBackground + variableExpansionPromptExample + getPromptQuestion(datapoint);
