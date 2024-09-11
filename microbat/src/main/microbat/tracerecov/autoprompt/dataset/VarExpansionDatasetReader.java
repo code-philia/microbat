@@ -19,7 +19,7 @@ public class VarExpansionDatasetReader extends DatasetReader {
 		String variableExpansionFile = "var_expansion.txt";
 
 		this.variableExpansionPath = Activator.getDefault().getPreferenceStore()
-				.getString(TraceRecovPreference.PROMPT_GT_PATH) + File.separator + variableExpansionFile;
+				.getString(TraceRecovPreference.VAR_EXPAND_FILE_PATH) + File.separator + variableExpansionFile;
 	}
 
 	/**

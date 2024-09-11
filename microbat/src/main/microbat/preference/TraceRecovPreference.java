@@ -36,7 +36,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	public static final String COLLECT_PROMPT = "collect_prompt";
 	public static final String ENABLE_LOGGING = "enable_logging";
 	public static final String LOG_DEBUG_INFO = "log_debug_info";
-	public static final String PROMPT_GT_PATH = "prompt_gt_path";
+	public static final String VAR_EXPAND_FILE_PATH = "var_expand_file_path";
 	public static final String ALIAS_FILE_PATH = "alias_file_path";
 	public static final String COLLECT_GROUND_TRUTH = "collect_ground_truth";
 	public static final String PROMPT_TYPE = "prompt_type";
@@ -145,7 +145,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 			this.collectGroundTruth = false;
 		}
 
-		this.promptGTPath = Activator.getDefault().getPreferenceStore().getString(PROMPT_GT_PATH);
+		this.promptGTPath = Activator.getDefault().getPreferenceStore().getString(VAR_EXPAND_FILE_PATH);
 
 		String promptType = Activator.getDefault().getPreferenceStore().getString(PROMPT_TYPE);
 		if (promptType != null && !promptType.equals("")) {
@@ -314,7 +314,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(COLLECT_PROMPT, String.valueOf(this.isCollectingPromptButton.getSelection()));
 		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
-		preferences.put(PROMPT_GT_PATH, this.promptGTPathText.getText());
+		preferences.put(VAR_EXPAND_FILE_PATH, this.promptGTPathText.getText());
 		preferences.put(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
 		preferences.put(PROMPT_TYPE, this.promptTypeCombo.getText());
 
@@ -335,7 +335,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 				String.valueOf(this.isEnableLoggingButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(LOG_DEBUG_INFO,
 				String.valueOf(this.logDebugInfoButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(PROMPT_GT_PATH, this.promptGTPathText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(VAR_EXPAND_FILE_PATH, this.promptGTPathText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(PROMPT_TYPE, this.promptTypeCombo.getText());
 
