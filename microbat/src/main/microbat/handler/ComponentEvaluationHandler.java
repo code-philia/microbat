@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -53,12 +54,45 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 	private int notPredictedNum;
 	private int wrongPredictionNum;
 
+	private static ArrayList<String> classes = new ArrayList<>(Arrays.asList(
+            "leetbugs.ANAGRAM",
+            "leetbugs.ANAGRAMS",
+            "leetbugs.BINARY",
+            "leetbugs.BUCKETSORT",
+            "leetbugs.CAMAL",
+            "leetbugs.COUNT_SAY",
+            "leetbugs.DECODE",
+            "leetbugs.DETECT_CYCLE",
+            "leetbugs.DISTINCT",
+            "leetbugs.DUPLICATE",
+            "leetbugs.EVAL_RPN",
+            "leetbugs.FREQUENCY",
+            "leetbugs.GET_FACTORS",
+            "leetbugs.INTERSECT",
+            "leetbugs.ISOMORPHIC",
+            "leetbugs.KHEAPSORT",
+            "leetbugs.LETTERS",
+            "leetbugs.LEVEL",
+            "leetbugs.LIS",
+            "leetbugs.MERGE_SIMILAR_ITEM",
+            "leetbugs.MISSING_NUM",
+            "leetbugs.PASCAL",
+            "leetbugs.PATH",
+            "leetbugs.POWERSET",
+            "leetbugs.SPIRAL",
+            "leetbugs.SUBARRAY",
+            "leetbugs.THREENUM",
+            "leetbugs.UGLY_NUM"
+        ));
+
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		Job job = new Job(DebugPilotHandler.JOB_FAMALY_NAME) {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				execute();
+		        for(String launchClass:classes) {
+		        	execute(launchClass);
+		        }
 				return Status.OK_STATUS;
 			}
 
@@ -71,22 +105,18 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		return null;
 	}
 
-	protected void execute() {
+	protected void execute(String launchClass) {
 		Log.printMsg(getClass(), "");
 		Log.printMsg(getClass(), "=====================================");
-		Log.printMsg(getClass(), "Component Evaluation of Tracerecov");
+		Log.printMsg(getClass(), "Launch Class: "+launchClass);
 		Log.printMsg(getClass(), "=====================================");
 		Log.printMsg(getClass(), "");
 		
 		Log.printMsg(getClass(), "Using model: "+SimulatorConstants.getSelectedModel());
 
+		Settings.launchClass = launchClass;
+		
 		final AppJavaClassPath appClassPath = MicroBatUtil.constructClassPaths();
-		if (Settings.isRunTest) {
-			appClassPath.setOptionalTestClass(Settings.launchClass);
-			appClassPath.setOptionalTestMethod(Settings.testMethod);
-			appClassPath.setLaunchClass(TestCaseAnalyzer.TEST_RUNNER);
-			appClassPath.setTestCodePath(MicroBatUtil.getSourceFolder(Settings.launchClass, Settings.projectName));
-		}
 		List<String> srcFolders = MicroBatUtil.getSourceFolders(Settings.projectName);
 		appClassPath.setSourceCodePath(MicroBatUtil.getSourceFolder(Settings.launchClass, Settings.projectName));
 

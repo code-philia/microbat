@@ -1,8 +1,12 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -76,6 +80,72 @@ public class GeminiExecutionSimulator extends ExecutionSimulator {
 	protected String getSingleResponse(JSONObject responseObject) {
 		return responseObject.getJSONArray("candidates").getJSONObject(0).getJSONObject("content").getJSONArray("parts")
 				.getJSONObject(0).getString("text").trim();
+	}
+	
+	@Override
+	protected String sendInSegments(String backgroundContent, String questionContent, LLMResponseType responseType)
+			throws IOException {
+		List<String> promptSegments = splitPrompt(backgroundContent + questionContent);
+
+		StringBuilder combinedResponse = new StringBuilder();
+
+		URL url = new URL(getUrl());
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+		JSONArray parts = new JSONArray();
+		
+		for (int i = 0; i < promptSegments.size(); i++) {
+			String segment = promptSegments.get(i);
+			JSONObject part = new JSONObject();
+			part.put("content", segment);
+			parts.put(part);
+		}
+		JSONObject content = new JSONObject();
+		content.put("parts", parts);
+
+		JSONArray contents = new JSONArray();
+		contents.put(content);
+
+		/* generationConfig */
+		JSONObject generationConfig = new JSONObject();
+//		generationConfig.put("responseMimeType", getResponseTypeString(responseType));
+		generationConfig.put("maxOutputTokens", SimulatorConstants.MAX_TOKENS);
+		generationConfig.put("temperature", SimulatorConstants.TEMPERATURE);
+		generationConfig.put("topP", SimulatorConstants.GEMINI_TOP_P);
+		generationConfig.put("topK", SimulatorConstants.GEMINI_TOP_K);
+
+		/* request */
+		JSONObject request = new JSONObject();
+		request.put("contents", contents);
+		request.put("generationConfig", generationConfig);
+
+		
+		try (OutputStream os = connection.getOutputStream()) {
+			byte[] input = request.toString().getBytes("utf-8");
+			os.write(input, 0, input.length);
+		}
+
+		int responseCode = connection.getResponseCode();
+		if (responseCode == HttpURLConnection.HTTP_OK) {
+			try (BufferedReader br = new BufferedReader(
+					new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+				StringBuilder response = new StringBuilder();
+				String responseLine;
+				while ((responseLine = br.readLine()) != null) {
+					response.append(responseLine.trim());
+				}
+
+				JSONObject responseObject = new JSONObject(response.toString());
+				String segmentResponse = responseObject.getJSONArray("choices").getJSONObject(0)
+						.getJSONObject("message").getString("content").trim();
+
+				combinedResponse.append(segmentResponse);
+			}
+		} else {
+			throw new RuntimeException("Failed : HTTP error code : " + responseCode);
+		}
+
+		return combinedResponse.toString();
 	}
 
 }
