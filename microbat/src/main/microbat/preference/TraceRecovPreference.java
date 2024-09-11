@@ -38,6 +38,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	public static final String LOG_DEBUG_INFO = "log_debug_info";
 	public static final String VAR_EXPAND_FILE_PATH = "var_expand_file_path";
 	public static final String ALIAS_FILE_PATH = "alias_file_path";
+	public static final String DEF_FILE_PATH = "definition_file_path";
 	public static final String COLLECT_GROUND_TRUTH = "collect_ground_truth";
 	public static final String PROMPT_TYPE = "prompt_type";
 
@@ -51,7 +52,9 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private boolean isCollectingPrompt;
 	private boolean isEnableLogging;
 	private boolean logDebugInfo;
-	private String varExpansionFilePath;
+	private String varExpansionFilePath; // variable expansion
+	private String aliasFilePath; // alias inference
+	private String definitionFilePath; // definition inference
 	private boolean collectGroundTruth;
 	private PromptType promptType = PromptType.VAR_EXPANSION; // default prompt type for incontext learning
 
@@ -68,6 +71,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private Button collectGroundTruthButton;
 	private Text varExpansionFilePathText;
 	private Text aliasFilePathText;
+	private Text definitionFilePathText;
 	private Combo promptTypeCombo;
 
 	public TraceRecovPreference() {
@@ -146,6 +150,8 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		}
 
 		this.varExpansionFilePath = Activator.getDefault().getPreferenceStore().getString(VAR_EXPAND_FILE_PATH);
+		this.aliasFilePath = Activator.getDefault().getPreferenceStore().getString(ALIAS_FILE_PATH);
+		this.definitionFilePath = Activator.getDefault().getPreferenceStore().getString(DEF_FILE_PATH);
 
 		String promptType = Activator.getDefault().getPreferenceStore().getString(PROMPT_TYPE);
 		if (promptType != null && !promptType.equals("")) {
@@ -237,12 +243,14 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		this.promptTypeCombo = createDropDown(logSettingGroup, promptSelectionLabel, PromptType.values(),
 				this.promptType.ordinal());
 
-		String promptGTPathLabel = "Path for Prompt Ground Truth:";
-		this.varExpansionFilePathText = createText(logSettingGroup, promptGTPathLabel, this.varExpansionFilePath);
+		String varExpansionPathLabel = "Path for Variable Expansion File:";
+		this.varExpansionFilePathText = createText(logSettingGroup, varExpansionPathLabel, this.varExpansionFilePath);
 
-		String aliasFilePathLabel = "Path for Alias File:";
-		this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel,
-				Activator.getDefault().getPreferenceStore().getString(ALIAS_FILE_PATH));
+		String aliasFilePathLabel = "Path for Alias Inference File:";
+		this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel, this.aliasFilePath);
+		
+		String definitionFilePathLabel = "Path for Definition Inference File:";
+		this.definitionFilePathText = createText(logSettingGroup, definitionFilePathLabel, this.definitionFilePath);
 	}
 
 	private Group initGroup(final Composite parent, String title) {
@@ -316,6 +324,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
 		preferences.put(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
 		preferences.put(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
+		preferences.put(DEF_FILE_PATH, this.definitionFilePathText.getText());
 		preferences.put(PROMPT_TYPE, this.promptTypeCombo.getText());
 
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_TRACERECOV,
@@ -337,6 +346,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 				String.valueOf(this.logDebugInfoButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(DEF_FILE_PATH, this.definitionFilePathText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(PROMPT_TYPE, this.promptTypeCombo.getText());
 
 		Settings.isEnableGPTInference = this.isEnableLLMButton.getSelection();
