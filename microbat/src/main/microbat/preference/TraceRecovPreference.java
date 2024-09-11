@@ -51,7 +51,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private boolean isCollectingPrompt;
 	private boolean isEnableLogging;
 	private boolean logDebugInfo;
-	private String promptGTPath;
+	private String varExpansionFilePath;
 	private boolean collectGroundTruth;
 	private PromptType promptType = PromptType.VAR_EXPANSION; // default prompt type for incontext learning
 
@@ -66,7 +66,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private Button isEnableLoggingButton;
 	private Button logDebugInfoButton;
 	private Button collectGroundTruthButton;
-	private Text promptGTPathText;
+	private Text varExpansionFilePathText;
 	private Text aliasFilePathText;
 	private Combo promptTypeCombo;
 
@@ -145,7 +145,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 			this.collectGroundTruth = false;
 		}
 
-		this.promptGTPath = Activator.getDefault().getPreferenceStore().getString(VAR_EXPAND_FILE_PATH);
+		this.varExpansionFilePath = Activator.getDefault().getPreferenceStore().getString(VAR_EXPAND_FILE_PATH);
 
 		String promptType = Activator.getDefault().getPreferenceStore().getString(PROMPT_TYPE);
 		if (promptType != null && !promptType.equals("")) {
@@ -238,7 +238,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 				this.promptType.ordinal());
 
 		String promptGTPathLabel = "Path for Prompt Ground Truth:";
-		this.promptGTPathText = createText(logSettingGroup, promptGTPathLabel, this.promptGTPath);
+		this.varExpansionFilePathText = createText(logSettingGroup, promptGTPathLabel, this.varExpansionFilePath);
 
 		String aliasFilePathLabel = "Path for Alias File:";
 		this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel,
@@ -314,7 +314,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(COLLECT_PROMPT, String.valueOf(this.isCollectingPromptButton.getSelection()));
 		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
-		preferences.put(VAR_EXPAND_FILE_PATH, this.promptGTPathText.getText());
+		preferences.put(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
 		preferences.put(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
 		preferences.put(PROMPT_TYPE, this.promptTypeCombo.getText());
 
@@ -335,7 +335,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 				String.valueOf(this.isEnableLoggingButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(LOG_DEBUG_INFO,
 				String.valueOf(this.logDebugInfoButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(VAR_EXPAND_FILE_PATH, this.promptGTPathText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(PROMPT_TYPE, this.promptTypeCombo.getText());
 
