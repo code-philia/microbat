@@ -106,35 +106,55 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 			}
 		});
 
+		// String className = Settings.launchClass.substring(Settings.launchClass.indexOf(".") + 1);
+		// ObjectMapper objectMapper = new ObjectMapper();
+		// Path bmPath = Paths.get("C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_benchmark", className + ".json");
+
+		// List<Map<String, String>> benchmark = null;
+		// Map<String, List<String>> groundtruth = null;
+		// try {
+		// 	benchmark = objectMapper.readValue(new File(bmPath.toString()),
+		// 			new TypeReference<List<Map<String, String>>>() {
+		// 			});
+		// } catch (IOException e) {
+		// 	e.printStackTrace();
+		// }
+		// if (benchmark == null) {
+		// 	Log.printMsg(getClass(), "ERROR: load benchmark or groundtruth failed");
+		// 	return;
+		// }
+
+		// matchedNum = 0;
+		// notPredictedNum = 0;
+		// wrongPredictionNum = 0;
+
+		// String result = evaluateComponent(appClassPath, trace, benchmark, groundtruth);
+
 		String className = Settings.launchClass.substring(Settings.launchClass.indexOf(".") + 1);
 		ObjectMapper objectMapper = new ObjectMapper();
-		Path bmPath = Paths.get("C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_benchmark", className + ".json");
-//		Path gtPath = Paths.get("C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_groundtruth", className + ".json");
+		Path bmPath1 = Paths.get("C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_benchmark_def", className + ".json");
+        Path bmPath2 = Paths.get("C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_benchmark_def", className + "_Neg.json");
 
-		List<Map<String, String>> benchmark = null;
-		Map<String, List<String>> groundtruth = null;
+		List<Map<String, String>> benchmark_positive = null;
+		List<Map<String, String>> benchmark_negtive = null;
 		try {
-			benchmark = objectMapper.readValue(new File(bmPath.toString()),
+			benchmark_positive = objectMapper.readValue(new File(bmPath1.toString()),
 					new TypeReference<List<Map<String, String>>>() {
 					});
-//			groundtruth = objectMapper.readValue(new File(gtPath.toString()),
-//					new TypeReference<Map<String, List<String>>>() {
-//					});
+			benchmark_negtive = objectMapper.readValue(new File(bmPath2.toString()),
+					new TypeReference<List<Map<String, String>>>() {
+					});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if (benchmark == null) {
+		if (benchmark_positive == null || benchmark_negtive == null) {
 			Log.printMsg(getClass(), "ERROR: load benchmark or groundtruth failed");
 			return;
 		}
+        benchmark_positive.addAll(benchmark_negtive);
+        String result = evaluateDefInference(appClassPath, trace, benchmark_positive);
 
-		matchedNum = 0;
-		notPredictedNum = 0;
-		wrongPredictionNum = 0;
-
-		String result = evaluateComponent(appClassPath, trace, benchmark, groundtruth);
-
-		String filePath = Paths.get("C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_result_var", className + ".txt").toString();
+		String filePath = Paths.get("C:\\Users\\Kwy\\Desktop\\RQ2\\RQ2_result_def", className + ".txt").toString();
 		try (FileWriter writer = new FileWriter(filePath)) {
 			writer.write(result);
 		} catch (IOException e) {
@@ -168,6 +188,104 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		return null;
 	}
 
+    protected String evaluateDefInference(final AppJavaClassPath appClassPath, Trace trace, List<Map<String, String>> benchmark){
+		// def-inference
+        ArrayList<Map<String,String>> failed = new ArrayList<>();
+        ArrayList<Map<String,String>> skipped = new ArrayList<>();
+		int def_succ = 0;
+
+		ExecutionSimulator simulator = ExecutionSimulatorFactory.getExecutionSimulator();
+		System.out.println(simulator.getClass());
+		
+		// for each selected data dependency to be recovered
+		for (Map<String, String> element : benchmark) {
+			int currentOrder = Integer.valueOf(element.get("Order"));
+			TraceNode currentStep = trace.getExecutionList().get(currentOrder - 1);
+			
+            // find root var
+            VarValue rootVar = null;
+            for(VarValue var : currentStep.getAllVariables()){
+                if(var.getVarName().equals(element.get("RootVarName"))){
+                    rootVar = var;
+                    break;
+                }
+            }
+            if(rootVar == null){
+                element.put("SkipReason","root var is null");
+                skipped.add(element);
+                continue;
+            }
+
+			// assume variable expansion is correct
+			Condition condition = new Condition(rootVar.getVarName(), rootVar.getType(), rootVar.getStringValue(),"null");
+			System.out.println("Re-execution of condition: " + condition);
+			Trace newTrace = generateTrace(appClassPath, condition);
+			JSONObject varExpandedJson = condition.getMatchedGroundTruth(newTrace);
+			if (varExpandedJson == null) {
+				continue;
+			}
+			VariableExpansionUtils.processResponse(rootVar, varExpandedJson.toString());
+
+            List<VarValue> criticalVariables = new ArrayList<>();
+            // find target var
+            VarValue targetVar = rootVar;
+            String[] varNames = element.get("FieldName").split("\\.");
+            if(!rootVar.getVarName().equals(varNames[0])){
+                element.put("SkipReason","root var name not match");
+                skipped.add(element);
+                continue;
+            }
+
+            criticalVariables.add(rootVar);
+            int i;
+            for(i = 1;i<varNames.length;i++){
+                boolean found = false;
+                for(VarValue var : targetVar.getChildren()){
+                    if(var.getVarName().equals(varNames[i])){
+                        targetVar = var;
+                        criticalVariables.add(var);
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found){
+                    break;
+                }
+            }
+            if(i < varNames.length){
+                element.put("SkipReason","field var name not match");
+                skipped.add(element);
+                continue;
+            }
+
+            // predict and pending
+            boolean def = simulator.inferDefinition(currentStep, rootVar, targetVar, criticalVariables);
+            boolean gt = element.get("Written").equals("T")?true:false;
+            if(def == gt){
+                def_succ += 1;
+            }
+            else{
+                failed.add(element);
+            }
+		}
+
+		StringBuilder result = new StringBuilder();
+        result.append("Total: "+benchmark.size()+"\n");
+        result.append("Skipped: "+skipped.size()+"\n");
+        result.append("Failed: "+failed.size()+"\n");
+        result.append("Successfull: "+def_succ+"\n");
+
+        double def_infer_rate = (double) def_succ / (benchmark.size()-skipped.size());
+        result.append("Successfull rate: "+ def_infer_rate+"\n");
+
+        result.append("[Skipped]: "+skipped.toString()+"\n");
+        result.append("[Failed]: "+failed.toString()+"\n");
+
+		System.out.println(result.toString());
+		return result.toString();
+    }
+
+
 	protected String evaluateComponent(final AppJavaClassPath appClassPath, Trace trace,
 			List<Map<String, String>> benchmark, Map<String, List<String>> groundtruth) {
 		// var-expansion
@@ -179,6 +297,8 @@ public class ComponentEvaluationHandler extends StartDebugHandler {
 		Map<Integer, Set<Integer>> predictedDataDep = new HashMap<>();
 		int var_succ = 0;
 		int def_succ = 0;
+
+        ArrayList<HashMap<String,String>> failed = new ArrayList<>();
 		
 		ExecutionSimulator simulator = ExecutionSimulatorFactory.getExecutionSimulator();
 		System.out.println(simulator.getClass());
