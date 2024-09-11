@@ -22,10 +22,20 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 	private PromptTemplateFiller promptTemplateFiller;
 
 	public VarExpansionExampleSearcher() {
+		this(false);
+	}
+
+	public VarExpansionExampleSearcher(boolean useFullDataset) {
 		DatasetReader datasetReader = new VarExpansionDatasetReader();
-		ArrayList<ArrayList<HashMap<String, String>>> datasets = datasetReader.getTrainingAndTestingDataset();
-		trainingDataset = datasets.get(0);
-		testingDataset = datasets.get(1);
+		if (useFullDataset) {
+			trainingDataset = datasetReader.readCompleteDataset();
+			testingDataset = new ArrayList<>();
+		} else {
+			ArrayList<ArrayList<HashMap<String, String>>> datasets = datasetReader.getTrainingAndTestingDataset();
+			trainingDataset = datasets.get(0);
+			testingDataset = datasets.get(1);
+		}
+
 		varSkeletonParser = new VarSkeletonParser();
 		promptTemplateFiller = new VarExpansionPromptTemplateFiller();
 	}

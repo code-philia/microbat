@@ -29,7 +29,7 @@ public class AliasInferenceDatasetReader extends DatasetReader {
 	 * fields_in_step, invoked_methods, target_fields, ground_truth, source_file
 	 */
 	@Override
-	protected ArrayList<HashMap<String, String>> readCompleteDataset() {
+	public ArrayList<HashMap<String, String>> readCompleteDataset() {
 		ArrayList<HashMap<String, String>> dataset = new ArrayList<>();
 
 		try {

@@ -152,7 +152,7 @@ public class DefinitionInferenceUtils {
 	private static String getExample(VarValue rootVar) {
 		HashMap<String, String> datapoint = getDatapointFromStep(rootVar);
 
-		ExampleSearcher exampleSearcher = new DefinitionInferenceExampleSearcher();
+		ExampleSearcher exampleSearcher = new DefinitionInferenceExampleSearcher(true);
 		String closestExample = exampleSearcher.searchForExample(datapoint);
 
 		// TODO: add default example

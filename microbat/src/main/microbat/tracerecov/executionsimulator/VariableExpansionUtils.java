@@ -109,7 +109,7 @@ public class VariableExpansionUtils {
 	private static String getExample(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {
 		HashMap<String, String> datapoint = getDatapointFromStep(varValue, varSkeleton, step);
 
-		ExampleSearcher exampleSearcher = new VarExpansionExampleSearcher();
+		ExampleSearcher exampleSearcher = new VarExpansionExampleSearcher(true);
 		String closestExample = exampleSearcher.searchForExample(datapoint);
 
 		if (closestExample == null || closestExample.equals("")) {

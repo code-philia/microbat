@@ -28,7 +28,7 @@ public class DefinitionInferenceDatasetReader extends DatasetReader {
 	 * target_field, var_name, target_var, source_code, invoked_methods, vars_in_step, ground_truth
 	 */
 	@Override
-	protected ArrayList<HashMap<String, String>> readCompleteDataset() {
+	public ArrayList<HashMap<String, String>> readCompleteDataset() {
 		ArrayList<HashMap<String, String>> dataset = new ArrayList<>();
 
 		try {

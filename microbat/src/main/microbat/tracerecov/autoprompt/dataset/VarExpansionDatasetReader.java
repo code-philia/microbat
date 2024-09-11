@@ -28,7 +28,7 @@ public class VarExpansionDatasetReader extends DatasetReader {
 	 * var_name, var_type, var_value, class_structure, source_code, ground_truth
 	 */
 	@Override
-	protected ArrayList<HashMap<String, String>> readCompleteDataset() {
+	public ArrayList<HashMap<String, String>> readCompleteDataset() {
 		ArrayList<HashMap<String, String>> dataset = new ArrayList<>();
 
 		try {

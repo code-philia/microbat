@@ -32,7 +32,7 @@ public abstract class DatasetReader {
 
 	private long seed = 2024L;
 
-	protected abstract ArrayList<HashMap<String, String>> readCompleteDataset();
+	public abstract ArrayList<HashMap<String, String>> readCompleteDataset();
 
 	/**
 	 * Split the complete dataset randomly into training and testing sets.
