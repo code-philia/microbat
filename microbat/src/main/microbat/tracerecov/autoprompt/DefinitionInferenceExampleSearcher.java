@@ -76,7 +76,8 @@ public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 				int exampleTargetFieldLevel = exampleTargetField.split("\\.").length;
 				int diffScoreBasedOnTargetField = Math.abs(exampleTargetFieldLevel - targetFieldLevel);
 				
-				if (diffScore < minDiffScore || diffScoreBasedOnTargetField < minFieldLevelScore) {
+				if (diffScore < minDiffScore
+						|| (diffScoreBasedOnTargetField < minFieldLevelScore && minDiffScore < 1)) {
 					minFieldLevelScore = diffScoreBasedOnTargetField;
 					minDiffScore = diffScore;
 					datapointIndex = i;

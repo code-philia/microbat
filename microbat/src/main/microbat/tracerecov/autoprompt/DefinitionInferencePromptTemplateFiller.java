@@ -64,9 +64,8 @@ public class DefinitionInferencePromptTemplateFiller extends PromptTemplateFille
 			stringBuilder.append("`" + name + "` is of type: `" + type + "`, of runtime value \"" + value + "\",\n");
 		}
 
-		stringBuilder.append("\nwe know that later `" + rootVarName + "` has the following structure and value:\n");
+		stringBuilder.append("\nwe know that `" + rootVarName + "` has the following structure and value:\n");
 		stringBuilder.append(classStructure);
-		stringBuilder.append("\nBut we don't know which step during the execution modified the value.\n");
 
 		stringBuilder.append("`" + rootVarName + "` has a field called `" + targetField + "`");
 

@@ -125,9 +125,8 @@ public class DefinitionInferenceUtils {
 			question.append("\",");
 		}
 
-		question.append("\n\nwe know that later `" + rootVarName + "` has the following structure and value:\n");
+		question.append("\n\nwe know that `" + rootVarName + "` has the following structure and value:\n");
 		question.append(jsonString);
-		question.append("\n\nBut we don't know which step during the execution modified the value.\n");
 
 		boolean isFirstVar = true;
 		for (VarValue var : variablesInStep) {
