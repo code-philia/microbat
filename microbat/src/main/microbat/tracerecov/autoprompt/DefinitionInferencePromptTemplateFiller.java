@@ -50,7 +50,7 @@ public class DefinitionInferencePromptTemplateFiller extends PromptTemplateFille
 
 		stringBuilder.append("\nVariables involved:\n");
 		for (String var : varsInStep) {
-			if (!var.contains("{")) {
+			if (!var.contains("{") || !var.contains("}")) {
 				continue;
 			}
 			int startIndex = var.indexOf("{");
@@ -60,7 +60,7 @@ public class DefinitionInferencePromptTemplateFiller extends PromptTemplateFille
 			String nameAndType = var.split(":")[0]; // assume one key only
 			String name = nameAndType.split("\\|")[0];
 			String type = nameAndType.split("\\|")[1];
-			String value = var.split(":")[1];
+			String value = var.split(":").length == 2 ? var.split(":")[1] : "\"\"";
 			stringBuilder.append("`" + name + "` is of type: `" + type + "`, of runtime value \"" + value + "\",\n");
 		}
 
