@@ -50,6 +50,9 @@ public class DefinitionInferencePromptTemplateFiller extends PromptTemplateFille
 
 		stringBuilder.append("\nVariables involved:\n");
 		for (String var : varsInStep) {
+			if (!var.contains("{")) {
+				continue;
+			}
 			int startIndex = var.indexOf("{");
 			int endIndex = var.lastIndexOf("}");
 			var = var.substring(startIndex + 1, endIndex);
