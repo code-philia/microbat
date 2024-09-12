@@ -14,7 +14,7 @@ import microbat.tracerecov.varskeleton.VariableSkeleton;
 
 public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 
-	private static double DIFF_SCORE_THRESHOLD = 0.5;
+	private static double DIFF_SCORE_THRESHOLD = 0.3;
 
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
@@ -57,27 +57,30 @@ public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 
 		/* search for closest example */
 		double minDiffScore = 1;
+		int minFieldLevelScore = Integer.MAX_VALUE;
 		int datapointIndex = 0;
 		for (int i = 0; i < trainingDataset.size(); i++) {
 			HashMap<String, String> example = trainingDataset.get(i);
-
-			// diff score based on target field level
-			String exampleTargetField = example.get(targetFieldKey);
-			int exampleTargetFieldLevel = exampleTargetField.split("\\.").length;
-			double diffScoreBasedOnTargetField = (double) Math.abs(exampleTargetFieldLevel - targetFieldLevel)
-					/ (double) Math.max(exampleTargetFieldLevel, targetFieldLevel);
 
 			// diff score based on variable structure
 			String exampleTargetVar = example.get(targetVarKey);
 			JSONObject exampleTargetVariable = new JSONObject(exampleTargetVar);
 			VariableSkeleton exampleTargetVarSkeleton = varSkeletonParser
 					.parseVariableValueJSONObject(exampleTargetVariable);
-			double diffScoreBasedOnVarStructure = targetVarSkeleton.getDifferenceScore(exampleTargetVarSkeleton);
 
-			double diffScore = (diffScoreBasedOnTargetField + diffScoreBasedOnVarStructure) / 2;
-			if (diffScore < minDiffScore) {
-				minDiffScore = diffScore;
-				datapointIndex = i;
+			double diffScore = targetVarSkeleton.getDifferenceScore(exampleTargetVarSkeleton);
+			
+			if (diffScore <= minDiffScore) {
+				// diff score based on target field level
+				String exampleTargetField = example.get(targetFieldKey);
+				int exampleTargetFieldLevel = exampleTargetField.split("\\.").length;
+				int diffScoreBasedOnTargetField = Math.abs(exampleTargetFieldLevel - targetFieldLevel);
+				
+				if (diffScore < minDiffScore || diffScoreBasedOnTargetField < minFieldLevelScore) {
+					minFieldLevelScore = diffScoreBasedOnTargetField;
+					minDiffScore = diffScore;
+					datapointIndex = i;
+				}
 			}
 		}
 
