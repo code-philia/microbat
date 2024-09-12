@@ -43,10 +43,14 @@ public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 	@Override
 	public String searchForExample(HashMap<String, String> datapoint) {
 		/* keys */
+		String targetFieldKey = DatasetReader.TARGET_FIELD;
 		String targetVarKey = DatasetReader.TARGET_VAR;
 		String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
 		/* datapoint features */
+		String targetField = datapoint.get(targetFieldKey);
+		int targetFieldLevel = targetField.split("\\.").length;
+
 		String targetVar = datapoint.get(targetVarKey);
 		JSONObject targetVariable = new JSONObject(targetVar);
 		VariableSkeleton targetVarSkeleton = varSkeletonParser.parseVariableValueJSONObject(targetVariable);
@@ -57,12 +61,20 @@ public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 		for (int i = 0; i < trainingDataset.size(); i++) {
 			HashMap<String, String> example = trainingDataset.get(i);
 
+			// diff score based on target field level
+			String exampleTargetField = example.get(targetFieldKey);
+			int exampleTargetFieldLevel = exampleTargetField.split("\\.").length;
+			double diffScoreBasedOnTargetField = (double) Math.abs(exampleTargetFieldLevel - targetFieldLevel)
+					/ (double) Math.max(exampleTargetFieldLevel, targetFieldLevel);
+
+			// diff score based on variable structure
 			String exampleTargetVar = example.get(targetVarKey);
 			JSONObject exampleTargetVariable = new JSONObject(exampleTargetVar);
 			VariableSkeleton exampleTargetVarSkeleton = varSkeletonParser
 					.parseVariableValueJSONObject(exampleTargetVariable);
+			double diffScoreBasedOnVarStructure = targetVarSkeleton.getDifferenceScore(exampleTargetVarSkeleton);
 
-			double diffScore = targetVarSkeleton.getDifferenceScore(exampleTargetVarSkeleton);
+			double diffScore = (diffScoreBasedOnTargetField + diffScoreBasedOnVarStructure) / 2;
 			if (diffScore < minDiffScore) {
 				minDiffScore = diffScore;
 				datapointIndex = i;
