@@ -176,7 +176,7 @@ public class VariableSkeleton {
 
 		double diffScore = 0;
 		double numberOfEntities = 1; // type
-		if (this.type.equals(other.type)) {
+		if (this.type.equals(other.type) || this.name.equals(other.name)) {
 			// compare children
 			for (VariableSkeleton thisChild : this.children) {
 				VariableSkeleton otherChild = thisChild.findMatchingChild(other);
