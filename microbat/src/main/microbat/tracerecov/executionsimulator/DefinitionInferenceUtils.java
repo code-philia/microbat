@@ -25,17 +25,28 @@ public class DefinitionInferenceUtils {
 		return DEFINITION_INFERENCE_BACKGROUND;
 	}
 
-	public static String getBackgroundContent(VarValue rootVar) {
-		return DEFINITION_INFERENCE_BACKGROUND + getExample(rootVar);
+	public static String getBackgroundContent(VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
+		return DEFINITION_INFERENCE_BACKGROUND + getExample(rootVar, targetVar, criticalVariables);
 	}
 
-	private static HashMap<String, String> getDatapointFromStep(VarValue rootVar) {
+	private static HashMap<String, String> getDatapointFromStep(VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
 
+		// TARGET_FIELD
+		String targetVarName = targetVar.getVarName();
+		
+		String cascadeFieldName = "";
+		int stopIndex = criticalVariables.size() - 1;
+		for (int i = 0; i < stopIndex; i++) {
+			VarValue criticalVar = criticalVariables.get(i);
+			cascadeFieldName += criticalVar.getVarName() + ".";
+		}
+		cascadeFieldName += targetVarName;
+		
 		// TARGET_VAR
 		String jsonString = TraceRecovUtils.processInputStringForLLM(rootVar.toJSON().toString());
 
 		HashMap<String, String> datapoint = new HashMap<>();
-		datapoint.put(DatasetReader.TARGET_FIELD, "");
+		datapoint.put(DatasetReader.TARGET_FIELD, cascadeFieldName);
 		datapoint.put(DatasetReader.VAR_NAME, "");
 		datapoint.put(DatasetReader.TARGET_VAR, jsonString);
 		datapoint.put(DatasetReader.SOURCE_CODE, "");
@@ -46,8 +57,8 @@ public class DefinitionInferenceUtils {
 		return datapoint;
 	}
 
-	private static String getExample(VarValue rootVar) {
-		HashMap<String, String> datapoint = getDatapointFromStep(rootVar);
+	private static String getExample(VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
+		HashMap<String, String> datapoint = getDatapointFromStep(rootVar, targetVar, criticalVariables);
 
 		ExampleSearcher exampleSearcher = new DefinitionInferenceExampleSearcher(true);
 		String closestExample = exampleSearcher.searchForExample(datapoint);
