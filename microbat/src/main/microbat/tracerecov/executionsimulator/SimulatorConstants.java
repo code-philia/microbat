@@ -33,10 +33,6 @@ public class SimulatorConstants {
 			return SimulatorConstants.GPT4O;
 		case GPT4O_MINI:
 			return SimulatorConstants.GPT4O_MINI;
-		case CLAUDE3:
-			return SimulatorConstants.CLAUDE3;
-		case CLAUDE35:
-			return SimulatorConstants.CLAUDE35;
 		case GEMINI:
 			return SimulatorConstants.GEMINI;
 		default:

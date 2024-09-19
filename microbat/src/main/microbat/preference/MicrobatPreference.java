@@ -205,48 +205,48 @@ public class MicrobatPreference extends PreferencePage implements
 		variableLayerText.setLayoutData(variableLayerTextData);
 		variableLayerText.setToolTipText("how many layers of variable children does the debugger need to retrieve, -1 means infinite.");
 		
-		supportConcurrentTraceButton = new Button(settingGroup, SWT.CHECK);
-		supportConcurrentTraceButton.setText("Support concurrent trace");
-		GridData supportConcurrentTraceButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		supportConcurrentTraceButtonData.horizontalSpan = 3;
-		supportConcurrentTraceButton.setLayoutData(supportConcurrentTraceButtonData);
-		boolean supportConcurrentTraceSelected = this.defaultSupportConcurrentTrace.equals("true");
-		supportConcurrentTraceButton.setSelection(supportConcurrentTraceSelected);
-		
-		recordSnapshotButton = new Button(settingGroup, SWT.CHECK);
-		recordSnapshotButton.setText("Record snapshot");
-		GridData recordButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		recordButtonData.horizontalSpan = 3;
-		recordSnapshotButton.setLayoutData(recordButtonData);
-		boolean recordSnapshotSelected = this.defaultRecordSnapshot.equals("true");
-		recordSnapshotButton.setSelection(recordSnapshotSelected);
-		
-		runWithDebugModeButton = new Button(settingGroup, SWT.CHECK);
-		runWithDebugModeButton.setText("Run with debug mode");
-		GridData runWithDebugModeButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		runWithDebugModeButtonData.horizontalSpan = 3;
-		runWithDebugModeButton.setLayoutData(runWithDebugModeButtonData);
-		boolean runWithDebugModeButtonSelected = this.defaultRunWithDebugMode.equals("true");
-		runWithDebugModeButton.setSelection(runWithDebugModeButtonSelected);
-		
-		advancedDetailInspectorButton = new Button(settingGroup, SWT.CHECK);
-		advancedDetailInspectorButton.setText("Apply advanced detail inspection");
-		GridData advanceInspectorButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		recordButtonData.horizontalSpan = 3;
-		advancedDetailInspectorButton.setLayoutData(advanceInspectorButtonData);
-		boolean advanceInspectorSelected = this.defaultAdvancedDetailInspector.equals("true");
-		advancedDetailInspectorButton.setSelection(advanceInspectorSelected);
-		
-		recordingOptimizationButton = new Button(settingGroup, SWT.CHECK);
-		recordingOptimizationButton.setText("Apply trace recording optimization for interested library code");
-		GridData recordingOptimizationButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		recordingOptimizationButtonData.horizontalSpan = 3;
-		recordingOptimizationButton.setLayoutData(recordingOptimizationButtonData);
-		boolean recordingOptimizationSelected = this.defaultApplyRecodingOptimization.equals("true");
-		recordingOptimizationButton.setSelection(recordingOptimizationSelected);
-		
-		enableMethodSplittingButton = SWTFactory.createCheckbox(settingGroup, "Enable method splitting function", 2);
-		enableMethodSplittingButton.setSelection(this.defaultEnableMethodSplitting);
+//		supportConcurrentTraceButton = new Button(settingGroup, SWT.CHECK);
+//		supportConcurrentTraceButton.setText("Support concurrent trace");
+//		GridData supportConcurrentTraceButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
+//		supportConcurrentTraceButtonData.horizontalSpan = 3;
+//		supportConcurrentTraceButton.setLayoutData(supportConcurrentTraceButtonData);
+//		boolean supportConcurrentTraceSelected = this.defaultSupportConcurrentTrace.equals("true");
+//		supportConcurrentTraceButton.setSelection(supportConcurrentTraceSelected);
+//		
+//		recordSnapshotButton = new Button(settingGroup, SWT.CHECK);
+//		recordSnapshotButton.setText("Record snapshot");
+//		GridData recordButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
+//		recordButtonData.horizontalSpan = 3;
+//		recordSnapshotButton.setLayoutData(recordButtonData);
+//		boolean recordSnapshotSelected = this.defaultRecordSnapshot.equals("true");
+//		recordSnapshotButton.setSelection(recordSnapshotSelected);
+//		
+//		runWithDebugModeButton = new Button(settingGroup, SWT.CHECK);
+//		runWithDebugModeButton.setText("Run with debug mode");
+//		GridData runWithDebugModeButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
+//		runWithDebugModeButtonData.horizontalSpan = 3;
+//		runWithDebugModeButton.setLayoutData(runWithDebugModeButtonData);
+//		boolean runWithDebugModeButtonSelected = this.defaultRunWithDebugMode.equals("true");
+//		runWithDebugModeButton.setSelection(runWithDebugModeButtonSelected);
+//		
+//		advancedDetailInspectorButton = new Button(settingGroup, SWT.CHECK);
+//		advancedDetailInspectorButton.setText("Apply advanced detail inspection");
+//		GridData advanceInspectorButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
+//		recordButtonData.horizontalSpan = 3;
+//		advancedDetailInspectorButton.setLayoutData(advanceInspectorButtonData);
+//		boolean advanceInspectorSelected = this.defaultAdvancedDetailInspector.equals("true");
+//		advancedDetailInspectorButton.setSelection(advanceInspectorSelected);
+//		
+//		recordingOptimizationButton = new Button(settingGroup, SWT.CHECK);
+//		recordingOptimizationButton.setText("Apply trace recording optimization for interested library code");
+//		GridData recordingOptimizationButtonData = new GridData(SWT.FILL, SWT.FILL, true, false);
+//		recordingOptimizationButtonData.horizontalSpan = 3;
+//		recordingOptimizationButton.setLayoutData(recordingOptimizationButtonData);
+//		boolean recordingOptimizationSelected = this.defaultApplyRecodingOptimization.equals("true");
+//		recordingOptimizationButton.setSelection(recordingOptimizationSelected);
+//		
+//		enableMethodSplittingButton = SWTFactory.createCheckbox(settingGroup, "Enable method splitting function", 2);
+//		enableMethodSplittingButton.setSelection(this.defaultEnableMethodSplitting);
 	}
 	
 	private void createSeedStatementGroup(Composite parent){
@@ -313,16 +313,16 @@ public class MicrobatPreference extends PreferencePage implements
 		preferences.put(TEST_METHOD, this.testMethodText.getText());
 //		preferences.put(CLASS_NAME, this.classNameText.getText());
 //		preferences.put(LINE_NUMBER, this.lineNumberText.getText());
-		preferences.put(RECORD_SNAPSHORT, String.valueOf(this.recordSnapshotButton.getSelection()));
-		preferences.put(APPLY_ADVANCE_INSPECTOR, String.valueOf(this.advancedDetailInspectorButton.getSelection()));
+//		preferences.put(RECORD_SNAPSHORT, String.valueOf(this.recordSnapshotButton.getSelection()));
+//		preferences.put(APPLY_ADVANCE_INSPECTOR, String.valueOf(this.advancedDetailInspectorButton.getSelection()));
 		preferences.put(STEP_LIMIT, this.stepLimitText.getText());
 		preferences.put(VARIABLE_LAYER, this.variableLayerText.getText());
-		preferences.put(RUN_TEST, String.valueOf(this.runTestButton.getSelection()));
+//		preferences.put(RUN_TEST, String.valueOf(this.runTestButton.getSelection()));
 		preferences.put(JAVA7HOME_PATH, this.java7HomePathText.getText());
-		preferences.put(RECORDING_OPTIMIZATION, String.valueOf(this.recordingOptimizationButton.getSelection()));
-		preferences.putBoolean(REQUIRE_METHOD_SPLITTING, this.enableMethodSplittingButton.getSelection());
-		preferences.put(SUPPORT_CONCURRENT_TRACE, String.valueOf(this.supportConcurrentTraceButton.getSelection()));
-		preferences.put(RUN_WITH_DEBUG_MODE, String.valueOf(this.runWithDebugModeButton.getSelection()));
+//		preferences.put(RECORDING_OPTIMIZATION, String.valueOf(this.recordingOptimizationButton.getSelection()));
+//		preferences.putBoolean(REQUIRE_METHOD_SPLITTING, this.enableMethodSplittingButton.getSelection());
+//		preferences.put(SUPPORT_CONCURRENT_TRACE, String.valueOf(this.supportConcurrentTraceButton.getSelection()));
+//		preferences.put(RUN_WITH_DEBUG_MODE, String.valueOf(this.runWithDebugModeButton.getSelection()));
 //		preferences.put(DROP_IN_FOLDER_MICROBAT, this.dropInFolderText.getText());
 //		preferences.put(CONFIG_PATH_MICROBAT, this.configPathText.getText());
 //		preferences.put(PROJECT_PATH, this.projectPathText.getText());
@@ -334,16 +334,16 @@ public class MicrobatPreference extends PreferencePage implements
 		Activator.getDefault().getPreferenceStore().putValue(TEST_METHOD, this.testMethodText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(CLASS_NAME, this.classNameText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(LINE_NUMBER, this.lineNumberText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(RECORD_SNAPSHORT, String.valueOf(this.recordSnapshotButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(APPLY_ADVANCE_INSPECTOR, String.valueOf(this.advancedDetailInspectorButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(RECORD_SNAPSHORT, String.valueOf(this.recordSnapshotButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(APPLY_ADVANCE_INSPECTOR, String.valueOf(this.advancedDetailInspectorButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(STEP_LIMIT, this.stepLimitText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(VARIABLE_LAYER, this.variableLayerText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(RUN_TEST, String.valueOf(this.runTestButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(RUN_TEST, String.valueOf(this.runTestButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(JAVA7HOME_PATH, this.java7HomePathText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(RECORDING_OPTIMIZATION, String.valueOf(this.recordingOptimizationButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(REQUIRE_METHOD_SPLITTING, String.valueOf(this.enableMethodSplittingButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(SUPPORT_CONCURRENT_TRACE, String.valueOf(this.supportConcurrentTraceButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(RUN_WITH_DEBUG_MODE, String.valueOf(this.runWithDebugModeButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(RECORDING_OPTIMIZATION, String.valueOf(this.recordingOptimizationButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(REQUIRE_METHOD_SPLITTING, String.valueOf(this.enableMethodSplittingButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(SUPPORT_CONCURRENT_TRACE, String.valueOf(this.supportConcurrentTraceButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(RUN_WITH_DEBUG_MODE, String.valueOf(this.runWithDebugModeButton.getSelection()));
 //		Activator.getDefault().getPreferenceStore().putValue(DROP_IN_FOLDER_MICROBAT, this.dropInFolderText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(CONFIG_PATH_MICROBAT, this.configPathText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(PROJECT_PATH, this.projectPathText.getText());
@@ -362,14 +362,14 @@ public class MicrobatPreference extends PreferencePage implements
 		Settings.testMethod = this.testMethodText.getText();
 //		Settings.buggyClassName = this.classNameText.getText();
 //		Settings.buggyLineNumber = this.lineNumberText.getText();
-		Settings.isRecordSnapshot = this.recordSnapshotButton.getSelection();
-		Settings.isApplyAdvancedInspector = this.advancedDetailInspectorButton.getSelection();
+//		Settings.isRecordSnapshot = this.recordSnapshotButton.getSelection();
+//		Settings.isApplyAdvancedInspector = this.advancedDetailInspectorButton.getSelection();
 		Settings.stepLimit = Integer.valueOf(this.stepLimitText.getText());
 		Settings.setVariableLayer(Integer.valueOf(this.variableLayerText.getText()));
-		Settings.isRunTest = this.runTestButton.getSelection();
-		Settings.applyLibraryOptimization = this.recordingOptimizationButton.getSelection();
-		Settings.supportConcurrentTrace = this.supportConcurrentTraceButton.getSelection();
-		Settings.isRunWtihDebugMode = this.runWithDebugModeButton.getSelection();
+//		Settings.isRunTest = this.runTestButton.getSelection();
+//		Settings.applyLibraryOptimization = this.recordingOptimizationButton.getSelection();
+//		Settings.supportConcurrentTrace = this.supportConcurrentTraceButton.getSelection();
+//		Settings.isRunWtihDebugMode = this.runWithDebugModeButton.getSelection();
 //		Settings.autoFeedbackMethod = this.autoFeedbackCombo.getText();
 		
 	}

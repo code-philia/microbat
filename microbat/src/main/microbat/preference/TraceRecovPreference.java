@@ -45,13 +45,13 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	/* constants before update */
 	private boolean isEnableTraceRecov;
 	private boolean isEnableLLMInference;
-	private boolean isMutationExperiment;
+	private boolean isMutationExperiment = false;
 	private String apiKey;
 	private LLMModel llmModelType = LLMModel.GPT4O; // default model
-	private String methodLayer;
-	private boolean isCollectingPrompt;
-	private boolean isEnableLogging;
-	private boolean logDebugInfo;
+	private String methodLayer = "";
+	private boolean isCollectingPrompt = false;
+	private boolean isEnableLogging = true;
+	private boolean logDebugInfo = true;
 	private String varExpansionFilePath; // variable expansion
 	private String aliasFilePath; // alias inference
 	private String definitionFilePath; // definition inference
@@ -176,8 +176,8 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		// LLM Model Settings
 		createModelConfigGroup(composite);
 
-		// RQ1: Shorten Trace Settings
-		createShortenTraceSettingGroup(composite);
+//		// RQ1: Shorten Trace Settings
+//		createShortenTraceSettingGroup(composite);
 
 		// RQ3: Logging Settings
 		createLogSettingGroup(composite);
@@ -197,13 +197,13 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		String enableLLMLabel = "Enable TraceRecov in Auto Root Cause Localization";
 		this.isEnableLLMButton = createCheckButton(experimentSettingGroup, enableLLMLabel, this.isEnableLLMInference);
 
-		String mutationLabel = "Use Mutation Configuration";
-		this.useMutationConfigButton = createCheckButton(experimentSettingGroup, mutationLabel,
-				this.isMutationExperiment);
-
-		String colleatGTLabel = "Collect Ground Truth";
-		this.collectGroundTruthButton = createCheckButton(experimentSettingGroup, colleatGTLabel,
-				this.collectGroundTruth);
+//		String mutationLabel = "Use Mutation Configuration";
+//		this.useMutationConfigButton = createCheckButton(experimentSettingGroup, mutationLabel,
+//				this.isMutationExperiment);
+//
+//		String colleatGTLabel = "Collect Ground Truth";
+//		this.collectGroundTruthButton = createCheckButton(experimentSettingGroup, colleatGTLabel,
+//				this.collectGroundTruth);
 	}
 
 	private void createModelConfigGroup(final Composite parent) {
@@ -227,28 +227,28 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	}
 
 	private void createLogSettingGroup(final Composite parent) {
-		String title = "Log Settings";
+		String title = "In-Context Learning Settings";
 		Group logSettingGroup = initGroup(parent, title);
 
-		String collectPromptLabel = "RQ3: Collect and Label Prompts";
-		this.isCollectingPromptButton = createCheckButton(logSettingGroup, collectPromptLabel, this.isCollectingPrompt);
-
-		String enableLogLabel = "Enable Logging";
-		this.isEnableLoggingButton = createCheckButton(logSettingGroup, enableLogLabel, this.isEnableLogging);
-
-		String logDebugInfoLabel = "Log Debug Info";
-		this.logDebugInfoButton = createCheckButton(logSettingGroup, logDebugInfoLabel, this.logDebugInfo);
-
-		String promptSelectionLabel = "Type of Prompt (for auto incontext learning experiment, independent from TraceRecov):";
-		this.promptTypeCombo = createDropDown(logSettingGroup, promptSelectionLabel, PromptType.values(),
-				this.promptType.ordinal());
+//		String collectPromptLabel = "RQ3: Collect and Label Prompts";
+//		this.isCollectingPromptButton = createCheckButton(logSettingGroup, collectPromptLabel, this.isCollectingPrompt);
+//
+//		String enableLogLabel = "Enable Logging";
+//		this.isEnableLoggingButton = createCheckButton(logSettingGroup, enableLogLabel, this.isEnableLogging);
+//
+//		String logDebugInfoLabel = "Log Debug Info";
+//		this.logDebugInfoButton = createCheckButton(logSettingGroup, logDebugInfoLabel, this.logDebugInfo);
+//
+//		String promptSelectionLabel = "Type of Prompt (for auto incontext learning experiment, independent from TraceRecov):";
+//		this.promptTypeCombo = createDropDown(logSettingGroup, promptSelectionLabel, PromptType.values(),
+//				this.promptType.ordinal());
 
 		String varExpansionPathLabel = "Path for Variable Expansion File:";
 		this.varExpansionFilePathText = createText(logSettingGroup, varExpansionPathLabel, this.varExpansionFilePath);
 
-		String aliasFilePathLabel = "Path for Alias Inference File:";
-		this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel, this.aliasFilePath);
-		
+//		String aliasFilePathLabel = "Path for Alias Inference File:";
+//		this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel, this.aliasFilePath);
+
 		String definitionFilePathLabel = "Path for Definition Inference File:";
 		this.definitionFilePathText = createText(logSettingGroup, definitionFilePathLabel, this.definitionFilePath);
 	}
@@ -314,40 +314,40 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 
 		preferences.put(ENABLE_TRACERECOV, String.valueOf(this.isEnableTraceRecovButton.getSelection()));
 		preferences.put(ENABLE_LLM, String.valueOf(this.isEnableLLMButton.getSelection()));
-		preferences.put(USE_MUTATION_CONFIG, String.valueOf(this.useMutationConfigButton.getSelection()));
-		preferences.put(COLLECT_GROUND_TRUTH, String.valueOf(this.collectGroundTruthButton.getSelection()));
+//		preferences.put(USE_MUTATION_CONFIG, String.valueOf(this.useMutationConfigButton.getSelection()));
+//		preferences.put(COLLECT_GROUND_TRUTH, String.valueOf(this.collectGroundTruthButton.getSelection()));
 		preferences.put(API_KEY, this.apiKeyText.getText());
 		preferences.put(MODEL_TYPE, this.modelTypeCombo.getText());
-		preferences.put(METHOD_LAYER, this.methodLayerText.getText());
-		preferences.put(COLLECT_PROMPT, String.valueOf(this.isCollectingPromptButton.getSelection()));
-		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
-		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
+//		preferences.put(METHOD_LAYER, this.methodLayerText.getText());
+//		preferences.put(COLLECT_PROMPT, String.valueOf(this.isCollectingPromptButton.getSelection()));
+//		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
+//		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
 		preferences.put(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
-		preferences.put(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
+//		preferences.put(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
 		preferences.put(DEF_FILE_PATH, this.definitionFilePathText.getText());
-		preferences.put(PROMPT_TYPE, this.promptTypeCombo.getText());
+//		preferences.put(PROMPT_TYPE, this.promptTypeCombo.getText());
 
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_TRACERECOV,
 				String.valueOf(this.isEnableTraceRecovButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LLM,
 				String.valueOf(this.isEnableLLMButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(USE_MUTATION_CONFIG,
-				String.valueOf(this.useMutationConfigButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(COLLECT_GROUND_TRUTH,
-				String.valueOf(this.collectGroundTruthButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(USE_MUTATION_CONFIG,
+//				String.valueOf(this.useMutationConfigButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(COLLECT_GROUND_TRUTH,
+//				String.valueOf(this.collectGroundTruthButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(API_KEY, this.apiKeyText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(MODEL_TYPE, this.modelTypeCombo.getText());
-		Activator.getDefault().getPreferenceStore().putValue(METHOD_LAYER, this.methodLayerText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(COLLECT_PROMPT,
-				String.valueOf(this.isCollectingPromptButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LOGGING,
-				String.valueOf(this.isEnableLoggingButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(LOG_DEBUG_INFO,
-				String.valueOf(this.logDebugInfoButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(METHOD_LAYER, this.methodLayerText.getText());
+//		Activator.getDefault().getPreferenceStore().putValue(COLLECT_PROMPT,
+//				String.valueOf(this.isCollectingPromptButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LOGGING,
+//				String.valueOf(this.isEnableLoggingButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(LOG_DEBUG_INFO,
+//				String.valueOf(this.logDebugInfoButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
+//		Activator.getDefault().getPreferenceStore().putValue(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(DEF_FILE_PATH, this.definitionFilePathText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(PROMPT_TYPE, this.promptTypeCombo.getText());
+//		Activator.getDefault().getPreferenceStore().putValue(PROMPT_TYPE, this.promptTypeCombo.getText());
 
 		Settings.isEnableGPTInference = this.isEnableLLMButton.getSelection();
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();

@@ -64,57 +64,8 @@
    </extension>
    <extension
          point="org.eclipse.ui.menus">
-      <menuContribution
-            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
-         <menu
-               label="Generate Mutation Trace"
-               mnemonic="M"
-               id="microbat_mutation_trace.menus.sampleMenu">
-            <command
-                  commandId="microbat_mutation_trace.commands.generate_mutation_trace"
-                  mnemonic="S"
-                  id="microbat_mutation_trace.menus.generate_mutation_trace">
-            </command>
-             <command
-                   commandId="microbat_mutation_trace.commands.evaluate_mutation_trace"
-                   id="microbat_mutation_trace.menus.evaluate_mutation_traces"
-                   mnemonic="S">
-             </command>
-             <command
-                   commandId="microbat_mutation_trace.commands.singleRun"
-                   id="microbat_mutation_trace.menus.singleRun">
-             </command>
-             <command
-                   commandId="microbat_mutation_trace.commands.regenerate_csv"
-                   id="microbat_mutation_trace.menus.regenerate_csv">
-             </command>
-         </menu>
-      </menuContribution>
-      <menuContribution
-            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
-         <toolbar
-               id="microbat_mutation_trace.toolbars.sampleToolbar">
-            <command
-                  commandId="microbat_mutation_trace.commands.sampleCommand"
-                  icon="icons/sample.png"
-                  tooltip="Generate Mutation Trace"
-                  id="microbat_mutation_trace.toolbars.sampleCommand">
-            </command>
-            <command
-                  commandId="microbat_mutation_trace.commands.singleRun"
-                  icon="icons/mutation.png"
-                  id="microbat_mutation_trace.toolbars.singleRun"
-                  style="push">
-            </command>
-         </toolbar>
-      </menuContribution>
    </extension>
    <extension
          point="org.eclipse.ui.preferencePages">
-      <page
-            class="microbat.mutation.trace.preference.MutationRegressionPreference"
-            id="muregression.preference"
-            name="Mutation Regression">
-      </page>
    </extension>
 </plugin>
