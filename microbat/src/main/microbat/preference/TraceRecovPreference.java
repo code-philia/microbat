@@ -320,8 +320,8 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(MODEL_TYPE, this.modelTypeCombo.getText());
 //		preferences.put(METHOD_LAYER, this.methodLayerText.getText());
 //		preferences.put(COLLECT_PROMPT, String.valueOf(this.isCollectingPromptButton.getSelection()));
-//		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
-//		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
+		preferences.put(ENABLE_LOGGING, "true");
+		preferences.put(LOG_DEBUG_INFO, "true");
 		preferences.put(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
 //		preferences.put(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
 		preferences.put(DEF_FILE_PATH, this.definitionFilePathText.getText());
@@ -340,10 +340,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 //		Activator.getDefault().getPreferenceStore().putValue(METHOD_LAYER, this.methodLayerText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(COLLECT_PROMPT,
 //				String.valueOf(this.isCollectingPromptButton.getSelection()));
-//		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LOGGING,
-//				String.valueOf(this.isEnableLoggingButton.getSelection()));
-//		Activator.getDefault().getPreferenceStore().putValue(LOG_DEBUG_INFO,
-//				String.valueOf(this.logDebugInfoButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LOGGING,
+				"true");
+		Activator.getDefault().getPreferenceStore().putValue(LOG_DEBUG_INFO,
+				"true");
 		Activator.getDefault().getPreferenceStore().putValue(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
 //		Activator.getDefault().getPreferenceStore().putValue(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(DEF_FILE_PATH, this.definitionFilePathText.getText());
