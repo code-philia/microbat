@@ -1,14 +1,12 @@
 package microbat.tracerecov.staticverifiers;
 
-import microbat.model.value.VarValue;
-
 public class AssignRelation {
 	
 	private AssignStatus assignStatus;
-	private VarValue variableOfInterest;
-	private VarValue field;
+	private String variableOfInterest;
+	private String field;
 	
-	private AssignRelation(AssignStatus assignStatus, VarValue variableOfInterest, VarValue field) {
+	private AssignRelation(AssignStatus assignStatus, String variableOfInterest, String field) {
 		this.assignStatus = assignStatus;
 		this.variableOfInterest = variableOfInterest;
 		this.field = field;
@@ -22,7 +20,7 @@ public class AssignRelation {
 		return new AssignRelation(AssignStatus.GUARANTEE_NO_ASSIGN, null, null);
 	}
 	
-	public static AssignRelation getGuaranteeAssignRelation(VarValue variableOfInterest, VarValue field) {
+	public static AssignRelation getGuaranteeAssignRelation(String variableOfInterest, String field) {
 		return new AssignRelation(AssignStatus.GUARANTEE_ASSIGN, variableOfInterest, field);
 	}
 	
@@ -30,11 +28,11 @@ public class AssignRelation {
 		return assignStatus;
 	}
 
-	public VarValue getVariableOfInterest() {
+	public String getVariableOfInterest() {
 		return variableOfInterest;
 	}
 
-	public VarValue getField() {
+	public String getField() {
 		return field;
 	}
 	
