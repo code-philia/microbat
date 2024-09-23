@@ -29,10 +29,6 @@ public class CandidateVarVerifier {
 	private CFG cfg;
 	private ConstantPoolGen constantPoolGen;
 
-	public enum WriteStatus {
-		GUARANTEE_WRITE, GUARANTEE_NO_WRITE, NO_GUARANTEE
-	}
-
 	public CandidateVarVerifier(CFG cfg) {
 		this.cfg = cfg;
 		this.constantPoolGen = new ConstantPoolGen(cfg.getConstantPool());
@@ -101,7 +97,7 @@ public class CandidateVarVerifier {
 	}
 
 	/**
-	 * Write Status at one step can only be GUARANTEE_WRITE or GUARANTEE_NO_WRITE.
+	 * Write Pattern: putfield|putstatic
 	 */
 	private WriteStatus getWriteStatusAtNode(CFGNode node, String varName) {
 		Instruction instruction = node.getInstructionHandle().getInstruction();

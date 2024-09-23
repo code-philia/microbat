@@ -6,7 +6,7 @@ import org.junit.Test;
 
 import microbat.codeanalysis.bytecode.CFG;
 import microbat.tracerecov.staticverifiers.CandidateVarVerifier;
-import microbat.tracerecov.staticverifiers.CandidateVarVerifier.WriteStatus;
+import microbat.tracerecov.staticverifiers.WriteStatus;
 
 public class CandidateVarVerifierTest {
 
