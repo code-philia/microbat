@@ -1,8 +1,11 @@
 package microbat.tracerecov.staticverifiers;
 
+import java.util.HashMap;
+
 import org.apache.bcel.generic.ConstantPoolGen;
 
 import microbat.codeanalysis.bytecode.CFG;
+import microbat.codeanalysis.bytecode.CFGNode;
 
 /**
  * This class performs static analysis and verifies whether a candidate variable
@@ -33,14 +36,24 @@ public class AliasRelationsVerifier {
 		if (varName.contains("[") || varName.contains("]")) {
 			return AssignStatus.NO_GUARANTEE;
 		}
-		return AssignStatus.NO_GUARANTEE;
+		return getAssignStatusRecur(cfg.getStartNode(), new HashMap<>(), varName);
 	}
 	
+	private AssignStatus getAssignStatusRecur(CFGNode startNode, HashMap hashMap, String varName) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	public ReturnStatus getVarReturnStatus(String varName) {
 		if (varName.contains("[") || varName.contains("]")) {
 			return ReturnStatus.NO_GUARANTEE;
 		}
-		return ReturnStatus.NO_GUARANTEE;
+		return getReturnStatusRecur(cfg.getStartNode(), new HashMap<>(), varName);
+	}
+
+	private ReturnStatus getReturnStatusRecur(CFGNode startNode, HashMap hashMap, String varName) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }
