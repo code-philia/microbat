@@ -24,6 +24,22 @@ public class AssignRelation {
 		return new AssignRelation(AssignStatus.GUARANTEE_ASSIGN, variableOfInterest, field);
 	}
 	
+	@Override
+	public boolean equals(Object other) {
+		if (other instanceof AssignRelation) {
+			AssignRelation otherRelation = (AssignRelation) other;
+			boolean sameAssignStatus = this.assignStatus.equals(otherRelation.assignStatus);
+			boolean sameVariableOfInterest = this.variableOfInterest == null 
+					? otherRelation.variableOfInterest == null 
+					: this.variableOfInterest.equals(otherRelation.variableOfInterest);
+			boolean sameField = this.field == null 
+					? otherRelation.field == null 
+					: this.field.equals(otherRelation.field);
+			return sameAssignStatus && sameVariableOfInterest && sameField;
+		}
+		return false;
+	}
+	
 	public AssignStatus getAssignStatus() {
 		return assignStatus;
 	}

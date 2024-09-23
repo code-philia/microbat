@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.bcel.generic.ALOAD;
-import org.apache.bcel.generic.ASTORE;
 import org.apache.bcel.generic.ConstantPoolGen;
+import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InvokeInstruction;
 import org.apache.bcel.generic.PUTFIELD;
@@ -39,39 +39,91 @@ public class AliasRelationsVerifier {
 		return getAssignRelationRecur(cfg.getStartNode(), new HashMap<>(), varName);
 	}
 	
-	private AssignRelation getAssignRelationRecur(CFGNode node, Map<CFGNode, WriteStatus> visitedNodes, String varName) {
+	private AssignRelation getAssignRelationRecur(CFGNode node, Map<CFGNode, AssignRelation> visitedNodes, String varName) {
 		visitedNodes.put(node, null);
 		
-//		AssignRelation assignRelation = getAssignRelationAtNode(node, varName);
-		return null;
+		AssignRelation assignRelation = getAssignRelationAtNode(node, varName);
+		if (assignRelation.getAssignStatus().equals(AssignStatus.NO_GUARANTEE)) {
+			visitedNodes.put(node, assignRelation);
+			return assignRelation;
+		}
+		
+		AssignRelation assignRelationAmongChildren = null;
+		List<CFGNode> children = node.getChildren();
+		for (CFGNode child : children) {
+			AssignRelation childAssignRelation;
+			if (visitedNodes.containsKey(child)) {
+				if (visitedNodes.get(child) == null) {
+					continue;
+				} else {
+					childAssignRelation = visitedNodes.get(child);
+				}
+			} else {
+				childAssignRelation = getAssignRelationRecur(child, visitedNodes, varName);
+			}
+
+			// if status is NO_GUARANTEE at any point, the overall status is NO_GUARANTEE
+			if (childAssignRelation.getAssignStatus().equals(AssignStatus.NO_GUARANTEE)) {
+				visitedNodes.put(node, childAssignRelation);
+				return childAssignRelation;
+			}
+
+			if (assignRelationAmongChildren == null) {
+				assignRelationAmongChildren = childAssignRelation;
+			} else if (!assignRelationAmongChildren.equals(childAssignRelation)) {
+				// if assign relations are different among branches, the overall status is
+				// NO_GUARANTEE
+				AssignRelation overallAssignRelation = AssignRelation.getNoGuaranteeAssignRelation();
+				visitedNodes.put(node, overallAssignRelation);
+				return overallAssignRelation;
+			}
+		}
+
+		if (assignRelationAmongChildren == null) {
+			// if there are no children, return the assign relation of the current node
+			visitedNodes.put(node, assignRelation);
+			return assignRelation;
+		} else if (assignRelationAmongChildren.getAssignStatus().equals(AssignStatus.GUARANTEE_ASSIGN)) {
+			// if the children all have status GUARANTEE_ASSIGN, and are assigning to the same field, 
+			// then the overall status is GUARANTEE_ASSIGN
+			visitedNodes.put(node, assignRelationAmongChildren);
+			return assignRelationAmongChildren;
+		}
+
+		visitedNodes.put(node, assignRelation);
+		return assignRelation;
 	}
 
-//	/**
-//	 * Analyze two nodes (one assign step) at a time.
-//	 * Assign Pattern: aload astore|putfield|putstatic
-//	 */
-//	private AssignRelation getAssignRelationAtNode(CFGNode node, String varName) {
-//		Instruction instruction = node.getInstructionHandle().getInstruction();
-//		
-//		if (instruction instanceof ALOAD) {
-//			List<CFGNode> children = node.getChildren();
-//			boolean isLastNode = children == null || children.size() == 0;
-//			if (isLastNode) {
-//				return AssignStatus.GUARANTEE_NO_ASSIGN;
-//			} else if (children.size() > 1) {
-//				return AssignStatus.NO_GUARANTEE;
-//			} else {
-//				Instruction nextInstruction = children.get(0).getInstructionHandle().getInstruction();
-//				if (nextInstruction instanceof ASTORE || nextInstruction instanceof PUTFIELD || nextInstruction instanceof PUTSTATIC) {}
-//			}
-//		} else if (instruction instanceof InvokeInstruction) {
-//			return AssignStatus.NO_GUARANTEE;
-//		} else {
-//			return AssignStatus.GUARANTEE_NO_ASSIGN;
-//		}
-//
-//		return AssignStatus.NO_GUARANTEE;
-//	}
+	/**
+	 * Analyze two nodes (one assign step) at a time.
+	 * Assign Pattern: aload putfield|putstatic
+	 */
+	private AssignRelation getAssignRelationAtNode(CFGNode node, String varName) {
+		Instruction instruction = node.getInstructionHandle().getInstruction();
+		
+		if (instruction instanceof ALOAD) {
+			List<CFGNode> children = node.getChildren();
+			boolean isLastNode = children == null || children.size() == 0;
+			if (isLastNode) {
+				return AssignRelation.getGuaranteeNoAssignRelation();
+			} else if (children.size() > 1) {
+				return AssignRelation.getNoGuaranteeAssignRelation();
+			} else {
+				Instruction nextInstruction = children.get(0).getInstructionHandle().getInstruction();
+				if (nextInstruction instanceof PUTFIELD || nextInstruction instanceof PUTSTATIC) {
+					FieldInstruction fieldInstruction = (FieldInstruction) nextInstruction;
+					String fieldName = fieldInstruction.getFieldName(constantPoolGen);
+					return AssignRelation.getGuaranteeAssignRelation(varName, fieldName);
+				}
+			}
+		} else if (instruction instanceof InvokeInstruction) {
+			return AssignRelation.getNoGuaranteeAssignRelation();
+		} else {
+			return AssignRelation.getGuaranteeNoAssignRelation();
+		}
+
+		return AssignRelation.getNoGuaranteeAssignRelation();
+	}
 
 	public ReturnStatus getVarReturnStatus(String varName) {
 		if (varName.contains("[") || varName.contains("]")) {
@@ -80,7 +132,7 @@ public class AliasRelationsVerifier {
 		return getReturnStatusRecur(cfg.getStartNode(), new HashMap<>(), varName);
 	}
 
-	private ReturnStatus getReturnStatusRecur(CFGNode node, Map<CFGNode, WriteStatus> visitedNodes, String varName) {
+	private ReturnStatus getReturnStatusRecur(CFGNode node, Map<CFGNode, ReturnStatus> visitedNodes, String varName) {
 		// TODO Auto-generated method stub
 		return null;
 	}
