@@ -5,8 +5,8 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import microbat.codeanalysis.bytecode.CFG;
-import microbat.tracerecov.candidatevar.CandidateVarVerifier;
-import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
+import microbat.tracerecov.staticverifiers.CandidateVarVerifier;
+import microbat.tracerecov.staticverifiers.CandidateVarVerifier.WriteStatus;
 
 public class CandidateVarVerifierTest {
 

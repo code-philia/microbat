@@ -182,8 +182,8 @@ Export-Package:
  microbat.trace,
  microbat.tracerecov,
  microbat.tracerecov.autoprompt,
- microbat.tracerecov.candidatevar,
  microbat.tracerecov.executionsimulator,
+ microbat.tracerecov.staticverifiers,
  microbat.tracerecov.varskeleton,
  microbat.util;
   uses:="org.eclipse.jdt.core,
