@@ -6,8 +6,9 @@ import org.junit.Test;
 
 import microbat.codeanalysis.bytecode.CFG;
 import microbat.tracerecov.staticverifiers.AliasRelationsVerifier;
-import microbat.tracerecov.staticverifiers.AliasRelationsVerifier.AssignStatus;
-import microbat.tracerecov.staticverifiers.AliasRelationsVerifier.ReturnStatus;
+import microbat.tracerecov.staticverifiers.AssignRelation;
+import microbat.tracerecov.staticverifiers.AssignStatus;
+import microbat.tracerecov.staticverifiers.ReturnStatus;
 
 public class AliasRelationsVerifierTest {
 
@@ -22,10 +23,10 @@ public class AliasRelationsVerifierTest {
 		try {
 			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
 			AliasRelationsVerifier aliasRelationsVerifier = new AliasRelationsVerifier(cfg);
-			AssignStatus assignStatus = aliasRelationsVerifier.getVarAssignStatus(fieldName);
+			AssignRelation assignRelation = aliasRelationsVerifier.getVarAssignRelation(fieldName);
 			ReturnStatus returnStatus = aliasRelationsVerifier.getVarReturnStatus(fieldName);
 
-			assertEquals(AssignStatus.NO_GUARANTEE, assignStatus);
+			assertEquals(AssignStatus.NO_GUARANTEE, assignRelation.getAssignStatus());
 			assertEquals(ReturnStatus.NO_GUARANTEE, returnStatus);
 		} catch (CannotBuildCFGException e) {
 			e.printStackTrace();
