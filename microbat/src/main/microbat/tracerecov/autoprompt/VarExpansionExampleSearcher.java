@@ -16,10 +16,14 @@ import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 
 public class VarExpansionExampleSearcher extends ExampleSearcher {
+
+	private static double[] WEIGHTS = new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 };
+
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
 	private VarSkeletonParser varSkeletonParser;
 	private PromptTemplateFiller promptTemplateFiller;
+	private SimilarityScoreCalculator simScoreCalculator;
 
 	public VarExpansionExampleSearcher() {
 		this(false);
@@ -38,27 +42,46 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 		varSkeletonParser = new VarSkeletonParser();
 		promptTemplateFiller = new VarExpansionPromptTemplateFiller();
+		simScoreCalculator = new SimilarityScoreCalculator();
 	}
 
 	@Override
 	public String searchForExample(HashMap<String, String> datapoint) {
 		/* keys */
 		String classStructureKey = DatasetReader.CLASS_STRUCTURE;
+		String sourceCodeKey = DatasetReader.SOURCE_CODE;
+		String varValueKey = DatasetReader.VAR_VALUE;
 		String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
 		/* datapoint features */
+		// class
 		String classStructure = datapoint.get(classStructureKey);
 		VariableSkeleton varSkeleton = varSkeletonParser.parseClassStructure(classStructure);
+		// source code
+		String sourceCode = datapoint.get(sourceCodeKey);
+		// variable value
+		String varValue = datapoint.get(varValueKey);
 
 		/* search for closest example */
 		double maxSimScore = 0;
 		int datapointIndex = 0;
 		for (int i = 0; i < trainingDataset.size(); i++) {
 			HashMap<String, String> example = trainingDataset.get(i);
+			// class
 			String exampleClassStructure = example.get(classStructureKey);
 			VariableSkeleton exampleVarSkeleton = varSkeletonParser.parseClassStructure(exampleClassStructure);
+			// source code
+			String exampleSourceCode = example.get(sourceCodeKey);
+			// variable value
+			String exampleVarValue = example.get(varValueKey);
 
-			double simScore = SimilarityScoreCalculator.getSimScoreBetweenVarSkeletons(varSkeleton, exampleVarSkeleton);
+			double codeSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(sourceCode, exampleSourceCode);
+			double varValueSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(varValue, exampleVarValue);
+			double classSimScore = simScoreCalculator.getSimScoreBetweenVarSkeletons(varSkeleton, exampleVarSkeleton);
+
+			double simScore = simScoreCalculator
+					.getCombinedScore(new double[] { codeSimScore, varValueSimScore, classSimScore }, WEIGHTS);
+
 			if (simScore > maxSimScore) {
 				maxSimScore = simScore;
 				datapointIndex = i;
@@ -114,4 +137,5 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 		LossCalculator lossCalculator = new VarExpansionLossCalculator();
 		return lossCalculator.computeLoss(outputJSON, groundTruthJSON);
 	}
+
 }
