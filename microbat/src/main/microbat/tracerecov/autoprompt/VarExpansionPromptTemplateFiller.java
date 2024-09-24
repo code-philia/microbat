@@ -62,19 +62,6 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 			+ "  },\r\n"
 			+ " }";
 
-	// TODO: update later (not used for now)
-	private static String variableExpansionAdjustmentPromptPrefix = 
-			"You are given a prompt template with examples which might be inaccurate.\n"
-			+ "\n"
-			+ "Given a variable in an existing example `V_e` and a variable in the additional example `V_a`:\n"
-			+ "1. Check `V_e` (e.g., `java.util.HashMap<String, Integer>`), identify all generic types present in `V_e` (e.g., `String`, `Integer`). If there are generic types, take note of the generic types with primitive equivalences, OR String. e.g. Integer has corresponding primitive type int.\n"
-			+ "2. Choose one of the identified generic types as `T_g`. Let `T_a` be the data type of `V_a` (e.g., `java.lang.StringBuffer`). Replace `T_g` with `T_a`. Let `T_e` be the updated data type of `V_e` (e.g., `java.util.HashMap<String, java.lang.StringBuffer>`).\n"
-			+ "3. Create an instance of `T_e`. Create some instances of `T_a`. Fully expand the structure of `V_a` according to its class definition, including all fields and their respective data types. \n"
-			+ "4. Populate the `T_e` instance using fully expanded `T_a` instances from step 3.\n"
-			+ "5. Replace `V_e` with the updated example. Do not include any explanation.\n";
-
-	/* Prompt to be adjusted */
-
 	@Override
 	public String getDefaultPromptExample() {
 		return variableExpansionPromptExample;
@@ -131,59 +118,4 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		return stringBuilder.toString();
 	}
 
-	/* Adjustment Prompt
-	 * TODO: update later (not used for now) */
-
-	/**
-	 * datapoint features:
-	 * 
-	 * var_name, var_type, var_value, class_structure, source_code, ground_truth
-	 */
-	@Override
-	public String getAdjustmentPrompt(HashMap<String, String> datapoint, String example) {
-		StringBuilder stringBuilder = new StringBuilder(variableExpansionAdjustmentPromptPrefix);
-		String groundTruth = datapoint.get(DatasetReader.GROUND_TRUTH);
-
-		// basic information
-		stringBuilder.append("\nAdditional Example:");
-		stringBuilder.append(getExample(datapoint, groundTruth));
-
-		// instruction
-		stringBuilder.append("\nUpdate the Prompt template: \"\"\"\n");
-		stringBuilder.append(example);
-		stringBuilder.append("\n\"\"\"");
-
-		return stringBuilder.toString();
-	}
-
-	@Override
-	public String getDefaultAdjustmentPrompt(HashMap<String, String> datapoint) {
-		return getAdjustmentPrompt(datapoint, variableExpansionPromptExample);
-	}
-
-	/* Adjustment Prompt Incorporating Textual Loss
-	 * TODO: update later (not used for now) */
-
-	@Override
-	public String getAdjustmentPromptWithLoss(String example, HashMap<String, String> datapoint, String output,
-			String textualLoss) {
-		// existing example
-		StringBuilder stringBuilder = new StringBuilder("Given example:\n");
-		stringBuilder.append(example);
-		stringBuilder.append("\n");
-
-		// output
-		stringBuilder.append("Based on the example, an output was generated:\n\"\"\"");
-		stringBuilder.append(getExample(datapoint, output));
-		stringBuilder.append("\"\"\"");
-
-		// errors (textual loss) in output
-		stringBuilder.append("It has the following errors:\n\"\"\"");
-		stringBuilder.append(textualLoss);
-		stringBuilder.append("\"\"\"");
-
-		stringBuilder.append("Summarize the errors first, update the given example to avoid these errors. "
-				+ "In your answer, include the updated example only. Do not include explanations.");
-		return stringBuilder.toString();
-	}
 }
