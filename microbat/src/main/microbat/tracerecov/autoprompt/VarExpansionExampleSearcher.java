@@ -77,7 +77,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 			double codeSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(sourceCode, exampleSourceCode);
 			double varValueSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(varValue, exampleVarValue);
-			double classSimScore = simScoreCalculator.getSimScoreBetweenVarSkeletons(varSkeleton, exampleVarSkeleton);
+			double classSimScore = simScoreCalculator.getJaccardCoefficient(varSkeleton, exampleVarSkeleton);
 
 			double simScore = simScoreCalculator
 					.getCombinedScore(new double[] { codeSimScore, varValueSimScore, classSimScore }, WEIGHTS);

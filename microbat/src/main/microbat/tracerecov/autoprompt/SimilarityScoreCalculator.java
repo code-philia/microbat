@@ -13,10 +13,10 @@ public class SimilarityScoreCalculator {
 	public SimilarityScoreCalculator() {
 	}
 
-	public double getSimScoreBetweenVarSkeletons(VariableSkeleton var1, VariableSkeleton var2) {
+	public double getJaccardCoefficient(VariableSkeleton var1, VariableSkeleton var2) {
 		return 1 - var1.getDifferenceScore(var2);
 	}
-
+	
 	public double getSimilarityRatioBasedOnLCS(String str1, String str2) {
 		int lcs = getLongestCommonSequenceSize(str1, str2);
 		return (double) (2 * lcs) / (double) (str1.length() + str2.length());
@@ -25,7 +25,7 @@ public class SimilarityScoreCalculator {
 	private int getLongestCommonSequenceSize(String str1, String str2) {
 		int m = str1.length();
 		int n = str2.length();
-		
+
 		if (m == 0 || n == 0) {
 			return 0;
 		}
@@ -52,7 +52,7 @@ public class SimilarityScoreCalculator {
 
 		return lens[m - 1][n - 1];
 	}
-	
+
 	public double getCombinedScore(double[] entries, double[] weights) {
 		int size = Math.min(entries.length, weights.length);
 		double combinedScore = 0;

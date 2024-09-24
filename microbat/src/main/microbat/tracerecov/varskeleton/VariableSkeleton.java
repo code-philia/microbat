@@ -3,7 +3,6 @@ package microbat.tracerecov.varskeleton;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import microbat.model.value.ArrayValue;
 import microbat.model.value.PrimitiveValue;
 import microbat.model.value.ReferenceValue;
