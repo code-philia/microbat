@@ -20,7 +20,7 @@ import microbat.model.value.VarValue;
 import microbat.tracerecov.CannotBuildCFGException;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.staticverifiers.CandidateVarVerifier;
-import microbat.tracerecov.staticverifiers.CandidateVarVerifier.WriteStatus;
+import microbat.tracerecov.staticverifiers.WriteStatus;
 import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.common.core.Pair;
@@ -257,7 +257,7 @@ public abstract class ExecutionSimulator {
 			List<VarValue> criticalVariables) throws IOException {
 		return inferAliasRelationsByLLM(step, rootVar, criticalVariables);
 	}
-	
+
 	public Map<VarValue, VarValue> inferAliasRelationsByLLM(TraceNode step, VarValue rootVar,
 			List<VarValue> criticalVariables) throws IOException {
 
@@ -322,8 +322,8 @@ public abstract class ExecutionSimulator {
 	}
 
 	/**
-	 * deterministic flow: guarantee_write, guarantee_no_write must-analysis by LLM:
-	 * no_guarantee
+	 * deterministic flow: guarantee_write, guarantee_no_write 
+	 * must-analysis by LLM: no_guarantee
 	 */
 	private WriteStatus estimateComplication(TraceNode step, VarValue parentVar, VarValue targetVar) {
 
