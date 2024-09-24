@@ -51,16 +51,16 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 		VariableSkeleton varSkeleton = varSkeletonParser.parseClassStructure(classStructure);
 
 		/* search for closest example */
-		double minDiffScore = 1;
+		double maxSimScore = 0;
 		int datapointIndex = 0;
 		for (int i = 0; i < trainingDataset.size(); i++) {
 			HashMap<String, String> example = trainingDataset.get(i);
 			String exampleClassStructure = example.get(classStructureKey);
 			VariableSkeleton exampleVarSkeleton = varSkeletonParser.parseClassStructure(exampleClassStructure);
 
-			double diffScore = varSkeleton.getDifferenceScore(exampleVarSkeleton);
-			if (diffScore < minDiffScore) {
-				minDiffScore = diffScore;
+			double simScore = SimilarityScoreCalculator.getSimScoreBetweenVarSkeletons(varSkeleton, exampleVarSkeleton);
+			if (simScore > maxSimScore) {
+				maxSimScore = simScore;
 				datapointIndex = i;
 			}
 		}
