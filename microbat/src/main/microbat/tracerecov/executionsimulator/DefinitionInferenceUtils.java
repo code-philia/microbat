@@ -157,8 +157,6 @@ public class DefinitionInferenceUtils {
 			}
 		}
 
-		question.append("`" + rootVarName + "` has a field called `");
-
 		String cascadeFieldName = "";
 		int stopIndex = criticalVariables.size() - 1;
 		for (int i = 0; i < stopIndex; i++) {
@@ -167,8 +165,7 @@ public class DefinitionInferenceUtils {
 		}
 		cascadeFieldName += targetVarName;
 
-		question.append(cascadeFieldName);
-		question.append("`, does the code directly or indirectly write this field?"
+		question.append("\nDoes the code directly or indirectly modify the value of `" + cascadeFieldName + "`?"
 				+ "\nIn your response, return T for true and F for false. Do not include explanation.");
 
 		return question.toString();
