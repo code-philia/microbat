@@ -117,4 +117,80 @@ public class CandidateVarVerifierTest {
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+     * Test the write status of size
+     */
+    @Test
+    public void getVarWriteStatus_resSize_GuaranteeWrite() {
+        String methodSignature = "java.util.ArrayList#add(Ljava/lang/Object;)Z";
+        String fieldName = "size"; 
+
+        try {
+            CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+            CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+            WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName);
+
+            assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
+        } catch (CannotBuildCFGException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Test the writing of res.elementData.elementData[2]
+     */
+    @Test
+    public void getVarWriteStatus_elementInArray2_GuaranteeWrite() {
+        String methodSignature = "java.util.ArrayList#add(Ljava/lang/Object;)Z";
+        String fieldName = "elementData[2]"; 
+
+        try {
+            CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+            CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+            WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName);
+
+            assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
+        } catch (CannotBuildCFGException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     *  Test the writing of hashMap.table.table[1]
+     */
+    @Test
+    public void getVarWriteStatus_tableIndex1_GuaranteeWrite() {
+        String methodSignature = "java.util.HashMap#put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;";
+        String fieldName = "table[1]"; 
+
+        try {
+            CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+            CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+            WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName);
+
+            assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
+        } catch (CannotBuildCFGException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Test the write status of hashMap.size
+     */
+    @Test
+    public void getVarWriteStatus_hashMapSize_GuaranteeWrite() {
+        String methodSignature = "java.util.HashMap#put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;";
+        String fieldName = "size"; 
+
+        try {
+            CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+            CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+            WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName);
+
+            assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
+        } catch (CannotBuildCFGException e) {
+            e.printStackTrace();
+        }
+    }
 }
