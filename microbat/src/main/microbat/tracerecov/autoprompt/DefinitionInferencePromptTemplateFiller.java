@@ -75,24 +75,4 @@ public class DefinitionInferencePromptTemplateFiller extends PromptTemplateFille
 		return stringBuilder.toString();
 	}
 
-	/*
-	 * Adjustment Prompt TODO: update later (not used for now)
-	 */
-
-	@Override
-	public String getAdjustmentPrompt(HashMap<String, String> datapoint, String example) {
-		return null;
-	}
-
-	@Override
-	public String getDefaultAdjustmentPrompt(HashMap<String, String> datapoint) {
-		return null;
-	}
-
-	@Override
-	public String getAdjustmentPromptWithLoss(String example, HashMap<String, String> datapoint, String output,
-			String textualLoss) {
-		return null;
-	}
-
 }

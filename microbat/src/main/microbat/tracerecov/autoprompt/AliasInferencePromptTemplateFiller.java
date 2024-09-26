@@ -7,7 +7,6 @@ import org.json.JSONObject;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 
-// TODO: update later (not used for now)
 public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
 
 	private static String aliasInferencePromptBackground = "<Background>\n"
@@ -37,11 +36,6 @@ public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
 			+ "{\n"
 			+ "\"list.elementData.elementData[0]\":\"item\"\n"
 			+ "}\n\n";
-	
-	// TODO: prompt engineering
-	private static String aliasInferenceAdjustmentPromptPrefix = "";
-
-	/* Prompt to be adjusted */
 
 	@Override
 	public String getDefaultPromptExample() {
@@ -193,26 +187,4 @@ public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
 		return stringBuilder.toString();
 	}
 
-	/* Adjustment Prompt */
-
-	@Override
-	public String getAdjustmentPrompt(HashMap<String, String> datapoint, String example) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getDefaultAdjustmentPrompt(HashMap<String, String> datapoint) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/* Adjustment Prompt Incorporating Textual Loss */
-
-	@Override
-	public String getAdjustmentPromptWithLoss(String example, HashMap<String, String> datapoint, String output,
-			String textualLoss) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

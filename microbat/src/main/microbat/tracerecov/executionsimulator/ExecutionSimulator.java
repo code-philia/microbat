@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,8 +19,8 @@ import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.CannotBuildCFGException;
 import microbat.tracerecov.TraceRecovUtils;
-import microbat.tracerecov.candidatevar.CandidateVarVerifier;
-import microbat.tracerecov.candidatevar.CandidateVarVerifier.WriteStatus;
+import microbat.tracerecov.staticverifiers.CandidateVarVerifier;
+import microbat.tracerecov.staticverifiers.WriteStatus;
 import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.common.core.Pair;
@@ -245,6 +244,11 @@ public abstract class ExecutionSimulator {
 	 */
 	public Map<VarValue, VarValue> inferAliasRelations(TraceNode step, VarValue rootVar,
 			List<VarValue> criticalVariables) throws IOException {
+		return inferAliasRelationsByLLM(step, rootVar, criticalVariables);
+	}
+
+	public Map<VarValue, VarValue> inferAliasRelationsByLLM(TraceNode step, VarValue rootVar,
+			List<VarValue> criticalVariables) throws IOException {
 
 		String background = AliasInferenceUtils.getBackgroundContent();
 		String content = AliasInferenceUtils.getQuestionContent(step, rootVar, criticalVariables);
@@ -272,44 +276,43 @@ public abstract class ExecutionSimulator {
 	public boolean inferDefinition(TraceNode step, VarValue rootVar, VarValue targetVar,
 			List<VarValue> criticalVariables) {
 
-//		WriteStatus complication = WriteStatus.NO_GUARANTEE;
-//		VarValue ancestorVarOnTrace = null;
-//		for (VarValue readVarInStep : step.getReadVariables()) {
-//			String aliasID = readVarInStep.getAliasVarID();
-//			if (aliasID == null) {
-//				continue;
-//			}
-//			VarValue criticalAncestor = criticalVariables.stream()
-//					.filter(criticalVar -> aliasID.equals(criticalVar.getAliasVarID())).findFirst().orElse(null);
-//
-//			if (criticalAncestor != null) {
-//				ancestorVarOnTrace = readVarInStep;
-//				break;
-//			}
-//		}
-//		if (ancestorVarOnTrace == null) {
-//			complication = WriteStatus.GUARANTEE_NO_WRITE;
-//		} else if (TraceRecovUtils.shouldBeChecked(ancestorVarOnTrace.getType())) {
-//			complication = estimateComplication(step, ancestorVarOnTrace, targetVar);
-//		}
-//
-//		System.out.println(targetVar.getVarName());
-//		System.out.println(step.getInvokingMethod());
-//		System.out.println(complication);
-//
-//		if (complication == WriteStatus.GUARANTEE_WRITE) {
-//			return true;
-//		} else if (complication == WriteStatus.GUARANTEE_NO_WRITE) {
-//			return false;
-//		} else {
-//			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
-//		}
-		return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
+		WriteStatus complication = WriteStatus.NO_GUARANTEE;
+		VarValue ancestorVarOnTrace = null;
+		for (VarValue readVarInStep : step.getReadVariables()) {
+			String aliasID = readVarInStep.getAliasVarID();
+			if (aliasID == null) {
+				continue;
+			}
+			VarValue criticalAncestor = criticalVariables.stream()
+					.filter(criticalVar -> aliasID.equals(criticalVar.getAliasVarID())).findFirst().orElse(null);
+
+			if (criticalAncestor != null) {
+				ancestorVarOnTrace = readVarInStep;
+				break;
+			}
+		}
+		if (ancestorVarOnTrace == null) {
+			complication = WriteStatus.GUARANTEE_NO_WRITE;
+		} else if (TraceRecovUtils.shouldBeChecked(ancestorVarOnTrace.getType())) {
+			complication = estimateComplication(step, ancestorVarOnTrace, targetVar);
+		}
+
+		System.out.println(targetVar.getVarName());
+		System.out.println(step.getInvokingMethod());
+		System.out.println(complication);
+
+		if (complication == WriteStatus.GUARANTEE_WRITE) {
+			return true;
+		} else if (complication == WriteStatus.GUARANTEE_NO_WRITE) {
+			return false;
+		} else {
+			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
+		}
 	}
 
 	/**
-	 * deterministic flow: guarantee_write, guarantee_no_write must-analysis by LLM:
-	 * no_guarantee
+	 * deterministic flow: guarantee_write, guarantee_no_write 
+	 * must-analysis by LLM: no_guarantee
 	 */
 	private WriteStatus estimateComplication(TraceNode step, VarValue parentVar, VarValue targetVar) {
 
@@ -323,7 +326,8 @@ public abstract class ExecutionSimulator {
 					return WriteStatus.NO_GUARANTEE;
 				}
 				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
-				return candidateVarVerifier.getVarWriteStatus(targetVar.getVarName());
+				String invokingClass = invokedMethod.split("#")[0];
+				return candidateVarVerifier.getVarWriteStatus(targetVar.getVarName(), invokingClass);
 			} catch (CannotBuildCFGException e) {
 				e.printStackTrace();
 			}
@@ -335,7 +339,7 @@ public abstract class ExecutionSimulator {
 	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar,
 			List<VarValue> criticalVariables) {
 
-		String background = DefinitionInferenceUtils.getBackgroundContent(rootVar, targetVar, criticalVariables);
+		String background = DefinitionInferenceUtils.getBackgroundContent();
 		String content = DefinitionInferenceUtils.getQuestionContent(step, rootVar, targetVar, criticalVariables);
 
 		this.logger.printInfoBeforeQuery("Definition Inference", targetVar, step, background + content);

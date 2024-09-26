@@ -20,6 +20,7 @@ public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 	private ArrayList<HashMap<String, String>> testingDataset;
 	private VarSkeletonParser varSkeletonParser;
 	private PromptTemplateFiller promptTemplateFiller;
+	private SimilarityScoreCalculator simScoreCalculator;
 
 	public DefinitionInferenceExampleSearcher() {
 		this(false);
@@ -38,6 +39,7 @@ public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 
 		varSkeletonParser = new VarSkeletonParser();
 		promptTemplateFiller = new DefinitionInferencePromptTemplateFiller();
+		simScoreCalculator = new SimilarityScoreCalculator();
 	}
 
 	@Override

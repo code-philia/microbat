@@ -16,10 +16,14 @@ import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 
 public class VarExpansionExampleSearcher extends ExampleSearcher {
+
+	private static double[] WEIGHTS = new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 };
+
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
 	private VarSkeletonParser varSkeletonParser;
 	private PromptTemplateFiller promptTemplateFiller;
+	private SimilarityScoreCalculator simScoreCalculator;
 
 	public VarExpansionExampleSearcher() {
 		this(false);
@@ -38,40 +42,50 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 		varSkeletonParser = new VarSkeletonParser();
 		promptTemplateFiller = new VarExpansionPromptTemplateFiller();
+		simScoreCalculator = new SimilarityScoreCalculator();
 	}
 
 	@Override
 	public String searchForExample(HashMap<String, String> datapoint) {
 		/* keys */
 		String classStructureKey = DatasetReader.CLASS_STRUCTURE;
+		String sourceCodeKey = DatasetReader.SOURCE_CODE;
+		String varValueKey = DatasetReader.VAR_VALUE;
 		String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
 		/* datapoint features */
+		// class
 		String classStructure = datapoint.get(classStructureKey);
 		VariableSkeleton varSkeleton = varSkeletonParser.parseClassStructure(classStructure);
+		// source code
+		String sourceCode = datapoint.get(sourceCodeKey);
+		// variable value
+		String varValue = datapoint.get(varValueKey);
 
 		/* search for closest example */
-		double minDiffScore = 1;
+		double maxSimScore = 0;
 		int datapointIndex = 0;
 		int exactlyMatch = -1;
 		
 		for (int i = 0; i < trainingDataset.size(); i++) {
 			HashMap<String, String> example = trainingDataset.get(i);
-
-			if(example.get(DatasetReader.VAR_NAME).equals(datapoint.get(DatasetReader.VAR_NAME))
-					&& example.get(DatasetReader.VAR_TYPE).equals(datapoint.get(DatasetReader.VAR_TYPE))
-					&& example.get(DatasetReader.VAR_VALUE).equals(datapoint.get(DatasetReader.VAR_VALUE))) {
-				System.out.println("Exactly match one example.");
-				exactlyMatch = i;
-				break;
-			}
-			
+			// class
 			String exampleClassStructure = example.get(classStructureKey);
 			VariableSkeleton exampleVarSkeleton = varSkeletonParser.parseClassStructure(exampleClassStructure);
+			// source code
+			String exampleSourceCode = example.get(sourceCodeKey);
+			// variable value
+			String exampleVarValue = example.get(varValueKey);
 
-			double diffScore = varSkeleton.getDifferenceScore(exampleVarSkeleton);
-			if (diffScore < minDiffScore) {
-				minDiffScore = diffScore;
+			double codeSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(sourceCode, exampleSourceCode);
+			double varValueSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(varValue, exampleVarValue);
+			double classSimScore = simScoreCalculator.getJaccardCoefficient(varSkeleton, exampleVarSkeleton);
+
+			double simScore = simScoreCalculator
+					.getCombinedScore(new double[] { codeSimScore, varValueSimScore, classSimScore }, WEIGHTS);
+
+			if (simScore > maxSimScore) {
+				maxSimScore = simScore;
 				datapointIndex = i;
 			}			
 		}
@@ -126,4 +140,5 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 		LossCalculator lossCalculator = new VarExpansionLossCalculator();
 		return lossCalculator.computeLoss(outputJSON, groundTruthJSON);
 	}
+
 }

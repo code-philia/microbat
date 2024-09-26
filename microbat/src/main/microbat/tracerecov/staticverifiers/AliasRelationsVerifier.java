@@ -117,6 +117,8 @@ public class AliasRelationsVerifier {
 					FieldInstruction fieldInstruction = (FieldInstruction) nextInstruction;
 					String fieldName = fieldInstruction.getFieldName(constantPoolGen);
 					return AssignRelation.getGuaranteeAssignRelation(varName, fieldName);
+				} else {
+					return AssignRelation.getGuaranteeNoAssignRelation();
 				}
 			}
 		} else if (instruction instanceof InvokeInstruction) {
@@ -124,105 +126,101 @@ public class AliasRelationsVerifier {
 		} else {
 			return AssignRelation.getGuaranteeNoAssignRelation();
 		}
-
-		return AssignRelation.getNoGuaranteeAssignRelation();
 	}
 
-	public ReturnStatus getVarReturnStatus(String varName) {
-		if (varName.contains("[") || varName.contains("]")) {
-			return ReturnStatus.NO_GUARANTEE;
-		}
-		return getReturnStatusRecur(cfg.getStartNode(), new HashMap<>(), varName);
+	public ReturnRelation getVarReturnRelation() {
+		return getReturnRelationRecur(cfg.getStartNode(), new HashMap<>());
 	}
 
-	private ReturnStatus getReturnStatusRecur(CFGNode node, Map<CFGNode, ReturnStatus> visitedNodes, String varName) {
+	private ReturnRelation getReturnRelationRecur(CFGNode node, Map<CFGNode, ReturnRelation> visitedNodes) {
 		visitedNodes.put(node, null);
 
-		ReturnStatus returnStatus = getReturnStatusAtNode(node, varName);
+		ReturnRelation returnRelation = getReturnRelationAtNode(node);
 		// only check the whole graph when status is GUARANTEE_NO_RETURN
-		if (returnStatus != ReturnStatus.GUARANTEE_NO_RETURN) {
-			visitedNodes.put(node, returnStatus);
-			return returnStatus;
+		if (!returnRelation.getReturnStatus().equals(ReturnStatus.GUARANTEE_NO_RETURN)) {
+			visitedNodes.put(node, returnRelation);
+			return returnRelation;
 		}
 
-		ReturnStatus returnStatusAmongChildren = null;
+		ReturnRelation returnRelationAmongChildren = null;
 		List<CFGNode> children = node.getChildren();
 		for (CFGNode child : children) {
-			ReturnStatus childReturnStatus;
+			ReturnRelation childReturnRelation;
 			if (visitedNodes.containsKey(child)) {
 				if (visitedNodes.get(child) == null) {
 					continue;
 				} else {
-					childReturnStatus = visitedNodes.get(child);
+					childReturnRelation = visitedNodes.get(child);
 				}
 			} else {
-				childReturnStatus = getReturnStatusRecur(child, visitedNodes, varName);
+				childReturnRelation = getReturnRelationRecur(child, visitedNodes);
 			}
 
 			// if status is NO_GUARANTEE at any point, the overall status is NO_GUARANTEE
-			if (childReturnStatus == ReturnStatus.NO_GUARANTEE) {
-				visitedNodes.put(node, childReturnStatus);
-				return childReturnStatus;
+			if (childReturnRelation.getReturnStatus().equals(ReturnStatus.NO_GUARANTEE)) {
+				visitedNodes.put(node, childReturnRelation);
+				return childReturnRelation;
 			}
 
-			if (returnStatusAmongChildren == null) {
-				returnStatusAmongChildren = childReturnStatus;
-			} else if (returnStatusAmongChildren != childReturnStatus) {
+			if (returnRelationAmongChildren == null) {
+				returnRelationAmongChildren = childReturnRelation;
+			} else if (!returnRelationAmongChildren.equals(childReturnRelation)) {
 				// if return status are different among branches, the overall status is
 				// NO_GUARANTEE
-				visitedNodes.put(node, ReturnStatus.NO_GUARANTEE);
-				return ReturnStatus.NO_GUARANTEE;
+				ReturnRelation noGuaranteeRelation = ReturnRelation.getNoGuaranteeReturnRelation();
+				visitedNodes.put(node, noGuaranteeRelation);
+				return noGuaranteeRelation;
 			}
 		}
 
-		if (returnStatusAmongChildren == null) {
+		if (returnRelationAmongChildren == null) {
 			// if there are no children, return the status of the current node
-			visitedNodes.put(node, returnStatus);
-			return returnStatus;
-		} else if (returnStatusAmongChildren == ReturnStatus.GUARANTEE_RETURN) {
+			visitedNodes.put(node, returnRelation);
+			return returnRelation;
+		} else if (returnRelationAmongChildren.getReturnStatus().equals(ReturnStatus.GUARANTEE_RETURN)) {
 			// if the children all have status GUARANTEE_RETURN, then the overall status is
 			// GUARANTEE_RETURN
-			visitedNodes.put(node, returnStatusAmongChildren);
-			return returnStatusAmongChildren;
+			visitedNodes.put(node, returnRelationAmongChildren);
+			return returnRelationAmongChildren;
 		}
 
-		visitedNodes.put(node, returnStatus);
-		return returnStatus;
+		visitedNodes.put(node, returnRelation);
+		return returnRelation;
 	}
 
 	/**
 	 * Analyze two nodes (one return step) at a time.
 	 * Return Pattern: getfield return
 	 */
-	private ReturnStatus getReturnStatusAtNode(CFGNode node, String varName) {
+	private ReturnRelation getReturnRelationAtNode(CFGNode node) {
 		Instruction instruction = node.getInstructionHandle().getInstruction();
 
 		if (instruction instanceof GETFIELD) {
 			GETFIELD getFieldInstruction = (GETFIELD) instruction;
 			String fieldName = getFieldInstruction.getFieldName(constantPoolGen);
-			if (!fieldName.equals(varName)) {
-				return ReturnStatus.GUARANTEE_NO_RETURN;
+			if (fieldName == null) {
+				return ReturnRelation.getGuaranteeNoReturnRelation();
 			}
 
 			List<CFGNode> children = node.getChildren();
 			boolean isLastNode = children == null || children.size() == 0;
 			if (isLastNode) {
-				return ReturnStatus.GUARANTEE_NO_RETURN;
+				return ReturnRelation.getGuaranteeNoReturnRelation();
 			} else if (children.size() > 1) {
-				return ReturnStatus.NO_GUARANTEE;
+				return ReturnRelation.getNoGuaranteeReturnRelation();
 			} else {
 				Instruction nextInstruction = children.get(0).getInstructionHandle().getInstruction();
 				if (nextInstruction instanceof ReturnInstruction) {
-					return ReturnStatus.GUARANTEE_RETURN;
+					return ReturnRelation.getGuaranteeReturnRelation(fieldName);
 				}
 			}
 		} else if (instruction instanceof InvokeInstruction) {
-			return ReturnStatus.NO_GUARANTEE;
+			return ReturnRelation.getNoGuaranteeReturnRelation();
 		} else {
-			return ReturnStatus.GUARANTEE_NO_RETURN;
+			return ReturnRelation.getGuaranteeNoReturnRelation();
 		}
 
-		return ReturnStatus.NO_GUARANTEE;
+		return ReturnRelation.getNoGuaranteeReturnRelation();
 	}
 
 }

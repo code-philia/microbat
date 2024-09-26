@@ -34,17 +34,17 @@ public class CandidateVarVerifier {
 		this.constantPoolGen = new ConstantPoolGen(cfg.getConstantPool());
 	}
 
-	public WriteStatus getVarWriteStatus(String varName) {
+	public WriteStatus getVarWriteStatus(String varName, String className) {
 		if (varName.contains("[") || varName.contains("]")) {
 			return WriteStatus.NO_GUARANTEE;
 		}
-		return getWriteStatusRecur(cfg.getStartNode(), new HashMap<>(), varName);
+		return getWriteStatusRecur(cfg.getStartNode(), new HashMap<>(), varName, className);
 	}
 
-	private WriteStatus getWriteStatusRecur(CFGNode node, Map<CFGNode, WriteStatus> visitedNodes, String varName) {
+	private WriteStatus getWriteStatusRecur(CFGNode node, Map<CFGNode, WriteStatus> visitedNodes, String varName, String className) {
 		visitedNodes.put(node, null);
 
-		WriteStatus writeStatus = getWriteStatusAtNode(node, varName);
+		WriteStatus writeStatus = getWriteStatusAtNode(node, varName, className);
 		// only check the whole graph when status is GUARANTEE_NO_WRITE
 		if (writeStatus != WriteStatus.GUARANTEE_NO_WRITE) {
 			visitedNodes.put(node, writeStatus);
@@ -62,7 +62,7 @@ public class CandidateVarVerifier {
 					childWriteStatus = visitedNodes.get(child);
 				}
 			} else {
-				childWriteStatus = getWriteStatusRecur(child, visitedNodes, varName);
+				childWriteStatus = getWriteStatusRecur(child, visitedNodes, varName, className);
 			}
 
 			// if status is NO_GUARANTEE at any point, the overall status is NO_GUARANTEE
@@ -99,7 +99,7 @@ public class CandidateVarVerifier {
 	/**
 	 * Write Pattern: putfield|putstatic
 	 */
-	private WriteStatus getWriteStatusAtNode(CFGNode node, String varName) {
+	private WriteStatus getWriteStatusAtNode(CFGNode node, String varName, String className) {
 		Instruction instruction = node.getInstructionHandle().getInstruction();
 
 		if (instruction instanceof PUTFIELD || instruction instanceof PUTSTATIC) {
@@ -110,11 +110,15 @@ public class CandidateVarVerifier {
 			} else {
 				return WriteStatus.GUARANTEE_NO_WRITE;
 			}
-		} else if (instruction instanceof INVOKEVIRTUAL || instruction instanceof INVOKESPECIAL) {
+		} else if (instruction instanceof InvokeInstruction) {
 			InvokeInstruction invokeInstruction = (InvokeInstruction) instruction;
 			String methodName = invokeInstruction.getName(this.constantPoolGen);
 			String methodSigature = invokeInstruction.getSignature(this.constantPoolGen);
 			String invokingType = invokeInstruction.getClassName(this.constantPoolGen);
+			
+			if (!className.equals(invokingType)) {
+				return WriteStatus.GUARANTEE_NO_WRITE;
+			}
 
 			try {
 				CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokingType, methodName + methodSigature);
@@ -122,12 +126,10 @@ public class CandidateVarVerifier {
 					return WriteStatus.NO_GUARANTEE;
 				}
 				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
-				return candidateVarVerifier.getVarWriteStatus(varName);
+				return candidateVarVerifier.getVarWriteStatus(varName, className);
 			} catch (CannotBuildCFGException e) {
 				e.printStackTrace();
 			}
-		} else if (instruction instanceof InvokeInstruction) {
-			return WriteStatus.NO_GUARANTEE;
 		} else {
 			return WriteStatus.GUARANTEE_NO_WRITE;
 		}
