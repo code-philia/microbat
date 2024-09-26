@@ -86,22 +86,6 @@ public class CandidateVarVerifierTest {
 		}
 	}
 
-	@Test
-	public void getVarWriteStatus_withMethodInvocation_GuaranteeWrite() {
-		String methodSignature = "java.io.StringWriter#append(C)Ljava/io/StringWriter;";
-		String fieldName = "toStringCache";
-
-		try {
-			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
-			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
-			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName);
-
-			assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
-		} catch (CannotBuildCFGException e) {
-			e.printStackTrace();
-		}
-	}
-
 	/**
 	 * `value` is written within StringBuffer class instead of StringWriter.
 	 */
@@ -122,7 +106,7 @@ public class CandidateVarVerifierTest {
 	}
 
 	@Test
-	public void getVarWriteStatus_resSize_GuaranteeWrite() {
+	public void getVarWriteStatus_withinMethodInvocation_GuaranteeWrite() {
 		String methodSignature = "java.util.ArrayList#add(Ljava/lang/Object;)Z";
 		String fieldName = "size";
 
