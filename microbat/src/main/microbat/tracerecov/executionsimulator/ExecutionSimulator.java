@@ -336,7 +336,8 @@ public abstract class ExecutionSimulator {
 					return WriteStatus.NO_GUARANTEE;
 				}
 				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
-				return candidateVarVerifier.getVarWriteStatus(targetVar.getVarName());
+				String invokingClass = invokedMethod.split("#")[0];
+				return candidateVarVerifier.getVarWriteStatus(targetVar.getVarName(), invokingClass);
 			} catch (CannotBuildCFGException e) {
 				e.printStackTrace();
 			}

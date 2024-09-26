@@ -110,8 +110,11 @@ public class CandidateVarVerifierTest {
 		}
 	}
 
+	/**
+	 * `size` is written after method invocation.
+	 */
 	@Test
-	public void getVarWriteStatus_withinMethodInvocation_GuaranteeWrite() {
+	public void getVarWriteStatus_afterMethodInvocation_GuaranteeWrite() {
 		String methodSignature = "java.util.ArrayList#add(Ljava/lang/Object;)Z";
 		String className = "java.util.ArrayList";
 		String fieldName = "size";
