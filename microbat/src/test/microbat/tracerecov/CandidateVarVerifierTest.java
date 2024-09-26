@@ -31,6 +31,46 @@ public class CandidateVarVerifierTest {
 	}
 
 	/**
+	 * possible to return early
+	 */
+	@Test
+	public void getVarWriteStatus_withinForLoop_NoGuarantee() {
+		String methodSignature = "java.util.ArrayList#remove(Ljava/lang/Object;)Z";
+		String className = "java.util.ArrayList";
+		String fieldName = "modCount";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
+
+			assertEquals(WriteStatus.NO_GUARANTEE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * `size` is written after method invocation.
+	 */
+	@Test
+	public void getVarWriteStatus_afterMethodInvocation_GuaranteeWrite() {
+		String methodSignature = "java.util.ArrayList#add(Ljava/lang/Object;)Z";
+		String className = "java.util.ArrayList";
+		String fieldName = "size";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
+
+			assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * 2:putfield java.lang.StringBuffer.toStringCache:[C (11)
 	 */
 	@Test
@@ -71,26 +111,6 @@ public class CandidateVarVerifierTest {
 	}
 
 	/**
-	 * possible to return early
-	 */
-	@Test
-	public void getVarWriteStatus_withinForLoop_NoGuarantee() {
-		String methodSignature = "java.util.ArrayList#remove(Ljava/lang/Object;)Z";
-		String className = "java.util.ArrayList";
-		String fieldName = "modCount";
-
-		try {
-			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
-			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
-			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
-
-			assertEquals(WriteStatus.NO_GUARANTEE, writeStatus);
-		} catch (CannotBuildCFGException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
 	 * `value` is written within StringBuffer class instead of StringWriter.
 	 */
 	@Test
@@ -111,12 +131,12 @@ public class CandidateVarVerifierTest {
 	}
 
 	/**
-	 * `size` is written after method invocation.
+	 * method might terminate early before `size` is incremented.
 	 */
 	@Test
-	public void getVarWriteStatus_afterMethodInvocation_GuaranteeWrite() {
-		String methodSignature = "java.util.ArrayList#add(Ljava/lang/Object;)Z";
-		String className = "java.util.ArrayList";
+	public void getVarWriteStatus_afterReturn_NoGuarantee() {
+		String methodSignature = "java.util.HashMap#put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;";
+		String className = "java.util.HashMap";
 		String fieldName = "size";
 
 		try {
@@ -124,7 +144,7 @@ public class CandidateVarVerifierTest {
 			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
 			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
 
-			assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
+			assertEquals(WriteStatus.NO_GUARANTEE, writeStatus);
 		} catch (CannotBuildCFGException e) {
 			e.printStackTrace();
 		}
