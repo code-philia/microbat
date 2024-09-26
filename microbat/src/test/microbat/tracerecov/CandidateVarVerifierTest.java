@@ -11,7 +11,7 @@ import microbat.tracerecov.staticverifiers.WriteStatus;
 public class CandidateVarVerifierTest {
 
 	/**
-	 * Always bypass elements in array
+	 * Special case: Always bypass elements in array.
 	 */
 	@Test
 	public void getVarWriteStatus_elementInArray_NoGuarantee() {
@@ -34,7 +34,7 @@ public class CandidateVarVerifierTest {
 	 * 2:putfield java.lang.StringBuffer.toStringCache:[C (11)
 	 */
 	@Test
-	public void getVarWriteStatus_GuaranteeWrite() {
+	public void getVarWriteStatus_beforeMethodInvocation_GuaranteeWrite() {
 		String methodSignature = "java.lang.StringBuffer#append(Ljava/lang/CharSequence;)Ljava/lang/StringBuffer;";
 		String className = "java.lang.StringBuffer";
 		String fieldName = "toStringCache";
@@ -54,7 +54,7 @@ public class CandidateVarVerifierTest {
 	 * `getBuffer` reads `buf` but doesn't write to it.
 	 */
 	@Test
-	public void getVarWriteStatus_GuaranteeNoWrite() {
+	public void getVarWriteStatus_noMethodInvocation_GuaranteeNoWrite() {
 		String methodSignature = "java.io.StringWriter#getBuffer()Ljava/lang/StringBuffer;";
 		String className = "java.io.StringWriter";
 		String fieldName = "buf";
@@ -74,7 +74,7 @@ public class CandidateVarVerifierTest {
 	 * possible to return early
 	 */
 	@Test
-	public void getVarWriteStatus_forLoop_NoGuarantee() {
+	public void getVarWriteStatus_withinForLoop_NoGuarantee() {
 		String methodSignature = "java.util.ArrayList#remove(Ljava/lang/Object;)Z";
 		String className = "java.util.ArrayList";
 		String fieldName = "modCount";
@@ -94,7 +94,7 @@ public class CandidateVarVerifierTest {
 	 * `value` is written within StringBuffer class instead of StringWriter.
 	 */
 	@Test
-	public void getVarWriteStatus_withMethodInvocation_NoGuarantee() {
+	public void getVarWriteStatus_withinMethodInvocation_NoGuarantee() {
 		String methodSignature = "java.io.StringWriter#append(Ljava/lang/CharSequence;)Ljava/io/StringWriter;";
 		String className = "java.io.StringWriter";
 		String fieldName = "value";
@@ -104,7 +104,7 @@ public class CandidateVarVerifierTest {
 			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
 			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
 
-			assertEquals(WriteStatus.NO_GUARANTEE, writeStatus);
+			assertEquals(WriteStatus.GUARANTEE_NO_WRITE, writeStatus);
 		} catch (CannotBuildCFGException e) {
 			e.printStackTrace();
 		}
