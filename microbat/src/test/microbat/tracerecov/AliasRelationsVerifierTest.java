@@ -161,5 +161,95 @@ public class AliasRelationsVerifierTest {
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * This test verifies that both `key` and `value` parameters of HashMap#put 
+	 * are not assigned to any internal field. This test ensures the static analysis tool 
+	 * correctly identifies that no assign relation is formed between these parameters and internal fields.
+	 */
+	@Test
+	public void multipleParams_AssignRelationTest() {
+	    String methodSignature = "java.util.HashMap#put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;";
+	    String className = "java.util.HashMap";
+	    String paramNameKey = "key";
+	    int paramIndexKey = 1;
+	    String paramNameValue = "value";
+	    int paramIndexValue = 2;
+
+	    try {
+	        CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+	        AliasRelationsVerifier aliasRelationsVerifier = new AliasRelationsVerifier(cfg, methodSignature);
+
+	        // Check if 'key' is assigned to an internal field
+	        AssignRelation assignRelationKey = aliasRelationsVerifier.getVarAssignRelation(paramNameKey, paramIndexKey, className);
+	        // Check if 'value' is assigned to an internal field
+	        AssignRelation assignRelationValue = aliasRelationsVerifier.getVarAssignRelation(paramNameValue, paramIndexValue, className);
+
+	        // Neither 'key' nor 'value' should be assigned to internal fields
+	        assertEquals(AssignRelation.getGuaranteeNoAssignRelation(), assignRelationKey);
+	        assertEquals(AssignRelation.getGuaranteeNoAssignRelation(), assignRelationValue);
+
+	    } catch (CannotBuildCFGException e) {
+	        e.printStackTrace();
+	    }
+	}
+
+	
+	/**
+	 * This test verifies that StringBuilder#toString can return its internal field 'toStringCache'.
+	 * It checks whether the return relation is correctly formed between the method and the internal field.
+	 */
+	@Test
+	public void complexControlFlow_ReturnRelationTest() {
+	    String methodSignature = "java.lang.StringBuilder#toString()Ljava/lang/String;";
+	    String className = "java.lang.StringBuilder";
+
+	    try {
+	        CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+	        AliasRelationsVerifier aliasRelationsVerifier = new AliasRelationsVerifier(cfg, methodSignature);
+
+	        // Check the return relation
+	        ReturnRelation returnRelation = aliasRelationsVerifier.getVarReturnRelation();
+
+	        // Ensure that the returned field is 'toStringCache'
+	        String expectedReturnedField = "toStringCache";
+	        assertEquals(ReturnRelation.getGuaranteeReturnRelation(expectedReturnedField), returnRelation);
+
+	    } catch (CannotBuildCFGException e) {
+	        e.printStackTrace();
+	    }
+	}
+
+
+	/**
+	 * This test checks that the key parameter in HashMap#computeIfAbsent is not assigned to an internal field.
+	 * It ensures that the static analysis tool correctly identifies that there is no assign relation.
+	 */
+	@Test
+	public void methodCallChain_AssignAndReturnRelationTest() {
+	    String methodSignature = "java.util.HashMap#computeIfAbsent(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;";
+	    String className = "java.util.HashMap";
+	    String paramName = "key";
+	    int paramIndex = 1;
+
+	    try {
+	        CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+	        AliasRelationsVerifier aliasRelationsVerifier = new AliasRelationsVerifier(cfg, methodSignature);
+
+	        // Check if 'key' is assigned to any internal field across method calls
+	        AssignRelation assignRelation = aliasRelationsVerifier.getVarAssignRelation(paramName, paramIndex, className);
+	        ReturnRelation returnRelation = aliasRelationsVerifier.getVarReturnRelation();
+
+	        // 'key' should not be assigned to any internal field
+	        assertEquals(AssignRelation.getGuaranteeNoAssignRelation(), assignRelation);
+	        
+	        // Return value might not be guaranteed due to the nature of compute logic
+	        assertEquals(ReturnRelation.getNoGuaranteeReturnRelation(), returnRelation);
+
+	    } catch (CannotBuildCFGException e) {
+	        e.printStackTrace();
+	    }
+	}
+
 
 }
