@@ -38,6 +38,16 @@ public class AliasRelationsVerifier {
 		this.methodSignature = methodSignature;
 	}
 
+	/**
+	 * Return the assign relation between an input parameter of a method call to an
+	 * internal field within the invoking object (if any).
+	 * 
+	 * @param varName   is the name of the input parameter.
+	 * @param varIndex  is the index of the input parameter among all parameters
+	 *                  (starting from 1).
+	 * @param className is the class name of the invoking object.
+	 * @return the assign relation.
+	 */
 	public AssignRelation getVarAssignRelation(String varName, int varIndex, String className) {
 		if (varName == null || varIndex == -1) {
 			return AssignRelation.getGuaranteeNoAssignRelation();
@@ -184,6 +194,12 @@ public class AliasRelationsVerifier {
 		}
 	}
 
+	/**
+	 * Get the return relation of a method call. If any field is returned as an
+	 * output, it will be included in the return relation.
+	 * 
+	 * @return the return relation.
+	 */
 	public ReturnRelation getVarReturnRelation() {
 		if (this.methodSignature.contains("<init>")) {
 			String className = this.methodSignature.split("#")[0];
