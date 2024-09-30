@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.bcel.Const;
+import org.apache.bcel.Repository;
+import org.apache.bcel.classfile.Field;
+import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.generic.ALOAD;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.FieldInstruction;
@@ -35,18 +38,36 @@ public class CandidateVarVerifier {
 		this.constantPoolGen = new ConstantPoolGen(cfg.getConstantPool());
 	}
 
-	public WriteStatus getVarWriteStatus(String varName, String className) {
+	public WriteStatus getVarWriteStatus(String varName, String methodSignature) {
 		if (varName.contains("[") || varName.contains("]")) {
 			return WriteStatus.NO_GUARANTEE;
 		}
-		return getWriteStatusRecur(cfg.getStartNode(), new HashMap<>(), varName, className);
+		
+		if (methodSignature.contains("<init>")) {
+			try {
+				String className = methodSignature.split("#")[0];
+				JavaClass javaClass = Repository.lookupClass(className);
+				Field[] fields = javaClass.getFields();
+				for (Field field : fields) {
+					if (field.getName().equals(varName)) {
+						return WriteStatus.GUARANTEE_WRITE;
+					}
+				}
+				return WriteStatus.GUARANTEE_NO_WRITE;
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+				return WriteStatus.NO_GUARANTEE;
+			}
+		}
+		
+		return getWriteStatusRecur(cfg.getStartNode(), new HashMap<>(), varName, methodSignature);
 	}
 
 	private WriteStatus getWriteStatusRecur(CFGNode node, Map<CFGNode, WriteStatus> visitedNodes, String varName,
-			String className) {
+			String methodSignature) {
 		visitedNodes.put(node, null);
 
-		WriteStatus writeStatus = getWriteStatusAtNode(node, varName, className);
+		WriteStatus writeStatus = getWriteStatusAtNode(node, varName, methodSignature);
 		// only check the whole graph when status is GUARANTEE_NO_WRITE
 		if (writeStatus != WriteStatus.GUARANTEE_NO_WRITE) {
 			visitedNodes.put(node, writeStatus);
@@ -64,7 +85,7 @@ public class CandidateVarVerifier {
 					childWriteStatus = visitedNodes.get(child);
 				}
 			} else {
-				childWriteStatus = getWriteStatusRecur(child, visitedNodes, varName, className);
+				childWriteStatus = getWriteStatusRecur(child, visitedNodes, varName, methodSignature);
 			}
 
 			// if status is NO_GUARANTEE at any point, the overall status is NO_GUARANTEE
@@ -101,7 +122,7 @@ public class CandidateVarVerifier {
 	/**
 	 * Write Pattern: putfield|putstatic
 	 */
-	private WriteStatus getWriteStatusAtNode(CFGNode node, String varName, String className) {
+	private WriteStatus getWriteStatusAtNode(CFGNode node, String varName, String methodSignature) {
 		Instruction instruction = node.getInstructionHandle().getInstruction();
 
 		if (instruction instanceof PUTFIELD || instruction instanceof PUTSTATIC) {
@@ -142,7 +163,7 @@ public class CandidateVarVerifier {
 							return WriteStatus.NO_GUARANTEE;
 						}
 						CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
-						return candidateVarVerifier.getVarWriteStatus(varName, className);
+						return candidateVarVerifier.getVarWriteStatus(varName, methodSignature);
 					} catch (CannotBuildCFGException e) {
 						e.printStackTrace();
 					}

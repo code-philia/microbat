@@ -348,9 +348,8 @@ public abstract class ExecutionSimulator {
 					return WriteStatus.NO_GUARANTEE;
 				}
 				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
-				String invokingClass = invokedMethod.split("#")[0];
 				WriteStatus methodWriteStatus = candidateVarVerifier.getVarWriteStatus(targetVar.getVarName(),
-						invokingClass);
+						invokedMethod);
 				if (methodWriteStatus == WriteStatus.GUARANTEE_WRITE || methodWriteStatus == WriteStatus.NO_GUARANTEE) {
 					return methodWriteStatus;
 				}
