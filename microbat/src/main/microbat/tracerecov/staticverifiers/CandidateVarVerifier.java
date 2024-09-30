@@ -4,10 +4,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.bcel.Const;
+import org.apache.bcel.generic.ALOAD;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.FieldInstruction;
-import org.apache.bcel.generic.INVOKESPECIAL;
-import org.apache.bcel.generic.INVOKEVIRTUAL;
+import org.apache.bcel.generic.INVOKESTATIC;
 import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InvokeInstruction;
 import org.apache.bcel.generic.PUTFIELD;
@@ -41,7 +42,8 @@ public class CandidateVarVerifier {
 		return getWriteStatusRecur(cfg.getStartNode(), new HashMap<>(), varName, className);
 	}
 
-	private WriteStatus getWriteStatusRecur(CFGNode node, Map<CFGNode, WriteStatus> visitedNodes, String varName, String className) {
+	private WriteStatus getWriteStatusRecur(CFGNode node, Map<CFGNode, WriteStatus> visitedNodes, String varName,
+			String className) {
 		visitedNodes.put(node, null);
 
 		WriteStatus writeStatus = getWriteStatusAtNode(node, varName, className);
@@ -110,31 +112,46 @@ public class CandidateVarVerifier {
 			} else {
 				return WriteStatus.GUARANTEE_NO_WRITE;
 			}
-		} else if (instruction instanceof InvokeInstruction) {
+		} else if (instruction instanceof InvokeInstruction && !(instruction instanceof INVOKESTATIC)) {
 			InvokeInstruction invokeInstruction = (InvokeInstruction) instruction;
 			String methodName = invokeInstruction.getName(this.constantPoolGen);
 			String methodSigature = invokeInstruction.getSignature(this.constantPoolGen);
 			String invokingType = invokeInstruction.getClassName(this.constantPoolGen);
-			
-			if (!className.equals(invokingType)) {
-				return WriteStatus.GUARANTEE_NO_WRITE;
-			}
 
-			try {
-				CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokingType, methodName + methodSigature);
-				if (cfg == null) {
-					return WriteStatus.NO_GUARANTEE;
+			// check whether the method is from the this class or super class
+			int numOfParameters = invokeInstruction.getArgumentTypes(constantPoolGen).length;
+			CFGNode currentNode = node;
+			int index = 0;
+			while (index <= numOfParameters) {
+				currentNode = currentNode.getParents().get(0); // assume one parent
+				Instruction ins = currentNode.getInstructionHandle().getInstruction();
+				if (ins instanceof InvokeInstruction) {
+					InvokeInstruction invokeIns = (InvokeInstruction) ins;
+					numOfParameters += invokeIns.getArgumentTypes(constantPoolGen).length;
 				}
-				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
-				return candidateVarVerifier.getVarWriteStatus(varName, className);
-			} catch (CannotBuildCFGException e) {
-				e.printStackTrace();
+				index++;
 			}
+			Instruction previousInstruction = currentNode.getInstructionHandle().getInstruction();
+			if (previousInstruction instanceof ALOAD) {
+				ALOAD loadObjectInstruction = (ALOAD) previousInstruction;
+				if (loadObjectInstruction.getOpcode() == Const.ALOAD_0) {
+					// method is invoked from the current class
+					try {
+						CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokingType, methodName + methodSigature);
+						if (cfg == null) {
+							return WriteStatus.NO_GUARANTEE;
+						}
+						CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+						return candidateVarVerifier.getVarWriteStatus(varName, className);
+					} catch (CannotBuildCFGException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			return WriteStatus.GUARANTEE_NO_WRITE;
 		} else {
 			return WriteStatus.GUARANTEE_NO_WRITE;
 		}
-
-		return WriteStatus.NO_GUARANTEE;
 	}
 
 }

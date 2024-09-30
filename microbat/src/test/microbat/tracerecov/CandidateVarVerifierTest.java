@@ -231,11 +231,11 @@ public class CandidateVarVerifierTest {
 	}
 
 	/**
-	 * `count` is a field inherited from `AbstractStringBuilder`, if the appended
-	 * string is null, `count` is not written.
+	 * `count` is a field inherited from `AbstractStringBuilder`, it is guaranteed
+	 * to be written in all the control branches when `append` is called.
 	 */
 	@Test
-	public void getVarWriteStatus_inheritedField_NoGuarantee() {
+	public void getVarWriteStatus_inheritedField_GuaranteeWrite() {
 		String methodSignature = "java.lang.StringBuilder#append(Ljava/lang/Object;)Ljava/lang/StringBuilder;";
 		String className = "java.lang.StringBuilder";
 		String fieldName = "count";
@@ -245,7 +245,7 @@ public class CandidateVarVerifierTest {
 			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
 			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
 
-			assertEquals(WriteStatus.NO_GUARANTEE, writeStatus);
+			assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
 		} catch (CannotBuildCFGException e) {
 			e.printStackTrace();
 		}
