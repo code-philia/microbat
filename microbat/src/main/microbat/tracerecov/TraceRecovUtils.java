@@ -318,9 +318,6 @@ public class TraceRecovUtils {
 		String generalType = variableWithGeneralType.getType();
 		String specificType = variableWithSpecificType.getType();
 
-		if (generalType.contains("class ")) {
-			generalType = generalType.split(" ")[1];
-		}
 		String generalName = variableWithGeneralType.getVarName();
 		boolean isArrayElement = generalType == null || generalType.equals("")
 				|| (generalName.contains("[") && generalName.contains("]"));
@@ -329,9 +326,18 @@ public class TraceRecovUtils {
 			return true;
 		}
 
+		return isAssignable(generalType, specificType, appJavaClassPath);
+	}
+
+	public static boolean isAssignable(String generalType, String specificType, AppJavaClassPath appJavaClassPath) {
+
+		if (generalType.contains("class ")) {
+			generalType = generalType.split(" ")[1];
+		}
 		if (specificType.contains("class ")) {
 			specificType = specificType.split(" ")[1];
 		}
+
 		if (!isUnrecorded(generalType, appJavaClassPath) || !isUnrecorded(specificType, appJavaClassPath)
 				|| specificType == null) {
 			return false;

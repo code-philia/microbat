@@ -323,12 +323,24 @@ public abstract class ExecutionSimulator {
 	/**
 	 * deterministic flow: guarantee_write, guarantee_no_write 
 	 * must-analysis by LLM: no_guarantee
+	 * 
+	 * Algorithm:
+	 * 1. if any method writes the targetVar, stop and return GUARANTEE_WRITE
+	 * 2. if the write status of any method cannot be determined, the overall status is NO_GUARANTEE
+	 * 3. if all methods are guaranteed not to write to targetVar, the overall status is GUARANTEE_NO_WRITE
 	 */
 	private WriteStatus estimateComplication(TraceNode step, VarValue parentVar, VarValue targetVar) {
 
 		String[] invokingMethods = step.getInvokingMethod().split("%");
+		String parentVarType = parentVar.getType();
 
 		for (String invokedMethod : invokingMethods) {
+
+			String invokingType = invokedMethod.split("#")[0];
+
+			if (!TraceRecovUtils.isAssignable(invokingType, parentVarType, step.getTrace().getAppJavaClassPath())) {
+				continue; // GUARANTEE_NO_WRITE
+			}
 
 			try {
 				CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokedMethod);
@@ -337,13 +349,17 @@ public abstract class ExecutionSimulator {
 				}
 				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
 				String invokingClass = invokedMethod.split("#")[0];
-				return candidateVarVerifier.getVarWriteStatus(targetVar.getVarName(), invokingClass);
+				WriteStatus methodWriteStatus = candidateVarVerifier.getVarWriteStatus(targetVar.getVarName(),
+						invokingClass);
+				if (methodWriteStatus == WriteStatus.GUARANTEE_WRITE || methodWriteStatus == WriteStatus.NO_GUARANTEE) {
+					return methodWriteStatus;
+				}
 			} catch (CannotBuildCFGException e) {
 				e.printStackTrace();
 			}
 		}
 
-		return WriteStatus.NO_GUARANTEE;
+		return WriteStatus.GUARANTEE_NO_WRITE;
 	}
 
 	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar,
