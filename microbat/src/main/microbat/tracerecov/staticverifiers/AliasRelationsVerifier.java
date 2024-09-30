@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.bcel.Const;
+import org.apache.bcel.generic.ALOAD;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.GETFIELD;
@@ -118,7 +120,8 @@ public class AliasRelationsVerifier {
 
 	/**
 	 * Analyze two nodes (one assign step) at a time.
-	 * Assign Pattern: aload putfield|putstatic
+	 * 
+	 * Assign Pattern: aload_0 <?>load_varIndex putfield|putstatic
 	 */
 	private AssignRelation getAssignRelationAtNode(CFGNode node, String varName, int varIndex, String className) {
 		Instruction instruction = node.getInstructionHandle().getInstruction();
@@ -129,21 +132,29 @@ public class AliasRelationsVerifier {
 			if (fieldIndex != varIndex) {
 				return AssignRelation.getGuaranteeNoAssignRelation();
 			}
+
+			List<CFGNode> parents = node.getParents();
 			List<CFGNode> children = node.getChildren();
+			boolean isFirstNode = parents == null || parents.size() == 0;
 			boolean isLastNode = children == null || children.size() == 0;
-			if (isLastNode) {
+			if (isFirstNode || isLastNode) {
 				return AssignRelation.getGuaranteeNoAssignRelation();
-			} else if (children.size() > 1) {
+			} else if (parents.size() > 1 || children.size() > 1) {
 				return AssignRelation.getNoGuaranteeAssignRelation();
 			} else {
-				Instruction nextInstruction = children.get(0).getInstructionHandle().getInstruction();
-				if (nextInstruction instanceof PUTFIELD || nextInstruction instanceof PUTSTATIC) {
-					FieldInstruction fieldInstruction = (FieldInstruction) nextInstruction;
-					String fieldName = fieldInstruction.getFieldName(constantPoolGen);
-					return AssignRelation.getGuaranteeAssignRelation(varName, fieldName);
-				} else {
-					return AssignRelation.getGuaranteeNoAssignRelation();
+				Instruction previousInstruction = parents.get(0).getInstructionHandle().getInstruction();
+				if (previousInstruction instanceof ALOAD) {
+					ALOAD previousAload = (ALOAD) previousInstruction;
+					if (previousAload.getOpcode() == Const.ALOAD_0) {
+						Instruction nextInstruction = children.get(0).getInstructionHandle().getInstruction();
+						if (nextInstruction instanceof PUTFIELD || nextInstruction instanceof PUTSTATIC) {
+							FieldInstruction fieldInstruction = (FieldInstruction) nextInstruction;
+							String fieldName = fieldInstruction.getFieldName(constantPoolGen);
+							return AssignRelation.getGuaranteeAssignRelation(varName, fieldName);
+						}
+					}
 				}
+				return AssignRelation.getGuaranteeNoAssignRelation();
 			}
 		} else if (instruction instanceof InvokeInstruction) {
 			InvokeInstruction invokeInstruction = (InvokeInstruction) instruction;
@@ -157,10 +168,9 @@ public class AliasRelationsVerifier {
 
 			// track the index of the parameter in method calls
 			int numOfParameters = invokeInstruction.getArgumentTypes(constantPoolGen).length;
-			int newIndex = numOfParameters + 1;
+			int newIndex = numOfParameters;
 			CFGNode currentNode = node;
 			for (int i = 0; i < numOfParameters; i++) {
-				newIndex--;
 				CFGNode parent = currentNode.getParents().get(0); // assume one parent
 				Instruction previousInstruction = parent.getInstructionHandle().getInstruction();
 				if (previousInstruction instanceof LoadInstruction) {
@@ -171,6 +181,7 @@ public class AliasRelationsVerifier {
 					}
 				}
 				currentNode = parent;
+				newIndex--;
 			}
 			if (newIndex == 0) {
 				return AssignRelation.getGuaranteeNoAssignRelation();
@@ -269,6 +280,7 @@ public class AliasRelationsVerifier {
 
 	/**
 	 * Analyze two nodes (one return step) at a time.
+	 * 
 	 * Return Pattern: getfield return
 	 */
 	private ReturnRelation getReturnRelationAtNode(CFGNode node) {

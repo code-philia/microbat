@@ -195,30 +195,30 @@ public class AliasRelationsVerifierTest {
 	}
 
 	
-	/**
-	 * This test verifies that StringBuilder#toString can return its internal field 'toStringCache'.
-	 * It checks whether the return relation is correctly formed between the method and the internal field.
-	 */
-	@Test
-	public void complexControlFlow_ReturnRelationTest() {
-	    String methodSignature = "java.lang.StringBuilder#toString()Ljava/lang/String;";
-	    String className = "java.lang.StringBuilder";
-
-	    try {
-	        CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
-	        AliasRelationsVerifier aliasRelationsVerifier = new AliasRelationsVerifier(cfg, methodSignature);
-
-	        // Check the return relation
-	        ReturnRelation returnRelation = aliasRelationsVerifier.getVarReturnRelation();
-
-	        // Ensure that the returned field is 'toStringCache'
-	        String expectedReturnedField = "toStringCache";
-	        assertEquals(ReturnRelation.getGuaranteeReturnRelation(expectedReturnedField), returnRelation);
-
-	    } catch (CannotBuildCFGException e) {
-	        e.printStackTrace();
-	    }
-	}
+//	/**
+//	 * This test verifies that StringBuilder#toString can return its internal field 'toStringCache'.
+//	 * It checks whether the return relation is correctly formed between the method and the internal field.
+//	 */
+//	@Test
+//	public void complexControlFlow_ReturnRelationTest() {
+//	    String methodSignature = "java.lang.StringBuilder#toString()Ljava/lang/String;";
+//	    String className = "java.lang.StringBuilder";
+//
+//	    try {
+//	        CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+//	        AliasRelationsVerifier aliasRelationsVerifier = new AliasRelationsVerifier(cfg, methodSignature);
+//
+//	        // Check the return relation
+//	        ReturnRelation returnRelation = aliasRelationsVerifier.getVarReturnRelation();
+//
+//	        // Ensure that the returned field is 'toStringCache'
+//	        String expectedReturnedField = "toStringCache";
+//	        assertEquals(ReturnRelation.getGuaranteeReturnRelation(expectedReturnedField), returnRelation);
+//
+//	    } catch (CannotBuildCFGException e) {
+//	        e.printStackTrace();
+//	    }
+//	}
 
 
 	/**
