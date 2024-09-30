@@ -71,6 +71,26 @@ public class CandidateVarVerifierTest {
 	}
 
 	/**
+	 * `size` is written after method invocation.
+	 */
+	@Test
+	public void getVarWriteStatus_afterMethodInvocation_GuaranteeWrite2() {
+		String methodSignature = "java.util.ArrayList#addAll(Ljava/util/Collection;)Z";
+		String className = "java.util.ArrayList";
+		String fieldName = "size";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
+
+			assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * 2:putfield java.lang.StringBuffer.toStringCache:[C (11)
 	 */
 	@Test
@@ -145,6 +165,66 @@ public class CandidateVarVerifierTest {
 			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
 
 			assertEquals(WriteStatus.NO_GUARANTEE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * `size` is decreased on one of the control branches (not all).
+	 */
+	@Test
+	public void getVarWriteStatus_oneBranchModification_NoGuarantee() {
+		String methodSignature = "java.util.HashMap#remove(Ljava/lang/Object;)Ljava/lang/Object;";
+		String className = "java.util.HashMap";
+		String fieldName = "size";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
+
+			assertEquals(WriteStatus.NO_GUARANTEE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * method might terminate early before `head` is written.
+	 */
+	@Test
+	public void getVarWriteStatus_afterThrow_NoGuarantee() {
+		String methodSignature = "java.util.ArrayDeque#push(Ljava/lang/Object;)V";
+		String className = "java.util.ArrayDeque";
+		String fieldName = "head";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
+
+			assertEquals(WriteStatus.NO_GUARANTEE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * `size` is guaranteed to be written in nested method invocations.
+	 */
+	@Test
+	public void getVarWriteStatus_withinMethodInvocation_GuaranteeWrite() {
+		String methodSignature = "java.util.LinkedList#push(Ljava/lang/Object;)V";
+		String className = "java.util.LinkedList";
+		String fieldName = "size";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
+
+			assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
 		} catch (CannotBuildCFGException e) {
 			e.printStackTrace();
 		}

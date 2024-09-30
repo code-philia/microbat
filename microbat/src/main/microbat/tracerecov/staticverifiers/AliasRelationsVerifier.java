@@ -4,18 +4,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.bcel.Const;
 import org.apache.bcel.generic.ALOAD;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.GETFIELD;
 import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InvokeInstruction;
+import org.apache.bcel.generic.LoadInstruction;
 import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.PUTSTATIC;
 import org.apache.bcel.generic.ReturnInstruction;
 
 import microbat.codeanalysis.bytecode.CFG;
 import microbat.codeanalysis.bytecode.CFGNode;
+import microbat.tracerecov.CannotBuildCFGException;
+import microbat.tracerecov.TraceRecovUtils;
 
 /**
  * This class performs static analysis and verifies whether a candidate variable
@@ -28,24 +32,41 @@ public class AliasRelationsVerifier {
 
 	private CFG cfg;
 	private ConstantPoolGen constantPoolGen;
+	private String methodSignature;
 
-	public AliasRelationsVerifier(CFG cfg) {
+	public AliasRelationsVerifier(CFG cfg, String methodSignature) {
 		this.cfg = cfg;
 		this.constantPoolGen = new ConstantPoolGen(cfg.getConstantPool());
+		this.methodSignature = methodSignature;
 	}
 
-	public AssignRelation getVarAssignRelation(String varName) {
+	/**
+	 * Return the assign relation between an input parameter of a method call to an
+	 * internal field within the invoking object (if any).
+	 * 
+	 * @param varName   is the name of the input parameter.
+	 * @param varIndex  is the index of the input parameter among all parameters
+	 *                  (starting from 1).
+	 * @param className is the class name of the invoking object.
+	 * @return the assign relation.
+	 */
+	public AssignRelation getVarAssignRelation(String varName, int varIndex, String className) {
+		if (varName == null || varIndex == -1) {
+			return AssignRelation.getGuaranteeNoAssignRelation();
+		}
+
 		if (varName.contains("[") || varName.contains("]")) {
 			return AssignRelation.getNoGuaranteeAssignRelation();
 		}
-		return getAssignRelationRecur(cfg.getStartNode(), new HashMap<>(), varName);
+
+		return getAssignRelationRecur(cfg.getStartNode(), new HashMap<>(), varName, varIndex, className);
 	}
 
 	private AssignRelation getAssignRelationRecur(CFGNode node, Map<CFGNode, AssignRelation> visitedNodes,
-			String varName) {
+			String varName, int varIndex, String className) {
 		visitedNodes.put(node, null);
 
-		AssignRelation assignRelation = getAssignRelationAtNode(node, varName);
+		AssignRelation assignRelation = getAssignRelationAtNode(node, varName, varIndex, className);
 		if (assignRelation.getAssignStatus().equals(AssignStatus.NO_GUARANTEE)) {
 			visitedNodes.put(node, assignRelation);
 			return assignRelation;
@@ -62,7 +83,7 @@ public class AliasRelationsVerifier {
 					childAssignRelation = visitedNodes.get(child);
 				}
 			} else {
-				childAssignRelation = getAssignRelationRecur(child, visitedNodes, varName);
+				childAssignRelation = getAssignRelationRecur(child, visitedNodes, varName, varIndex, className);
 			}
 
 			// if status is NO_GUARANTEE at any point, the overall status is NO_GUARANTEE
@@ -99,36 +120,105 @@ public class AliasRelationsVerifier {
 
 	/**
 	 * Analyze two nodes (one assign step) at a time.
-	 * Assign Pattern: aload putfield|putstatic
+	 * 
+	 * Assign Pattern: aload_0 <?>load_varIndex putfield|putstatic
 	 */
-	private AssignRelation getAssignRelationAtNode(CFGNode node, String varName) {
+	private AssignRelation getAssignRelationAtNode(CFGNode node, String varName, int varIndex, String className) {
 		Instruction instruction = node.getInstructionHandle().getInstruction();
 
-		if (instruction instanceof ALOAD) {
-			List<CFGNode> children = node.getChildren();
-			boolean isLastNode = children == null || children.size() == 0;
-			if (isLastNode) {
+		if (instruction instanceof LoadInstruction) {
+			LoadInstruction loadInstruction = (LoadInstruction) instruction;
+			int fieldIndex = loadInstruction.getIndex();
+			if (fieldIndex != varIndex) {
 				return AssignRelation.getGuaranteeNoAssignRelation();
-			} else if (children.size() > 1) {
+			}
+
+			List<CFGNode> parents = node.getParents();
+			List<CFGNode> children = node.getChildren();
+			boolean isFirstNode = parents == null || parents.size() == 0;
+			boolean isLastNode = children == null || children.size() == 0;
+			if (isFirstNode || isLastNode) {
+				return AssignRelation.getGuaranteeNoAssignRelation();
+			} else if (parents.size() > 1 || children.size() > 1) {
 				return AssignRelation.getNoGuaranteeAssignRelation();
 			} else {
-				Instruction nextInstruction = children.get(0).getInstructionHandle().getInstruction();
-				if (nextInstruction instanceof PUTFIELD || nextInstruction instanceof PUTSTATIC) {
-					FieldInstruction fieldInstruction = (FieldInstruction) nextInstruction;
-					String fieldName = fieldInstruction.getFieldName(constantPoolGen);
-					return AssignRelation.getGuaranteeAssignRelation(varName, fieldName);
-				} else {
-					return AssignRelation.getGuaranteeNoAssignRelation();
+				Instruction previousInstruction = parents.get(0).getInstructionHandle().getInstruction();
+				if (previousInstruction instanceof ALOAD) {
+					ALOAD previousAload = (ALOAD) previousInstruction;
+					if (previousAload.getOpcode() == Const.ALOAD_0) {
+						Instruction nextInstruction = children.get(0).getInstructionHandle().getInstruction();
+						if (nextInstruction instanceof PUTFIELD || nextInstruction instanceof PUTSTATIC) {
+							FieldInstruction fieldInstruction = (FieldInstruction) nextInstruction;
+							String fieldName = fieldInstruction.getFieldName(constantPoolGen);
+							return AssignRelation.getGuaranteeAssignRelation(varName, fieldName);
+						}
+					}
 				}
+				return AssignRelation.getGuaranteeNoAssignRelation();
 			}
 		} else if (instruction instanceof InvokeInstruction) {
+			InvokeInstruction invokeInstruction = (InvokeInstruction) instruction;
+			String methodName = invokeInstruction.getName(this.constantPoolGen);
+			String methodSigature = invokeInstruction.getSignature(this.constantPoolGen);
+			String invokingType = invokeInstruction.getClassName(this.constantPoolGen);
+
+			if (!className.equals(invokingType)) {
+				return AssignRelation.getGuaranteeNoAssignRelation();
+			}
+
+			// track the index of the parameter in method calls
+			int numOfParameters = invokeInstruction.getArgumentTypes(constantPoolGen).length;
+			int newIndex = numOfParameters;
+			CFGNode currentNode = node;
+			for (int i = 0; i < numOfParameters; i++) {
+				CFGNode parent = currentNode.getParents().get(0); // assume one parent
+				Instruction previousInstruction = parent.getInstructionHandle().getInstruction();
+				if (previousInstruction instanceof LoadInstruction) {
+					LoadInstruction loadInstruction = (LoadInstruction) previousInstruction;
+					int index = loadInstruction.getIndex();
+					if (index == varIndex) {
+						break;
+					}
+				}
+				currentNode = parent;
+				newIndex--;
+			}
+			if (newIndex == 0) {
+				return AssignRelation.getGuaranteeNoAssignRelation();
+			}
+
+			try {
+				CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(invokingType, methodName + methodSigature);
+				if (cfg == null) {
+					return AssignRelation.getNoGuaranteeAssignRelation();
+				}
+				AliasRelationsVerifier aliasRelationsVerifier = new AliasRelationsVerifier(cfg,
+						invokingType + "#" + methodName + methodSigature);
+				return aliasRelationsVerifier.getVarAssignRelation(varName, newIndex, className);
+			} catch (CannotBuildCFGException e) {
+				e.printStackTrace();
+			}
+
 			return AssignRelation.getNoGuaranteeAssignRelation();
 		} else {
 			return AssignRelation.getGuaranteeNoAssignRelation();
 		}
 	}
 
+	/**
+	 * Get the return relation of a method call. If any field is returned as an
+	 * output, it will be included in the return relation.
+	 * 
+	 * @return the return relation.
+	 */
 	public ReturnRelation getVarReturnRelation() {
+		if (this.methodSignature.contains("<init>")) {
+			String className = this.methodSignature.split("#")[0];
+			String[] entries = className.split("\\.");
+			String simpleClassName = entries[entries.length - 1];
+			String returnedVariableName = simpleClassName + "_instance";
+			return ReturnRelation.getGuaranteeReturnRelation(returnedVariableName);
+		}
 		return getReturnRelationRecur(cfg.getStartNode(), new HashMap<>());
 	}
 
@@ -190,6 +280,7 @@ public class AliasRelationsVerifier {
 
 	/**
 	 * Analyze two nodes (one return step) at a time.
+	 * 
 	 * Return Pattern: getfield return
 	 */
 	private ReturnRelation getReturnRelationAtNode(CFGNode node) {
