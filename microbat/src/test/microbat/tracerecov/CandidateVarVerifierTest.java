@@ -230,4 +230,66 @@ public class CandidateVarVerifierTest {
 		}
 	}
 
+	/**
+	 * `count` is a field inherited from `AbstractStringBuilder`, if the appended
+	 * string is null, `count` is not written.
+	 */
+	@Test
+	public void getVarWriteStatus_inheritedField_NoGuarantee() {
+		String methodSignature = "java.lang.StringBuilder#append(Ljava/lang/Object;)Ljava/lang/StringBuilder;";
+		String className = "java.lang.StringBuilder";
+		String fieldName = "count";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
+
+			assertEquals(WriteStatus.NO_GUARANTEE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * The constructor of a class will always initialize the class-level fields.
+	 */
+	@Test
+	public void getVarWriteStatus_initialization_GuaranteeWrite() {
+		String methodSignature = "java.util.ArrayList#<init>()V";
+		String className = "java.util.ArrayList";
+		String fieldName = "size";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
+
+			assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * `size` is a field in the internal `map` in `HashSet`. It might not be written
+	 * since an incoming element might already exist in the set.
+	 */
+	@Test
+	public void getVarWriteStatus_nestedField_NoGuarantee() {
+		String methodSignature = "java.util.HashSet#add(Ljava/lang/Object;)Z";
+		String className = "java.util.HashSet";
+		String fieldName = "map.size";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, className);
+
+			assertEquals(WriteStatus.NO_GUARANTEE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
 }
