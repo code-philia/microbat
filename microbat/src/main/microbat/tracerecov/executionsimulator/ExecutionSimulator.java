@@ -330,6 +330,8 @@ public abstract class ExecutionSimulator {
 
 			if (!TraceRecovUtils.isAssignable(invokingType, parentVarType, step.getTrace().getAppJavaClassPath())) {
 				continue; // GUARANTEE_NO_WRITE
+			} else {
+				invokedMethod = parentVarType + "#" + invokedMethod.split("#")[1]; // replace general type by runtime type
 			}
 
 			try {
