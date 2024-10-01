@@ -294,7 +294,7 @@ public abstract class ExecutionSimulator {
 		if (ancestorVarOnTrace == null) {
 			complication = WriteStatus.GUARANTEE_NO_WRITE;
 		} else if (TraceRecovUtils.shouldBeChecked(ancestorVarOnTrace.getType())) {
-			complication = estimateComplication(step, ancestorVarOnTrace, targetVar);
+			complication = estimateComplication(step, ancestorVarOnTrace, criticalVariables);
 		}
 
 		System.out.println(targetVar.getVarName());
@@ -319,7 +319,7 @@ public abstract class ExecutionSimulator {
 	 * 2. if the write status of any method cannot be determined, the overall status is NO_GUARANTEE
 	 * 3. if all methods are guaranteed not to write to targetVar, the overall status is GUARANTEE_NO_WRITE
 	 */
-	private WriteStatus estimateComplication(TraceNode step, VarValue parentVar, VarValue targetVar) {
+	private WriteStatus estimateComplication(TraceNode step, VarValue parentVar, List<VarValue> criticalVariables) {
 
 		String[] invokingMethods = step.getInvokingMethod().split("%");
 		String parentVarType = parentVar.getType();
@@ -337,10 +337,19 @@ public abstract class ExecutionSimulator {
 				if (cfg == null) {
 					return WriteStatus.NO_GUARANTEE;
 				}
+
 				CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
-				String invokingClass = invokedMethod.split("#")[0];
-				WriteStatus methodWriteStatus = candidateVarVerifier.getVarWriteStatus(targetVar.getVarName(),
-						invokingClass);
+				StringBuilder cascadingNameBuilder = new StringBuilder();
+				for (int i = 1; i < criticalVariables.size(); i++) {
+					VarValue var = criticalVariables.get(i);
+					cascadingNameBuilder.append(var.getVarName());
+					if (i < criticalVariables.size() - 1) {
+						cascadingNameBuilder.append(".");
+					}
+				}
+
+				WriteStatus methodWriteStatus = candidateVarVerifier.getVarWriteStatus(cascadingNameBuilder.toString(),
+						invokedMethod);
 				if (methodWriteStatus == WriteStatus.GUARANTEE_WRITE || methodWriteStatus == WriteStatus.NO_GUARANTEE) {
 					return methodWriteStatus;
 				}
