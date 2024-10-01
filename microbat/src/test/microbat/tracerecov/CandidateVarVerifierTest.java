@@ -278,4 +278,24 @@ public class CandidateVarVerifierTest {
 		}
 	}
 
+	/**
+	 * `size` is a field in the internal `map` in `HashSet`. When a set is
+	 * initialized, a map will also be initialized, thus `size` will be written.
+	 */
+	@Test
+	public void getVarWriteStatus_nestedFieldInConstructor_GuaranteeWrite() {
+		String methodSignature = "java.util.HashSet#<init>()V";
+		String fieldName = "map.size";
+
+		try {
+			CFG cfg = TraceRecovUtils.getCFGFromMethodSignature(methodSignature);
+			CandidateVarVerifier candidateVarVerifier = new CandidateVarVerifier(cfg);
+			WriteStatus writeStatus = candidateVarVerifier.getVarWriteStatus(fieldName, methodSignature);
+
+			assertEquals(WriteStatus.GUARANTEE_WRITE, writeStatus);
+		} catch (CannotBuildCFGException e) {
+			e.printStackTrace();
+		}
+	}
+
 }
