@@ -57,7 +57,9 @@ public class DefinitionInferencePromptTemplateFiller extends PromptTemplateFille
 			int endIndex = var.lastIndexOf("}");
 			var = var.substring(startIndex + 1, endIndex);
 
-			String nameAndType = var.split(":")[0]; // assume one key only
+			int pipIndex = var.indexOf("|");
+			int colonIndex = var.indexOf(":", pipIndex + 1);
+			String nameAndType = var.substring(0, colonIndex); // assume one key only
 			String name = nameAndType.split("\\|")[0];
 			String type = nameAndType.split("\\|")[1];
 			String value = var.split(":").length == 2 ? var.split(":")[1] : "\"\"";

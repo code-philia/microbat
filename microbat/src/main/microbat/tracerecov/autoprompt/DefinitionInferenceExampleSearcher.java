@@ -14,7 +14,8 @@ import microbat.tracerecov.varskeleton.VariableSkeleton;
 
 public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 
-	private static double DIFF_SCORE_THRESHOLD = 0.3;
+	private static double[] WEIGHTS = new double[] { 0.5, 0.5 };
+	private static double SIM_SCORE_THRESHOLD = 0.7;
 
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
@@ -45,48 +46,44 @@ public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 	@Override
 	public String searchForExample(HashMap<String, String> datapoint) {
 		/* keys */
-		String targetFieldKey = DatasetReader.TARGET_FIELD;
 		String targetVarKey = DatasetReader.TARGET_VAR;
+		String sourceCodeKey = DatasetReader.SOURCE_CODE;
 		String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
 		/* datapoint features */
-		String targetField = datapoint.get(targetFieldKey);
-		int targetFieldLevel = targetField.split("\\.").length;
+		String sourceCode = datapoint.get(sourceCodeKey);
 
 		String targetVar = datapoint.get(targetVarKey);
 		JSONObject targetVariable = new JSONObject(targetVar);
 		VariableSkeleton targetVarSkeleton = varSkeletonParser.parseVariableValueJSONObject(targetVariable);
 
 		/* search for closest example */
-		double minDiffScore = 1;
-		int minFieldLevelScore = Integer.MAX_VALUE;
+		double maxSimScore = 0;
 		int datapointIndex = 0;
 		for (int i = 0; i < trainingDataset.size(); i++) {
 			HashMap<String, String> example = trainingDataset.get(i);
 
-			// diff score based on variable structure
+			String exampleSourceCode = example.get(sourceCodeKey);
+
 			String exampleTargetVar = example.get(targetVarKey);
 			JSONObject exampleTargetVariable = new JSONObject(exampleTargetVar);
 			VariableSkeleton exampleTargetVarSkeleton = varSkeletonParser
 					.parseVariableValueJSONObject(exampleTargetVariable);
 
-			double diffScore = targetVarSkeleton.getDifferenceScore(exampleTargetVarSkeleton);
-			
-			if (diffScore <= minDiffScore) {
-				// diff score based on target field level
-				String exampleTargetField = example.get(targetFieldKey);
-				int exampleTargetFieldLevel = exampleTargetField.split("\\.").length;
-				int diffScoreBasedOnTargetField = Math.abs(exampleTargetFieldLevel - targetFieldLevel);
-				
-				if (diffScore < minDiffScore || diffScoreBasedOnTargetField < minFieldLevelScore) {
-					minFieldLevelScore = diffScoreBasedOnTargetField;
-					minDiffScore = diffScore;
-					datapointIndex = i;
-				}
+			double codeSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(sourceCode, exampleSourceCode);
+			double classSimScore = simScoreCalculator.getJaccardCoefficient(targetVarSkeleton,
+					exampleTargetVarSkeleton);
+
+			double simScore = simScoreCalculator.getCombinedScore(new double[] { codeSimScore, classSimScore },
+					WEIGHTS);
+
+			if (simScore > maxSimScore) {
+				maxSimScore = simScore;
+				datapointIndex = i;
 			}
 		}
 
-		if (minDiffScore < DIFF_SCORE_THRESHOLD) {
+		if (maxSimScore > SIM_SCORE_THRESHOLD) {
 			HashMap<String, String> closestExample = trainingDataset.get(datapointIndex);
 			String groundTruth = TraceRecovUtils.processInputStringForLLM(closestExample.get(groundTruthKey));
 			return promptTemplateFiller.getExample(closestExample, groundTruth);
