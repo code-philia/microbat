@@ -57,6 +57,10 @@ public class LoadClassUtils {
 		String fileName = getFileName(classFName);
 		byte[] bytecode = loadByteCode(fileName);
 		
+		if (bytecode == null) {
+			return null;
+		}
+		
 		ClassParser cp = new ClassParser(new java.io.ByteArrayInputStream(bytecode), classFName);
 		JavaClass jc = cp.parse();
 		return new ClassGen(jc);

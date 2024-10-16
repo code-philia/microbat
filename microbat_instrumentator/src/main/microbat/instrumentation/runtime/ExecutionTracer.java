@@ -466,10 +466,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			Map<String, Set<String>> relevantMethods = LoadClassUtils.getRelevantMethods(className, methodSignature);
 			for (String key : relevantMethods.keySet()) {
 				Set<String> methods = relevantMethods.get(key);
-				if (!libraryCalls.containsKey(key) && !methods.isEmpty()) {
-					libraryCalls.put(key, new HashSet<String>());
+				if (!methods.isEmpty()) {
+					if (!libraryCalls.containsKey(key)) {
+						libraryCalls.put(key, new HashSet<String>());
+					}
+					libraryCalls.get(key).addAll(methods);
 				}
-				libraryCalls.get(key).addAll(methods);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
