@@ -260,7 +260,7 @@ public class InstrumentationExecutor {
 		try {
 			agentRunner.addAgentParam(AgentParams.OPT_EXPECTED_STEP, info.getStepNum());
 			String filePath = TraceAgentRunner.getlibCallsPath();
-			agentRunner.recoverDependency(filePath);
+			agentRunner.recoverDependency(null);
 			return agentRunner.getDependencyRecoveryInfo();
 		} catch (SavException e1) {
 			e1.printStackTrace();
