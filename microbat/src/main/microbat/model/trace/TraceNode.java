@@ -52,6 +52,8 @@ public class TraceNode implements Comparator<TraceNode> {
 	
 	private Map<AttributionVar, Double> suspicousScoreMap = new HashMap<>();
 	
+	private Set<VarValue> recoveredDataDependency = new HashSet<>();
+	
 	private int checkTime = -1;
 	
 	private BreakPoint breakPoint;
@@ -223,7 +225,7 @@ public class TraceNode implements Comparator<TraceNode> {
 //		
 //		return dataDominator;
 		
-		return this.trace.findDataDependency(this, readVar);
+		return this.trace.findProducer(readVar, this);
 	}
 	
 //	private TraceNode findLatestProducer(StepVariableRelationEntry entry) {
@@ -596,6 +598,13 @@ public class TraceNode implements Comparator<TraceNode> {
 	
 	public void addWrittenVariable(VarValue var){
 		this.writtenVariables.add(var);
+	}
+	
+	public Set<VarValue> getAllVariables() {
+		Set<VarValue> variablesInStep = new HashSet<>();
+		variablesInStep.addAll(this.getReadVariables());
+		variablesInStep.addAll(this.getWrittenVariables());
+		return variablesInStep;
 	}
 
 	public Double getSuspicousScore(AttributionVar var) {
@@ -1340,12 +1349,19 @@ public class TraceNode implements Comparator<TraceNode> {
 	 */
 	public boolean isCallingAPI() {
 		ByteCodeList byteCodeList = new ByteCodeList(this.getBytecode());
+		if (byteCodeList.isEmpty() && this.stepOverPrevious != null && this.stepOverPrevious.isCallingAPI()) {
+			return true;
+		}
+
+		Set<String> invokedMethods = new HashSet<>();
 		for (ByteCode bytecode : byteCodeList) {
-			if(bytecode.getOpcodeType() == OpcodeType.INVOKE) {
-				if (this.invocationChildren.isEmpty()) {
-					return true;
-				}
+			if (bytecode.getOpcodeType() == OpcodeType.INVOKE) {
+				invokedMethods.add(bytecode.toString());
 			}
+		}
+
+		if (this.invocationChildren.isEmpty() || invokedMethods.size() > 1) {
+			return true;
 		}
 		return false;
 	}
@@ -1406,5 +1422,17 @@ public class TraceNode implements Comparator<TraceNode> {
 	
 	public double getCorrectness() {
 		return this.correctness;
+	}
+
+	public Set<VarValue> getRecoveredDataDependency() {
+		return recoveredDataDependency;
+	}
+
+	public void setRecoveredDataDependency(Set<VarValue> recoveredDataDependency) {
+		this.recoveredDataDependency = recoveredDataDependency;
+	}
+	
+	public void addRecoveredDataDependency(VarValue value) {
+		this.recoveredDataDependency.add(value);
 	}
 }
