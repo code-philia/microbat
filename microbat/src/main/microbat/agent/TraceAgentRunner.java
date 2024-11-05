@@ -109,6 +109,8 @@ public class TraceAgentRunner extends AgentVmRunner {
 				dumpFile = DatabasePreference.getDBFile();
 				break;
 			}
+			// TODO: remove later
+			addAgentParam(AgentParams.OPT_ONDEMAND_TRACE, "true");
 			addAgentParam(AgentParams.OPT_TRACE_RECORDER, reader.name()); // why is reader name used for recorder option?
 			addAgentParam(AgentParams.OPT_RUN_ID, runId);
 			addAgentParam(AgentParams.OPT_DUMP_FILE, String.valueOf(dumpFile.getPath()));

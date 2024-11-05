@@ -25,6 +25,7 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_LOG = CommonParams.OPT_LOG;
 	
 	public static final String OPT_PRECHECK = "precheck";
+	public static final String OPT_ONDEMAND_TRACE = "on_demand_trace";
 	public static final String OPT_ENTRY_POINT = "entry_point";
 	public static final String OPT_LAUNCH_CLASS = "launch_class";
 	public static final String OPT_JAVA_HOME = "java_home";
@@ -57,6 +58,7 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_CONDITION_CLASS_STRUCTURE = "class_structure";
 	
 	private boolean precheck;
+	private boolean onDemandTrace;
 	private EntryPoint entryPoint;
 	
 	private String javaHome;
@@ -82,6 +84,7 @@ public class AgentParams extends CommonParams {
 	public AgentParams(CommandLine cmd) {
 		super(cmd);
 		precheck = cmd.getBoolean(OPT_PRECHECK, false);
+		onDemandTrace = cmd.getBoolean(OPT_ONDEMAND_TRACE, false);
 		String entryPointStr = cmd.getString(OPT_ENTRY_POINT);
 		if (entryPointStr != null) {
 			int idx = entryPointStr.lastIndexOf(".");
@@ -197,6 +200,10 @@ public class AgentParams extends CommonParams {
 	
 	public boolean isPrecheck() {
 		return precheck;
+	}
+	
+	public boolean isOnDemandTrace() {
+		return onDemandTrace;
 	}
 	
 	public int getStepLimit() {
