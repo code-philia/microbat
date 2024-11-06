@@ -2,6 +2,7 @@ package microbat.instrumentation.ondemandtrace;
 
 import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.TraceAgent;
+import microbat.instrumentation.instr.TraceTransformer;
 import microbat.instrumentation.runtime.ExecutionTracer;
 
 /**
@@ -21,6 +22,11 @@ public class OnDemandTraceAgent extends TraceAgent {
 		super.startup0(vmStartupTime, agentPreStartup);
 		// initial method layer == 1
 		ExecutionTracer.setMethodLayer(1);
+	}
+
+	@Override
+	public TraceTransformer getTransformer0() {
+		return new OnDemandTraceTransformer(agentParams);
 	}
 
 }

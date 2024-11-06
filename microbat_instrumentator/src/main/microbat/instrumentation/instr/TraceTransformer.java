@@ -13,7 +13,9 @@ import microbat.instrumentation.filter.GlobalFilterChecker;
  *
  */
 public class TraceTransformer extends AbstractTransformer implements ClassFileTransformer {
-	private TraceInstrumenter instrumenter;
+	protected TraceInstrumenter instrumenter;
+	
+	protected TraceTransformer() {}
 	
 	public TraceTransformer(AgentParams params) {
 		instrumenter = new TraceInstrumenter(params);
