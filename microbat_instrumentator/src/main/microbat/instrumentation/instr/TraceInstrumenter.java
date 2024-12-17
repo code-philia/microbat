@@ -75,7 +75,7 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 	private int tempVarIdx = 0;
 	private EntryPoint entryPoint;
 	private Set<String> requireSplittingMethods = Collections.emptySet();
-	private UserFilters userFilters;
+	protected UserFilters userFilters;
 
 	private HashMap<Integer, SerializableLineInfo> instructionTable;
 	

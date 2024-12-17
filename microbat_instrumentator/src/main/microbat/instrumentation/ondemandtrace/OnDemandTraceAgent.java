@@ -20,8 +20,6 @@ public class OnDemandTraceAgent extends TraceAgent {
 	public void startup0(long vmStartupTime, long agentPreStartup) {
 		/* init filter */
 		super.startup0(vmStartupTime, agentPreStartup);
-		// initial method layer == 1
-		ExecutionTracer.setMethodLayer(1);
 	}
 
 	@Override
