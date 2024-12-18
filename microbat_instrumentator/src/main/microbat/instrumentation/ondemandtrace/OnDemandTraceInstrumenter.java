@@ -3,18 +3,15 @@ package microbat.instrumentation.ondemandtrace;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
-import org.apache.bcel.generic.ICONST;
 import org.apache.bcel.generic.IFEQ;
-import org.apache.bcel.generic.ILOAD;
-import org.apache.bcel.generic.ISTORE;
+import org.apache.bcel.generic.INVOKESTATIC;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
-import org.apache.bcel.generic.LocalVariableGen;
 import org.apache.bcel.generic.MethodGen;
-import org.apache.bcel.generic.Type;
-
+import org.apache.bcel.generic.PUSH;
 import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.instr.TraceInstrumenter;
+import microbat.instrumentation.ondemandtrace.tracestatus.CodeBlockKeyIssuer;
 
 /**
  * This class is responsible for instrumenting loaded java classes for on-demand
@@ -47,17 +44,25 @@ public class OnDemandTraceInstrumenter extends TraceInstrumenter {
 
 			InstructionList tracingInstructions = methodGen.getInstructionList();
 
-			/* `boolean instrumentationSwitch = true;` */
-			String booleanVarName = "instrumentationSwitch";
-			LocalVariableGen boolVar = methodGen.addLocalVariable(booleanVarName, Type.BOOLEAN, null, null);
-			InstructionHandle startOfVarScope = outputInstructions.append(new ICONST(1)); // 1: true
-			outputInstructions.append(new ISTORE(boolVar.getIndex()));
-			InstructionHandle endOfVarScope = outputInstructions.append(new ILOAD(boolVar.getIndex()));
+			/* `TraceStatusStore._updateStatusToRecord("class%method");` */
+			loadControlBoolToStack(methodGen, outputInstructions, constPool);
+			OnDemandTraceMethods updateStatusToRecordMethod = OnDemandTraceMethods.UPDATE_STATUS_TO_RECORD;
+			insertInvocationOfStaticMethod(updateStatusToRecordMethod, constPool, outputInstructions);
 
-			boolVar.setStart(startOfVarScope);
-			boolVar.setEnd(endOfVarScope);
+			/* Invoke `TraceStatusStore._isToRecord("class%method")` */
+			loadControlBoolToStack(methodGen, outputInstructions, constPool);
+			OnDemandTraceMethods isToRecordMethod = OnDemandTraceMethods.IS_TO_RECORD;
+			insertInvocationOfStaticMethod(isToRecordMethod, constPool, outputInstructions);
 
-			/* `if (instrumentationSwitch) { tracing code } else { original code }` */
+			/*
+			 * `
+			 * if (TraceStatusStore._isToRecord("class%method")) {
+			 * 		// tracing code
+			 * } else {
+			 * 		// original code
+			 * }
+			 * `
+			 */
 			InstructionHandle originalStartHandle = originalInstructions.getStart();
 			outputInstructions.append(new IFEQ(originalStartHandle));
 			outputInstructions.append(tracingInstructions);
@@ -71,6 +76,19 @@ public class OnDemandTraceInstrumenter extends TraceInstrumenter {
 
 		originalInstructions.dispose();
 		return changed;
+	}
+	
+	private void loadControlBoolToStack(MethodGen methodGen, InstructionList instrList, ConstantPoolGen constPool) {
+		/* load "class%method" to stack */
+		String codeBlockKey = CodeBlockKeyIssuer.getKeyForMethod(methodGen);
+		instrList.append(new PUSH(constPool, codeBlockKey));
+	}
+
+	private void insertInvocationOfStaticMethod(OnDemandTraceMethods staticMethod, ConstantPoolGen constPool,
+			InstructionList instrList) {
+		int staticMethodIndex = constPool.addMethodref(staticMethod.getDeclareClass(), staticMethod.getMethodName(),
+				staticMethod.getMethodSign());
+		instrList.append(new INVOKESTATIC(staticMethodIndex));
 	}
 
 }

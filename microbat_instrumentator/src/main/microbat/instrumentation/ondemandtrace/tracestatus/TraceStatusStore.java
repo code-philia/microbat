@@ -6,6 +6,8 @@ import java.util.HashMap;
  * This class answers queries about the trace recording statuses for code
  * blocks, and updates the statuses upon requests.
  * 
+ * Methods in this class will be called by instrumented code.
+ * 
  * @author HongshuW
  */
 public class TraceStatusStore {
@@ -21,7 +23,7 @@ public class TraceStatusStore {
 	 * @param codeBlockKey
 	 * @return
 	 */
-	public static boolean isRecorded(String codeBlockKey) {
+	public static boolean _isRecorded(String codeBlockKey) {
 		return statuses.get(codeBlockKey) == TraceStatus.RECORDED;
 	}
 
@@ -32,7 +34,7 @@ public class TraceStatusStore {
 	 * @param codeBlockKey
 	 * @return
 	 */
-	public static boolean isToRecord(String codeBlockKey) {
+	public static boolean _isToRecord(String codeBlockKey) {
 		return statuses.get(codeBlockKey) == TraceStatus.TO_RECORD;
 	}
 
@@ -43,18 +45,18 @@ public class TraceStatusStore {
 	 * @param codeBlockKey
 	 * @return
 	 */
-	public static boolean isUnrecorded(String codeBlockKey) {
+	public static boolean _isUnrecorded(String codeBlockKey) {
 		return !statuses.containsKey(codeBlockKey);
 	}
 
-	public static void updateStatusToRecord(String codeBlockKey) {
-		if (isUnrecorded(codeBlockKey)) {
+	public static void _updateStatusToRecord(String codeBlockKey) {
+		if (_isUnrecorded(codeBlockKey)) {
 			statuses.put(codeBlockKey, TraceStatus.TO_RECORD);
 		}
 	}
 
-	public static void updateStatusRecorded(String codeBlockKey) {
-		if (isUnrecorded(codeBlockKey) || isToRecord(codeBlockKey)) {
+	public static void _updateStatusRecorded(String codeBlockKey) {
+		if (_isUnrecorded(codeBlockKey) || _isToRecord(codeBlockKey)) {
 			statuses.put(codeBlockKey, TraceStatus.RECORDED);
 		}
 	}
