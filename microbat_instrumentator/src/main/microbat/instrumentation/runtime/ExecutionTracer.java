@@ -66,9 +66,6 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 	public static int methodLayer = Integer.MAX_VALUE;
 	public static RuntimeCondition condition;
 	
-	/* On-Demand Trace Loading */
-	public static String testCaseName;
-	
 	private long threadId;
 
 	private Trace trace;

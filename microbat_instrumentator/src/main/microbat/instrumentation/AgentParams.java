@@ -86,6 +86,8 @@ public class AgentParams extends CommonParams {
 	private int methodLayer;
 	private RuntimeCondition condition;
 	
+	private String testCaseName;
+	
 	public AgentParams(CommandLine cmd) {
 		super(cmd);
 		precheck = cmd.getBoolean(OPT_PRECHECK, false);
@@ -115,6 +117,7 @@ public class AgentParams extends CommonParams {
 		variableLayer = cmd.getInt(OPT_VARIABLE_LAYER, 2);
 		methodLayer = cmd.getInt(OPT_METHOD_LAYER, AgentConstants.UNSPECIFIED_INT_VALUE);
 		condition = cmd.getRuntimeCondition(OPT_CONDITION);
+		testCaseName = cmd.getString(OPT_TEST_CASE);
 		stepLimit = cmd.getInt(OPT_STEP_LIMIT, AgentConstants.UNSPECIFIED_INT_VALUE);
 		expectedSteps = cmd.getInt(OPT_EXPECTED_STEP, AgentConstants.UNSPECIFIED_INT_VALUE);
 		overlongMethods = cmd.getStringSet(OPT_OVER_LONG_METHODS);
@@ -203,6 +206,10 @@ public class AgentParams extends CommonParams {
 		return condition;
 	}
 	
+	public String getTestCaseName() {
+		return testCaseName;
+	}
+
 	public boolean isPrecheck() {
 		return precheck;
 	}
