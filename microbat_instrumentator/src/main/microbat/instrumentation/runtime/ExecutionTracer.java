@@ -62,8 +62,12 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 //	private static int tolerantExpectedSteps = expectedSteps;
 	public static boolean avoidProxyToString = false;
 	
+	/* TraceRecov */
 	public static int methodLayer = Integer.MAX_VALUE;
 	public static RuntimeCondition condition;
+	
+	/* On-Demand Trace Loading */
+	public static String testCaseName;
 	
 	private long threadId;
 

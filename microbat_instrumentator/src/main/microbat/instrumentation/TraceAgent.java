@@ -15,6 +15,7 @@ import microbat.instrumentation.filter.CodeRangeUserFilter;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.filter.OverLongMethodFilter;
 import microbat.instrumentation.instr.TraceTransformer;
+import microbat.instrumentation.ondemandtrace.tracestatus.CodeBlockKeyIssuer;
 import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.instrumentation.runtime.IExecutionTracer;
 import microbat.model.trace.Trace;
@@ -42,6 +43,7 @@ public class TraceAgent extends Agent {
 		ExecutionTracer.condition = agentParams.getRuntimeCondition();
 		ExecutionTracer.setStepLimit(agentParams.getStepLimit());
 		ExecutionTracer.setMethodLayer(agentParams.getMethodLayer());
+//		ExecutionTracer.testCaseName = CodeBlockKeyIssuer.getKeyForMethod(agentParams.getLaunchClass(), agentParams.,"()V");
 		if (!agentParams.isRequireMethodSplit()) {
 			agentParams.getUserFilters().register(new OverLongMethodFilter(agentParams.getOverlongMethods()));
 		}

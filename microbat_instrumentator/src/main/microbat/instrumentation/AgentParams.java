@@ -57,6 +57,11 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_CONDITION_VAR_VALUE = "variable_value";
 	public static final String OPT_CONDITION_CLASS_STRUCTURE = "class_structure";
 	
+	/**
+	 * On-Demand Trace Loading
+	 */
+	public static final String OPT_TEST_CASE = "test_case_name";
+	
 	private boolean precheck;
 	private boolean onDemandTrace;
 	private EntryPoint entryPoint;

@@ -149,6 +149,9 @@ public class InstrumentationExecutor {
 			agentRunner.getConfig().setDebug(Settings.isRunWtihDebugMode);
 			agentRunner.getConfig().setPort(9000);
 			
+			// add test case name to agent params
+			agentRunner.addAgentParam(AgentParams.OPT_TEST_CASE, agentRunner.getConfig().getProgramArgs().get(1));
+			
 			System.out.println("precheck..");
 			agentRunner.precheck(null);
 			PrecheckInfo info = agentRunner.getPrecheckInfo();
