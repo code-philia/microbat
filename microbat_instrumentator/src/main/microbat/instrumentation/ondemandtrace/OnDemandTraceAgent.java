@@ -23,8 +23,7 @@ public class OnDemandTraceAgent extends TraceAgent {
 		super.startup0(vmStartupTime, agentPreStartup);
 
 		/* on-demand trace loading: record inital partial trace */
-		String className = agentParams.getLaunchClass().replace('.', '/');
-		String initialMethodKey = CodeBlockKeyIssuer.getKeyForMethod(className, agentParams.getTestCaseName(), "()V");
+		String initialMethodKey = CodeBlockKeyIssuer.getKeyForMethod(agentParams.getLaunchClass(), agentParams.getTestCaseName(), "()V");
 		TraceStatusStore._updateStatusToRecord(initialMethodKey);
 	}
 

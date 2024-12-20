@@ -59,6 +59,7 @@ import microbat.model.BreakPoint;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
+import microbat.ondemandtrace.views.ExpandTraceOptions;
 import microbat.util.JavaUtil;
 import microbat.util.MicroBatUtil;
 import microbat.util.Settings;
@@ -451,6 +452,11 @@ public class TraceView extends ViewPart {
 		return action;
 	}
 	
+	protected MenuManager createExpandTraceMenu(MenuManager parentMenuMgr) {
+		ExpandTraceOptions options = new ExpandTraceOptions(listViewer.getSelection(), parentMenuMgr);
+		return options.getOptions();
+	}
+	
 	protected MenuManager menuMgr = new MenuManager("#PopupMenu");
 	protected void appendMenuForTraceStep() {
 		menuMgr.setRemoveAllWhenShown(true);
@@ -458,7 +464,9 @@ public class TraceView extends ViewPart {
 			@Override
 			public void menuAboutToShow(IMenuManager manager) {
 				Action action = createForSearchAction();
+				MenuManager expandTraceOptions = createExpandTraceMenu(menuMgr);
 				menuMgr.add(action);
+				menuMgr.add(expandTraceOptions);
 			}
 		});
 		
