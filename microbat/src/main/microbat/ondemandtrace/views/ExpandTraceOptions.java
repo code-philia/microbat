@@ -9,8 +9,8 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 
-import microbat.instrumentation.ondemandtrace.traceskeleton.CodeBlockKeyIssuer;
 import microbat.model.trace.TraceNode;
+import microbat.ondemandtrace.model.traceskeleton.CodeBlockKeyIssuer;
 
 /**
  * @author HongshuW

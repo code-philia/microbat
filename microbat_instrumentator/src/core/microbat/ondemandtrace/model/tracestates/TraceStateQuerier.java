@@ -1,4 +1,4 @@
-package microbat.instrumentation.ondemandtrace.tracestates;
+package microbat.ondemandtrace.model.tracestates;
 
 import java.util.HashMap;
 

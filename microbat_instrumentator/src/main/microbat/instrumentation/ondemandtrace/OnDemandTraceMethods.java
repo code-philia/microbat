@@ -6,17 +6,16 @@ package microbat.instrumentation.ondemandtrace;
  * @author HongshuW
  */
 public enum OnDemandTraceMethods {
-	IS_RECORDED(false, "microbat/instrumentation/ondemandtrace/tracestates/TraceStateQuerier", "_isRecorded",
+	IS_RECORDED(false, "microbat/ondemandtrace/model/tracestates/TraceStateQuerier", "_isRecorded",
 			"(Ljava/lang/String;)Z", 2),
-	IS_TO_RECORD(false, "microbat/instrumentation/ondemandtrace/tracestates/TraceStateQuerier", "_isToRecord",
+	IS_TO_RECORD(false, "microbat/ondemandtrace/model/tracestates/TraceStateQuerier", "_isToRecord",
 			"(Ljava/lang/String;)Z", 2),
-	IS_UNRECORDED(false, "microbat/instrumentation/ondemandtrace/tracestates/TraceStateQuerier", "_isUnrecorded",
+	IS_UNRECORDED(false, "microbat/ondemandtrace/model/tracestates/TraceStateQuerier", "_isUnrecorded",
 			"(Ljava/lang/String;)Z", 2),
-	UPDATE_STATUS_TO_RECORD(false, "microbat/instrumentation/ondemandtrace/tracestates/TraceStateQuerier",
+	UPDATE_STATUS_TO_RECORD(false, "microbat/ondemandtrace/model/tracestates/TraceStateQuerier",
 			"_updateStatusToRecord", "(Ljava/lang/String;)V", 2),
-	UPDATE_STATUS_RECORDED(false, "microbat/instrumentation/ondemandtrace/tracestates/TraceStateQuerier",
+	UPDATE_STATUS_RECORDED(false, "microbat/ondemandtrace/model/tracestates/TraceStateQuerier",
 			"_updateStatusRecorded", "(Ljava/lang/String;)V", 2),
-
 	;
 
 	private boolean interfaceMethod;

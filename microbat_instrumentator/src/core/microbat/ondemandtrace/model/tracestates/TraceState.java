@@ -1,4 +1,4 @@
-package microbat.instrumentation.ondemandtrace.tracestates;
+package microbat.ondemandtrace.model.tracestates;
 
 /**
  * This enum class contains trace states for on-demand trace recording.

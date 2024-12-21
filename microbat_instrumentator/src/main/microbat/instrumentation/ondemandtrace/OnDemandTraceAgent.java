@@ -3,8 +3,8 @@ package microbat.instrumentation.ondemandtrace;
 import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.TraceAgent;
 import microbat.instrumentation.instr.TraceTransformer;
-import microbat.instrumentation.ondemandtrace.traceskeleton.CodeBlockKeyIssuer;
-import microbat.instrumentation.ondemandtrace.tracestates.TraceStateQuerier;
+import microbat.ondemandtrace.model.traceskeleton.CodeBlockKeyIssuer;
+import microbat.ondemandtrace.model.tracestates.TraceStateQuerier;
 
 /**
  * This class is the agent responsible for On-Demand Trace Loading.

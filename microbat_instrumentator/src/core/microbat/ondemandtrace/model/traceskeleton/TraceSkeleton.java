@@ -1,4 +1,4 @@
-package microbat.instrumentation.ondemandtrace.traceskeleton;
+package microbat.ondemandtrace.model.traceskeleton;
 
 /**
  * Trace skeleton model that records the trace expansion statuses.

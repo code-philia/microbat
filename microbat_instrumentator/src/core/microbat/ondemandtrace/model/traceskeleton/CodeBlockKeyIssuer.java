@@ -1,4 +1,4 @@
-package microbat.instrumentation.ondemandtrace.traceskeleton;
+package microbat.ondemandtrace.model.traceskeleton;
 
 import org.apache.bcel.generic.MethodGen;
 
