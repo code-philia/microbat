@@ -453,7 +453,7 @@ public class TraceView extends ViewPart {
 	}
 	
 	protected MenuManager createExpandTraceMenu(MenuManager parentMenuMgr) {
-		ExpandTraceOptions options = new ExpandTraceOptions(listViewer.getSelection(), parentMenuMgr);
+		ExpandTraceOptions options = new ExpandTraceOptions(listViewer.getSelection());
 		return options.getOptions();
 	}
 	

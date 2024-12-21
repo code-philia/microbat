@@ -9,7 +9,7 @@ import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 
-import microbat.instrumentation.ondemandtrace.tracestatus.CodeBlockKeyIssuer;
+import microbat.instrumentation.ondemandtrace.traceskeleton.CodeBlockKeyIssuer;
 import microbat.model.trace.TraceNode;
 
 /**
@@ -18,11 +18,9 @@ import microbat.model.trace.TraceNode;
 public class ExpandTraceOptions {
 
 	private ISelection step;
-	private MenuManager parentMenu;
 
-	public ExpandTraceOptions(ISelection step, MenuManager parentMenu) {
+	public ExpandTraceOptions(ISelection step) {
 		this.step = step;
-		this.parentMenu = parentMenu;
 	}
 
 	public MenuManager getOptions() {
