@@ -3,7 +3,7 @@ package microbat.instrumentation.ondemandtrace;
 import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.TraceAgent;
 import microbat.instrumentation.instr.TraceTransformer;
-import microbat.instrumentation.ondemandtrace.tracestatus.CodeBlockKeyIssuer;
+import microbat.instrumentation.ondemandtrace.traceskeleton.CodeBlockKeyIssuer;
 import microbat.instrumentation.ondemandtrace.tracestatus.TraceStatusStore;
 
 /**

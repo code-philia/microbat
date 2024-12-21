@@ -11,7 +11,7 @@ import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.PUSH;
 import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.instr.TraceInstrumenter;
-import microbat.instrumentation.ondemandtrace.tracestatus.CodeBlockKeyIssuer;
+import microbat.instrumentation.ondemandtrace.traceskeleton.CodeBlockKeyIssuer;
 
 /**
  * This class is responsible for instrumenting loaded java classes for on-demand
