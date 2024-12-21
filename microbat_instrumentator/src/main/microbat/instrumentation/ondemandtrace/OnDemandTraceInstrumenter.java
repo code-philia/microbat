@@ -44,14 +44,14 @@ public class OnDemandTraceInstrumenter extends TraceInstrumenter {
 
 			InstructionList tracingInstructions = methodGen.getInstructionList();
 
-			/* Invoke `TraceStatusStore._isToRecord("class%method")` */
+			/* Invoke `TraceStateQuerier._isToRecord("class%method")` */
 			loadControlBoolToStack(methodGen, outputInstructions, constPool);
 			OnDemandTraceMethods isToRecordMethod = OnDemandTraceMethods.IS_TO_RECORD;
 			insertInvocationOfStaticMethod(isToRecordMethod, constPool, outputInstructions);
 
 			/*
 			 * `
-			 * if (TraceStatusStore._isToRecord("class%method")) {
+			 * if (TraceStateQuerier._isToRecord("class%method")) {
 			 * 		// tracing code
 			 * } else {
 			 * 		// original code

@@ -1,4 +1,4 @@
-package microbat.instrumentation.ondemandtrace.tracestatus;
+package microbat.instrumentation.ondemandtrace.tracestates;
 
 import java.util.HashMap;
 
@@ -10,9 +10,9 @@ import java.util.HashMap;
  * 
  * @author HongshuW
  */
-public class TraceStatusStore {
+public class TraceStateQuerier {
 
-	private static HashMap<String, TraceStatus> statuses = new HashMap<>();
+	private static HashMap<String, TraceState> statuses = new HashMap<>();
 
 	/* APIs */
 
@@ -24,7 +24,7 @@ public class TraceStatusStore {
 	 * @return
 	 */
 	public static boolean _isRecorded(String codeBlockKey) {
-		return statuses.get(codeBlockKey) == TraceStatus.RECORDED;
+		return statuses.get(codeBlockKey) == TraceState.RECORDED;
 	}
 
 	/**
@@ -35,7 +35,7 @@ public class TraceStatusStore {
 	 * @return
 	 */
 	public static boolean _isToRecord(String codeBlockKey) {
-		return statuses.get(codeBlockKey) == TraceStatus.TO_RECORD;
+		return statuses.get(codeBlockKey) == TraceState.TO_RECORD;
 	}
 
 	/**
@@ -51,13 +51,13 @@ public class TraceStatusStore {
 
 	public static void _updateStatusToRecord(String codeBlockKey) {
 		if (_isUnrecorded(codeBlockKey)) {
-			statuses.put(codeBlockKey, TraceStatus.TO_RECORD);
+			statuses.put(codeBlockKey, TraceState.TO_RECORD);
 		}
 	}
 
 	public static void _updateStatusRecorded(String codeBlockKey) {
 		if (_isUnrecorded(codeBlockKey) || _isToRecord(codeBlockKey)) {
-			statuses.put(codeBlockKey, TraceStatus.RECORDED);
+			statuses.put(codeBlockKey, TraceState.RECORDED);
 		}
 	}
 

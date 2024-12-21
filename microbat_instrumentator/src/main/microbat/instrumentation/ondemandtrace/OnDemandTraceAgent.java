@@ -4,7 +4,7 @@ import microbat.instrumentation.CommandLine;
 import microbat.instrumentation.TraceAgent;
 import microbat.instrumentation.instr.TraceTransformer;
 import microbat.instrumentation.ondemandtrace.traceskeleton.CodeBlockKeyIssuer;
-import microbat.instrumentation.ondemandtrace.tracestatus.TraceStatusStore;
+import microbat.instrumentation.ondemandtrace.tracestates.TraceStateQuerier;
 
 /**
  * This class is the agent responsible for On-Demand Trace Loading.
@@ -24,7 +24,7 @@ public class OnDemandTraceAgent extends TraceAgent {
 
 		/* on-demand trace loading: record inital partial trace */
 		String initialMethodKey = CodeBlockKeyIssuer.getKeyForMethod(agentParams.getLaunchClass(), agentParams.getTestCaseName(), "()V");
-		TraceStatusStore._updateStatusToRecord(initialMethodKey);
+		TraceStateQuerier._updateStatusToRecord(initialMethodKey);
 	}
 
 	@Override
