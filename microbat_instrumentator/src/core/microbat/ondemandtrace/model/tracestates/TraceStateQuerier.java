@@ -1,18 +1,27 @@
 package microbat.ondemandtrace.model.tracestates;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class answers queries about the trace recording statuses for code
  * blocks, and updates the statuses upon requests.
  * 
- * Methods in this class will be called by instrumented code.
+ * APIs in this class will be called by instrumented code.
  * 
  * @author HongshuW
  */
 public class TraceStateQuerier {
 
-	private static HashMap<String, TraceState> statuses = new HashMap<>();
+	private static Map<String, TraceState> traceStates = new HashMap<>();
+
+	public static void init(Map<String, TraceState> recordedStates) {
+		TraceStateQuerier.traceStates = recordedStates;
+	}
+
+	public static Map<String, TraceState> getTraceStates() {
+		return TraceStateQuerier.traceStates;
+	}
 
 	/* APIs */
 
@@ -24,7 +33,7 @@ public class TraceStateQuerier {
 	 * @return
 	 */
 	public static boolean _isRecorded(String codeBlockKey) {
-		return statuses.get(codeBlockKey) == TraceState.RECORDED;
+		return traceStates.get(codeBlockKey) == TraceState.RECORDED;
 	}
 
 	/**
@@ -35,7 +44,7 @@ public class TraceStateQuerier {
 	 * @return
 	 */
 	public static boolean _isToRecord(String codeBlockKey) {
-		return statuses.get(codeBlockKey) == TraceState.TO_RECORD;
+		return traceStates.get(codeBlockKey) == TraceState.TO_RECORD;
 	}
 
 	/**
@@ -46,18 +55,18 @@ public class TraceStateQuerier {
 	 * @return
 	 */
 	public static boolean _isUnrecorded(String codeBlockKey) {
-		return !statuses.containsKey(codeBlockKey);
+		return !traceStates.containsKey(codeBlockKey);
 	}
 
 	public static void _updateStatusToRecord(String codeBlockKey) {
 		if (_isUnrecorded(codeBlockKey)) {
-			statuses.put(codeBlockKey, TraceState.TO_RECORD);
+			traceStates.put(codeBlockKey, TraceState.TO_RECORD);
 		}
 	}
 
 	public static void _updateStatusRecorded(String codeBlockKey) {
 		if (_isUnrecorded(codeBlockKey) || _isToRecord(codeBlockKey)) {
-			statuses.put(codeBlockKey, TraceState.RECORDED);
+			traceStates.put(codeBlockKey, TraceState.RECORDED);
 		}
 	}
 
