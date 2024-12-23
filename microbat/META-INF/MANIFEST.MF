@@ -165,6 +165,7 @@ Export-Package:
    sav.strategies.dto",
  microbat.model.value;uses:="microbat.model.variable",
  microbat.model.variable,
+ microbat.ondemandtrace.views,
  microbat.perspectives;uses:="org.eclipse.ui",
  microbat.preference;
   uses:="org.eclipse.ui,

@@ -13,18 +13,25 @@ import microbat.ondemandtrace.model.tracestates.TraceStateQuerier;
 public class ExpandCodeBlockAction extends Action {
 
 	private String codeBlockID;
+	private String launchClass;
+	private String testCase;
 
-	public ExpandCodeBlockAction(String codeBlockID) {
+	public ExpandCodeBlockAction(String codeBlockID, String launchClass, String testCase) {
 		super();
 		this.codeBlockID = codeBlockID;
+		this.launchClass = launchClass;
+		this.testCase = testCase;
 	}
 
 	@Override
 	public void run() {
 		System.out.println(codeBlockID);
-		
+
+		String traceStatesPath = System.getProperty("java.io.tmpdir") + launchClass + "#" + testCase + ".txt";
+		TraceStateQuerier.init(traceStatesPath);
+
 		TraceStateQuerier._updateStatusToRecord(codeBlockID);
-		
+
 		// TODO: re-execute
 	}
 

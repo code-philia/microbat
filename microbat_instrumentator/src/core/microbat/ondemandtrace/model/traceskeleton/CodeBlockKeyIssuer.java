@@ -22,7 +22,7 @@ public class CodeBlockKeyIssuer {
 	}
 
 	private static String getClassNameWithCorrectFormat(String className) {
-		return className.replace('.', '/');
+		return className.replace('/', '.');
 	}
 
 }

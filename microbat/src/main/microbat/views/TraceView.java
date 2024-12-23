@@ -52,6 +52,7 @@ import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.ITextEditor;
 
+import microbat.Activator;
 import microbat.behavior.Behavior;
 import microbat.behavior.BehaviorData;
 import microbat.behavior.BehaviorReporter;
@@ -453,10 +454,17 @@ public class TraceView extends ViewPart {
 	}
 	
 	protected MenuManager createExpandTraceMenu(MenuManager parentMenuMgr) {
-		ExpandTraceOptions options = new ExpandTraceOptions(listViewer.getSelection());
+		// retrieved from {@code MicrobatPreference}
+		String classNameKey = "className";
+		String testCaseKey = "testMethod";
+
+		String className = Activator.getDefault().getPreferenceStore().getString(classNameKey);
+		String testCase = Activator.getDefault().getPreferenceStore().getString(testCaseKey);
+
+		ExpandTraceOptions options = new ExpandTraceOptions(listViewer.getSelection(), className, testCase);
 		return options.getOptions();
 	}
-	
+
 	protected MenuManager menuMgr = new MenuManager("#PopupMenu");
 	protected void appendMenuForTraceStep() {
 		menuMgr.setRemoveAllWhenShown(true);

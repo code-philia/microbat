@@ -18,9 +18,13 @@ import microbat.ondemandtrace.model.traceskeleton.CodeBlockKeyIssuer;
 public class ExpandTraceOptions {
 
 	private ISelection step;
+	private String launchClass;
+	private String testCase;
 
-	public ExpandTraceOptions(ISelection step) {
+	public ExpandTraceOptions(ISelection step, String launchClass, String testCase) {
 		this.step = step;
+		this.launchClass = launchClass;
+		this.testCase = testCase;
 	}
 
 	public MenuManager getOptions() {
@@ -50,7 +54,7 @@ public class ExpandTraceOptions {
 			}
 
 			String codeBlockKey = CodeBlockKeyIssuer.getKeyForMethod(entries[0], entries[1]);
-			expandCodeBlockActions.add(new ExpandCodeBlockAction(codeBlockKey));
+			expandCodeBlockActions.add(new ExpandCodeBlockAction(codeBlockKey, launchClass, testCase));
 		}
 
 		return expandCodeBlockActions;

@@ -14,13 +14,18 @@ import java.util.Map;
 public class TraceStateQuerier {
 
 	private static Map<String, TraceState> traceStates = new HashMap<>();
+	private static String path;
 
-	public static void init(Map<String, TraceState> recordedStates) {
-		TraceStateQuerier.traceStates = recordedStates;
+	public static void init(String path) {
+		TraceStateQuerier.path = path;
+
+		TraceStateReader reader = new TraceStateReader(path);
+		Map<String, TraceState> traceStates = reader.parseTraceStates();
+		TraceStateQuerier.traceStates = traceStates;
 	}
 
-	public static Map<String, TraceState> getTraceStates() {
-		return TraceStateQuerier.traceStates;
+	public static boolean hasNoRecordedTraceStates() {
+		return TraceStateQuerier.traceStates.isEmpty();
 	}
 
 	/* APIs */
@@ -62,6 +67,9 @@ public class TraceStateQuerier {
 		if (_isUnrecorded(codeBlockKey)) {
 			traceStates.put(codeBlockKey, TraceState.TO_RECORD);
 		}
+
+		TraceStateWriter writer = new TraceStateWriter(path);
+		writer.writeTraceStates(traceStates);
 	}
 
 	public static void _updateStatusRecorded(String codeBlockKey) {
