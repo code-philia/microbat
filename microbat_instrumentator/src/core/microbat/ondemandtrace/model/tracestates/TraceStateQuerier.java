@@ -76,6 +76,9 @@ public class TraceStateQuerier {
 		if (_isUnrecorded(codeBlockKey) || _isToRecord(codeBlockKey)) {
 			traceStates.put(codeBlockKey, TraceState.RECORDED);
 		}
+
+		TraceStateWriter writer = new TraceStateWriter(path);
+		writer.writeTraceStates(traceStates);
 	}
 
 }

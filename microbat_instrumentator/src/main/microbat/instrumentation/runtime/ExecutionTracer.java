@@ -42,6 +42,7 @@ import microbat.model.variable.FieldVar;
 import microbat.model.variable.LocalVar;
 import microbat.model.variable.Variable;
 import microbat.model.variable.VirtualVar;
+import microbat.ondemandtrace.model.tracestates.TraceStateQuerier;
 import microbat.util.PrimitiveUtils;
 import sav.common.core.utils.SignatureUtils;
 import sav.strategies.dto.AppJavaClassPath;
@@ -571,6 +572,8 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				}
 			}
 		}
+
+		TraceStateQuerier._updateStatusRecorded(methodSignature);
 
 		boolean exclusive = GlobalFilterChecker.isExclusive(className, methodSignature);
 		if (!exclusive) {
