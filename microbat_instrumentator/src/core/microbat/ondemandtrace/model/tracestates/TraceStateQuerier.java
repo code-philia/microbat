@@ -60,7 +60,7 @@ public class TraceStateQuerier {
 	 * @return
 	 */
 	public static boolean _isUnrecorded(String codeBlockKey) {
-		return !traceStates.containsKey(codeBlockKey);
+		return !traceStates.containsKey(codeBlockKey) || traceStates.get(codeBlockKey) == TraceState.UNRECORDED;
 	}
 
 	public static void _updateStatusToRecord(String codeBlockKey) {
