@@ -132,7 +132,7 @@ public class DebugPilotFeedbackView extends ViewPart {
 		this.createReadVariablesViewer(sashForm);
 		this.createWrittenVariableViewer(sashForm);
 		this.createAvaliableFeedbackView(sashForm);
-		sashForm.setWeights(10, 10, 10);
+		sashForm.setWeights(new int[] {10, 10, 10});
 	}
 
 	@Override
