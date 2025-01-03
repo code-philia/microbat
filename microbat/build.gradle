@@ -1,5 +1,6 @@
 plugins {
     id "java"
+    id "eclipse"
 }
 
 repositories {
@@ -12,6 +13,9 @@ sourceSets {
             srcDirs += 'src/main'
             srcDirs += 'src/evaluation'
             srcDirs += 'src/behavior'
+        }
+        resources {
+            srcDirs += 'resources'
         }
     }
 }
