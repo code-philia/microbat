@@ -7,3 +7,5 @@ resources/Python_Server/servers/__pycache__/
 resources/Python_Server/fasttext/
 resources/Python_Server/.vscode
 microbat/src/main/microbat/handler/TestHandler.java
+
+instrumentator-lib/*.jar
