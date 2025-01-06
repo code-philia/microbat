@@ -22,6 +22,7 @@ tasks.jar {
     manifest {
         attributes["Premain-Class"] = "microbat.instrumentation.Premain"
         attributes["Can-Retransform-Classes"] = "true"
+        attributes["Can-Redefine-Classes"] = "true"
     }
 }
 
@@ -40,4 +41,6 @@ dependencies {
     implementation 'org.xerial:sqlite-jdbc:3.32.3.2'
 
     implementation project(':microbat:sav.commons')
+
+    testImplementation 'commons-io:commons-io:2.18.0'
 }
