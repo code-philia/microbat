@@ -1,8 +1,10 @@
 package microbat.util;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -138,71 +140,112 @@ public class MicroBatUtil {
 
 	/** for centralization */
 	public static void setSystemJars(AppJavaClassPath appClassPath) {
+
+		// get current jar modify time
+		long currentJarModifyTime = -1;
+		try{
+			String selfJarFile = MicroBatUtil.class.getProtectionDomain().getCodeSource().getLocation().getFile();
+			File file = new File(selfJarFile);
+			currentJarModifyTime = file.lastModified();
+		} catch (Exception e) {
+			log.error("Cannot get current jar modify time", e);
+		}
+
 		/**
 		 * setting junit lib into classpath
 		 */
 		String dropinsDir = IResourceUtils.getDropinsDir();
 		String junitDir = dropinsDir + File.separator + "junit_lib";
+
+		File junitDirFile = new File(junitDir);
+		if (!junitDirFile.exists()) {
+			junitDirFile.mkdirs();
+		}
+
+		// String junitPath = junitDir + File.separator + "junit.jar";
+		// String hamcrestCorePath = junitDir + File.separator + "org.hamcrest.core.jar";
+		// appClassPath.addClasspath(junitPath);
+		// appClassPath.addClasspath(hamcrestCorePath);
 		
-		
-		String junitPath = junitDir + File.separator + "junit.jar";
-		String hamcrestCorePath = junitDir + File.separator + "org.hamcrest.core.jar";
-		appClassPath.addClasspath(junitPath);
-		appClassPath.addClasspath(hamcrestCorePath);
-		
-		String testRunnerDir = junitDir + File.separator + "testrunner.jar";
-		appClassPath.addClasspath(testRunnerDir);
+		// String testRunnerDir = junitDir + File.separator + "testrunner.jar";
+		// appClassPath.addClasspath(testRunnerDir);
 		
 		// JUnit5
-		String junit5Path = junitDir  + File.separator + "junit-platform-console-standalone-1.0.0.jar";
-		appClassPath.addClasspath(junit5Path);
-		String junit5RunnerPath = junitDir  + File.separator + "junit-platform-runner-1.0.0.jar";
-		appClassPath.addClasspath(junit5RunnerPath);
+		// String junit5Path = junitDir  + File.separator + "junit-platform-console-standalone-1.0.0.jar";
+		// appClassPath.addClasspath(junit5Path);
+		// String junit5RunnerPath = junitDir  + File.separator + "junit-platform-runner-1.0.0.jar";
+		// appClassPath.addClasspath(junit5RunnerPath);
 		
 		// TestNG
-		String testNG = junitDir  + File.separator + "testng-6.0.jar";
-		appClassPath.addClasspath(testNG);
+		// String testNG = junitDir  + File.separator + "testng-6.0.jar";
+		// appClassPath.addClasspath(testNG);
 		
 		/**
 		 * setting bcel lib (for instrumentation) into classpath
 		 */
-		String bcelDir = junitDir + File.separator + "bcel-6.0.jar";
-		appClassPath.addClasspath(bcelDir);
-		String javassitDir = junitDir + File.separator + "javassist.jar";
-		appClassPath.addClasspath(javassitDir);
+		// String bcelDir = junitDir + File.separator + "bcel-6.0.jar";
+		// appClassPath.addClasspath(bcelDir);
+		// String javassitDir = junitDir + File.separator + "javassist.jar";
+		// appClassPath.addClasspath(javassitDir);
+
+		String runnerLib = junitDir + File.separator + "runner.jar";
+		File runnerJar = new File(runnerLib);
+
+		boolean needExportRunnerJar = false;
+		if(runnerJar.exists()) {
+			long lastModified = runnerJar.lastModified();
+			if(lastModified < currentJarModifyTime || currentJarModifyTime < 0) {
+				needExportRunnerJar = true;
+			}
+		} else {
+			needExportRunnerJar = true;
+		}
+		if (needExportRunnerJar) {
+			try (InputStream is = MicroBatUtil.class.getClassLoader().getResourceAsStream("microbat_test_runner.jar");
+					FileOutputStream fos = new FileOutputStream(runnerLib)) {
+				byte[] buffer = new byte[1024];
+				int len;
+				while ((len = is.read(buffer)) != -1) {
+					fos.write(buffer, 0, len);
+				}
+			} catch (IOException e) {
+				log.error("Cannot load runner.jar", e);
+				throw new RuntimeException("Cannot load runner.jar", e);
+			}
+		}
+		appClassPath.addClasspath(runnerLib);
 		
 		/**
-		 * setting java agent lib 
-		 */	
+		 * setting java agent lib
+		 */
 		String agentLib = junitDir + File.separator + "instrumentator.jar";
 		File jar = new File(agentLib);
-		//if none  instrumentator.jar under the eclispe root
-		if (!jar.exists()) {
-			//find features installed in eclispe
-			String featuresFileName = IResourceUtils.getEclipseRootDir() + File.separator + "features";
-			//find our features
-			File[] mircobatFeature = new File(featuresFileName).listFiles(new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.contains("microbat");
-				}
-			});
-			//if had find our feature ,change Agentlib to feature/jar
-			boolean  flag=false;
-			if (mircobatFeature.length > 0) {
-				String jarPath = mircobatFeature[0].getAbsolutePath() + File.separator + "junit_lib" + File.separator
-						+ "instrumentator.jar";
-				if (new File(jarPath).exists()) {
-					agentLib=jarPath;
-					flag=true;
-				}
+		boolean needExportJar = false;
+		if(jar.exists()) {
+			long lastModified = jar.lastModified();
+			if(lastModified < currentJarModifyTime || currentJarModifyTime < 0) {
+				needExportJar = true;
 			}
-			if (!flag) {
-				log.error("can't find instrumentator");
+		} else {
+			needExportJar = true;
+		}
+		if (needExportJar) {
+			try (InputStream is = MicroBatUtil.class.getClassLoader()
+					.getResourceAsStream("microbat_instrumentator.jar");
+					FileOutputStream fos = new FileOutputStream(agentLib)) {
+				byte[] buffer = new byte[1024];
+				int len;
+				while ((len = is.read(buffer)) != -1) {
+					fos.write(buffer, 0, len);
+				}
+			} catch (IOException e) {
+				log.error("Cannot load microbat_instrumentator.jar", e);
+				throw new RuntimeException("Cannot load microbat_instrumentator.jar", e);
 			}
 
+			jar = new File(agentLib);
 		}
-		
+
 		appClassPath.setAgentLib(agentLib);
 	}
 

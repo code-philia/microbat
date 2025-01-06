@@ -1,0 +1,35 @@
+
+plugins {
+    id "java"
+    id "eclipse"
+    id "application"
+    id "com.gradleup.shadow" version "8.3.2"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+repositories {
+    mavenCentral()
+}
+
+
+sourceSets {
+    main {
+        java {
+            srcDirs += 'src'
+        }
+    }
+}
+
+application {
+    mainClass = 'microbat.evaluation.junit.MicroBatTestRunner'
+}
+
+dependencies {
+    implementation 'junit:junit:4.13.2'
+    implementation 'org.junit.platform:junit-platform-runner:1.11.4'
+    implementation 'org.testng:testng:7.5.1'
+}

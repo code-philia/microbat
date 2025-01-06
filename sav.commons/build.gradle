@@ -1,5 +1,11 @@
 plugins {
-    id 'java'
+    id "java"
+    id "eclipse"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 repositories {

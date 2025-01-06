@@ -7,31 +7,58 @@ repositories {
     mavenCentral()
 }
 
+def extraLibDir = file("$buildDir/extra_lib")
+
 sourceSets {
     main {
         java {
             srcDirs += 'src/main'
             srcDirs += 'src/evaluation'
             srcDirs += 'src/behavior'
+            srcDirs += "src/test"
         }
         resources {
             srcDirs += 'resources'
-            srcDirs += "instrumentator-lib"
+            srcDirs += extraLibDir
         }
     }
 }
 
-task copyJar {
+task createExtraLibDir {
+    doLast {
+        extraLibDir.mkdirs()
+    }
+}
+
+task copyInstrumentatorJar {
     doLast {
         copy {
             from project(':microbat:microbat_instrumentator').tasks.findByName('shadowJar').outputs.files.singleFile
-            into "$projectDir/instrumentator-lib"
+            into extraLibDir
+            rename { fileName ->
+                "microbat_instrumentator.jar"
+            }
         }
     }
 }
-processResources.dependsOn(copyJar)
-copyJar.dependsOn(':microbat:microbat_instrumentator:shadowJar')
+processResources.dependsOn(copyInstrumentatorJar)
+copyInstrumentatorJar.dependsOn(':microbat:microbat_instrumentator:shadowJar')
+copyInstrumentatorJar.dependsOn(createExtraLibDir)
 
+task copyTestRunnerJar {
+    doLast {
+        copy {
+            from project(':microbat:microbat_test_runner').tasks.findByName('shadowJar').outputs.files.singleFile
+            into extraLibDir
+            rename { fileName ->
+                "microbat_test_runner.jar"
+            }
+        }
+    }
+}
+processResources.dependsOn(copyTestRunnerJar)
+copyTestRunnerJar.dependsOn(':microbat:microbat_test_runner:shadowJar')
+copyTestRunnerJar.dependsOn(createExtraLibDir)
 
 dependencies {
     implementation 'org.apache.bcel:bcel:6.0'
