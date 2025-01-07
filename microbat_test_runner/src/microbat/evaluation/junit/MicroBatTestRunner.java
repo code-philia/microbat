@@ -6,8 +6,10 @@ import microbat.evaluation.runners.TestRunner;
 public class MicroBatTestRunner {
 	
 	public static void main(String[] args){
+		System.out.println("This is the main method of MicroBatTestRunner");
 		String className = args[0];
 		String methodName = args[1];
+		System.out.println("Running test: " + className + ";" + methodName + ";");
 		MicroBatTestRunnerFactory testRunnerFactory = new MicroBatTestRunnerFactory();
 		TestRunner testRunner = testRunnerFactory.create(className, methodName);
 		testRunner.runTest(className, methodName);

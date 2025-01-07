@@ -117,10 +117,10 @@ public class VMRunner {
 				BufferedReader br = new BufferedReader(streamReader);
 				String line = null;
 				try {
-					while (isProcessRunning() && ((line = br.readLine()) != null)) {
-//						if (error) {
-//							log.warn(line);
-//						}
+					while ( ((line = br.readLine()) != null)) {
+						// if (error) {
+							log.warn("Agent output. isError: {}, line: {}", error, line);
+						// }
 						printOut(line, error);
 						if (!line.contains("Class JavaLaunchHelper is implemented in both")) {
 							sb.append(line).append("\n");
