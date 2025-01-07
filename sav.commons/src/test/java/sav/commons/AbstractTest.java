@@ -21,7 +21,7 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.PropertyConfigurator;
+// import org.apache.log4j.PropertyConfigurator;
 import org.junit.BeforeClass;
 
 import sav.common.core.utils.StringUtils;
@@ -43,12 +43,12 @@ public class AbstractTest {
 	
 	@BeforeClass
 	public static void init() throws Exception {
-		ResourceBundle log4jtest = ResourceBundle.getBundle("test-log4j");
-		Properties props = new Properties();
-		for (String key : log4jtest.keySet()) {
-			props.setProperty(key, log4jtest.getString(key));
-		}
-		PropertyConfigurator.configure(props);
+		// ResourceBundle log4jtest = ResourceBundle.getBundle("test-log4j");
+		// Properties props = new Properties();
+		// for (String key : log4jtest.keySet()) {
+		// 	props.setProperty(key, log4jtest.getString(key));
+		// }
+		// PropertyConfigurator.configure(props);
 	}
 	
 	public void print(Object... objs) {
