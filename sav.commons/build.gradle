@@ -1,0 +1,50 @@
+plugins {
+    id "java"
+    id "eclipse"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs += 'src/main'
+            srcDirs += 'src/test/java'
+        }
+    }
+}
+
+dependencies {
+    implementation 'org.slf4j:slf4j-api:2.0.16'
+
+    implementation 'commons-cli:commons-cli:1.2'
+    implementation 'commons-lang:commons-lang:2.6'
+    implementation 'org.apache.commons:commons-csv:1.0'
+
+    implementation 'junit:junit:4.13.2'
+
+    compileOnly 'org.eclipse.platform:org.eclipse.platform:4.34.0'
+    compileOnly files("../../local-deps/jdimodel.jar")
+}
+
+configurations.all {
+    resolutionStrategy.dependencySubstitution {
+        def os = System.getProperty("os.name").toLowerCase()
+        if (os.contains("windows")) {
+            substitute module('org.eclipse.platform:org.eclipse.swt.${osgi.platform}') using module("org.eclipse.platform:org.eclipse.swt.win32.win32.x86_64:3.114.0")
+        }
+        else if (os.contains("linux")) {
+            substitute module('org.eclipse.platform:org.eclipse.swt.${osgi.platform}') using module("org.eclipse.platform:org.eclipse.swt.gtk.linux.x86_64:3.114.0")
+        }
+        else if (os.contains("mac")) {
+            substitute module('org.eclipse.platform:org.eclipse.swt.${osgi.platform}') using module("org.eclipse.platform:org.eclipse.swt.cocoa.macosx.x86_64:3.114.0")
+        }
+    }
+}

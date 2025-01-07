@@ -29,7 +29,7 @@ public class Premain {
 	public static void premain(String agentArgs, Instrumentation inst) throws Exception {
 		long vmStartupTime = System.currentTimeMillis() - ManagementFactory.getRuntimeMXBean().getStartTime();
 		long agentPreStartup = System.currentTimeMillis();
-		installBootstrap(inst);
+		// installBootstrap(inst);
 		CommandLine cmd = CommandLine.parse(agentArgs);
 		AgentFactory.cmd = cmd;
 		

@@ -1,0 +1,17 @@
+plugins {
+    id "java"
+    id "eclipse"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.apache.poi:poi:3.11'
+    implementation 'org.apache.poi:poi-ooxml:3.11'
+    implementation 'org.apache.poi:poi-ooxml-schemas:3.11'
+    implementation 'junit:junit:4.13.2'
+    implementation 'commons-cli:commons-cli:1.2'
+    implementation project(':microbat:sav.commons')
+}

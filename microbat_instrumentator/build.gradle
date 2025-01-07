@@ -1,0 +1,46 @@
+plugins {
+    id "application"
+    id "java"
+    id "eclipse"
+    id "com.gradleup.shadow" version "8.3.2"
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = 'dummy.DummyMain'
+}
+
+tasks.jar {
+    manifest {
+        attributes["Premain-Class"] = "microbat.instrumentation.Premain"
+        attributes["Can-Retransform-Classes"] = "true"
+        attributes["Can-Redefine-Classes"] = "true"
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs += 'src/main'
+            srcDirs += 'src/core'
+        }
+    }
+}
+
+dependencies {
+    implementation 'org.apache.bcel:bcel:6.0'
+    implementation 'mysql:mysql-connector-java:5.1.44'
+    implementation 'org.xerial:sqlite-jdbc:3.32.3.2'
+
+    implementation project(':microbat:sav.commons')
+
+    testImplementation 'commons-io:commons-io:2.18.0'
+}

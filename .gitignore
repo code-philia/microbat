@@ -3,3 +3,14 @@ target
 /.project
 /.classpath
 /.metadata
+
+build/
+
+
+.project
+.classpath
+bin/
+.settings/
+
+.DS_Store
+build.properties
