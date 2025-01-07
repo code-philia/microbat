@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
@@ -33,16 +34,26 @@ public class Premain {
 		CommandLine cmd = CommandLine.parse(agentArgs);
 		AgentFactory.cmd = cmd;
 		
-		Class<?>[] retransformableClasses = getRetransformableClasses(inst);
-		
 		debug("start instrumentation...");
 		agentPreStartup = System.currentTimeMillis() - agentPreStartup;
 		System.out.println("Vm start up time: " + vmStartupTime);
 		System.out.println("Agent start up time: " + agentPreStartup);
 		Agent agent = AgentFactory.createAgent(cmd, inst);
 		agent.startup(vmStartupTime, agentPreStartup);
-		inst.addTransformer(agent.getTransformer(), true);
-		inst.addTransformer(new TestRunnerTranformer());
+
+		ClassFileTransformer t1 = agent.getTransformer();
+		ClassFileTransformer t2 = new TestRunnerTranformer();
+
+		getRetransformableClasses(inst);
+		Class<?>[] retransformableClasses = getRetransformableClasses(inst);
+
+		// for (Class<?> c : retransformableClasses) {
+		// 	debug("retransformable class: " + c.getName());
+		// }
+
+		inst.addTransformer(t1, true);
+		inst.addTransformer(t2);
+
 		agent.retransformClasses(retransformableClasses);
 		
 		debug("after retransform");
