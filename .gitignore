@@ -11,3 +11,6 @@ build/
 .classpath
 bin/
 .settings/
+
+.DS_Store
+build.properties
