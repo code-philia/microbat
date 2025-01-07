@@ -14,33 +14,27 @@ import microbat.instrumentation.filter.GlobalFilterChecker;
  */
 public class TraceTransformer extends AbstractTransformer implements ClassFileTransformer {
 	private TraceInstrumenter instrumenter;
-
+	
 	public TraceTransformer(AgentParams params) {
 		instrumenter = new TraceInstrumenter(params);
 	}
-
+	
 	@Override
 	protected byte[] doTransform(ClassLoader loader, String classFName, Class<?> classBeingRedefined,
 			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
 		/* bootstrap classes */
-
-		// String logstr = String.format("doTransform: %s. Loader: %s. CodeSource: %s. Location: %s. FileName: %s.", classFName, loader,
-		// 		protectionDomain.getCodeSource(), protectionDomain.getCodeSource().getLocation(),
-		// 		protectionDomain.getCodeSource().getLocation().getFile());
-		// System.out.println(logstr);
-
 		if ((loader == null) || (protectionDomain == null)) {
 			if (!GlobalFilterChecker.isTransformable(classFName, null, true)) {
 				return null;
 			}
-		}
+		} 
 		if (protectionDomain != null) {
 			String path = protectionDomain.getCodeSource().getLocation().getFile();
 			if (!GlobalFilterChecker.isTransformable(classFName, path, false)) {
 				return null;
 			}
 		}
-
+		
 		/* do instrumentation */
 		try {
 			return instrumenter.instrument(classFName, classfileBuffer);
@@ -49,7 +43,7 @@ public class TraceTransformer extends AbstractTransformer implements ClassFileTr
 		}
 		return null;
 	}
-
+	
 	public TraceInstrumenter getInstrumenter() {
 		return this.instrumenter;
 	}

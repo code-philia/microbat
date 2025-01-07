@@ -8,8 +8,6 @@ import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
-import com.github.javaparser.utils.Log;
-
 import microbat.views.ImageUI;
 
 /**
@@ -29,9 +27,6 @@ public class Activator extends AbstractUIPlugin {
 	 * The constructor
 	 */
 	public Activator() {
-		// throw new RuntimeException("This constructor should not be called.");
-		// Log.error("This constructor should not be called.", new Exception());
-		org.slf4j.LoggerFactory.getLogger(Activator.class).error("This constructor should not be called.", new RuntimeException());
 	}
 	
 	/**

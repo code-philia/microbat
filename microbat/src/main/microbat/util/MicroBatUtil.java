@@ -34,6 +34,8 @@ import sav.common.core.utils.FileUtils;
 import sav.common.core.utils.StringUtils;
 import sav.strategies.dto.AppJavaClassPath;
 
+// Modify by wenjie, GRADLE build
+// directly read classes from the jar file
 
 public class MicroBatUtil {
 	private static Logger log = LoggerFactory.getLogger(MicroBatUtil.class);
