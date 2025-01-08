@@ -1,0 +1,26 @@
+
+    @org.junit.Test
+    public void testWrapper() {
+        String msg = "success";
+        $testStarted("SampleTest", "testWrapper");
+        try {
+            test();
+        } catch (Exception t) {
+            msg = "error: " + t.getMessage();
+        } finally {
+            $testFinished("SampleTest", "testWrapper");
+            $exitProgram("");
+        }
+    }
+
+    public void $testFinished(String className, String methodName) {
+        // for agent part.
+    }
+
+    public void $testStarted(String className, String methodName) {
+        // for agent part.
+    }
+
+    public void $exitProgram(String resultMsg) {
+        // for agent part.
+    }
