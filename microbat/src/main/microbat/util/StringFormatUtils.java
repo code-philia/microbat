@@ -1,9 +1,16 @@
 package microbat.util;
 
+import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.IntConsumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class StringFormatUtils {
+    private static Logger log = LoggerFactory.getLogger(StringFormatUtils.class);
+
     private StringFormatUtils() {
     }
 
@@ -121,5 +128,45 @@ public class StringFormatUtils {
             this.location += codePointLength;
         }
 
+    }
+
+    private static Map<String, String> promptCacheMap = new HashMap<>();
+
+    public static synchronized String loadPrompt(String name) {
+        if (promptCacheMap.containsKey(name)) {
+            return promptCacheMap.get(name);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        byte[] buffer = new byte[1024];
+
+        String resourceName = StringFormatUtils.formatString("/prompts/{name}.md", Map.of("name", name));
+
+        try (InputStream is = StringFormatUtils.class.getResourceAsStream(resourceName)) {
+            int read;
+            while ((read = is.read(buffer)) != -1) {
+                sb.append(new String(buffer, 0, read));
+            }
+        } catch (Exception e) {
+            log.error("Failed to load prompt: " + name, e);
+            throw new RuntimeException("Failed to load prompt: " + name, e);
+        }
+
+        String prompt = sb.toString();
+        promptCacheMap.put(name, prompt);
+
+        return prompt;
+    }
+
+    public static final String PROMPT_NAME_IN_CONTEXT_LEARNING_SYSTEM = "in_context_learning_system";
+    public static final String PROMPT_NAME_IN_CONTEXT_LEARNING_USER = "in_context_learning_user";
+
+    public static String getPromptInContextLearningSystem() {
+        return loadPrompt(PROMPT_NAME_IN_CONTEXT_LEARNING_SYSTEM);
+    }
+
+    /** This prompt should be formatted with {original_code} */
+    public static String getPromptInContextLearningUser() {
+        return loadPrompt(PROMPT_NAME_IN_CONTEXT_LEARNING_USER);
     }
 }
