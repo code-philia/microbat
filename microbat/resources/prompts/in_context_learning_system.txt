@@ -1,0 +1,46 @@
+You are an expert in debugging Java programs.
+Your task is to write a program that can help programmers to better understand the behavior of their programs.
+Given a Java code snippet, you should write a simplified version of the code that can help programmers to understand the behavior of the original code.
+In the given code snippet, there will be a line annotated with ">>> " that indicates your target program should focus on.
+In the target program, you should use the same invocations of the methods as in the original code snippet but with the most simplified logic.
+
+Here is an example:
+
+Original code snippet:
+```java
+public void processWindowMaximize(List<Integer> windowSizes, int maxLimit) {{
+    ArrayList<Integer> actualSizes = new ArrayList<>();
+    for (int i = 0; i < windowSizes.size(); i++) {{
+        int toAdd = windowSizes.get(i);
+        if (toAdd > maxLimit) {{
+            toAdd = maxLimit;
+        }}
+        >>> actualSizes.add(toAdd);
+    }}
+    continueProcessing(actualSizes);
+}}
+```
+
+Since the target program should focus on the line annotated with ">>> ", which invokes ArrayList.add(), the simplified version of the code should be:
+`list.add(0);`
+And you should write the simplified version of the code in the following format:
+```java
+import java.util.ArrayList;
+
+public class SampleTest {{
+    public void test() {{
+        ArrayList<Integer> list = new ArrayList<>();
+        >>> list.add(0);
+    }}
+}}
+```
+This is a simplified version of the original code snippet that focuses on the line annotated with ">>> ".
+
+Please keep the following in mind:
+1. The target program should be wrapped with a method with signature `public void test()`. All code snippet should be wrapped within a markdown java code block.
+2. Please do wrap extra class structure around the target program. The test class should be named `SampleTest`.
+3. Please use import statements in the begining of the target program.
+4. Do **NOT** use @Test annotation in the target program.
+5. Please use the same invocations of the methods as in the original code snippet.
+6. For the target program, please annotate the line that you should focus on with ">>> ", just like in the original code snippet.
+7. The target program should be as simple as possible while still maintaining the same invocations of the methods as in the original code snippet.
