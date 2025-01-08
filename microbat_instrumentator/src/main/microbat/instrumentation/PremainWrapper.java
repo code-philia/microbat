@@ -50,7 +50,11 @@ public class PremainWrapper {
                     "premain",
                     String.class,
                     Instrumentation.class);
-            premainMethod.invoke(null, agentArgs, inst);
+            try {
+                premainMethod.invoke(null, agentArgs, inst);
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
         }
     }
 }
