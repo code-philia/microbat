@@ -36,7 +36,6 @@ public abstract class AbstractInstrumenter {
 
 	public byte[] instrument(String classFName, byte[] classfileBuffer) throws Exception {
 		String className = classFName.replace("/", ".");
-		System.out.println("TRANSFORMING: " + className);
 		ClassParser cp = new ClassParser(new java.io.ByteArrayInputStream(classfileBuffer), classFName);
 		JavaClass jc = cp.parse();
 		// First, make sure we have to instrument this class:
