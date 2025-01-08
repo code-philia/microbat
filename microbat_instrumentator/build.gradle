@@ -20,7 +20,7 @@ application {
 
 tasks.jar {
     manifest {
-        attributes["Premain-Class"] = "microbat.instrumentation.Premain"
+        attributes["Premain-Class"] = "microbat.instrumentation.PremainWrapper"
         attributes["Can-Retransform-Classes"] = "true"
         attributes["Can-Redefine-Classes"] = "true"
     }
