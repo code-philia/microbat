@@ -46,6 +46,7 @@ public class JdkFilter {
 			"java.security.",
 			// "java.",
 			"junit.",
+			"org.testng.",
 	};
 
 	static {

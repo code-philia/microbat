@@ -14,6 +14,9 @@ public class CommonParams {
 	public static final String OPT_CLASS_PATH = "class_path";
 	public static final String OPT_WORKING_DIR = "working_dir";
 	public static final String OPT_LOG = "log";
+
+	public static final String OPT_MANUALLY_TEST_RUNNING_CLASS = "manually_test_running_class";
+	public static final String OPT_FORCE_EXIT_WITHOUT_WAIT_OTHER_THREADS = "force_exit_without_wait_other_threads";
 	
 	private List<String> classPaths = new ArrayList<>();
 	private String workingDirectory;
