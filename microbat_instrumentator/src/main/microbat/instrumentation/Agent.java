@@ -86,6 +86,14 @@ public abstract class Agent {
 			Agent.programMsg = programMsg;
 			
 			boolean allInterestedThreadsStop = false;
+			if (AgentFactory.cmd.getString(CommonParams.OPT_FORCE_EXIT_WITHOUT_WAIT_OTHER_THREADS) != null) {
+				allInterestedThreadsStop = true;
+				try{
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
 			while(!allInterestedThreadsStop) {
 				try {
 					Thread.sleep(100);
@@ -180,9 +188,12 @@ public abstract class Agent {
 		return candidates.toArray(new Class<?>[candidates.size()]);
 	}
 
+	private static Agent currentAgent;
+
 	public static void _startTest(String junitClass, String junitMethod) {
 		try {
 			Agent agent = AgentFactory.createAgent(AgentFactory.cmd, instrumentation);
+			currentAgent = agent;
 			agent.startTest(junitClass, junitMethod);
 		} catch (Throwable e) {
 			AgentLogger.error(e);
@@ -191,7 +202,12 @@ public abstract class Agent {
 	
 	public static void _finishTest(String junitClass, String junitMethod) {
 		try {
-			Agent agent = AgentFactory.createAgent(AgentFactory.cmd, instrumentation);
+			Agent agent = null;
+			if (currentAgent != null) {
+				agent = currentAgent;
+			} else {
+				agent = AgentFactory.createAgent(AgentFactory.cmd, instrumentation);
+			}
 			agent.finishTest(junitClass, junitMethod);
 		} catch (Throwable e) {
 			AgentLogger.error(e);

@@ -7,6 +7,7 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 
 import microbat.instrumentation.AgentLogger;
+import microbat.instrumentation.filter.JdkFilter;
 import microbat.instrumentation.runtime.ExecutionTracer;
 import microbat.instrumentation.runtime.IExecutionTracer;
 import sav.common.core.utils.FileUtils;
@@ -34,7 +35,24 @@ public abstract class AbstractTransformer implements ClassFileTransformer {
 //			AgentLogger.debug("AbstractTransformation-Warning: ClassFName is null");
 			return null;
 		}
-		byte[] data = doTransform(loader, classFName, classBeingRedefined, protectionDomain, classfileBuffer);
+		byte[] data = null;
+		if ((this.getClass() != TestRunnerTranformer.class) && !JdkFilter.filterClass(classFName.replace("/", "."))) {
+			if(!this.getClass().getName().contains("SystemClassTransformer")) {
+            if (needToReleaseLock) {
+                tracer.unLock();
+            }
+			return null;
+			}
+		}
+		try {
+			data = doTransform(loader, classFName, classBeingRedefined, protectionDomain, classfileBuffer);
+			if (data != null) {
+				System.out.println("Transforming class: " + classFName + " by " + this.getClass().getName());
+			}
+		} catch (Throwable t) {
+			System.out.println("Error transforming class: " + classFName + " by " + this.getClass().getName());
+			t.printStackTrace();
+		}
 
 		log(classfileBuffer, data, classFName, false);
 					
