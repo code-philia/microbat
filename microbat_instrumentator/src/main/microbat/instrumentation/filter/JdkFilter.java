@@ -4,30 +4,76 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class JdkFilter {
+	private static final String[] jdkExclusivesArray = new String[] {
+			"java.lang.Integer",
+			"java.lang.Boolean",
+			"java.lang.Float",
+			"java.lang.Character",
+			"java.lang.Double",
+			"java.lang.Long",
+			"java.lang.Short",
+			"java.lang.Byte",
+			"java.lang.Object",
+			"java.lang.String",
+			"java.lang.Thread",
+			"java.lang.ThreadLocal",
+			"java.lang.Error",
+			"java.lang.AssertionError",
+			"java.lang.Class",
+			"java.lang.StringBuffer",
+			"java.lang.StringBuilder",
+			"java.lang.System",
+			"java.lang.ThreadGroup",
+			"java.lang.Throwable"
+	};
+
 	private static final Set<String> jdkExclusives;
-	
+
+	private static String[] excludePrefixes = new String[] {
+			"sun.",
+			"com.sun.",
+			"microbat.",
+			"java.lang.",
+			"jdk.",
+			"org.junit.",
+			"sav.common.",
+			"sav.commons.",
+			"sav.strategies.",
+			"java.nio.",
+			"java.util.concurrent.",
+			"java.io.",
+			"java.net.",
+			"java.security.",
+			// "java.",
+			"junit.",
+			"org.testng.",
+	};
+
 	static {
 		jdkExclusives = new HashSet<>();
-		jdkExclusives.add(Integer.class.getName());
-		jdkExclusives.add(Boolean.class.getName());
-		jdkExclusives.add(Float.class.getName());
-		jdkExclusives.add(Character.class.getName());
-		jdkExclusives.add(Double.class.getName());
-		jdkExclusives.add(Long.class.getName());
-		jdkExclusives.add(Short.class.getName());
-		jdkExclusives.add(Byte.class.getName());
-		jdkExclusives.add(Object.class.getName());
-		jdkExclusives.add(String.class.getName());
-		jdkExclusives.add("java.lang.Thread");
-		jdkExclusives.add("java.lang.ThreadLocal");
-		jdkExclusives.add("java.lang.Error");
-//		jdkExclusives.add("java.lang.Throwable");
-		jdkExclusives.add("java.lang.AssertionError");
-		jdkExclusives.add("java.lang.Class");
+		for (String className : jdkExclusivesArray) {
+			jdkExclusives.add(className);
+		}
 	}
 
 	public static boolean filter(String className) {
-		return !jdkExclusives.contains(className);
+		// if (jdkExclusives.contains(className)) {
+		// 	return false;
+		// }
+		// return true;
+		return filterClass(className);
 	}
-	
+
+	public static boolean filterClass(String className) {
+		if (jdkExclusives.contains(className)) {
+			return false;
+		}
+		for (String prefix : excludePrefixes) {
+			if (className.startsWith(prefix)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 }

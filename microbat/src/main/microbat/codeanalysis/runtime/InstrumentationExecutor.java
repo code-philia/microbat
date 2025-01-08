@@ -81,6 +81,10 @@ public class InstrumentationExecutor {
 		
 		agentRunner = createTraceAgentRunner();
 	}
+
+	public TraceAgentRunner getAgentRunner() {
+		return agentRunner;
+	}
 	
 	private TraceAgentRunner createTraceAgentRunner() {
 		

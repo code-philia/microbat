@@ -118,10 +118,14 @@ public class VMRunner {
 				String line = null;
 				try {
 					while ( ((line = br.readLine()) != null)) {
-						// if (error) {
-							log.warn("Agent output. isError: {}, line: {}", error, line);
-						// }
-						printOut(line, error);
+						if (error) {
+							log.warn("Agent: {}", line);
+						} else {
+							if (!line.startsWith("$")) {
+								log.info("Agent: {}", line);
+							}
+						}
+						// printOut(line, error);
 						if (!line.contains("Class JavaLaunchHelper is implemented in both")) {
 							sb.append(line).append("\n");
 						}
