@@ -1,6 +1,7 @@
 plugins {
     id "java"
     id "eclipse"
+    id "io.freefair.lombok" version "8.10.2"
 }
 
 repositories {

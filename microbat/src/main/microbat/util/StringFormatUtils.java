@@ -165,6 +165,8 @@ public class StringFormatUtils {
 
     public static final String PROMPT_NAME_IN_CONTEXT_LEARNING_SYSTEM = "in_context_learning_system";
     public static final String PROMPT_NAME_IN_CONTEXT_LEARNING_USER = "in_context_learning_user";
+    public static final String PROMPT_NAME_IN_CONTEXT_LEARNING_INSERT_END = "in_context_learning_insert_end";
+    public static final String PROMPT_NAME_IN_CONTEXT_LEARNING_EXPLAIN = "in_context_learning_explain";
 
     public static String getPromptInContextLearningSystem() {
         return loadPrompt(PROMPT_NAME_IN_CONTEXT_LEARNING_SYSTEM);
@@ -173,6 +175,18 @@ public class StringFormatUtils {
     /** This prompt should be formatted with {original_code} */
     public static String getPromptInContextLearningUser() {
         return loadPrompt(PROMPT_NAME_IN_CONTEXT_LEARNING_USER);
+    }
+
+    public static String getPromptInContextLearningInsertEnd() {
+        return loadPrompt(PROMPT_NAME_IN_CONTEXT_LEARNING_INSERT_END);
+    }
+
+    /**
+     * This prompt should be formatted with {code}, {variables_read},
+     * {variables_written}, {variables_read_outer}, {variables_written_outer}
+     */
+    public static String getPromptInContextLearningExplain() {
+        return loadPrompt(PROMPT_NAME_IN_CONTEXT_LEARNING_EXPLAIN);
     }
 
     public static String decodeWithIgnore(byte[] bytes) {

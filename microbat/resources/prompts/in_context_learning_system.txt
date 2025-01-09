@@ -25,16 +25,22 @@ Since the target program should focus on the line annotated with ">>> ", which i
 `list.add(0);`
 And you should write the simplified version of the code in the following format:
 ```java
-public void test() {{
-    ArrayList<Integer> list = new ArrayList<>();
-    >>> list.add(0);
+import java.util.ArrayList;
+
+public class SampleTest {{
+    public void test() {{
+        ArrayList<Integer> list = new ArrayList<>();
+        >>> list.add(0);
+    }}
 }}
 ```
 This is a simplified version of the original code snippet that focuses on the line annotated with ">>> ".
 
 Please keep the following in mind:
 1. The target program should be wrapped with a method with signature `public void test()`. All code snippet should be wrapped within a markdown java code block.
-2. Please do not wrap extra class structure around the target program. The target program should be a standalone method.
-3. Please use the same invocations of the methods as in the original code snippet.
-4. For the target program, please annotate the line that you should focus on with ">>> ", just like in the original code snippet.
-5. The target program should be as simple as possible while still maintaining the same invocations of the methods as in the original code snippet.
+2. Please do wrap extra class structure around the target program. The test class should be named `SampleTest`.
+3. Please use import statements in the begining of the target program.
+4. Do **NOT** use @Test annotation in the target program.
+5. Please use the same invocations of the methods as in the original code snippet.
+6. For the target program, please annotate the line that you should focus on with ">>> ", just like in the original code snippet.
+7. The target program should be as simple as possible while still maintaining the same invocations of the methods as in the original code snippet.
