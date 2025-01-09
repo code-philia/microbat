@@ -1,6 +1,11 @@
 package microbat.util;
 
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.IntConsumer;
@@ -168,5 +173,26 @@ public class StringFormatUtils {
     /** This prompt should be formatted with {original_code} */
     public static String getPromptInContextLearningUser() {
         return loadPrompt(PROMPT_NAME_IN_CONTEXT_LEARNING_USER);
+    }
+
+    public static String decodeWithIgnore(byte[] bytes) {
+        CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+
+        decoder.onMalformedInput(CodingErrorAction.REPLACE);
+        decoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+
+        StringBuilder sb = new StringBuilder();
+        ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+        CharBuffer charBuffer = CharBuffer.allocate(bytes.length);
+
+        decoder.decode(byteBuffer, charBuffer, true);
+        charBuffer.flip();
+        sb.append(charBuffer);
+
+        decoder.flush(charBuffer);
+        charBuffer.flip();
+        sb.append(charBuffer);
+
+        return sb.toString();
     }
 }
