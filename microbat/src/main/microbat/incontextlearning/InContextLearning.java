@@ -1,5 +1,8 @@
 package microbat.incontextlearning;
 
+import java.util.List;
+
+import microbat.model.value.VarValue;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 
 public interface InContextLearning {
@@ -17,7 +20,8 @@ public interface InContextLearning {
             String imports,
             String targetMethod,
             int targetLineNumber,
-            InContextLearningType type);
+            InContextLearningType type,
+            ContextVariablesToString contextToString);
 
     /**
      * Set execution simulator (i.e. LLM invoker).
@@ -28,5 +32,51 @@ public interface InContextLearning {
 
     public static enum InContextLearningType {
         ALIAS_INFERENCE, DEFINITION_INFERENCE
+    }
+
+    @FunctionalInterface
+    public static interface ContextVariablesToString {
+        public String contextToString(ContextVariables context, InContextLearningType type);
+    }
+
+    public static interface ContextVariables {
+        /**
+         * Get all written variables in the marker line including written variables in
+         * libraries.
+         */
+        public List<VarValue> getAllWrittenVariables();
+
+        /**
+         * Get all read variables in the marker line including read variables in
+         * libraries.
+         */
+        public List<VarValue> getAllReadVariables();
+
+        /**
+         * Get written variables in the marker line excluding written variables in
+         * libraries.
+         */
+        public List<VarValue> getOuterWrittenVariables();
+
+        /**
+         * Get read variables in the marker line excluding read variables in libraries.
+         */
+        public List<VarValue> getOuterReadVariables();
+
+        /**
+         * Get executed test case code. This code includes extra methods to execute the
+         * test case.
+         */
+        public String getCode();
+
+        /**
+         * Get gpt generated code.
+         */
+        public String getCodeToView();
+
+        /**
+         * Get target code line number. (The first line number is 1.)
+         */
+        public int getMarkerLine();
     }
 }
