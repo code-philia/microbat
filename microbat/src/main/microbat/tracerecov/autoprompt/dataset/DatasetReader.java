@@ -17,7 +17,10 @@ public abstract class DatasetReader {
 	public static final String VAR_TYPE = "var_type";
 	public static final String VAR_VALUE = "var_value";
 	public static final String CLASS_STRUCTURE = "class_structure";
-	public static final String SOURCE_CODE = "source_code";
+	public static final String LINE_SOURCE_CODE = "line_source_code";
+	public static final String METHOD_SOURCE_CODE = "method_source_code";
+	public static final String IMPORTS = "imports";
+	public static final String LINE_NO = "line_no";
 	public static final String GROUND_TRUTH = "ground_truth";
 
 	/* alias inference and definition inference keys */

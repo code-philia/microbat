@@ -47,7 +47,7 @@ public class VarExpansionDatasetReader extends DatasetReader {
 				datapoint.put(VAR_TYPE, columns[1]);
 				datapoint.put(VAR_VALUE, columns[2]);
 				datapoint.put(CLASS_STRUCTURE, columns[3]);
-				datapoint.put(SOURCE_CODE, columns[4]);
+				datapoint.put(LINE_SOURCE_CODE, columns[4]);
 				datapoint.put(GROUND_TRUTH, columns[5]);
 
 				dataset.add(datapoint);

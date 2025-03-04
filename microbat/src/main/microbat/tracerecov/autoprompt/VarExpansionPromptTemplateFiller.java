@@ -75,7 +75,7 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		String varType = datapoint.get(DatasetReader.VAR_TYPE);
 		String varValue = datapoint.get(DatasetReader.VAR_VALUE);
 		String classStructure = datapoint.get(DatasetReader.CLASS_STRUCTURE);
-		String sourceCode = datapoint.get(DatasetReader.SOURCE_CODE);
+		String sourceCode = datapoint.get(DatasetReader.LINE_SOURCE_CODE);
 
 		StringBuilder stringBuilder = new StringBuilder("\n\n<Question>\n");
 		stringBuilder.append("Given variable *" + varName + "*");

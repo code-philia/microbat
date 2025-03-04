@@ -11,6 +11,7 @@ import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.autoprompt.dataset.DefinitionInferenceDatasetReader;
 import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
+import sav.strategies.dto.AppJavaClassPath;
 
 public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 
@@ -42,12 +43,12 @@ public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 		promptTemplateFiller = new DefinitionInferencePromptTemplateFiller();
 		simScoreCalculator = new SimilarityScoreCalculator();
 	}
-
+	
 	@Override
-	public String searchForExample(HashMap<String, String> datapoint) {
+	public Object[] searchForExample(HashMap<String, String> datapoint) {
 		/* keys */
 		String targetVarKey = DatasetReader.TARGET_VAR;
-		String sourceCodeKey = DatasetReader.SOURCE_CODE;
+		String sourceCodeKey = DatasetReader.LINE_SOURCE_CODE;
 		String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
 		/* datapoint features */
@@ -83,13 +84,28 @@ public class DefinitionInferenceExampleSearcher extends ExampleSearcher {
 			}
 		}
 
-		if (maxSimScore > SIM_SCORE_THRESHOLD) {
-			HashMap<String, String> closestExample = trainingDataset.get(datapointIndex);
-			String groundTruth = TraceRecovUtils.processInputStringForLLM(closestExample.get(groundTruthKey));
-			return promptTemplateFiller.getExample(closestExample, groundTruth);
+		HashMap<String, String> closestExample = trainingDataset.get(datapointIndex);
+		String groundTruth = TraceRecovUtils.processInputStringForLLM(closestExample.get(groundTruthKey));
+		
+		Object[] outputArray = new Object[2];
+		outputArray[0] = promptTemplateFiller.getExample(closestExample, groundTruth);
+		outputArray[1] = maxSimScore;
+		return outputArray;
+	}
+
+	@Override
+	public String searchForExample(HashMap<String, String> datapoint, AppJavaClassPath appJavaClassPath) {
+		Object[] existingExample = searchForExample(datapoint);
+		String closestExample = (String) existingExample[0];
+		double maxSimScore = (double) existingExample[1];
+
+		if (maxSimScore <= SIM_SCORE_THRESHOLD) {
+			// TODO
 		} else {
-			return "";
+			return closestExample;
 		}
+		
+		return null;
 	}
 
 	// TODO: update later (not used for now)

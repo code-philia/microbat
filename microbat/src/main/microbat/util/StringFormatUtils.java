@@ -145,7 +145,7 @@ public class StringFormatUtils {
         StringBuilder sb = new StringBuilder();
         byte[] buffer = new byte[1024];
 
-        String resourceName = StringFormatUtils.formatString("/prompts/{name}.txt", Map.of("name", name));
+        String resourceName = StringFormatUtils.formatString("../../../../resources/prompts/{name}.txt", Map.of("name", name));
 
         try (InputStream is = StringFormatUtils.class.getResourceAsStream(resourceName)) {
             int read;

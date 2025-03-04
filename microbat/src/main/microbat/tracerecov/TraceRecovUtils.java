@@ -224,6 +224,112 @@ public class TraceRecovUtils {
 		return null;
 	}
 
+	/**
+	 * Get method code and the relative line number of the given line within the
+	 * method.
+	 * 
+	 * @param filePath
+	 * @param lineNumber
+	 * @return Object[] {String MethodSourceCode, Integer RelativeLineNumber}
+	 */
+	public static Object[] getSourceCodeOfMethodContainingLine(String filePath, int lineNumber) {
+		String line = null;
+		int methodStartLine = 0;
+
+		StringBuilder methodContent = new StringBuilder();
+
+		// get method range: start
+		try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+			int currentLine = 0;
+			while ((line = reader.readLine()) != null) {
+				line = line.strip();
+				currentLine++;
+				if (line.startsWith("public ") || line.startsWith("private ") || line.startsWith("protected ")) {
+					methodStartLine = currentLine;
+				}
+				if (currentLine == lineNumber) {
+					reader.close();
+					break;
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		// get method range: end
+		try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+			int count = -1;
+			int currentLine = 0;
+			while ((line = reader.readLine()) != null) {
+				currentLine++;
+				if (currentLine < methodStartLine) {
+					continue;
+				}
+				String text = line.strip();
+				int bracketsInLine = countBrackets(text);
+				if (count == -1) {
+					count = bracketsInLine;
+					methodContent.append(line);
+					methodContent.append("\n");
+				} else {
+					count += bracketsInLine;
+					methodContent.append(line);
+					methodContent.append("\n");
+					if (count == 0) {
+						// last line
+						break;
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		Object[] outputArray = new Object[2];
+		outputArray[0] = methodContent.toString();
+		outputArray[1] = lineNumber - methodStartLine + 1;
+		return outputArray;
+	}
+
+	/**
+	 * Iterate over the line, +1 for "{", -1 for "}"
+	 * 
+	 * @param line
+	 * @return
+	 */
+	private static int countBrackets(String line) {
+		int count = 0;
+		for (int i = 0; i < line.length(); i++) {
+			if (line.charAt(i) == '{') {
+				count++;
+			} else if (line.charAt(i) == '}') {
+				count--;
+			}
+		}
+		return count;
+	}
+
+	public static List<String> getImportStatements(String filePath) {
+		List<String> importStatements = new ArrayList<>();
+		String line = null;
+		try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+			while ((line = reader.readLine()) != null) {
+				line = line.strip();
+				if (line.startsWith("import ")) {
+					importStatements.add(line);
+				} else if (line.equals("") || line.equals("\n") || line.startsWith("/**") || line.startsWith("*")
+						|| line.startsWith("package ")) {
+					continue;
+				} else {
+					break;
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return importStatements;
+	}
+
 	public static String processInputStringForLLM(String input) {
 		return input.replace("\n", "\\n").replace("\r", "\\r");
 	}

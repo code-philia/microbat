@@ -95,12 +95,25 @@ public class VariableExpansionUtils {
 	private static HashMap<String, String> getDatapointFromStep(VarValue varValue, VariableSkeleton varSkeleton,
 			TraceNode step) {
 		HashMap<String, String> datapoint = new HashMap<>();
+		
+		Object[] methodSourceCodeAndLine = getMethodSourceCode(step);
+		String methodSourceCode = (String) methodSourceCodeAndLine[0];
+		int lineNoInMethod = (int) methodSourceCodeAndLine[1];
+		
+		List<String> importStatements = getImportStatements(step);
+		int lineNo = lineNoInMethod + importStatements.size() + 1;
+		
+		StringBuilder imports = new StringBuilder();
+		importStatements.stream().forEach(i -> imports.append(i + "\n"));
 
 		datapoint.put(DatasetReader.VAR_NAME, varValue.getVarName());
 		datapoint.put(DatasetReader.VAR_TYPE, varValue.getType());
 		datapoint.put(DatasetReader.VAR_VALUE, TraceRecovUtils.processInputStringForLLM(varValue.getStringValue()));
 		datapoint.put(DatasetReader.CLASS_STRUCTURE, varSkeleton.toString());
-		datapoint.put(DatasetReader.SOURCE_CODE, getSourceCode(step));
+		datapoint.put(DatasetReader.LINE_SOURCE_CODE, getLineSourceCode(step));
+		datapoint.put(DatasetReader.METHOD_SOURCE_CODE, methodSourceCode);
+		datapoint.put(DatasetReader.IMPORTS, imports.toString());
+		datapoint.put(DatasetReader.LINE_NO, String.valueOf(lineNo));
 		datapoint.put(DatasetReader.GROUND_TRUTH, ""); // not available yet
 
 		return datapoint;
@@ -110,7 +123,7 @@ public class VariableExpansionUtils {
 		HashMap<String, String> datapoint = getDatapointFromStep(varValue, varSkeleton, step);
 
 		ExampleSearcher exampleSearcher = new VarExpansionExampleSearcher(true);
-		String closestExample = exampleSearcher.searchForExample(datapoint);
+		String closestExample = exampleSearcher.searchForExample(datapoint, step.getTrace().getAppJavaClassPath());
 
 		if (closestExample == null || closestExample.equals("")) {
 			return VAR_EXPAND_EXAMPLE;
@@ -118,18 +131,36 @@ public class VariableExpansionUtils {
 		return closestExample;
 	}
 
-	private static String getSourceCode(TraceNode step) {
+	private static String getLineSourceCode(TraceNode step) {
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
 		String sourceCode = TraceRecovUtils
 				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(location, lineNo).trim());
 		return sourceCode;
 	}
+	
+	/**
+	 * Get method code and the relative line number of the given line within the method.
+	 * 
+	 * @param filePath
+	 * @param lineNumber
+	 * @return Object[] {String MethodSourceCode, Integer RelativeLineNumber}
+	 */
+	private static Object[] getMethodSourceCode(TraceNode step) {
+		int lineNo = step.getLineNumber();
+		String location = step.getBreakPoint().getFullJavaFilePath();
+		return TraceRecovUtils.getSourceCodeOfMethodContainingLine(location, lineNo);
+	}
+	
+	private static List<String> getImportStatements(TraceNode step) {
+		String location = step.getBreakPoint().getFullJavaFilePath();
+		return TraceRecovUtils.getImportStatements(location);
+	}
 
 	public static String getQuestionContent(VarValue selectedVariable, List<VariableSkeleton> variableSkeletons,
 			TraceNode step, Pair<String, String> preValueResponse) {
 		/* source code */
-		String sourceCode = getSourceCode(step);
+		String sourceCode = getLineSourceCode(step);
 
 		/* type of selected variable */
 		String variableType = selectedVariable.getType();

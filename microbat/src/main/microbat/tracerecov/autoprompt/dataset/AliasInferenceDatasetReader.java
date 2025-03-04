@@ -45,7 +45,7 @@ public class AliasInferenceDatasetReader extends DatasetReader {
 
 				HashMap<String, String> datapoint = new HashMap<>();
 				datapoint.put(STEP_NO, columns[0]);
-				datapoint.put(SOURCE_CODE, columns[1]);
+				datapoint.put(LINE_SOURCE_CODE, columns[1]);
 				datapoint.put(VARS_IN_STEP, columns[2]);
 				datapoint.put(TARGET_VAR, columns[3]);
 				datapoint.put(CURRENT_ALIASES, columns[4]);

@@ -11,13 +11,18 @@ import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.autoprompt.dataset.LossDataCollector;
 import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetReader;
+import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator;
+import microbat.tracerecov.autoprompt.incontextlearning.InContextLearning.InContextLearningType;
+import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 import microbat.tracerecov.executionsimulator.LLMResponseType;
 import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
+import sav.strategies.dto.AppJavaClassPath;
 
 public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 	private static double[] WEIGHTS = new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 };
+	private static double SIM_SCORE_THRESHOLD = 100;
 
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
@@ -46,10 +51,10 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 	}
 
 	@Override
-	public String searchForExample(HashMap<String, String> datapoint) {
+	public Object[] searchForExample(HashMap<String, String> datapoint) {
 		/* keys */
 		String classStructureKey = DatasetReader.CLASS_STRUCTURE;
-		String sourceCodeKey = DatasetReader.SOURCE_CODE;
+		String sourceCodeKey = DatasetReader.LINE_SOURCE_CODE;
 		String varValueKey = DatasetReader.VAR_VALUE;
 		String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
@@ -90,7 +95,38 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 		HashMap<String, String> closestExample = trainingDataset.get(datapointIndex);
 		String groundTruth = TraceRecovUtils.processInputStringForLLM(closestExample.get(groundTruthKey));
-		return promptTemplateFiller.getExample(closestExample, groundTruth);
+
+		Object[] outputArray = new Object[2];
+		outputArray[0] = promptTemplateFiller.getExample(closestExample, groundTruth);
+		outputArray[1] = maxSimScore;
+		return outputArray;
+	}
+
+	@Override
+	public String searchForExample(HashMap<String, String> datapoint, AppJavaClassPath appJavaClassPath) {
+		Object[] existingExample = searchForExample(datapoint);
+		String closestExample = (String) existingExample[0];
+		double maxSimScore = (double) existingExample[1];
+
+		if (maxSimScore <= SIM_SCORE_THRESHOLD) {
+			// generate example
+			String sourceCodeKey = DatasetReader.METHOD_SOURCE_CODE;
+			String importsKey = DatasetReader.IMPORTS;
+			String lineNoKey = DatasetReader.LINE_NO;
+			
+            InContextEgGenerator egGenerator = new InContextEgGenerator();
+            egGenerator.setExecutionSimulator(ExecutionSimulatorFactory.getExecutionSimulator());
+            String generatedExample = egGenerator.executeInContextLearning(
+            		appJavaClassPath,
+                    datapoint.get(importsKey),
+                    datapoint.get(sourceCodeKey),
+                    Integer.valueOf(datapoint.get(lineNoKey)),
+                    InContextLearningType.VAR_EXPANSION,
+                    InContextEgGenerator.defaultToString());
+            return generatedExample; // TODO: add to database
+		} else {
+			return closestExample;
+		}
 	}
 
 	@Override
@@ -103,7 +139,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 			System.out.println("Experiment:\n");
 			double experimentLoss = getLoss(datapoint,
-					x -> promptTemplateFiller.getPrompt(x, this.searchForExample(x)));
+					x -> promptTemplateFiller.getPrompt(x, (String) this.searchForExample(x)[0]));
 
 			System.out.println("baseline loss: " + baselineLoss);
 			System.out.println("experiment loss: " + experimentLoss);

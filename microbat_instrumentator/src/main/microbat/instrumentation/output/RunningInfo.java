@@ -95,7 +95,7 @@ public class RunningInfo {
 	
 	public Trace getMainTrace() {
 		for(Trace trace: traceList) {
-			if(trace.isMain()) {
+			if(trace.isMain() || trace.getThreadName().equals("main")) {
 				return trace;
 			}
 		}

@@ -1,4 +1,4 @@
-package microbat.incontextlearning;
+package microbat.tracerecov.autoprompt.incontextlearning;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public interface InContextLearning {
     public void setExecutionSimulator(ExecutionSimulator simulator);
 
     public static enum InContextLearningType {
-        ALIAS_INFERENCE, DEFINITION_INFERENCE
+        VAR_EXPANSION, ALIAS_INFERENCE, DEFINITION_INFERENCE
     }
 
     @FunctionalInterface

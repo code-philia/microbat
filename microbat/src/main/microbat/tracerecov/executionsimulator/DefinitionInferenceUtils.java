@@ -49,7 +49,7 @@ public class DefinitionInferenceUtils {
 		datapoint.put(DatasetReader.TARGET_FIELD, cascadeFieldName);
 		datapoint.put(DatasetReader.VAR_NAME, "");
 		datapoint.put(DatasetReader.TARGET_VAR, jsonString);
-		datapoint.put(DatasetReader.SOURCE_CODE, "");
+		datapoint.put(DatasetReader.LINE_SOURCE_CODE, "");
 		datapoint.put(DatasetReader.INVOKED_METHODS, "");
 		datapoint.put(DatasetReader.VARS_IN_STEP, "");
 		datapoint.put(DatasetReader.GROUND_TRUTH, ""); // not available yet
@@ -61,7 +61,7 @@ public class DefinitionInferenceUtils {
 		HashMap<String, String> datapoint = getDatapointFromStep(rootVar, targetVar, criticalVariables);
 
 		ExampleSearcher exampleSearcher = new DefinitionInferenceExampleSearcher(true);
-		String closestExample = exampleSearcher.searchForExample(datapoint);
+		String closestExample = exampleSearcher.searchForExample(datapoint, null);
 
 		// TODO: add default example
 		if (closestExample == null || closestExample.equals("")) {
