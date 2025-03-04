@@ -23,6 +23,8 @@ import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.Type;
 
 import microbat.instrumentation.Agent;
+import microbat.instrumentation.AgentFactory;
+import microbat.instrumentation.CommonParams;
 import microbat.instrumentation.cfgcoverage.CoverageAgent;
 
 /**
@@ -51,10 +53,18 @@ public class TestRunnerTranformer extends AbstractTransformer implements ClassFi
 		if (!Agent.isInstrumentationActive()) {
 			return null;
 		}
-		if ("microbat/evaluation/runners/TestRunner".equals(classFName)
-				|| "sav/junit/SavJunitRunner".equals(classFName)
-				|| "sav/junit/SavSimpleRunner".equals(classFName)
-				|| "sav/junit/SavSocketTestRunner".equals(classFName)) {
+		String manually_test_running_class = AgentFactory.cmd.getString(CommonParams.OPT_MANUALLY_TEST_RUNNING_CLASS);
+		boolean has_manually_test_running_class = manually_test_running_class != null;
+		boolean should_instruct = false;
+		if (has_manually_test_running_class) {
+			should_instruct = classFName.equals(manually_test_running_class);
+		} else {
+			should_instruct = "microbat/evaluation/runners/TestRunner".equals(classFName)
+					|| "sav/junit/SavJunitRunner".equals(classFName)
+					|| "sav/junit/SavSimpleRunner".equals(classFName)
+					|| "sav/junit/SavSocketTestRunner".equals(classFName);
+		}
+		if (should_instruct) {
 			try {
 				byte[] data = instrument(classFName, classfileBuffer);
 				return data;

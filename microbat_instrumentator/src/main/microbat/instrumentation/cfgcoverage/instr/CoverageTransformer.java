@@ -21,7 +21,7 @@ public class CoverageTransformer implements ClassFileTransformer {
 	@Override
 	public byte[] transform(ClassLoader loader, String classFName, Class<?> classBeingRedefined,
 			ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
-		
+		System.out.println("Transforming class: " + classFName + " by " + this.getClass().getName());
 		if (protectionDomain != null) {
 			CodeSource codeSource = protectionDomain.getCodeSource();
 			if ((codeSource == null) || (codeSource.getLocation() == null)) {

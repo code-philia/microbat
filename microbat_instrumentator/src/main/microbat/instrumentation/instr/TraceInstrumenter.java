@@ -53,8 +53,10 @@ import org.apache.bcel.generic.TargetLostException;
 import org.apache.bcel.generic.Type;
 import microbat.instrumentation.Agent;
 import microbat.instrumentation.AgentConstants;
+import microbat.instrumentation.AgentFactory;
 import microbat.instrumentation.AgentLogger;
 import microbat.instrumentation.AgentParams;
+import microbat.instrumentation.CommonParams;
 import microbat.instrumentation.filter.GlobalFilterChecker;
 import microbat.instrumentation.filter.UserFilters;
 import microbat.instrumentation.instr.instruction.info.ArrayInstructionInfo;
@@ -93,6 +95,9 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 
 	@Override
 	protected byte[] instrument(String classFName, String className, JavaClass jc) {
+		String manually_test_running_class = AgentFactory.cmd.getString(CommonParams.OPT_MANUALLY_TEST_RUNNING_CLASS);
+		boolean is_current_class = classFName.equals(manually_test_running_class);
+
 		ClassGen classGen = new ClassGen(jc);
 		ConstantPoolGen constPool = classGen.getConstantPool();
 		JavaClass newJC = null;
@@ -104,6 +109,9 @@ public class TraceInstrumenter extends AbstractInstrumenter {
 		for (Method method : jc.getMethods()) {
 			if (method.isNative() || method.isAbstract() || method.getCode() == null) {
 				continue; // Only instrument methods with code in them!
+			}
+			if (is_current_class && method.getName().startsWith("$")) {
+				continue;
 			}
 			try {
 				MethodGen methodGen = new MethodGen(method, classFName, constPool);

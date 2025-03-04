@@ -1,0 +1,9 @@
+Here is a simple example showing how the current line of code is working.
+In the following code snippet:
+```java
+{code}
+```
+This line of code has read the following variables:
+{variables_read}
+This line of code has written the following variables:
+{variables_written}

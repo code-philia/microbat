@@ -61,7 +61,7 @@ public class LineInstructionInfo{
 		this.insnList = methodGen.getInstructionList();
 		this.insnList.setPositions(true);
 		lineInsns = findCorrespondingInstructions(insnList , lineNumberTable, lineGen.getSourceLine());
-		System.out.println(methodGen.getClassName() + "#" + line);
+		// System.out.println(methodGen.getClassName() + "#" + line);
 //		for (InstructionHandle ih: lineInsns) {
 //			System.out.println(ih);
 //		}
