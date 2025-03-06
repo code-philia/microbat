@@ -162,24 +162,24 @@ public class InContextExecutor {
         runCommand(command);
     }
 
-    public void initializeAppClassPath() {
-    	
-        appClassPath.setOptionalTestClass("SampleTest");
-        appClassPath.setOptionalTestMethod("testWrapper");
-    	
-        appClassPath.setWorkingDirectory(binDirName);
+	public void initializeAppClassPath() {
 
-        List<String> classPaths = new ArrayList<>();
-        classPaths.add(binDirName);
-        List<String> originalClassPaths = appClassPath.getClasspaths();
-        for (String p : originalClassPaths) {
-        	classPaths.add(p);
-        }
-        appClassPath.setClasspaths(classPaths);
+		appClassPath.setOptionalTestClass("SampleTest");
+		appClassPath.setOptionalTestMethod("testWrapper");
 
-        appClassPath.setSourceCodePath(srcDirName);
-        appClassPath.setTestCodePath(binDirName);
-    }
+		appClassPath.setWorkingDirectory(binDirName);
+
+		List<String> classPaths = new ArrayList<>();
+		classPaths.add(binDirName);
+		List<String> originalClassPaths = appClassPath.getClasspaths();
+		for (String p : originalClassPaths) {
+			classPaths.add(p);
+		}
+		appClassPath.setClasspaths(classPaths);
+
+		appClassPath.setSourceCodePath(srcDirName);
+		appClassPath.setTestCodePath(binDirName);
+	}
 
     public Trace runTarget() {
         List<String> includeLibs = new ArrayList<>();

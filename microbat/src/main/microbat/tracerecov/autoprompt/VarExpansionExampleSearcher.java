@@ -122,8 +122,9 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
                     datapoint.get(sourceCodeKey),
                     Integer.valueOf(datapoint.get(lineNoKey)),
                     InContextLearningType.VAR_EXPANSION,
-                    InContextEgGenerator.defaultToString());
-            return generatedExample; // TODO: add to database
+                    InContextEgGenerator.defaultToString()); // TODO: change to correct format
+//            return generatedExample; // TODO: add to database
+            return "";
 		} else {
 			return closestExample;
 		}
