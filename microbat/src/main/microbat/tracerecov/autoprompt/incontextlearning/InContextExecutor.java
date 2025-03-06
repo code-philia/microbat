@@ -55,6 +55,7 @@ public class InContextExecutor {
     
     public InContextExecutor(AppJavaClassPath appJavaClassPath) {
     	this.appClassPath = appJavaClassPath;
+    	this.appClassPath = appJavaClassPath.duplicate();
     }
 
     @FunctionalInterface
@@ -79,11 +80,11 @@ public class InContextExecutor {
 
     public InContextExecutor(SourceCodeWritter sourceCodeWritter, AppJavaClassPath appJavaClassPath) {
         this.sourceCodeWritter = sourceCodeWritter;
-        this.appClassPath = appJavaClassPath;
+        this.appClassPath = appJavaClassPath.duplicate();
 
         String separator = File.separator;
 
-        currentWorkingDirName = appClassPath.getWorkingDirectory()
+        currentWorkingDirName = appJavaClassPath.getWorkingDirectory()
                 + separator + IN_CONTEXT_LEARNING_FOLDER
                 + separator + getNewWorkingDirName();
         currentWorkingDir = new File(currentWorkingDirName);
@@ -112,7 +113,7 @@ public class InContextExecutor {
         srcFileName = srcDirName + separator + MAIN_JAVA_NAME;
         srcFile = new File(srcFileName);
 
-        log.info("Java home: {}", appClassPath.getJavaHome());
+        log.info("Java home: {}", appJavaClassPath.getJavaHome());
         log.info("working path: {}", currentWorkingDirName);
         log.info("src path: {}", srcDirName);
         log.info("bin path: {}", binDirName);
@@ -162,15 +163,22 @@ public class InContextExecutor {
     }
 
     public void initializeAppClassPath() {
-
+    	
+        appClassPath.setOptionalTestClass("SampleTest");
+        appClassPath.setOptionalTestMethod("testWrapper");
+    	
         appClassPath.setWorkingDirectory(binDirName);
 
         List<String> classPaths = new ArrayList<>();
         classPaths.add(binDirName);
-        appClassPath.addClasspaths(classPaths);
+        List<String> originalClassPaths = appClassPath.getClasspaths();
+        for (String p : originalClassPaths) {
+        	classPaths.add(p);
+        }
+        appClassPath.setClasspaths(classPaths);
 
         appClassPath.setSourceCodePath(srcDirName);
-        appClassPath.setSourceCodePath(srcDirName);
+        appClassPath.setTestCodePath(binDirName);
     }
 
     public Trace runTarget() {

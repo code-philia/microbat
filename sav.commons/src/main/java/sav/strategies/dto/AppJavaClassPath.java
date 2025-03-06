@@ -206,5 +206,35 @@ public class AppJavaClassPath {
 	public void setClassLoader(ClassLoader classLoader) {
 		this.classLoader = classLoader;
 	}
+
+	public void setClasspaths(List<String> classpaths) {
+		this.classpaths = classpaths;
+	}
+
+	public void setPreferences(SystemPreferences preferences) {
+		this.preferences = preferences;
+	}
 	
+	/**
+	 * Return a copy. Use with caution, especially when lists are modified.
+	 * @return
+	 */
+	public AppJavaClassPath duplicate() {
+		AppJavaClassPath copy = new AppJavaClassPath();
+		copy.setAdditionalSourceFolders(additionalSourceFolders);
+		copy.setAgentBootstrapPathList(agentBootstrapPathList);
+		copy.setAgentLib(agentLib);
+		copy.setClassLoader(classLoader);
+		copy.setClasspaths(classpaths);
+		copy.setExternalLibPaths(externalLibPaths);
+		copy.setJavaHome(javaHome);
+		copy.setLaunchClass(launchClass);
+		copy.setOptionalTestClass(optionalTestClass);
+		copy.setOptionalTestMethod(optionalTestMethod);
+		copy.setPreferences(preferences);
+		copy.setSourceCodePath(soureCodePath);
+		copy.setTestCodePath(testCodePath);
+		copy.setWorkingDirectory(workingDirectory);
+		return copy;
+	}
 }
