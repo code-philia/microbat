@@ -47,6 +47,9 @@ public class JdkFilter {
 			// "java.",
 			"junit.",
 			"org.testng.",
+			"java.util.regex.",
+			"org.apache.bcel.",
+			"java.time.",
 	};
 
 	static {
