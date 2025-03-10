@@ -46,6 +46,7 @@ public class InContextEgGenerator implements InContextLearning {
 			String imports,
 			String targetMethod,
 			int targetLineNumber,
+			String targetVariable,
 			InContextLearningType type,
 			ContextVariablesToString contextToString) {
 		if (executionSimulator == null) {
@@ -57,7 +58,7 @@ public class InContextEgGenerator implements InContextLearning {
 		String input = processInputString(imports, targetMethod, targetLineNumber);
 		log.info("Input code: {}", input);
 		String gptSystem = getBackgroundContent();
-		String gptUser = getQuestionContent(input);
+		String gptUser = getQuestionContent(input, targetVariable);
 		log.info("GPT system: {}", gptSystem);
 		log.info("GPT user: {}", gptUser);
 
@@ -353,9 +354,12 @@ public class InContextEgGenerator implements InContextLearning {
         return StringFormatUtils.getPromptInContextLearningSystem();
     }
 
-    public String getQuestionContent(String code) {
+    public String getQuestionContent(String code, String varName) {
         String format = StringFormatUtils.getPromptInContextLearningUser();
-        return StringFormatUtils.formatString(format, Map.of("original_code", code));
+        HashMap<String, String> map = new HashMap<>();
+        map.put("original_code", code);
+        map.put("target_var", varName);
+        return StringFormatUtils.formatString(format, map);
     }
 
     public static class InContextLearningCode implements SourceCodeWritter {
@@ -458,13 +462,12 @@ public class InContextEgGenerator implements InContextLearning {
         return new InContextLearningCode(outputCode, code, markerLine);
     }
 
-    /**
-     * This method is for testing purpose and not implemented here.
-     */
+	/**
+	 * This method is for testing purpose and not implemented here.
+	 */
 	@Override
 	public String executeInContextLearning(String imports, String targetMethod, int targetLineNumber,
-			InContextLearningType type, ContextVariablesToString contextToString) {
-		// TODO Auto-generated method stub
+			String targetVariable, InContextLearningType type, ContextVariablesToString contextToString) {
 		return null;
 	}
 

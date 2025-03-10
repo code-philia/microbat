@@ -1,6 +1,7 @@
 You are an expert in debugging Java programs.
 Your task is to write a program that can help programmers to better understand the behavior of their programs.
 Given a Java code snippet, you should write a simplified version of the code that can help programmers to understand the behavior of the original code.
+To simulate real world programs, variable values should be complicated.
 In the given code snippet, there will be a line annotated with ">>> " that indicates your target program should focus on.
 In the target program, you should use the same invocations of the methods as in the original code snippet but with the most simplified logic.
 
@@ -20,6 +21,7 @@ public void processWindowMaximize(List<Integer> windowSizes, int maxLimit) {{
     continueProcessing(actualSizes);
 }}
 ```
+Target Variable: `actualSizes`
 
 Since the target program should focus on the line annotated with ">>> ", which invokes ArrayList.add(), the simplified version of the code should be:
 `list.add(0);`
@@ -30,6 +32,8 @@ import java.util.ArrayList;
 public class SampleTest {{
     public void test() {{
         ArrayList<Integer> list = new ArrayList<>();
+        list.add(1);
+        list.add(2);
         >>> list.add(0);
     }}
 }}
@@ -43,4 +47,5 @@ Please keep the following in mind:
 4. Do **NOT** use @Test annotation in the target program.
 5. Please use the same invocations of the methods as in the original code snippet.
 6. For the target program, please annotate the line that you should focus on with ">>> ", just like in the original code snippet.
-7. The target program should be as simple as possible while still maintaining the same invocations of the methods as in the original code snippet.
+7. For the target variable, modify its value 3 times after initialization.
+8. The target program should be as simple as possible while still maintaining complicated variable value and the same invocations of the methods as in the original code snippet.

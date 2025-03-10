@@ -20,6 +20,7 @@ public interface InContextLearning {
             String imports,
             String targetMethod,
             int targetLineNumber,
+            String targetVariable,
             InContextLearningType type,
             ContextVariablesToString contextToString);
 

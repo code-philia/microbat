@@ -127,8 +127,8 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			egGenerator.setExecutionSimulator(ExecutionSimulatorFactory.getExecutionSimulator());
 			InContextLearningType type = InContextLearningType.VAR_EXPANSION;
 			InContextLearningCode generatedCode = egGenerator.getGeneratedExampleCode(datapoint.get(importsKey),
-					datapoint.get(sourceCodeKey), Integer.valueOf(datapoint.get(lineNoKey)), type,
-					InContextEgGenerator.defaultToString());
+					datapoint.get(sourceCodeKey), Integer.valueOf(datapoint.get(lineNoKey)), datapoint.get(varNameKey),
+					type, InContextEgGenerator.defaultToString());
 			String loc = TraceRecovUtils.getLoc(generatedCode.getCode(), generatedCode.getMarkerLine());
 
 			InContextLearningVariables recordedVariables = egGenerator.getGeneratedExampleVars(appJavaClassPath,
@@ -149,7 +149,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			if (mostSuitableVar == null) {
 				return "";
 			}
-			
+
 			HashMap<String, String> newDP = new HashMap<>();
 			newDP.put(lineSourceCodeKey, loc); // TODO: extract code
 			newDP.put(varTypeKey, mostSuitableVar.getType());
@@ -157,7 +157,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			newDP.put(varValueKey, mostSuitableVar.getStringValue());
 			newDP.put(classStructureKey, datapoint.get(classStructureKey));
 			String gt = mostSuitableVar.toJSON().toString();
-			
+
 			String generatedExample = promptTemplateFiller.getExample(newDP, gt);
 			// TODO: add example to database
 			return generatedExample;

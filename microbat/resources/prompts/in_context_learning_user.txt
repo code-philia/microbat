@@ -4,5 +4,6 @@ Original code snippet:
 ```java
 {original_code}
 ```
+Target Variable: `{target_var}`
 
 Please output the target 
