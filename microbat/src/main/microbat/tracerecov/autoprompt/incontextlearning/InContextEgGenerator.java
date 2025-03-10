@@ -42,67 +42,56 @@ public class InContextEgGenerator implements InContextLearning {
 
     public InContextEgGenerator() {}
 
-    public String executeInContextLearning(
-    		AppJavaClassPath appJavaClassPath,
-    		String imports,
-            String targetMethod,
-            int targetLineNumber,
-            InContextLearningType type,
-            ContextVariablesToString contextToString) {
-    	this.appJavaClassPath = appJavaClassPath;
-    	return executeInContextLearning(imports, targetMethod, targetLineNumber, type, contextToString);
-    }
+	public InContextLearningCode getGeneratedExampleCode(
+			String imports,
+			String targetMethod,
+			int targetLineNumber,
+			InContextLearningType type,
+			ContextVariablesToString contextToString) {
+		if (executionSimulator == null) {
+			throw new IllegalStateException("Execution simulator is not set");
+		}
 
-    @Override
-    public String executeInContextLearning(
-            String imports,
-            String targetMethod,
-            int targetLineNumber,
-            InContextLearningType type,
-            ContextVariablesToString contextToString) {
-        if (executionSimulator == null) {
-            throw new IllegalStateException("Execution simulator is not set");
-        }
+		log.info("executeInContextLearning: imports: {}\ntarget: {}\ntargetLine: {}", imports, targetMethod,
+				targetLineNumber);
+		String input = processInputString(imports, targetMethod, targetLineNumber);
+		log.info("Input code: {}", input);
+		String gptSystem = getBackgroundContent();
+		String gptUser = getQuestionContent(input);
+		log.info("GPT system: {}", gptSystem);
+		log.info("GPT user: {}", gptUser);
 
-        log.info("executeInContextLearning: imports: {}\ntarget: {}\ntargetLine: {}",
-                imports, targetMethod, targetLineNumber);
-        String input = processInputString(imports, targetMethod, targetLineNumber);
-        log.info("Input code: {}", input);
-        String gptSystem = getBackgroundContent();
-        String gptUser = getQuestionContent(input);
-        log.info("GPT system: {}", gptSystem);
-        log.info("GPT user: {}", gptUser);
+		String response = null;
+		try {
+			response = executionSimulator.sendRequest(gptSystem, gptUser, LLMResponseType.TEXT);
+		} catch (Exception e) {
+			log.error("Failed to execute in context learning", e);
+			return null;
+		}
 
-        String response = null;
-        try {
-            response = executionSimulator.sendRequest(gptSystem, gptUser, LLMResponseType.TEXT);
-        } catch (Exception e) {
-            log.error("Failed to execute in context learning", e);
-            return "";
-        }
+		log.info("Response: {}", response);
 
-        log.info("Response: {}", response);
+		InContextLearningCode generatedCode = processCodeGeneratedByLLM(response);
+		return generatedCode;
+	}
 
-        InContextLearningCode generatedCode = processCodeGeneratedByLLM(response);
-        log.info("Generated code: {}", generatedCode.getCode());
-        log.info("Marker line: {}", generatedCode.getMarkerLine());
-        InContextExecutor executor = new InContextExecutor(generatedCode, appJavaClassPath);
+	public InContextLearningVariables getGeneratedExampleVars(AppJavaClassPath appJavaClassPath,
+			InContextLearningCode generatedCode, InContextLearningType type) {
+		log.info("Generated code: {}", generatedCode.getCode());
+		log.info("Marker line: {}", generatedCode.getMarkerLine());
+		InContextExecutor executor = new InContextExecutor(generatedCode, appJavaClassPath);
 
-        Trace trace = null;
-        try {
-            trace = executor.run();
-        } catch (Exception e) {
-            log.error("Failed to execute generated code", e);
-            return "";
-        }
+		Trace trace = null;
+		try {
+			trace = executor.run();
+		} catch (Exception e) {
+			log.error("Failed to execute generated code", e);
+			return null;
+		}
 
-        InContextLearningVariables variables = postProcessTrace(trace, type, generatedCode);
-        log.info("Variables: {}", variables);
-        String explanation = contextToString.contextToString(variables, type);
-        log.info("Explanation: {}", explanation);
-
-        return explanation;
-    }
+		InContextLearningVariables variables = postProcessTrace(trace, type, generatedCode);
+		return variables;
+	}
 
     public static final String TARGET_METHOD_SIGN = "SampleTest#test()V";
 
@@ -468,5 +457,15 @@ public class InContextEgGenerator implements InContextLearning {
 
         return new InContextLearningCode(outputCode, code, markerLine);
     }
+
+    /**
+     * This method is for testing purpose and not implemented here.
+     */
+	@Override
+	public String executeInContextLearning(String imports, String targetMethod, int targetLineNumber,
+			InContextLearningType type, ContextVariablesToString contextToString) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 }

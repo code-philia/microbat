@@ -2,16 +2,20 @@ package microbat.tracerecov.autoprompt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Function;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import microbat.model.value.VarValue;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.autoprompt.dataset.LossDataCollector;
 import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetReader;
 import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator;
+import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator.InContextLearningCode;
+import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator.InContextLearningVariables;
 import microbat.tracerecov.autoprompt.incontextlearning.InContextLearning.InContextLearningType;
 import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 import microbat.tracerecov.executionsimulator.LLMResponseType;
@@ -111,20 +115,52 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 		if (maxSimScore <= SIM_SCORE_THRESHOLD) {
 			// generate example
 			String sourceCodeKey = DatasetReader.METHOD_SOURCE_CODE;
+			String lineSourceCodeKey = DatasetReader.LINE_SOURCE_CODE;
 			String importsKey = DatasetReader.IMPORTS;
 			String lineNoKey = DatasetReader.LINE_NO;
+			String varTypeKey = DatasetReader.VAR_TYPE;
+			String varNameKey = DatasetReader.VAR_NAME;
+			String varValueKey = DatasetReader.VAR_VALUE;
+			String classStructureKey = DatasetReader.CLASS_STRUCTURE;
+
+			InContextEgGenerator egGenerator = new InContextEgGenerator();
+			egGenerator.setExecutionSimulator(ExecutionSimulatorFactory.getExecutionSimulator());
+			InContextLearningType type = InContextLearningType.VAR_EXPANSION;
+			InContextLearningCode generatedCode = egGenerator.getGeneratedExampleCode(datapoint.get(importsKey),
+					datapoint.get(sourceCodeKey), Integer.valueOf(datapoint.get(lineNoKey)), type,
+					InContextEgGenerator.defaultToString());
+			String loc = TraceRecovUtils.getLoc(generatedCode.getCode(), generatedCode.getMarkerLine());
+
+			InContextLearningVariables recordedVariables = egGenerator.getGeneratedExampleVars(appJavaClassPath,
+					generatedCode, type);
+			List<VarValue> variables = recordedVariables.getOuterReadVariables();
+			variables.addAll(recordedVariables.getOuterWrittenVariables());
+			VarValue mostSuitableVar = null;
+			for (VarValue var : variables) {
+				if (datapoint.get(varTypeKey).equals(var.getType())) {
+					if (mostSuitableVar == null) {
+						mostSuitableVar = var;
+					} else if (datapoint.get(varNameKey).equals(var.getVarName())) {
+						mostSuitableVar = var;
+						break;
+					}
+				}
+			}
+			if (mostSuitableVar == null) {
+				return "";
+			}
 			
-            InContextEgGenerator egGenerator = new InContextEgGenerator();
-            egGenerator.setExecutionSimulator(ExecutionSimulatorFactory.getExecutionSimulator());
-            String generatedExample = egGenerator.executeInContextLearning(
-            		appJavaClassPath,
-                    datapoint.get(importsKey),
-                    datapoint.get(sourceCodeKey),
-                    Integer.valueOf(datapoint.get(lineNoKey)),
-                    InContextLearningType.VAR_EXPANSION,
-                    InContextEgGenerator.defaultToString()); // TODO: change to correct format
-//            return generatedExample; // TODO: add to database
-            return "";
+			HashMap<String, String> newDP = new HashMap<>();
+			newDP.put(lineSourceCodeKey, loc); // TODO: extract code
+			newDP.put(varTypeKey, mostSuitableVar.getType());
+			newDP.put(varNameKey, mostSuitableVar.getVarName());
+			newDP.put(varValueKey, mostSuitableVar.getStringValue());
+			newDP.put(classStructureKey, datapoint.get(classStructureKey));
+			String gt = mostSuitableVar.toJSON().toString();
+			
+			String generatedExample = promptTemplateFiller.getExample(newDP, gt);
+			// TODO: add example to database
+			return generatedExample;
 		} else {
 			return closestExample;
 		}

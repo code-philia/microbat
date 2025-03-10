@@ -291,6 +291,11 @@ public class TraceRecovUtils {
 		return outputArray;
 	}
 
+	public static String getLoc(String classContent, int lineNumber) {
+		String[] lines = classContent.split("\n");
+		return lines[lineNumber - 1].strip();
+	}
+
 	/**
 	 * Iterate over the line, +1 for "{", -1 for "}"
 	 * 
