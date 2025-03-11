@@ -13,6 +13,7 @@ import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.autoprompt.dataset.LossDataCollector;
 import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetReader;
+import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetWriter;
 import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator;
 import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator.InContextLearningCode;
 import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator.InContextLearningVariables;
@@ -26,7 +27,7 @@ import sav.strategies.dto.AppJavaClassPath;
 public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 	private static double[] WEIGHTS = new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 };
-	private static double SIM_SCORE_THRESHOLD = 100;
+	private static double SIM_SCORE_THRESHOLD = 0.9;
 
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
@@ -122,6 +123,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			String varNameKey = DatasetReader.VAR_NAME;
 			String varValueKey = DatasetReader.VAR_VALUE;
 			String classStructureKey = DatasetReader.CLASS_STRUCTURE;
+			String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
 			// generate in-context learning examples
 			InContextEgGenerator egGenerator = new InContextEgGenerator();
@@ -159,9 +161,13 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			newDP.put(varValueKey, mostSuitableVar.getStringValue());
 			newDP.put(classStructureKey, datapoint.get(classStructureKey));
 			String gt = mostSuitableVar.toJSON().toString();
+			newDP.put(groundTruthKey, gt);
 
 			String generatedExample = promptTemplateFiller.getExample(newDP, gt);
-			// TODO: add example to database
+			
+			VarExpansionDatasetWriter datasetWriter = new VarExpansionDatasetWriter();
+			datasetWriter.addToDataset(newDP);
+
 			return generatedExample;
 		} else {
 			return closestExample;
