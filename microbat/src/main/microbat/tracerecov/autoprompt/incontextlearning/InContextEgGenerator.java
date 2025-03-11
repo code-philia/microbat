@@ -89,6 +89,10 @@ public class InContextEgGenerator implements InContextLearning {
 			log.error("Failed to execute generated code", e);
 			return null;
 		}
+		
+		if (trace == null) {
+			return null;
+		}
 
 		InContextLearningVariables variables = postProcessTrace(trace, type, generatedCode);
 		return variables;
@@ -195,7 +199,7 @@ public class InContextEgGenerator implements InContextLearning {
         int lastLoc = Integer.MIN_VALUE;
 
         List<Integer> targetLineTraces = new ArrayList<>();
-
+        
         for (int i = 1; i <= trace.size(); i++) {
             TraceNode node = trace.getTraceNode(i);
             log.info("Trace method: {}, line: {}", node.getMethodSign(), node.getLineNumber());

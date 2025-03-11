@@ -20,6 +20,7 @@ import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator.InC
 import microbat.tracerecov.autoprompt.incontextlearning.InContextLearning.InContextLearningType;
 import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 import microbat.tracerecov.executionsimulator.LLMResponseType;
+import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
 import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.strategies.dto.AppJavaClassPath;
@@ -136,17 +137,24 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 			InContextLearningVariables recordedVariables = egGenerator.getGeneratedExampleVars(appJavaClassPath,
 					generatedCode, type);
+			if (recordedVariables == null) {
+				return "";
+			}
 			List<VarValue> variables = recordedVariables.getOuterReadVariables();
 			variables.addAll(recordedVariables.getOuterWrittenVariables());
 			VarValue mostSuitableVar = null;
+			double classSimScore = 0;
+			VariableSkeleton varSkeleton = varSkeletonParser
+					.parseClassStructure(datapoint.get(DatasetReader.CLASS_STRUCTURE));
+			VariableSkeleton mostSuitableVarSkeleton = null;
 			for (VarValue var : variables) {
-				if (datapoint.get(varTypeKey).equals(var.getType())) {
-					if (mostSuitableVar == null) {
-						mostSuitableVar = var;
-					} else if (datapoint.get(varNameKey).equals(var.getVarName())) {
-						mostSuitableVar = var;
-						break;
-					}
+				VariableSkeleton otherVarSkeleton = VarSkeletonBuilder.getVariableStructure(var.getType(),
+						appJavaClassPath);
+				double newScore = simScoreCalculator.getJaccardCoefficient(varSkeleton, otherVarSkeleton);
+				if (newScore > classSimScore) {
+					mostSuitableVar = var;
+					classSimScore = newScore;
+					mostSuitableVarSkeleton = otherVarSkeleton;
 				}
 			}
 			if (mostSuitableVar == null) {
@@ -159,16 +167,26 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			newDP.put(varTypeKey, mostSuitableVar.getType());
 			newDP.put(varNameKey, mostSuitableVar.getVarName());
 			newDP.put(varValueKey, mostSuitableVar.getStringValue());
-			newDP.put(classStructureKey, datapoint.get(classStructureKey));
+			newDP.put(classStructureKey, mostSuitableVarSkeleton.toString());
 			String gt = mostSuitableVar.toJSON().toString();
 			newDP.put(groundTruthKey, gt);
 
 			String generatedExample = promptTemplateFiller.getExample(newDP, gt);
-			
+
 			VarExpansionDatasetWriter datasetWriter = new VarExpansionDatasetWriter();
 			datasetWriter.addToDataset(newDP);
 
-			return generatedExample;
+			double codeSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(datapoint.get(lineSourceCodeKey),
+					newDP.get(lineSourceCodeKey));
+
+			double simScore = simScoreCalculator
+					.getCombinedScore(new double[] { codeSimScore, 1, classSimScore }, WEIGHTS);
+
+			if (simScore > maxSimScore) {
+				return generatedExample;
+			} else {
+				return closestExample;
+			}
 		} else {
 			return closestExample;
 		}
