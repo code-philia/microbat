@@ -113,7 +113,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 		double maxSimScore = (double) existingExample[1];
 
 		if (maxSimScore <= SIM_SCORE_THRESHOLD) {
-			// generate example
+			// datapoint keys
 			String sourceCodeKey = DatasetReader.METHOD_SOURCE_CODE;
 			String lineSourceCodeKey = DatasetReader.LINE_SOURCE_CODE;
 			String importsKey = DatasetReader.IMPORTS;
@@ -123,6 +123,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			String varValueKey = DatasetReader.VAR_VALUE;
 			String classStructureKey = DatasetReader.CLASS_STRUCTURE;
 
+			// generate in-context learning examples
 			InContextEgGenerator egGenerator = new InContextEgGenerator();
 			egGenerator.setExecutionSimulator(ExecutionSimulatorFactory.getExecutionSimulator());
 			InContextLearningType type = InContextLearningType.VAR_EXPANSION;
@@ -150,8 +151,9 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 				return "";
 			}
 
+			// create new datapoint
 			HashMap<String, String> newDP = new HashMap<>();
-			newDP.put(lineSourceCodeKey, loc); // TODO: extract code
+			newDP.put(lineSourceCodeKey, loc);
 			newDP.put(varTypeKey, mostSuitableVar.getType());
 			newDP.put(varNameKey, mostSuitableVar.getVarName());
 			newDP.put(varValueKey, mostSuitableVar.getStringValue());
