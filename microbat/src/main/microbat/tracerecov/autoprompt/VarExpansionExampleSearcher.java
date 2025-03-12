@@ -28,7 +28,7 @@ import sav.strategies.dto.AppJavaClassPath;
 public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 	private static double[] WEIGHTS = new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 };
-	private static double SIM_SCORE_THRESHOLD = 0.9;
+	private static double SIM_SCORE_THRESHOLD = 0.75;
 
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
@@ -181,7 +181,9 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			double simScore = simScoreCalculator
 					.getCombinedScore(new double[] { codeSimScore, valueSimScore, classSimScore }, WEIGHTS);
 
-			if (simScore > maxSimScore) {
+			String varType = mostSuitableVar.getType();
+			if (simScore > maxSimScore && !varType.contains("StringBuilder") && !varType.contains("StringWriter")
+					&& !varType.contains("StringBuffer")) {
 				VarExpansionDatasetWriter datasetWriter = new VarExpansionDatasetWriter();
 				datasetWriter.addToDataset(newDP);
 				return generatedExample;
