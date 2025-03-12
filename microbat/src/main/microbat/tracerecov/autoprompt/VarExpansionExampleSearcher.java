@@ -132,7 +132,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			InContextLearningType type = InContextLearningType.VAR_EXPANSION;
 			InContextLearningCode generatedCode = egGenerator.getGeneratedExampleCode(datapoint.get(importsKey),
 					datapoint.get(sourceCodeKey), Integer.valueOf(datapoint.get(lineNoKey)), datapoint.get(varNameKey),
-					type, InContextEgGenerator.defaultToString());
+					datapoint.get(varValueKey), type, InContextEgGenerator.defaultToString());
 			String loc = TraceRecovUtils.getLoc(generatedCode.getCode(), generatedCode.getMarkerLine());
 
 			InContextLearningVariables recordedVariables = egGenerator.getGeneratedExampleVars(appJavaClassPath,
@@ -179,8 +179,8 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			double codeSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(datapoint.get(lineSourceCodeKey),
 					newDP.get(lineSourceCodeKey));
 
-			double simScore = simScoreCalculator
-					.getCombinedScore(new double[] { codeSimScore, 1, classSimScore }, WEIGHTS);
+			double simScore = simScoreCalculator.getCombinedScore(new double[] { codeSimScore, 1, classSimScore },
+					WEIGHTS);
 
 			if (simScore > maxSimScore) {
 				return generatedExample;

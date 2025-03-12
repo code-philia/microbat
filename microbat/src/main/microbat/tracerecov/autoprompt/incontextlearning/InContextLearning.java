@@ -13,6 +13,8 @@ public interface InContextLearning {
      * @param imports          imports of the target method
      * @param targetMethod     target method
      * @param targetLineNumber target line number
+     * @param targetVariable   target variable
+     * @param targetValue      target value
      * @param type             type of in context learning
      * @return prompt for alias inference and definition inference
      */
@@ -21,6 +23,7 @@ public interface InContextLearning {
             String targetMethod,
             int targetLineNumber,
             String targetVariable,
+            String targetValue,
             InContextLearningType type,
             ContextVariablesToString contextToString);
 
