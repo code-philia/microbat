@@ -173,16 +173,17 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 			String generatedExample = promptTemplateFiller.getExample(newDP, gt);
 
-			VarExpansionDatasetWriter datasetWriter = new VarExpansionDatasetWriter();
-			datasetWriter.addToDataset(newDP);
-
 			double codeSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(datapoint.get(lineSourceCodeKey),
 					newDP.get(lineSourceCodeKey));
+			double valueSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(datapoint.get(varValueKey),
+					newDP.get(varValueKey));
 
-			double simScore = simScoreCalculator.getCombinedScore(new double[] { codeSimScore, 1, classSimScore },
-					WEIGHTS);
+			double simScore = simScoreCalculator
+					.getCombinedScore(new double[] { codeSimScore, valueSimScore, classSimScore }, WEIGHTS);
 
 			if (simScore > maxSimScore) {
+				VarExpansionDatasetWriter datasetWriter = new VarExpansionDatasetWriter();
+				datasetWriter.addToDataset(newDP);
 				return generatedExample;
 			} else {
 				return closestExample;
