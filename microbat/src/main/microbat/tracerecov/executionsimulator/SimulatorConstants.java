@@ -18,6 +18,7 @@ public class SimulatorConstants {
 	public static final String CLAUDE35 = "claude-3.5";
 	public static final String GEMINI = "gemini-1.5-flash";
 
+//	public static final String GPT_API_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 	public static final String GPT_API_ENDPOINT = "https://api.key77qiqi.cn/v1/chat/completions";
 	public static final String CLAUDE3_API_ENDPOINT = "https://api.claude.ai/v3";
 	public static final String CLAUDE35_API_ENDPOINT = "https://api.claude.ai/v3.5";
