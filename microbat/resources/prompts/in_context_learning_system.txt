@@ -9,17 +9,17 @@ Here is an example:
 
 Original code snippet:
 ```java
-public void processWindowMaximize(List<Integer> windowSizes, int maxLimit) {{
+public void processWindowMaximize(List<Integer> windowSizes, int maxLimit) {
     ArrayList<Integer> actualSizes = new ArrayList<>();
-    for (int i = 0; i < windowSizes.size(); i++) {{
+    for (int i = 0; i < windowSizes.size(); i++) {
         int toAdd = windowSizes.get(i);
-        if (toAdd > maxLimit) {{
+        if (toAdd > maxLimit) {
             toAdd = maxLimit;
-        }}
+        }
         >>> actualSizes.add(toAdd);
-    }}
+    }
     continueProcessing(actualSizes);
-}}
+}
 ```
 Target Variable: `actualSizes`
 Target Value: "[3, 5, null, null, null, null, null, null, null, null]"
@@ -30,13 +30,13 @@ And you should write the simplified version of the code in the following format:
 ```java
 import java.util.ArrayList;
 
-public class SampleTest {{
-    public void test() {{
+public class SampleTest {
+    public void test() {
         ArrayList<Integer> list = new ArrayList<>();
         list.add(3);
         >>> list.add(5);
-    }}
-}}
+    }
+}
 ```
 This is a simplified version of the original code snippet that focuses on the line annotated with ">>> ".
 
