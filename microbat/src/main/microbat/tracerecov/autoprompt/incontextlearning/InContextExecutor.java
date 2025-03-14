@@ -119,16 +119,18 @@ public class InContextExecutor {
         log.info("bin path: {}", binDirName);
     }
 
-    public Trace run() {
+    public Trace run() throws CompilationFailureException {
         try {
             return runInner();
+        } catch (CompilationFailureException e0) {
+        	throw e0;
         } catch (Exception e) {
             log.error("Failed to run gpt.", e);
         }
         return null;
     }
 
-    public Trace runInner() {
+    public Trace runInner() throws CompilationFailureException {
         writeSrcFile();
         initializeAppClassPath();
         compileFile();
@@ -145,7 +147,7 @@ public class InContextExecutor {
         }
     }
 
-    public void compileFile() {
+    public void compileFile() throws CompilationFailureException {
         String javaHome = appClassPath.getJavaHome();
         String javac = javaHome + File.separator + "bin" + File.separator + "javac";
 
@@ -207,7 +209,7 @@ public class InContextExecutor {
         return results.getMainTrace();
     }
 
-    public void runCommand(List<String> cmdline) {
+    public void runCommand(List<String> cmdline) throws CompilationFailureException {
         ProcessBuilder pb = new ProcessBuilder(cmdline);
         ExecutorService executor = Executors.newFixedThreadPool(2);
         int exitCode = -1;
@@ -236,7 +238,7 @@ public class InContextExecutor {
             if (exitCode != 0) {
                 log.error("Command line failed: {}. STDOUT: {}, STDERR: {}",
                         cmdline, readStdout.getOutput(), readStderr.getOutput());
-                throw new RuntimeException("Command line failed: " + cmdline);
+                throw new CompilationFailureException("Command line failed: " + cmdline);
             }
         } catch (IOException | InterruptedException e) {
             String msg = "Failed to compile source file: " + srcFileName;

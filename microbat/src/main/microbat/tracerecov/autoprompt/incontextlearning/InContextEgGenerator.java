@@ -78,7 +78,7 @@ public class InContextEgGenerator implements InContextLearning {
 	}
 
 	public InContextLearningVariables getGeneratedExampleVars(AppJavaClassPath appJavaClassPath,
-			InContextLearningCode generatedCode, InContextLearningType type) {
+			InContextLearningCode generatedCode, InContextLearningType type) throws CompilationFailureException {
 		log.info("Generated code: {}", generatedCode.getCode());
 		log.info("Marker line: {}", generatedCode.getMarkerLine());
 		InContextExecutor executor = new InContextExecutor(generatedCode, appJavaClassPath);
@@ -86,6 +86,8 @@ public class InContextEgGenerator implements InContextLearning {
 		Trace trace = null;
 		try {
 			trace = executor.run();
+		} catch (CompilationFailureException e0) {
+			throw e0;
 		} catch (Exception e) {
 			log.error("Failed to execute generated code", e);
 			return null;

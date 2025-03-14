@@ -14,6 +14,7 @@ import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.autoprompt.dataset.LossDataCollector;
 import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetReader;
 import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetWriter;
+import microbat.tracerecov.autoprompt.incontextlearning.CompilationFailureException;
 import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator;
 import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator.InContextLearningCode;
 import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator.InContextLearningVariables;
@@ -127,19 +128,32 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
 			// generate in-context learning examples
-			InContextEgGenerator egGenerator = new InContextEgGenerator();
-			egGenerator.setExecutionSimulator(ExecutionSimulatorFactory.getExecutionSimulator());
-			InContextLearningType type = InContextLearningType.VAR_EXPANSION;
-			InContextLearningCode generatedCode = egGenerator.getGeneratedExampleCode(datapoint.get(importsKey),
-					datapoint.get(sourceCodeKey), Integer.valueOf(datapoint.get(lineNoKey)), datapoint.get(varNameKey),
-					datapoint.get(varValueKey), type, InContextEgGenerator.defaultToString());
-			String loc = TraceRecovUtils.getLoc(generatedCode.getCode(), generatedCode.getMarkerLine());
+			InContextLearningVariables recordedVariables = null;
+			String loc = null;
+			for (int i = 0; i < 3; i++) {
+				InContextEgGenerator egGenerator = new InContextEgGenerator();
+				egGenerator.setExecutionSimulator(ExecutionSimulatorFactory.getExecutionSimulator());
+				InContextLearningType type = InContextLearningType.VAR_EXPANSION;
+				InContextLearningCode generatedCode = egGenerator.getGeneratedExampleCode(datapoint.get(importsKey),
+						datapoint.get(sourceCodeKey), Integer.valueOf(datapoint.get(lineNoKey)),
+						datapoint.get(varNameKey), datapoint.get(varValueKey), type,
+						InContextEgGenerator.defaultToString());
+				loc = TraceRecovUtils.getLoc(generatedCode.getCode(), generatedCode.getMarkerLine());
 
-			InContextLearningVariables recordedVariables = egGenerator.getGeneratedExampleVars(appJavaClassPath,
-					generatedCode, type);
+				try {
+					recordedVariables = egGenerator.getGeneratedExampleVars(appJavaClassPath, generatedCode, type);
+				} catch (CompilationFailureException e) {
+					e.printStackTrace();
+				}
+				if (recordedVariables != null) {
+					break;
+				}
+			}
+
 			if (recordedVariables == null) {
 				return "";
 			}
+
 			List<VarValue> variables = recordedVariables.getOuterReadVariables();
 			variables.addAll(recordedVariables.getOuterWrittenVariables());
 			VarValue mostSuitableVar = null;
