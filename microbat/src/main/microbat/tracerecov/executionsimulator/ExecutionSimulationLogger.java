@@ -3,15 +3,15 @@ package microbat.tracerecov.executionsimulator;
 import microbat.Activator;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
-import microbat.preference.TraceRecovPreference;
+import microbat.preference.RecovSlicingPreference;
 
 public class ExecutionSimulationLogger {
 
 	public static boolean isLoggingEnabled = Activator.getDefault().getPreferenceStore()
-			.getString(TraceRecovPreference.ENABLE_LOGGING).equals("true");
+			.getString(RecovSlicingPreference.ENABLE_LOGGING).equals("true");
 
 	public static boolean showDebugInfo = Activator.getDefault().getPreferenceStore()
-			.getString(TraceRecovPreference.LOG_DEBUG_INFO).equals("true");
+			.getString(RecovSlicingPreference.LOG_DEBUG_INFO).equals("true");
 
 	public ExecutionSimulationLogger() {
 	}

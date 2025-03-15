@@ -439,9 +439,9 @@
       </page>
       <page
             category="microbat.preference"
-            class="microbat.preference.TraceRecovPreference"
+            class="microbat.preference.RecovSlicingPreference"
             id="microbat.preference.tracerecov"
-            name="Trace Recov Setting">
+            name="Recov Slicing Setting">
       </page>
    </extension>
    <extension

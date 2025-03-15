@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import microbat.Activator;
-import microbat.preference.TraceRecovPreference;
+import microbat.preference.RecovSlicingPreference;
 
 public class VarExpansionDatasetWriter extends DatasetWriter {
 
@@ -18,7 +18,7 @@ public class VarExpansionDatasetWriter extends DatasetWriter {
 		// TODO: move this to preference page
 		String variableExpansionFile = "var_expansion.txt";
 
-		this.path = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.INCONTEXT_FILE_PATH)
+		this.path = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.INCONTEXT_FILE_PATH)
 				+ File.separator + variableExpansionFile;
 
 		this.loadDataset();

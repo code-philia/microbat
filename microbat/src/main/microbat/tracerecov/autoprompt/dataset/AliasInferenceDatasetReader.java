@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import microbat.Activator;
-import microbat.preference.TraceRecovPreference;
+import microbat.preference.RecovSlicingPreference;
 
 public class AliasInferenceDatasetReader extends DatasetReader {
 
@@ -19,7 +19,7 @@ public class AliasInferenceDatasetReader extends DatasetReader {
 		String aliasInferenceFile = "alias_inference.txt";
 
 		this.aliasInferencePath = Activator.getDefault().getPreferenceStore()
-				.getString(TraceRecovPreference.INCONTEXT_FILE_PATH) + File.separator + aliasInferenceFile;
+				.getString(RecovSlicingPreference.INCONTEXT_FILE_PATH) + File.separator + aliasInferenceFile;
 	}
 
 	/**

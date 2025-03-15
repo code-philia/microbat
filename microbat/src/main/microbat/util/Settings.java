@@ -12,7 +12,7 @@ import microbat.handler.CheckingState;
 import microbat.model.UserInterestedVariables;
 import microbat.model.trace.PotentialCorrectPatternList;
 import microbat.preference.MicrobatPreference;
-import microbat.preference.TraceRecovPreference;
+import microbat.preference.RecovSlicingPreference;
 import microbat.views.ImageUI;
 
 public class Settings {
@@ -87,10 +87,10 @@ public class Settings {
 				String runWithDebugModeString = Activator.getDefault().getPreferenceStore().getString(MicrobatPreference.RUN_WITH_DEBUG_MODE);
 				isRunWtihDebugMode = runWithDebugModeString.equals("true");
 				
-				String isEnableGPTInferenceString = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.ENABLE_LLM);
+				String isEnableGPTInferenceString = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.ENABLE_LLM);
 				isEnableGPTInference = isEnableGPTInferenceString.equals("true");
 				
-				String collectGroundTruthString = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.COLLECT_GROUND_TRUTH);
+				String collectGroundTruthString = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.COLLECT_GROUND_TRUTH);
 				collectGroundTruth = collectGroundTruthString.equals("true");
 			}
 			catch(Exception e){
