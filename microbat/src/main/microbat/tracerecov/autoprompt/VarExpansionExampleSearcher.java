@@ -137,7 +137,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 				InContextLearningCode generatedCode = egGenerator.getGeneratedExampleCode(datapoint.get(importsKey),
 						datapoint.get(sourceCodeKey), Integer.valueOf(datapoint.get(lineNoKey)),
 						datapoint.get(varNameKey), datapoint.get(varValueKey), type,
-						InContextEgGenerator.defaultToString());
+						InContextEgGenerator.defaultToString(), 2);
 				loc = TraceRecovUtils.getLoc(generatedCode.getCode(), generatedCode.getMarkerLine());
 
 				try {
