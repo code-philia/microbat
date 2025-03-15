@@ -33,12 +33,9 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	public static final String API_KEY = "api_key";
 	public static final String MODEL_TYPE = "model_type";
 	public static final String METHOD_LAYER = "method_layer";
-	public static final String COLLECT_PROMPT = "collect_prompt";
 	public static final String ENABLE_LOGGING = "enable_logging";
 	public static final String LOG_DEBUG_INFO = "log_debug_info";
-	public static final String VAR_EXPAND_FILE_PATH = "var_expand_file_path";
-	public static final String ALIAS_FILE_PATH = "alias_file_path";
-	public static final String DEF_FILE_PATH = "definition_file_path";
+	public static final String INCONTEXT_FILE_PATH = "incontext_file_path";
 	public static final String COLLECT_GROUND_TRUTH = "collect_ground_truth";
 	public static final String PROMPT_TYPE = "prompt_type";
 
@@ -49,14 +46,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private String apiKey;
 	private LLMModel llmModelType = LLMModel.GPT4O; // default model
 	private String methodLayer;
-	private boolean isCollectingPrompt;
 	private boolean isEnableLogging;
 	private boolean logDebugInfo;
-	private String varExpansionFilePath; // variable expansion
-	private String aliasFilePath; // alias inference
-	private String definitionFilePath; // definition inference
+	private String incontextLearningDatasetPath;
 	private boolean collectGroundTruth;
-	private PromptType promptType = PromptType.VAR_EXPANSION; // default prompt type for incontext learning
 
 	/* constants after update */
 	private Button isEnableTraceRecovButton;
@@ -65,14 +58,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 	private Combo modelTypeCombo;
 	private Text apiKeyText;
 	private Text methodLayerText;
-	private Button isCollectingPromptButton;
 	private Button isEnableLoggingButton;
 	private Button logDebugInfoButton;
 	private Button collectGroundTruthButton;
-	private Text varExpansionFilePathText;
-	private Text aliasFilePathText;
-	private Text definitionFilePathText;
-	private Combo promptTypeCombo;
+	private Text incontextLearningDatasetText;
 
 	public TraceRecovPreference() {
 	}
@@ -119,14 +108,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 			}
 		}
 
-		this.methodLayer = Activator.getDefault().getPreferenceStore().getString(METHOD_LAYER);
-
-		String isCollectingPromptString = Activator.getDefault().getPreferenceStore().getString(COLLECT_PROMPT);
-		if (isCollectingPromptString != null && isCollectingPromptString.equals("true")) {
-			this.isCollectingPrompt = true;
-		} else {
-			this.isCollectingPrompt = false;
-		}
+//		this.methodLayer = Activator.getDefault().getPreferenceStore().getString(METHOD_LAYER);
 
 		String isEnableLoggingString = Activator.getDefault().getPreferenceStore().getString(ENABLE_LOGGING);
 		if (isEnableLoggingString != null && isEnableLoggingString.equals("true")) {
@@ -149,18 +131,8 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 			this.collectGroundTruth = false;
 		}
 
-		this.varExpansionFilePath = Activator.getDefault().getPreferenceStore().getString(VAR_EXPAND_FILE_PATH);
-		this.aliasFilePath = Activator.getDefault().getPreferenceStore().getString(ALIAS_FILE_PATH);
-		this.definitionFilePath = Activator.getDefault().getPreferenceStore().getString(DEF_FILE_PATH);
+		this.incontextLearningDatasetPath = Activator.getDefault().getPreferenceStore().getString(INCONTEXT_FILE_PATH);
 
-		String promptType = Activator.getDefault().getPreferenceStore().getString(PROMPT_TYPE);
-		if (promptType != null && !promptType.equals("")) {
-			try {
-				this.promptType = PromptType.valueOf(promptType);
-			} catch (IllegalArgumentException e) {
-				this.promptType = PromptType.VAR_EXPANSION; // default prompt type if unknown value
-			}
-		}
 	}
 
 	@Override
@@ -176,10 +148,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		// LLM Model Settings
 		createModelConfigGroup(composite);
 
-		// RQ1: Shorten Trace Settings
-		createShortenTraceSettingGroup(composite);
+//		// Shorten Trace Settings
+//		createShortenTraceSettingGroup(composite);
 
-		// RQ3: Logging Settings
+		// Logging Settings
 		createLogSettingGroup(composite);
 
 		performOk();
@@ -216,6 +188,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 
 		String apiKeyLabel = "API Key:";
 		this.apiKeyText = createText(modelSelectionGroup, apiKeyLabel, this.apiKey);
+		
+		String varExpansionPathLabel = "Path for folder containing In-context Learning dataset:";
+		this.incontextLearningDatasetText = createText(modelSelectionGroup, varExpansionPathLabel,
+				this.incontextLearningDatasetPath);
 	}
 
 	private void createShortenTraceSettingGroup(Composite parent) {
@@ -230,27 +206,11 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		String title = "Log Settings";
 		Group logSettingGroup = initGroup(parent, title);
 
-		String collectPromptLabel = "RQ3: Collect and Label Prompts";
-		this.isCollectingPromptButton = createCheckButton(logSettingGroup, collectPromptLabel, this.isCollectingPrompt);
-
 		String enableLogLabel = "Enable Logging";
 		this.isEnableLoggingButton = createCheckButton(logSettingGroup, enableLogLabel, this.isEnableLogging);
 
 		String logDebugInfoLabel = "Log Debug Info";
 		this.logDebugInfoButton = createCheckButton(logSettingGroup, logDebugInfoLabel, this.logDebugInfo);
-
-		String promptSelectionLabel = "Type of Prompt (for auto incontext learning experiment, independent from TraceRecov):";
-		this.promptTypeCombo = createDropDown(logSettingGroup, promptSelectionLabel, PromptType.values(),
-				this.promptType.ordinal());
-
-		String varExpansionPathLabel = "Path for Variable Expansion File:";
-		this.varExpansionFilePathText = createText(logSettingGroup, varExpansionPathLabel, this.varExpansionFilePath);
-
-		String aliasFilePathLabel = "Path for Alias Inference File:";
-		this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel, this.aliasFilePath);
-		
-		String definitionFilePathLabel = "Path for Definition Inference File:";
-		this.definitionFilePathText = createText(logSettingGroup, definitionFilePathLabel, this.definitionFilePath);
 	}
 
 	private Group initGroup(final Composite parent, String title) {
@@ -318,14 +278,10 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(COLLECT_GROUND_TRUTH, String.valueOf(this.collectGroundTruthButton.getSelection()));
 		preferences.put(API_KEY, this.apiKeyText.getText());
 		preferences.put(MODEL_TYPE, this.modelTypeCombo.getText());
-		preferences.put(METHOD_LAYER, this.methodLayerText.getText());
-		preferences.put(COLLECT_PROMPT, String.valueOf(this.isCollectingPromptButton.getSelection()));
+//		preferences.put(METHOD_LAYER, this.methodLayerText.getText());
 		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
-		preferences.put(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
-		preferences.put(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
-		preferences.put(DEF_FILE_PATH, this.definitionFilePathText.getText());
-		preferences.put(PROMPT_TYPE, this.promptTypeCombo.getText());
+		preferences.put(INCONTEXT_FILE_PATH, this.incontextLearningDatasetText.getText());
 
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_TRACERECOV,
 				String.valueOf(this.isEnableTraceRecovButton.getSelection()));
@@ -337,17 +293,13 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 				String.valueOf(this.collectGroundTruthButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(API_KEY, this.apiKeyText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(MODEL_TYPE, this.modelTypeCombo.getText());
-		Activator.getDefault().getPreferenceStore().putValue(METHOD_LAYER, this.methodLayerText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(COLLECT_PROMPT,
-				String.valueOf(this.isCollectingPromptButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(METHOD_LAYER, this.methodLayerText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LOGGING,
 				String.valueOf(this.isEnableLoggingButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(LOG_DEBUG_INFO,
 				String.valueOf(this.logDebugInfoButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(DEF_FILE_PATH, this.definitionFilePathText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(PROMPT_TYPE, this.promptTypeCombo.getText());
+		Activator.getDefault().getPreferenceStore().putValue(INCONTEXT_FILE_PATH,
+				this.incontextLearningDatasetText.getText());
 
 		Settings.isEnableGPTInference = this.isEnableLLMButton.getSelection();
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();

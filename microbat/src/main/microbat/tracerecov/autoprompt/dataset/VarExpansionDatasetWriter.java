@@ -18,7 +18,7 @@ public class VarExpansionDatasetWriter extends DatasetWriter {
 		// TODO: move this to preference page
 		String variableExpansionFile = "var_expansion.txt";
 
-		this.path = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.VAR_EXPAND_FILE_PATH)
+		this.path = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.INCONTEXT_FILE_PATH)
 				+ File.separator + variableExpansionFile;
 
 		this.loadDataset();

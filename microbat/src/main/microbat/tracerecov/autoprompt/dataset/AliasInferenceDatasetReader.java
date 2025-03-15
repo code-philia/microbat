@@ -19,7 +19,7 @@ public class AliasInferenceDatasetReader extends DatasetReader {
 		String aliasInferenceFile = "alias_inference.txt";
 
 		this.aliasInferencePath = Activator.getDefault().getPreferenceStore()
-				.getString(TraceRecovPreference.ALIAS_FILE_PATH) + File.separator + aliasInferenceFile;
+				.getString(TraceRecovPreference.INCONTEXT_FILE_PATH) + File.separator + aliasInferenceFile;
 	}
 
 	/**

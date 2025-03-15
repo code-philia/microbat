@@ -19,7 +19,7 @@ public class DefinitionInferenceDatasetReader extends DatasetReader {
 		String definitionInferenceFile = "definition_inference.txt";
 
 		this.definitionInferencePath = Activator.getDefault().getPreferenceStore()
-				.getString(TraceRecovPreference.DEF_FILE_PATH) + File.separator + definitionInferenceFile;
+				.getString(TraceRecovPreference.INCONTEXT_FILE_PATH) + File.separator + definitionInferenceFile;
 	}
 
 	/**
