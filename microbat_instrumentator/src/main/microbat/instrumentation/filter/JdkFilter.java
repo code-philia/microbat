@@ -44,7 +44,7 @@ public class JdkFilter {
 			"java.io.",
 			"java.net.",
 			"java.security.",
-			// "java.",
+			"java.",
 			"junit.",
 			"org.testng.",
 			"java.util.regex.",
