@@ -51,7 +51,7 @@ public abstract class ExecutionSimulator {
 
 	/* concrete methods */
 	public String sendRequest(String backgroundContent, String questionContent, LLMResponseType responseType)
-			throws IOException {
+			throws IOException, RuntimeException {
 		String combinedPrompt = backgroundContent + questionContent;
 
 		// Check if prompt exceeds max token
@@ -91,7 +91,7 @@ public abstract class ExecutionSimulator {
 
 	// Method to send the prompt in segments
 	private String sendInSegments(String backgroundContent, String questionContent, LLMResponseType responseType)
-			throws IOException {
+			throws IOException, RuntimeException {
 		List<String> promptSegments = splitPrompt(backgroundContent + questionContent);
 
 		StringBuilder combinedResponse = new StringBuilder();
@@ -241,7 +241,7 @@ public abstract class ExecutionSimulator {
 				VariableExpansionUtils.processResponse(selectedVar, response);
 				return response;
 				// break;
-			} catch (org.json.JSONException | java.lang.StringIndexOutOfBoundsException e) {
+			} catch (RuntimeException | IOException e) {
 				this.logger.printError(e.getMessage());
 			}
 		}
