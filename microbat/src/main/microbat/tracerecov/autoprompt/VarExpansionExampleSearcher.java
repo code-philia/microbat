@@ -87,12 +87,18 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			// variable value
 			String exampleVarValue = example.get(varValueKey);
 
+			boolean[] activationStatus = new boolean[3];
+			activationStatus[0] = simScoreCalculator.isBelowLengthThreshold(sourceCode, exampleSourceCode);
+			activationStatus[1] = simScoreCalculator.isBelowLengthThreshold(varValue, exampleVarValue);
+			activationStatus[2] = true;
+
 			double codeSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(sourceCode, exampleSourceCode);
 			double varValueSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(varValue, exampleVarValue);
 			double classSimScore = simScoreCalculator.getJaccardCoefficient(varSkeleton, exampleVarSkeleton);
 
+			double[] weights = simScoreCalculator.normalize(WEIGHTS, activationStatus);
 			double simScore = simScoreCalculator
-					.getCombinedScore(new double[] { codeSimScore, varValueSimScore, classSimScore }, WEIGHTS);
+					.getCombinedScore(new double[] { codeSimScore, varValueSimScore, classSimScore }, weights);
 
 			if (simScore > maxSimScore) {
 				maxSimScore = simScore;
@@ -190,13 +196,21 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 			String generatedExample = promptTemplateFiller.getExample(newDP, gt);
 
+			boolean[] activationStatus = new boolean[3];
+			activationStatus[0] = simScoreCalculator.isBelowLengthThreshold(datapoint.get(lineSourceCodeKey),
+					newDP.get(lineSourceCodeKey));
+			activationStatus[1] = simScoreCalculator.isBelowLengthThreshold(datapoint.get(varValueKey),
+					newDP.get(varValueKey));
+			activationStatus[2] = true;
+
 			double codeSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(datapoint.get(lineSourceCodeKey),
 					newDP.get(lineSourceCodeKey));
 			double valueSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(datapoint.get(varValueKey),
 					newDP.get(varValueKey));
 
+			double[] weights = simScoreCalculator.normalize(WEIGHTS, activationStatus);
 			double simScore = simScoreCalculator
-					.getCombinedScore(new double[] { codeSimScore, valueSimScore, classSimScore }, WEIGHTS);
+					.getCombinedScore(new double[] { codeSimScore, valueSimScore, classSimScore }, weights);
 
 			String varType = mostSuitableVar.getType();
 			if (simScore > maxSimScore && !varType.contains("StringBuilder") && !varType.contains("StringWriter")
