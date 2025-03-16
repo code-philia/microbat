@@ -261,6 +261,7 @@ public class TraceRecovUtils {
 		try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
 			int count = -1;
 			int currentLine = 0;
+			boolean isInMethod = false;
 			while ((line = reader.readLine()) != null) {
 				currentLine++;
 				if (currentLine < methodStartLine) {
@@ -268,7 +269,10 @@ public class TraceRecovUtils {
 				}
 				String text = line.strip();
 				int bracketsInLine = countBrackets(text);
-				if (count == -1) {
+				if (bracketsInLine > 0) {
+					isInMethod = true;
+				}
+				if (count == -1 || !isInMethod) {
 					count = bracketsInLine;
 					methodContent.append(line);
 					methodContent.append("\n");
