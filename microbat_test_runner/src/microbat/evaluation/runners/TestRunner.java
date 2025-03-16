@@ -36,6 +36,7 @@ public class TestRunner {
             List<Failure> failures = result.getFailures();
             for (Failure failure : failures) {
                 Throwable exception = failure.getException();
+                exception.printStackTrace();
                 this.failureMessage = exception.getMessage();
             }
 

@@ -10,47 +10,71 @@ import microbat.tracerecov.varskeleton.VariableSkeleton;
  */
 public class SimilarityScoreCalculator {
 
+	private static double LCS_LEN_THRESHOLD = 500;
+
 	public SimilarityScoreCalculator() {
 	}
 
 	public double getJaccardCoefficient(VariableSkeleton var1, VariableSkeleton var2) {
 		return 1 - var1.getDifferenceScore(var2);
 	}
-	
+
+	public boolean isBelowLengthThreshold(String str1, String str2) {
+		return str1.length() < LCS_LEN_THRESHOLD && str2.length() < LCS_LEN_THRESHOLD;
+	}
+
 	public double getSimilarityRatioBasedOnLCS(String str1, String str2) {
+		if (!isBelowLengthThreshold(str1, str2)) {
+			return 0;
+		}
 		int lcs = getLongestCommonSequenceSize(str1, str2);
 		return (double) (2 * lcs) / (double) (str1.length() + str2.length());
 	}
 
 	private int getLongestCommonSequenceSize(String str1, String str2) {
+		if (str1.length() < str2.length()) {
+			String temp = str1;
+			str1 = str2;
+			str2 = temp;
+		}
+
 		int m = str1.length();
 		int n = str2.length();
+		int[] dp = new int[n + 1];
 
-		if (m == 0 || n == 0) {
-			return 0;
-		}
-
-		int[][] lens = new int[m][n];
-
-		// initialize table
-		for (int i = 0; i < m; i++) {
-			lens[i][0] = str1.charAt(i) == str2.charAt(0) ? 1 : 0;
-		}
-		for (int j = 0; j < n; j++) {
-			lens[0][j] = str1.charAt(0) == str2.charAt(j) ? 1 : 0;
-		}
-
-		for (int i = 1; i < m; i++) {
-			for (int j = 1; j < n; j++) {
-				if (str1.charAt(i) == str2.charAt(j)) {
-					lens[i][j] = lens[i - 1][j - 1] + 1;
+		for (int i = 1; i <= m; i++) {
+			int prev = 0;
+			for (int j = 1; j <= n; j++) {
+				int temp = dp[j];
+				if (str1.charAt(i - 1) == str2.charAt(j - 1)) {
+					dp[j] = prev + 1;
 				} else {
-					lens[i][j] = Math.max(lens[i - 1][j - 1], Math.max(lens[i - 1][j], lens[i][j - 1]));
+					dp[j] = Math.max(dp[j], dp[j - 1]);
 				}
+				prev = temp;
 			}
 		}
+		return dp[n];
+	}
 
-		return lens[m - 1][n - 1];
+	public double[] normalize(double[] initialWeights, boolean[] activationStatus) {
+		int size = initialWeights.length;
+		if (activationStatus.length != size) {
+			throw new IllegalArgumentException("arrays have different sizes");
+		}
+
+		double[] updatedWeights = new double[3];
+		double total = 0;
+
+		for (int i = 0; i < size; i++) {
+			total += initialWeights[i] * (activationStatus[i] ? 1 : 0);
+		}
+
+		for (int i = 0; i < size; i++) {
+			updatedWeights[i] = activationStatus[i] ? (double) (initialWeights[i] / total) : (double) 0;
+		}
+
+		return updatedWeights;
 	}
 
 	public double getCombinedScore(double[] entries, double[] weights) {

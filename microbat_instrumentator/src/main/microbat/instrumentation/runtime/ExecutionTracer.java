@@ -1559,6 +1559,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			int methodStartLine, int methodEndLine, String paramNamesCode, String paramTypeSignsCode, Object[] params,
 			int methodLayer) {
 		try {
+			if(className.equals("SampleTest")) {
+				System.out.println("+-+-+-+-+-+-+-+-+ SampleTest _getTracer" + methodSig + " " + state.toString());
+			}
 			if (methodLayer <= 0) {
 				return EmptyExecutionTracer.getInstance();
 			}
@@ -1566,13 +1569,20 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				state = TracingState.RECORDING;
 				rtStore.setMainThreadId(Thread.currentThread().getId());
 			}
+			if(className.equals("SampleTest")) {
+				System.out.println("+-+-+-+-+-+-+-+-+ SampleTest _getTracer" + methodSig + " " + state.toString());
+			}
 			if (state != TracingState.RECORDING) {
 				return EmptyExecutionTracer.getInstance();
+			}
+			if(className.equals("SampleTest")) {
+				System.out.println("+-+-+-+-+-+-+-+-+ SampleTest _getTracer is recording");
 			}
 			long threadId = Thread.currentThread().getId();
 			if (lockedThreads.isUntracking(threadId)) {
 				return EmptyExecutionTracer.getInstance();
 			}
+			System.out.println("+-+-+-+-+-+-+-+-+ SampleTest _getTracer tracking");
 			lockedThreads.untrack(threadId);
 			// FIXME -mutithread LINYUN [1]
 			/*

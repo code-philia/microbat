@@ -16,6 +16,9 @@ import microbat.instrumentation.AgentLogger;
 import sav.common.core.utils.CollectionUtils;
 
 public class HeuristicIgnoringFieldRule {
+
+	// wenjie: Add a field to indicate whether to track all fields
+	public static boolean isTrackingAll = false;
 	
 	public static final String ENUM = "enum";
 	public static final String SERIALIZABLE = "java.io.Serializable";
@@ -210,6 +213,11 @@ public class HeuristicIgnoringFieldRule {
 			}
 			else{
 				isNeed = true;				
+			}
+
+			// if we need to track all jdk methods, then we need to parse all fields
+			if(isTrackingAll) {
+				isNeed = true;
 			}
 			
 			parsingTypeMap.put(typeName, isNeed);

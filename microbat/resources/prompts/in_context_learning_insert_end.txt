@@ -2,13 +2,29 @@
     @org.junit.Test
     public void testWrapper() {
         String msg = "success";
-        $testStarted("SampleTest", "testWrapper");
+        System.out.println("~~!!~~!!~~!!~~!!~~!!~~!! BEFORE TEST BEFORE");
+        System.out.println(getClass().getClassLoader());
+        ClassLoader loader = getClass().getClassLoader();
+        // find class with name "microbat.instrumentation.Agent"
+        try {
+            Class<?> agentClass = loader.loadClass("microbat.instrumentation.Agent");
+            System.out.println("~~!!~~!!~~!!~~!!~~!!~~!!" + agentClass + " " + agentClass.getClassLoader());
+            $testStarted("SampleTest", "testWrapper");
+        } catch (Throwable t) {
+            t.printStackTrace();
+            System.out.println("~~!!~~!!~~!!~~!!~~!!~~!! EXCEPTION TEST START");
+            return;
+        }
+        System.out.println("~~!!~~!!~~!!~~!!~~!!~~!! BEFORE TEST");
         try {
             test();
-        } catch (Exception t) {
+        } catch (Throwable t) {
+            t.printStackTrace();
             msg = "error: " + t.getMessage();
+            System.out.println("~~!!~~!!~~!!~~!!~~!!~~!! EXCEPTION");
         } finally {
             $testFinished("SampleTest", "testWrapper");
+            System.out.println("~~!!~~!!~~!!~~!!~~!!~~!! AFTER TEST");
             $exitProgram("");
         }
     }

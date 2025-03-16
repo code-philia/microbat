@@ -1,5 +1,6 @@
 package microbat.instrumentation.instr;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
@@ -67,6 +68,7 @@ public class TestRunnerTranformer extends AbstractTransformer implements ClassFi
 		if (should_instruct) {
 			try {
 				byte[] data = instrument(classFName, classfileBuffer);
+				System.out.println("########################################## Test RUNNER INSTRUMENTED: " + classFName);
 				return data;
 			} catch (Throwable e) {
 				e.printStackTrace();
@@ -84,6 +86,8 @@ public class TestRunnerTranformer extends AbstractTransformer implements ClassFi
 		for (Method method : jc.getMethods()) {
 			int agentMethodIdx = -1;
 			int paramSize = -1;
+			System.out.println("~~~~~~~~~~~~~~~~~~~~~~ Agent Class Name: " + Agent.class.getName().replace(".", "/"));
+			System.out.println("~~~~~~~~~~~~~~~~~~~~~~ Agent Class Name Origin: " + Agent.class.getName());
 			if ("$exitProgram".equals(method.getName())) {
 				agentMethodIdx = constPool.addMethodref(Agent.class.getName().replace(".", "/"), "_exitProgram",
 						"(Ljava/lang/String;)V");
@@ -112,7 +116,16 @@ public class TestRunnerTranformer extends AbstractTransformer implements ClassFi
 		}
 		newJC = classGen.getJavaClass();
 		newJC.setConstantPool(constPool.getFinalConstantPool());
-		return newJC.getBytes();
+		// return newJC.getBytes();
+		byte[] data = newJC.getBytes();
+		long timestamp = System.currentTimeMillis();
+		try(FileOutputStream fos = new FileOutputStream("D:\\TestRunner-" + timestamp + ".class")) {
+			fos.write(data);
+		} catch (Exception e) {
+			System.out.println("Error writing file: " + e.getMessage());
+			e.printStackTrace();
+		}
+		return data;
 	}
 	
 	private void instrumentDelegateMethod(Method method, String classFName, ConstantPoolGen constPool,

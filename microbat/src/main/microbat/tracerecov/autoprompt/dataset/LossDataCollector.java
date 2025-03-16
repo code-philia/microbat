@@ -5,7 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import microbat.Activator;
-import microbat.preference.TraceRecovPreference;
+import microbat.preference.RecovSlicingPreference;
 
 /**
  * This class is used to save loss data to CSV files.
@@ -16,7 +16,7 @@ public class LossDataCollector {
 	public LossDataCollector() {
 		// TODO: move this to preference page
 		String resultFile = "var_expansion_result.txt";
-		this.resultPath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.VAR_EXPAND_FILE_PATH)
+		this.resultPath = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.INCONTEXT_FILE_PATH)
 				+ File.separator + resultFile;
 	}
 

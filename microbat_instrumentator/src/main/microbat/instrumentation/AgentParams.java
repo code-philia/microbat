@@ -8,6 +8,7 @@ import java.util.Set;
 
 import microbat.instrumentation.filter.CodeRangeEntry;
 import microbat.instrumentation.instr.instruction.info.EntryPoint;
+import microbat.instrumentation.runtime.HeuristicIgnoringFieldRule;
 import microbat.instrumentation.utils.FileUtils;
 import microbat.sql.TraceRecorder;
 import sav.common.core.utils.CollectionUtils;
@@ -55,6 +56,9 @@ public class AgentParams extends CommonParams {
 	public static final String OPT_CONDITION_VAR_TYPE = "variable_type";
 	public static final String OPT_CONDITION_VAR_VALUE = "variable_value";
 	public static final String OPT_CONDITION_CLASS_STRUCTURE = "class_structure";
+
+	// whether to track all fields
+	public static final String OPT_TRACKING_ALL_FIELDS = "tracking_all_fields";
 	
 	private boolean precheck;
 	private EntryPoint entryPoint;
@@ -78,6 +82,8 @@ public class AgentParams extends CommonParams {
 	
 	private int methodLayer;
 	private RuntimeCondition condition;
+
+	private boolean trackingAllFields;
 	
 	public AgentParams(CommandLine cmd) {
 		super(cmd);
@@ -115,6 +121,11 @@ public class AgentParams extends CommonParams {
 		codeRanges = CodeRangeEntry.parse(cmd.getStringList(OPT_CODE_RANGE));
 		recorderName = cmd.getString(OPT_TRACE_RECORDER);
 		runId = cmd.getString(OPT_RUN_ID);
+
+		trackingAllFields = cmd.getBoolean(OPT_TRACKING_ALL_FIELDS, false);
+		if(trackingAllFields) {
+			HeuristicIgnoringFieldRule.isTrackingAll = true;
+		}
 	}
 
 	public static AgentParams initFrom(CommandLine cmd) {

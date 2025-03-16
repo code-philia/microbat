@@ -2,19 +2,26 @@ package microbat.tracerecov.autoprompt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Function;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import microbat.model.value.VarValue;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.autoprompt.dataset.LossDataCollector;
 import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetReader;
+import microbat.tracerecov.autoprompt.dataset.VarExpansionDatasetWriter;
+import microbat.tracerecov.autoprompt.incontextlearning.CompilationFailureException;
 import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator;
+import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator.InContextLearningCode;
+import microbat.tracerecov.autoprompt.incontextlearning.InContextEgGenerator.InContextLearningVariables;
 import microbat.tracerecov.autoprompt.incontextlearning.InContextLearning.InContextLearningType;
 import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 import microbat.tracerecov.executionsimulator.LLMResponseType;
+import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
 import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.strategies.dto.AppJavaClassPath;
@@ -22,7 +29,7 @@ import sav.strategies.dto.AppJavaClassPath;
 public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 	private static double[] WEIGHTS = new double[] { 1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0 };
-	private static double SIM_SCORE_THRESHOLD = 100;
+	private static double SIM_SCORE_THRESHOLD = 0.75;
 
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
@@ -80,12 +87,18 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			// variable value
 			String exampleVarValue = example.get(varValueKey);
 
+			boolean[] activationStatus = new boolean[3];
+			activationStatus[0] = simScoreCalculator.isBelowLengthThreshold(sourceCode, exampleSourceCode);
+			activationStatus[1] = simScoreCalculator.isBelowLengthThreshold(varValue, exampleVarValue);
+			activationStatus[2] = true;
+
 			double codeSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(sourceCode, exampleSourceCode);
 			double varValueSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(varValue, exampleVarValue);
 			double classSimScore = simScoreCalculator.getJaccardCoefficient(varSkeleton, exampleVarSkeleton);
 
+			double[] weights = simScoreCalculator.normalize(WEIGHTS, activationStatus);
 			double simScore = simScoreCalculator
-					.getCombinedScore(new double[] { codeSimScore, varValueSimScore, classSimScore }, WEIGHTS);
+					.getCombinedScore(new double[] { codeSimScore, varValueSimScore, classSimScore }, weights);
 
 			if (simScore > maxSimScore) {
 				maxSimScore = simScore;
@@ -109,22 +122,110 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 		double maxSimScore = (double) existingExample[1];
 
 		if (maxSimScore <= SIM_SCORE_THRESHOLD) {
-			// generate example
+			// datapoint keys
 			String sourceCodeKey = DatasetReader.METHOD_SOURCE_CODE;
+			String lineSourceCodeKey = DatasetReader.LINE_SOURCE_CODE;
 			String importsKey = DatasetReader.IMPORTS;
 			String lineNoKey = DatasetReader.LINE_NO;
-			
-            InContextEgGenerator egGenerator = new InContextEgGenerator();
-            egGenerator.setExecutionSimulator(ExecutionSimulatorFactory.getExecutionSimulator());
-            String generatedExample = egGenerator.executeInContextLearning(
-            		appJavaClassPath,
-                    datapoint.get(importsKey),
-                    datapoint.get(sourceCodeKey),
-                    Integer.valueOf(datapoint.get(lineNoKey)),
-                    InContextLearningType.VAR_EXPANSION,
-                    InContextEgGenerator.defaultToString()); // TODO: change to correct format
-//            return generatedExample; // TODO: add to database
-            return "";
+			String varTypeKey = DatasetReader.VAR_TYPE;
+			String varNameKey = DatasetReader.VAR_NAME;
+			String varValueKey = DatasetReader.VAR_VALUE;
+			String classStructureKey = DatasetReader.CLASS_STRUCTURE;
+			String groundTruthKey = DatasetReader.GROUND_TRUTH;
+
+			// generate in-context learning examples
+			InContextLearningVariables recordedVariables = null;
+			String loc = null;
+			for (int i = 0; i < 2; i++) {
+				InContextEgGenerator egGenerator = new InContextEgGenerator();
+				egGenerator.setExecutionSimulator(ExecutionSimulatorFactory.getExecutionSimulator());
+				InContextLearningType type = InContextLearningType.VAR_EXPANSION;
+				InContextLearningCode generatedCode = null;
+				try {
+					generatedCode = egGenerator.getGeneratedExampleCode(datapoint.get(importsKey),
+							datapoint.get(sourceCodeKey), Integer.valueOf(datapoint.get(lineNoKey)),
+							datapoint.get(varNameKey), datapoint.get(varValueKey), type,
+							InContextEgGenerator.defaultToString(), 2);
+				} catch (IllegalStateException | IllegalArgumentException e) {
+					e.printStackTrace();
+				}
+				if (generatedCode == null) {
+					continue;
+				}
+				loc = TraceRecovUtils.getLoc(generatedCode.getCode(), generatedCode.getMarkerLine());
+
+				try {
+					recordedVariables = egGenerator.getGeneratedExampleVars(appJavaClassPath, generatedCode, type);
+				} catch (CompilationFailureException | IllegalStateException e) {
+					e.printStackTrace();
+				}
+				if (recordedVariables != null) {
+					break;
+				}
+			}
+
+			if (recordedVariables == null) {
+				return closestExample;
+			}
+
+			List<VarValue> variables = recordedVariables.getOuterReadVariables();
+			variables.addAll(recordedVariables.getOuterWrittenVariables());
+			VarValue mostSuitableVar = null;
+			double classSimScore = 0;
+			VariableSkeleton varSkeleton = varSkeletonParser
+					.parseClassStructure(datapoint.get(DatasetReader.CLASS_STRUCTURE));
+			VariableSkeleton mostSuitableVarSkeleton = null;
+			for (VarValue var : variables) {
+				VariableSkeleton otherVarSkeleton = VarSkeletonBuilder.getVariableStructure(var.getType(),
+						appJavaClassPath);
+				double newScore = simScoreCalculator.getJaccardCoefficient(varSkeleton, otherVarSkeleton);
+				if (newScore > classSimScore) {
+					mostSuitableVar = var;
+					classSimScore = newScore;
+					mostSuitableVarSkeleton = otherVarSkeleton;
+				}
+			}
+			if (mostSuitableVar == null) {
+				return closestExample;
+			}
+
+			// create new datapoint
+			HashMap<String, String> newDP = new HashMap<>();
+			newDP.put(lineSourceCodeKey, loc);
+			newDP.put(varTypeKey, mostSuitableVar.getType());
+			newDP.put(varNameKey, mostSuitableVar.getVarName());
+			newDP.put(varValueKey, mostSuitableVar.getStringValue());
+			newDP.put(classStructureKey, mostSuitableVarSkeleton.toString());
+			String gt = mostSuitableVar.toJSON().toString();
+			newDP.put(groundTruthKey, gt);
+
+			String generatedExample = promptTemplateFiller.getExample(newDP, gt);
+
+			boolean[] activationStatus = new boolean[3];
+			activationStatus[0] = simScoreCalculator.isBelowLengthThreshold(datapoint.get(lineSourceCodeKey),
+					newDP.get(lineSourceCodeKey));
+			activationStatus[1] = simScoreCalculator.isBelowLengthThreshold(datapoint.get(varValueKey),
+					newDP.get(varValueKey));
+			activationStatus[2] = true;
+
+			double codeSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(datapoint.get(lineSourceCodeKey),
+					newDP.get(lineSourceCodeKey));
+			double valueSimScore = simScoreCalculator.getSimilarityRatioBasedOnLCS(datapoint.get(varValueKey),
+					newDP.get(varValueKey));
+
+			double[] weights = simScoreCalculator.normalize(WEIGHTS, activationStatus);
+			double simScore = simScoreCalculator
+					.getCombinedScore(new double[] { codeSimScore, valueSimScore, classSimScore }, weights);
+
+			String varType = mostSuitableVar.getType();
+			if (simScore > maxSimScore && !varType.contains("StringBuilder") && !varType.contains("StringWriter")
+					&& !varType.contains("StringBuffer")) {
+				VarExpansionDatasetWriter datasetWriter = new VarExpansionDatasetWriter();
+				datasetWriter.addToDataset(newDP);
+				return generatedExample;
+			} else {
+				return closestExample;
+			}
 		} else {
 			return closestExample;
 		}

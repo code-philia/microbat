@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import microbat.Activator;
-import microbat.preference.TraceRecovPreference;
+import microbat.preference.RecovSlicingPreference;
 
 public class VarExpansionDatasetReader extends DatasetReader {
 
@@ -19,7 +19,7 @@ public class VarExpansionDatasetReader extends DatasetReader {
 		String variableExpansionFile = "var_expansion.txt";
 
 		this.variableExpansionPath = Activator.getDefault().getPreferenceStore()
-				.getString(TraceRecovPreference.VAR_EXPAND_FILE_PATH) + File.separator + variableExpansionFile;
+				.getString(RecovSlicingPreference.INCONTEXT_FILE_PATH) + File.separator + variableExpansionFile;
 	}
 
 	/**

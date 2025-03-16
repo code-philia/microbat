@@ -95,14 +95,17 @@ public class VariableExpansionUtils {
 	private static HashMap<String, String> getDatapointFromStep(VarValue varValue, VariableSkeleton varSkeleton,
 			TraceNode step) {
 		HashMap<String, String> datapoint = new HashMap<>();
-		
+
 		Object[] methodSourceCodeAndLine = getMethodSourceCode(step);
 		String methodSourceCode = (String) methodSourceCodeAndLine[0];
 		int lineNoInMethod = (int) methodSourceCodeAndLine[1];
-		
+
 		List<String> importStatements = getImportStatements(step);
-		int lineNo = lineNoInMethod + importStatements.size() + 1;
-		
+		int lineNo = lineNoInMethod;
+		if (importStatements.size() != 0) {
+			lineNo = lineNoInMethod + importStatements.size() + 1;
+		}
+
 		StringBuilder imports = new StringBuilder();
 		importStatements.stream().forEach(i -> imports.append(i + "\n"));
 

@@ -244,7 +244,8 @@ public class TraceRecovUtils {
 			while ((line = reader.readLine()) != null) {
 				line = line.strip();
 				currentLine++;
-				if (line.startsWith("public ") || line.startsWith("private ") || line.startsWith("protected ")) {
+				if (line.contains("(") && (line.startsWith("public ") || line.startsWith("private ")
+						|| line.startsWith("protected "))) {
 					methodStartLine = currentLine;
 				}
 				if (currentLine == lineNumber) {
@@ -260,6 +261,7 @@ public class TraceRecovUtils {
 		try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
 			int count = -1;
 			int currentLine = 0;
+			boolean isInMethod = false;
 			while ((line = reader.readLine()) != null) {
 				currentLine++;
 				if (currentLine < methodStartLine) {
@@ -267,7 +269,10 @@ public class TraceRecovUtils {
 				}
 				String text = line.strip();
 				int bracketsInLine = countBrackets(text);
-				if (count == -1) {
+				if (bracketsInLine > 0) {
+					isInMethod = true;
+				}
+				if (count == -1 || !isInMethod) {
 					count = bracketsInLine;
 					methodContent.append(line);
 					methodContent.append("\n");
@@ -289,6 +294,11 @@ public class TraceRecovUtils {
 		outputArray[0] = methodContent.toString();
 		outputArray[1] = lineNumber - methodStartLine + 1;
 		return outputArray;
+	}
+
+	public static String getLoc(String classContent, int lineNumber) {
+		String[] lines = classContent.split("\n");
+		return lines[lineNumber - 1].strip();
 	}
 
 	/**

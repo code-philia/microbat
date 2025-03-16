@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import microbat.codeanalysis.runtime.InstrumentationExecutor;
 import microbat.codeanalysis.runtime.StepLimitException;
+import microbat.instrumentation.AgentParams;
 import microbat.instrumentation.CommonParams;
 import microbat.instrumentation.output.RunningInfo;
 import microbat.model.trace.Trace;
@@ -119,16 +120,18 @@ public class InContextExecutor {
         log.info("bin path: {}", binDirName);
     }
 
-    public Trace run() {
+    public Trace run() throws CompilationFailureException {
         try {
             return runInner();
+        } catch (CompilationFailureException e0) {
+        	throw e0;
         } catch (Exception e) {
             log.error("Failed to run gpt.", e);
         }
         return null;
     }
 
-    public Trace runInner() {
+    public Trace runInner() throws CompilationFailureException {
         writeSrcFile();
         initializeAppClassPath();
         compileFile();
@@ -145,7 +148,7 @@ public class InContextExecutor {
         }
     }
 
-    public void compileFile() {
+    public void compileFile() throws CompilationFailureException {
         String javaHome = appClassPath.getJavaHome();
         String javac = javaHome + File.separator + "bin" + File.separator + "javac";
 
@@ -181,7 +184,7 @@ public class InContextExecutor {
 		appClassPath.setTestCodePath(binDirName);
 	}
 
-    public Trace runTarget() {
+	public Trace runTarget() {
         List<String> includeLibs = new ArrayList<>();
         List<String> excludeLibs = new ArrayList<>();
         includeLibs.add("*");
@@ -194,6 +197,8 @@ public class InContextExecutor {
                 excludeLibs);
         executor.getAgentRunner().addAgentParam(CommonParams.OPT_FORCE_EXIT_WITHOUT_WAIT_OTHER_THREADS, "true");
         executor.getAgentRunner().addAgentParam(CommonParams.OPT_MANUALLY_TEST_RUNNING_CLASS, "SampleTest");
+        executor.getAgentRunner().addAgentParam(AgentParams.OPT_VARIABLE_LAYER, Integer.toString(3));
+        executor.getAgentRunner().addAgentParam(AgentParams.OPT_TRACKING_ALL_FIELDS, "true");
         RunningInfo results = null;
         try {
             results = executor.run();
@@ -205,7 +210,7 @@ public class InContextExecutor {
         return results.getMainTrace();
     }
 
-    public void runCommand(List<String> cmdline) {
+    public void runCommand(List<String> cmdline) throws CompilationFailureException {
         ProcessBuilder pb = new ProcessBuilder(cmdline);
         ExecutorService executor = Executors.newFixedThreadPool(2);
         int exitCode = -1;
@@ -234,7 +239,7 @@ public class InContextExecutor {
             if (exitCode != 0) {
                 log.error("Command line failed: {}. STDOUT: {}, STDERR: {}",
                         cmdline, readStdout.getOutput(), readStderr.getOutput());
-                throw new RuntimeException("Command line failed: " + cmdline);
+                throw new CompilationFailureException("Command line failed: " + cmdline);
             }
         } catch (IOException | InterruptedException e) {
             String msg = "Failed to compile source file: " + srcFileName;
