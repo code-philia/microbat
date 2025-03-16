@@ -86,7 +86,8 @@ public class InContextEgGenerator implements InContextLearning {
 	}
 
 	public InContextLearningVariables getGeneratedExampleVars(AppJavaClassPath appJavaClassPath,
-			InContextLearningCode generatedCode, InContextLearningType type) throws CompilationFailureException {
+			InContextLearningCode generatedCode, InContextLearningType type)
+			throws CompilationFailureException, IllegalStateException {
 		log.info("Generated code: {}", generatedCode.getCode());
 		log.info("Marker line: {}", generatedCode.getMarkerLine());
 		InContextExecutor executor = new InContextExecutor(generatedCode, appJavaClassPath);
@@ -105,7 +106,13 @@ public class InContextEgGenerator implements InContextLearning {
 			return null;
 		}
 
-		InContextLearningVariables variables = postProcessTrace(trace, type, generatedCode);
+		InContextLearningVariables variables;
+		try {
+			variables = postProcessTrace(trace, type, generatedCode);
+		} catch (IllegalStateException e) {
+			throw e;
+		}
+
 		return variables;
 	}
 
@@ -203,7 +210,7 @@ public class InContextEgGenerator implements InContextLearning {
 	}
 
 	public InContextLearningVariables postProcessTrace(Trace trace, InContextLearningType type,
-			InContextLearningCode code) {
+			InContextLearningCode code) throws IllegalStateException {
 		int firstLoc = Integer.MAX_VALUE;
 		int lastLoc = Integer.MIN_VALUE;
 

@@ -130,7 +130,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			// generate in-context learning examples
 			InContextLearningVariables recordedVariables = null;
 			String loc = null;
-			for (int i = 0; i < 3; i++) {
+			for (int i = 0; i < 2; i++) {
 				InContextEgGenerator egGenerator = new InContextEgGenerator();
 				egGenerator.setExecutionSimulator(ExecutionSimulatorFactory.getExecutionSimulator());
 				InContextLearningType type = InContextLearningType.VAR_EXPANSION;
@@ -142,7 +142,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 				try {
 					recordedVariables = egGenerator.getGeneratedExampleVars(appJavaClassPath, generatedCode, type);
-				} catch (CompilationFailureException e) {
+				} catch (CompilationFailureException | IllegalStateException e) {
 					e.printStackTrace();
 				}
 				if (recordedVariables != null) {
