@@ -130,6 +130,9 @@ public abstract class ExecutionSimulator {
 
 	// method to determine if the prompt exceeds max token limit
 	private boolean isExceedingMaxTokens(String prompt) {
+		if (prompt.length() > SimulatorConstants.MAX_TOKENS) {
+			return true;
+		}
 		int tokenCount = customTokenizeAndCount(prompt);
 		return tokenCount > SimulatorConstants.MAX_TOKENS;
 	}
