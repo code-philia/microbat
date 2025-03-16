@@ -138,6 +138,9 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 						datapoint.get(sourceCodeKey), Integer.valueOf(datapoint.get(lineNoKey)),
 						datapoint.get(varNameKey), datapoint.get(varValueKey), type,
 						InContextEgGenerator.defaultToString(), 2);
+				if (generatedCode == null) {
+					continue;
+				}
 				loc = TraceRecovUtils.getLoc(generatedCode.getCode(), generatedCode.getMarkerLine());
 
 				try {
