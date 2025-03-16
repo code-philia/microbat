@@ -154,6 +154,7 @@ public class InContextExecutor {
 
         ArrayList<String> command = new ArrayList<>();
         command.add(javac);
+        command.add("-g");
         String classpaths = String.join(File.pathSeparator, appClassPath.getClasspaths());
         if (!classpaths.isEmpty()) {
             command.add("-cp");
