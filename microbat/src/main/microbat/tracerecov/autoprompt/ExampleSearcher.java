@@ -43,7 +43,7 @@ public abstract class ExampleSearcher {
 			int begin = output.indexOf("{");
 			int end = output.lastIndexOf("}");
 			return output.substring(begin, end + 1);
-		} catch (IOException e) {
+		} catch (IOException | RuntimeException e) {
 			e.printStackTrace();
 		}
 		return null;

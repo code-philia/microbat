@@ -63,7 +63,7 @@ public abstract class ExecutionSimulator {
 	}
 
 	// Method to send the complete prompt in a single request
-	private String sendSingleRequest(String combinedPrompt, LLMResponseType responseType) throws IOException {
+	private String sendSingleRequest(String combinedPrompt, LLMResponseType responseType) throws IOException, RuntimeException {
 		HttpURLConnection connection = getConnection();
 		JSONObject request = getSingleRequest(combinedPrompt, responseType);
 
@@ -243,7 +243,7 @@ public abstract class ExecutionSimulator {
 
 				this.logger.printResponse(i, response);
 				return AliasInferenceUtils.processResponse(response, rootVar, step);
-			} catch (org.json.JSONException | java.lang.StringIndexOutOfBoundsException e) {
+			} catch (RuntimeException | IOException e) {
 				this.logger.printError(e.getMessage());
 			}
 		}
@@ -358,7 +358,7 @@ public abstract class ExecutionSimulator {
 
 				this.logger.printResponse(i, response);
 				return DefinitionInferenceUtils.isModified(response);
-			} catch (org.json.JSONException | IOException e) {
+			} catch (IOException | RuntimeException e) {
 				this.logger.printError(e.getMessage());
 			}
 		}
