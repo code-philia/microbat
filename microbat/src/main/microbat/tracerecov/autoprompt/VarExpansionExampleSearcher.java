@@ -140,10 +140,15 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 				InContextEgGenerator egGenerator = new InContextEgGenerator();
 				egGenerator.setExecutionSimulator(ExecutionSimulatorFactory.getExecutionSimulator());
 				InContextLearningType type = InContextLearningType.VAR_EXPANSION;
-				InContextLearningCode generatedCode = egGenerator.getGeneratedExampleCode(datapoint.get(importsKey),
-						datapoint.get(sourceCodeKey), Integer.valueOf(datapoint.get(lineNoKey)),
-						datapoint.get(varNameKey), datapoint.get(varValueKey), type,
-						InContextEgGenerator.defaultToString(), 2);
+				InContextLearningCode generatedCode = null;
+				try {
+					generatedCode = egGenerator.getGeneratedExampleCode(datapoint.get(importsKey),
+							datapoint.get(sourceCodeKey), Integer.valueOf(datapoint.get(lineNoKey)),
+							datapoint.get(varNameKey), datapoint.get(varValueKey), type,
+							InContextEgGenerator.defaultToString(), 2);
+				} catch (IllegalStateException | IllegalArgumentException e) {
+					e.printStackTrace();
+				}
 				if (generatedCode == null) {
 					continue;
 				}
@@ -160,7 +165,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			}
 
 			if (recordedVariables == null) {
-				return "";
+				return closestExample;
 			}
 
 			List<VarValue> variables = recordedVariables.getOuterReadVariables();
@@ -181,7 +186,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 				}
 			}
 			if (mostSuitableVar == null) {
-				return "";
+				return closestExample;
 			}
 
 			// create new datapoint

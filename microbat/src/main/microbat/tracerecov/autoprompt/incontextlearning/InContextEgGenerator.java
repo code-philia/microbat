@@ -46,7 +46,7 @@ public class InContextEgGenerator implements InContextLearning {
 
 	public InContextLearningCode getGeneratedExampleCode(String imports, String targetMethod, int targetLineNumber,
 			String targetVariable, String targetValue, InContextLearningType type,
-			ContextVariablesToString contextToString, int allowedAttempts) {
+			ContextVariablesToString contextToString, int allowedAttempts) throws IllegalArgumentException, IllegalStateException {
 		if (executionSimulator == null) {
 			throw new IllegalStateException("Execution simulator is not set");
 		}
@@ -340,7 +340,7 @@ public class InContextEgGenerator implements InContextLearning {
 		return (context, type) -> variablesToExplainString(context);
 	}
 
-	public String insertLineMarker(String line) {
+	public String insertLineMarker(String line) throws IllegalArgumentException {
 		int i = 0;
 		while (i < line.length() && (line.charAt(i) == ' ' || line.charAt(i) == '\t')) {
 			i++;
@@ -353,7 +353,7 @@ public class InContextEgGenerator implements InContextLearning {
 		return line.substring(0, i) + ">>> " + line.substring(i);
 	}
 
-	public String processInputString(String imports, String targetMethod, int targetLineNumber) {
+	public String processInputString(String imports, String targetMethod, int targetLineNumber) throws IllegalArgumentException {
 		StringBuilder sb = new StringBuilder();
 		sb.append(imports);
 		sb.append("\n");
