@@ -244,8 +244,8 @@ public class TraceRecovUtils {
 			while ((line = reader.readLine()) != null) {
 				line = line.strip();
 				currentLine++;
-				if (line.contains("(") && (line.startsWith("public ") || line.startsWith("private ")
-						|| line.startsWith("protected "))) {
+				if (line.contains("(") && (line.contains("public ") || line.contains("private ")
+						|| line.contains("protected "))) {
 					methodStartLine = currentLine;
 				}
 				if (currentLine == lineNumber) {
