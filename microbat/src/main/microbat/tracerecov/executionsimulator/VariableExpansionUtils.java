@@ -298,7 +298,8 @@ public class VariableExpansionUtils {
 
 			String headAddress = selectedVariable.getAliasVarID().equals("0") ? selectedVariable.getVarID()
 					: selectedVariable.getAliasVarID();
-			String varID = Variable.concanateFieldVarID(headAddress, varName);
+			String varID = headAddress + "[" + index + "]";
+//			String varID = Variable.concanateFieldVarID(headAddress, varName);
 
 			Variable var = new FieldVar(false, varName, varType, varType);
 			var.setVarID(varID);
