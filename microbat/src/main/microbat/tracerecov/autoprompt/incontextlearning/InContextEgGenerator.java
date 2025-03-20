@@ -31,8 +31,7 @@ public class InContextEgGenerator implements InContextLearning {
 	private static final Logger log = LoggerFactory.getLogger(InContextEgGenerator.class);
 
 	private ExecutionSimulator executionSimulator;
-	private AppJavaClassPath appJavaClassPath;
-
+	
 	public ExecutionSimulator getExecutionSimulator() {
 		return executionSimulator;
 	}

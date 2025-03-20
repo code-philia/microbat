@@ -36,6 +36,7 @@ public class InContextExecutor {
     public static final String TRACE_FOLDER = "trace";
     public static final String MAIN_JAVA_NAME = "SampleTest.java";
     public static final String TRACE_FILE_NAME = "trace";
+    public static final String TEST_RUNNER = "microbat.evaluation.junit.MicroBatTestRunner";
 
     private static AtomicInteger counter = new AtomicInteger(0);
 
@@ -55,8 +56,8 @@ public class InContextExecutor {
     private SourceCodeWritter sourceCodeWritter;
     
     public InContextExecutor(AppJavaClassPath appJavaClassPath) {
-    	this.appClassPath = appJavaClassPath;
     	this.appClassPath = appJavaClassPath.duplicate();
+    	this.appClassPath.setLaunchClass(TEST_RUNNER);
     }
 
     @FunctionalInterface
@@ -82,6 +83,7 @@ public class InContextExecutor {
     public InContextExecutor(SourceCodeWritter sourceCodeWritter, AppJavaClassPath appJavaClassPath) {
         this.sourceCodeWritter = sourceCodeWritter;
         this.appClassPath = appJavaClassPath.duplicate();
+        this.appClassPath.setLaunchClass(TEST_RUNNER);
 
         String separator = File.separator;
 
