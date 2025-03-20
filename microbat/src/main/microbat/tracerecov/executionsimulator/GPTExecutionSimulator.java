@@ -7,11 +7,21 @@ import java.net.URL;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import microbat.Activator;
+import microbat.preference.RecovSlicingPreference;
+
 public class GPTExecutionSimulator extends ExecutionSimulator {
+
+	private static String isOpenAIEndpointStr = Activator.getDefault().getPreferenceStore()
+			.getString(RecovSlicingPreference.IS_OPENAI_ENDPOINT);
 
 	@Override
 	protected String getUrl() {
-		return SimulatorConstants.GPT_API_ENDPOINT;
+		if (isOpenAIEndpointStr != null && isOpenAIEndpointStr.equals("true")) {
+			return SimulatorConstants.GPT_API_ENDPOINT;
+		} else {
+			return SimulatorConstants.GPT_TB_API_ENDPOINT;
+		}
 	}
 
 	@Override
@@ -21,7 +31,7 @@ public class GPTExecutionSimulator extends ExecutionSimulator {
 
 		connection.setRequestMethod("POST");
 		connection.setRequestProperty("Content-Type", "application/json");
-		connection.setRequestProperty("Authorization", "Bearer " + SimulatorConstants.API_KEY);
+		connection.setRequestProperty("Authorization", "Bearer " + getAPIKey());
 		connection.setDoOutput(true);
 
 		return connection;
@@ -68,6 +78,15 @@ public class GPTExecutionSimulator extends ExecutionSimulator {
 	protected String getSingleResponse(JSONObject responseObject) {
 		return responseObject.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content")
 				.trim();
+	}
+
+	@Override
+	protected String getAPIKey() {
+		if (isOpenAIEndpointStr != null && isOpenAIEndpointStr.equals("true")) {
+			return SimulatorConstants.API_KEY;
+		} else {
+			return SimulatorConstants.TB_API_KEY;
+		}
 	}
 
 }

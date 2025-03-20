@@ -30,7 +30,9 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	public static final String ENABLE_LLM = "enable_llm";
 	public static final String USE_MUTATION_CONFIG = "use_mutation_config";
 	public static final String API_KEY = "api_key";
+	public static final String TB_API_KEY = "tb_api_key";
 	public static final String MODEL_TYPE = "model_type";
+	public static final String IS_OPENAI_ENDPOINT = "openai_endpoint";
 	public static final String METHOD_LAYER = "method_layer";
 	public static final String ENABLE_LOGGING = "enable_logging";
 	public static final String LOG_DEBUG_INFO = "log_debug_info";
@@ -48,7 +50,9 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	private boolean isEnableLLMInference;
 	private boolean isMutationExperiment;
 	private String apiKey;
+	private String tbAPIKey;
 	private LLMModel llmModelType = LLMModel.GPT4O; // default model
+	private boolean isOpenAIEndpoint;
 	private String methodLayer;
 	private boolean isEnableLogging;
 	private boolean logDebugInfo;
@@ -65,7 +69,9 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	private Button isEnableLLMButton;
 	private Button useMutationConfigButton;
 	private Combo modelTypeCombo;
+	private Button isOpenAIEndpointButton;
 	private Text apiKeyText;
+	private Text tbAPIKeyText;
 	private Text methodLayerText;
 	private Button isEnableLoggingButton;
 	private Button logDebugInfoButton;
@@ -112,6 +118,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		}
 
 		this.apiKey = Activator.getDefault().getPreferenceStore().getString(API_KEY);
+		this.tbAPIKey = Activator.getDefault().getPreferenceStore().getString(TB_API_KEY);
 
 		String modelType = Activator.getDefault().getPreferenceStore().getString(MODEL_TYPE);
 		if (modelType != null && !modelType.equals("")) {
@@ -120,6 +127,13 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 			} catch (IllegalArgumentException e) {
 				this.llmModelType = LLMModel.GPT4O; // default model if unknown value
 			}
+		}
+
+		String isOpenAIEndpointStr = Activator.getDefault().getPreferenceStore().getString(IS_OPENAI_ENDPOINT);
+		if (isOpenAIEndpointStr != null && isOpenAIEndpointStr.equals("true")) {
+			this.isOpenAIEndpoint = true;
+		} else {
+			this.isOpenAIEndpoint = false;
 		}
 
 //		this.methodLayer = Activator.getDefault().getPreferenceStore().getString(METHOD_LAYER);
@@ -224,8 +238,15 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		this.modelTypeCombo = createDropDown(modelSelectionGroup, modelSelectionLabel, LLMModel.values(),
 				this.llmModelType.ordinal());
 
-		String apiKeyLabel = "API Key:";
+		String apiKeyLabel = "OpenAI (or Gemini) API Key:";
 		this.apiKeyText = createText(modelSelectionGroup, apiKeyLabel, this.apiKey);
+
+		String tbAPIKeyLabel = "TB API Key:";
+		this.tbAPIKeyText = createText(modelSelectionGroup, tbAPIKeyLabel, this.tbAPIKey);
+
+		String isOpenAIEndpointLabel = "use OpenAI API (instead of TB)";
+		this.isOpenAIEndpointButton = createCheckButton(modelSelectionGroup, isOpenAIEndpointLabel,
+				this.isOpenAIEndpoint);
 
 		String varExpansionPathLabel = "Path for folder containing In-context Learning dataset:";
 		this.incontextLearningDatasetText = createText(modelSelectionGroup, varExpansionPathLabel,
@@ -337,7 +358,9 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		preferences.put(USE_MUTATION_CONFIG, String.valueOf(this.useMutationConfigButton.getSelection()));
 		preferences.put(COLLECT_GROUND_TRUTH, String.valueOf(this.collectGroundTruthButton.getSelection()));
 		preferences.put(API_KEY, this.apiKeyText.getText());
+		preferences.put(TB_API_KEY, this.tbAPIKeyText.getText());
 		preferences.put(MODEL_TYPE, this.modelTypeCombo.getText());
+		preferences.put(IS_OPENAI_ENDPOINT, String.valueOf(isOpenAIEndpointButton.getSelection()));
 //		preferences.put(METHOD_LAYER, this.methodLayerText.getText());
 		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
@@ -358,7 +381,10 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		Activator.getDefault().getPreferenceStore().putValue(COLLECT_GROUND_TRUTH,
 				String.valueOf(this.collectGroundTruthButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(API_KEY, this.apiKeyText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(TB_API_KEY, this.tbAPIKeyText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(MODEL_TYPE, this.modelTypeCombo.getText());
+		Activator.getDefault().getPreferenceStore().putValue(IS_OPENAI_ENDPOINT,
+				String.valueOf(isOpenAIEndpointButton.getSelection()));
 //		Activator.getDefault().getPreferenceStore().putValue(METHOD_LAYER, this.methodLayerText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LOGGING,
 				String.valueOf(this.isEnableLoggingButton.getSelection()));

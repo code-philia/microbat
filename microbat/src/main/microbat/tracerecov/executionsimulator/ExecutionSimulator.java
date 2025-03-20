@@ -5,12 +5,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import microbat.codeanalysis.bytecode.CFG;
@@ -49,6 +47,8 @@ public abstract class ExecutionSimulator {
 
 	protected abstract String getSingleResponse(JSONObject responseObject);
 
+	protected abstract String getAPIKey();
+
 	/* concrete methods */
 	public String sendRequest(String backgroundContent, String questionContent, LLMResponseType responseType)
 			throws IOException, RuntimeException {
@@ -63,7 +63,8 @@ public abstract class ExecutionSimulator {
 	}
 
 	// Method to send the complete prompt in a single request
-	private String sendSingleRequest(String combinedPrompt, LLMResponseType responseType) throws IOException, RuntimeException {
+	private String sendSingleRequest(String combinedPrompt, LLMResponseType responseType)
+			throws IOException, RuntimeException {
 		HttpURLConnection connection = getConnection();
 		JSONObject request = getSingleRequest(combinedPrompt, responseType);
 
@@ -309,7 +310,8 @@ public abstract class ExecutionSimulator {
 			if (!TraceRecovUtils.isAssignable(invokingType, parentVarType, step.getTrace().getAppJavaClassPath())) {
 				continue; // GUARANTEE_NO_WRITE
 			} else {
-				invokedMethod = parentVarType + "#" + invokedMethod.split("#")[1]; // replace general type by runtime type
+				invokedMethod = parentVarType + "#" + invokedMethod.split("#")[1]; // replace general type by runtime
+																					// type
 			}
 
 			try {

@@ -13,7 +13,7 @@ public class GeminiExecutionSimulator extends ExecutionSimulator {
 	protected String getUrl() {
 		StringBuilder urlBuilder = new StringBuilder(SimulatorConstants.GEMINI_API_ENDPOINT);
 		urlBuilder.append(SimulatorConstants.getSelectedModel());
-		urlBuilder.append(":generateContent?key=" + SimulatorConstants.API_KEY);
+		urlBuilder.append(":generateContent?key=" + getAPIKey());
 		return urlBuilder.toString();
 	}
 
@@ -76,6 +76,11 @@ public class GeminiExecutionSimulator extends ExecutionSimulator {
 	protected String getSingleResponse(JSONObject responseObject) {
 		return responseObject.getJSONArray("candidates").getJSONObject(0).getJSONObject("content").getJSONArray("parts")
 				.getJSONObject(0).getString("text").trim();
+	}
+
+	@Override
+	protected String getAPIKey() {
+		return SimulatorConstants.API_KEY;
 	}
 
 }
