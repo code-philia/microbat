@@ -37,6 +37,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	public static final String INCONTEXT_FILE_PATH = "incontext_file_path";
 	public static final String COLLECT_GROUND_TRUTH = "collect_ground_truth";
 	public static final String PROMPT_TYPE = "prompt_type";
+	public static final String IS_JUNIT = "junit";
 	public static final String SLICE_DATASET_PATH = "slice_dataset_path";
 	public static final String SLICE_BUGS_TO_RUN = "slice_bugs_to_run";
 	public static final String ENABLE_IN_CONTEXT_LEARNING = "enable_incontext";
@@ -53,6 +54,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	private boolean logDebugInfo;
 	private String incontextLearningDatasetPath;
 	private boolean collectGroundTruth;
+	private boolean isJunit;
 	private String sliceDatasetPath;
 	private String sliceBugsToRun;
 	private boolean isEnableInContextLearning;
@@ -69,6 +71,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	private Button logDebugInfoButton;
 	private Button collectGroundTruthButton;
 	private Text incontextLearningDatasetText;
+	private Button isJunitButton;
 	private Text sliceDatasetText;
 	private Text sliceBugsToRunText;
 	private Button isEnableInContextLearningButton;
@@ -144,6 +147,12 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 
 		this.incontextLearningDatasetPath = Activator.getDefault().getPreferenceStore().getString(INCONTEXT_FILE_PATH);
 
+		String isJunitStr = Activator.getDefault().getPreferenceStore().getString(IS_JUNIT);
+		if (isJunitStr != null && isJunitStr.equals("true")) {
+			this.isJunit = true;
+		} else {
+			this.isJunit = false;
+		}
 		this.sliceDatasetPath = Activator.getDefault().getPreferenceStore().getString(SLICE_DATASET_PATH);
 		this.sliceBugsToRun = Activator.getDefault().getPreferenceStore().getString(SLICE_BUGS_TO_RUN);
 		String enableInContextLearningStr = Activator.getDefault().getPreferenceStore()
@@ -246,6 +255,9 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		String title = "Slicing Experiments Settings (RQ1 & RQ3)";
 		Group slicingSettingGroup = initGroup(parent, title);
 
+		String isJunitLabel = "slicing dataset is in the form of junit (not main)";
+		this.isJunitButton = createCheckButton(slicingSettingGroup, isJunitLabel, this.isJunit);
+
 		String slicingDatasetPathLabel = "Path to folder containing slicing dataset";
 		this.sliceDatasetText = createText(slicingSettingGroup, slicingDatasetPathLabel, this.sliceDatasetPath);
 
@@ -330,6 +342,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
 		preferences.put(INCONTEXT_FILE_PATH, this.incontextLearningDatasetText.getText());
+		preferences.put(IS_JUNIT, String.valueOf(this.isJunitButton.getSelection()));
 		preferences.put(SLICE_DATASET_PATH, this.sliceDatasetText.getText());
 		preferences.put(SLICE_BUGS_TO_RUN, this.sliceBugsToRunText.getText());
 		preferences.put(ENABLE_IN_CONTEXT_LEARNING,
@@ -353,6 +366,8 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 				String.valueOf(this.logDebugInfoButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(INCONTEXT_FILE_PATH,
 				this.incontextLearningDatasetText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(IS_JUNIT,
+				String.valueOf(this.isJunitButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(SLICE_DATASET_PATH, this.sliceDatasetText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(SLICE_BUGS_TO_RUN, this.sliceBugsToRunText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_IN_CONTEXT_LEARNING,
