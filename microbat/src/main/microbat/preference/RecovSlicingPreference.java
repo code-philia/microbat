@@ -38,6 +38,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	public static final String COLLECT_GROUND_TRUTH = "collect_ground_truth";
 	public static final String PROMPT_TYPE = "prompt_type";
 	public static final String SLICE_DATASET_PATH = "slice_dataset_path";
+	public static final String SLICE_BUGS_TO_RUN = "slice_bugs_to_run";
 
 	/* constants before update */
 	private boolean isEnableTraceRecov;
@@ -51,6 +52,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	private String incontextLearningDatasetPath;
 	private boolean collectGroundTruth;
 	private String sliceDatasetPath;
+	private String sliceBugsToRun;
 
 	/* constants after update */
 	private Button isEnableTraceRecovButton;
@@ -64,6 +66,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	private Button collectGroundTruthButton;
 	private Text incontextLearningDatasetText;
 	private Text sliceDatasetText;
+	private Text sliceBugsToRunText;
 
 	public RecovSlicingPreference() {
 	}
@@ -136,6 +139,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		this.incontextLearningDatasetPath = Activator.getDefault().getPreferenceStore().getString(INCONTEXT_FILE_PATH);
 
 		this.sliceDatasetPath = Activator.getDefault().getPreferenceStore().getString(SLICE_DATASET_PATH);
+		this.sliceBugsToRun = Activator.getDefault().getPreferenceStore().getString(SLICE_BUGS_TO_RUN);
 	}
 
 	@Override
@@ -225,6 +229,8 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 
 		String slicingDatasetPathLabel = "Path to folder containing slicing dataset";
 		this.sliceDatasetText = createText(slicingSettingGroup, slicingDatasetPathLabel, this.sliceDatasetPath);
+		String slicingBugsToRunLabel = "bugs.txt file name";
+		this.sliceBugsToRunText = createText(slicingSettingGroup, slicingBugsToRunLabel, this.sliceBugsToRun);
 	}
 
 	private Group initGroup(final Composite parent, String title) {
@@ -297,6 +303,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
 		preferences.put(INCONTEXT_FILE_PATH, this.incontextLearningDatasetText.getText());
 		preferences.put(SLICE_DATASET_PATH, this.sliceDatasetText.getText());
+		preferences.put(SLICE_BUGS_TO_RUN, this.sliceBugsToRunText.getText());
 
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_TRACERECOV,
 				String.valueOf(this.isEnableTraceRecovButton.getSelection()));
@@ -316,6 +323,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		Activator.getDefault().getPreferenceStore().putValue(INCONTEXT_FILE_PATH,
 				this.incontextLearningDatasetText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(SLICE_DATASET_PATH, this.sliceDatasetText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(SLICE_BUGS_TO_RUN, this.sliceBugsToRunText.getText());
 
 		Settings.isEnableGPTInference = this.isEnableLLMButton.getSelection();
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();
