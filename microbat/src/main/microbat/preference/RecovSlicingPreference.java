@@ -39,6 +39,8 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	public static final String PROMPT_TYPE = "prompt_type";
 	public static final String SLICE_DATASET_PATH = "slice_dataset_path";
 	public static final String SLICE_BUGS_TO_RUN = "slice_bugs_to_run";
+	public static final String ENABLE_IN_CONTEXT_LEARNING = "enable_incontext";
+	public static final String ENABLE_ALIAS_INFERENCE = "enable_alias";
 
 	/* constants before update */
 	private boolean isEnableTraceRecov;
@@ -53,6 +55,8 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	private boolean collectGroundTruth;
 	private String sliceDatasetPath;
 	private String sliceBugsToRun;
+	private boolean isEnableInContextLearning;
+	private boolean isEnableAliasInference;
 
 	/* constants after update */
 	private Button isEnableTraceRecovButton;
@@ -67,6 +71,8 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	private Text incontextLearningDatasetText;
 	private Text sliceDatasetText;
 	private Text sliceBugsToRunText;
+	private Button isEnableInContextLearningButton;
+	private Button isEnableAliasInferenceButton;
 
 	public RecovSlicingPreference() {
 	}
@@ -140,6 +146,19 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 
 		this.sliceDatasetPath = Activator.getDefault().getPreferenceStore().getString(SLICE_DATASET_PATH);
 		this.sliceBugsToRun = Activator.getDefault().getPreferenceStore().getString(SLICE_BUGS_TO_RUN);
+		String enableInContextLearningStr = Activator.getDefault().getPreferenceStore()
+				.getString(ENABLE_IN_CONTEXT_LEARNING);
+		if (enableInContextLearningStr != null && enableInContextLearningStr.equals("true")) {
+			this.isEnableInContextLearning = true;
+		} else {
+			this.isEnableInContextLearning = false;
+		}
+		String enableAliasInferenceStr = Activator.getDefault().getPreferenceStore().getString(ENABLE_ALIAS_INFERENCE);
+		if (enableAliasInferenceStr != null && enableAliasInferenceStr.equals("true")) {
+			this.isEnableAliasInference = true;
+		} else {
+			this.isEnableAliasInference = false;
+		}
 	}
 
 	@Override
@@ -224,13 +243,22 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	}
 
 	private void createSlicingSettingGroup(Composite parent) {
-		String title = "Slicing Experiments Settings";
+		String title = "Slicing Experiments Settings (RQ1 & RQ3)";
 		Group slicingSettingGroup = initGroup(parent, title);
 
 		String slicingDatasetPathLabel = "Path to folder containing slicing dataset";
 		this.sliceDatasetText = createText(slicingSettingGroup, slicingDatasetPathLabel, this.sliceDatasetPath);
+
 		String slicingBugsToRunLabel = "bugs.txt file name";
 		this.sliceBugsToRunText = createText(slicingSettingGroup, slicingBugsToRunLabel, this.sliceBugsToRun);
+
+		String enableInContextLearningLabel = "enable in-context learning";
+		this.isEnableInContextLearningButton = createCheckButton(slicingSettingGroup, enableInContextLearningLabel,
+				this.isEnableInContextLearning);
+
+		String enableAliasInferenceLabel = "enable alias inference";
+		this.isEnableAliasInferenceButton = createCheckButton(slicingSettingGroup, enableAliasInferenceLabel,
+				this.isEnableAliasInference);
 	}
 
 	private Group initGroup(final Composite parent, String title) {
@@ -304,6 +332,9 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		preferences.put(INCONTEXT_FILE_PATH, this.incontextLearningDatasetText.getText());
 		preferences.put(SLICE_DATASET_PATH, this.sliceDatasetText.getText());
 		preferences.put(SLICE_BUGS_TO_RUN, this.sliceBugsToRunText.getText());
+		preferences.put(ENABLE_IN_CONTEXT_LEARNING,
+				String.valueOf(this.isEnableInContextLearningButton.getSelection()));
+		preferences.put(ENABLE_ALIAS_INFERENCE, String.valueOf(this.isEnableAliasInferenceButton.getSelection()));
 
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_TRACERECOV,
 				String.valueOf(this.isEnableTraceRecovButton.getSelection()));
@@ -324,6 +355,10 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 				this.incontextLearningDatasetText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(SLICE_DATASET_PATH, this.sliceDatasetText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(SLICE_BUGS_TO_RUN, this.sliceBugsToRunText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(ENABLE_IN_CONTEXT_LEARNING,
+				String.valueOf(this.isEnableInContextLearningButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(ENABLE_ALIAS_INFERENCE,
+				String.valueOf(this.isEnableAliasInferenceButton.getSelection()));
 
 		Settings.isEnableGPTInference = this.isEnableLLMButton.getSelection();
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();

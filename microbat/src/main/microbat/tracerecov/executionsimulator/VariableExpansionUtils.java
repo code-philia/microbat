@@ -7,6 +7,7 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import microbat.Activator;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.ArrayValue;
 import microbat.model.value.PrimitiveValue;
@@ -15,6 +16,7 @@ import microbat.model.value.StringValue;
 import microbat.model.value.VarValue;
 import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
+import microbat.preference.RecovSlicingPreference;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.ExampleSearcher;
 import microbat.tracerecov.autoprompt.VarExpansionExampleSearcher;
@@ -123,15 +125,20 @@ public class VariableExpansionUtils {
 	}
 
 	private static String getExample(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {
-		HashMap<String, String> datapoint = getDatapointFromStep(varValue, varSkeleton, step);
+		String isEnableIncontextLearningStr = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.ENABLE_IN_CONTEXT_LEARNING);
+		if (isEnableIncontextLearningStr != null && isEnableIncontextLearningStr.equals("true")) {
+			HashMap<String, String> datapoint = getDatapointFromStep(varValue, varSkeleton, step);
 
-		ExampleSearcher exampleSearcher = new VarExpansionExampleSearcher(true);
-		String closestExample = exampleSearcher.searchForExample(datapoint, step.getTrace().getAppJavaClassPath());
+			ExampleSearcher exampleSearcher = new VarExpansionExampleSearcher(true);
+			String closestExample = exampleSearcher.searchForExample(datapoint, step.getTrace().getAppJavaClassPath());
 
-		if (closestExample == null || closestExample.equals("")) {
-			return VAR_EXPAND_EXAMPLE;
+			if (closestExample == null || closestExample.equals("")) {
+				return VAR_EXPAND_EXAMPLE;
+			}
+			return closestExample;
+		} else {
+			return "";
 		}
-		return closestExample;
 	}
 
 	private static String getLineSourceCode(TraceNode step) {

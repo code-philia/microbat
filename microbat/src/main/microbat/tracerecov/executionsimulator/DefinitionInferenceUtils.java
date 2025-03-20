@@ -4,8 +4,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import microbat.Activator;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
+import microbat.preference.RecovSlicingPreference;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.DefinitionInferenceExampleSearcher;
 import microbat.tracerecov.autoprompt.ExampleSearcher;
@@ -29,11 +31,12 @@ public class DefinitionInferenceUtils {
 		return DEFINITION_INFERENCE_BACKGROUND + getExample(rootVar, targetVar, criticalVariables);
 	}
 
-	private static HashMap<String, String> getDatapointFromStep(VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
+	private static HashMap<String, String> getDatapointFromStep(VarValue rootVar, VarValue targetVar,
+			List<VarValue> criticalVariables) {
 
 		// TARGET_FIELD
 		String targetVarName = targetVar.getVarName();
-		
+
 		String cascadeFieldName = "";
 		int stopIndex = criticalVariables.size() - 1;
 		for (int i = 0; i < stopIndex; i++) {
@@ -41,7 +44,7 @@ public class DefinitionInferenceUtils {
 			cascadeFieldName += criticalVar.getVarName() + ".";
 		}
 		cascadeFieldName += targetVarName;
-		
+
 		// TARGET_VAR
 		String jsonString = TraceRecovUtils.processInputStringForLLM(rootVar.toJSON().toString());
 
@@ -58,16 +61,22 @@ public class DefinitionInferenceUtils {
 	}
 
 	private static String getExample(VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
-		HashMap<String, String> datapoint = getDatapointFromStep(rootVar, targetVar, criticalVariables);
+		String isEnableIncontextLearningStr = Activator.getDefault().getPreferenceStore()
+				.getString(RecovSlicingPreference.ENABLE_IN_CONTEXT_LEARNING);
+		if (isEnableIncontextLearningStr != null && isEnableIncontextLearningStr.equals("true")) {
+			HashMap<String, String> datapoint = getDatapointFromStep(rootVar, targetVar, criticalVariables);
 
-		ExampleSearcher exampleSearcher = new DefinitionInferenceExampleSearcher(true);
-		String closestExample = exampleSearcher.searchForExample(datapoint, null);
+			ExampleSearcher exampleSearcher = new DefinitionInferenceExampleSearcher(true);
+			String closestExample = exampleSearcher.searchForExample(datapoint, null);
 
-		// TODO: add default example
-		if (closestExample == null || closestExample.equals("")) {
+			// TODO: add default example
+			if (closestExample == null || closestExample.equals("")) {
+				return "";
+			}
+			return closestExample;
+		} else {
 			return "";
 		}
-		return closestExample;
 	}
 
 	public static String getQuestionContent(TraceNode step, VarValue rootVar, VarValue targetVar,

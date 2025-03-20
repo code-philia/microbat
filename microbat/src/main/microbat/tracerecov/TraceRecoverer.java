@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import microbat.Activator;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.ArrayValue;
@@ -16,6 +17,7 @@ import microbat.model.value.StringValue;
 import microbat.model.value.VarValue;
 import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
+import microbat.preference.RecovSlicingPreference;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 
@@ -58,8 +60,11 @@ public class TraceRecoverer {
 		int end = currentStep.getOrder() - 1;
 
 		// alias inference
-		inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck);
-
+		String isEnableAliasInferenceStr = Activator.getDefault().getPreferenceStore()
+				.getString(RecovSlicingPreference.ENABLE_ALIAS_INFERENCE);
+		if (isEnableAliasInferenceStr != null && isEnableAliasInferenceStr.equals("true")) {
+			inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck);
+		}
 		// update scope of searching
 		scopeStart = determineScopeOfSearching(criticalVariables, trace, currentStep);
 		if (scopeStart == null)
