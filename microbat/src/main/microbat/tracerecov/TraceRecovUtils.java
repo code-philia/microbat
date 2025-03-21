@@ -27,6 +27,7 @@ import microbat.codeanalysis.bytecode.CFG;
 import microbat.codeanalysis.bytecode.CFGConstructor;
 import microbat.model.value.VarValue;
 import microbat.preference.MicrobatPreference;
+import microbat.tracerecov.autoprompt.incontextlearning.FailToExtractMethodException;
 import sav.strategies.dto.AppJavaClassPath;
 
 /**
@@ -231,10 +232,11 @@ public class TraceRecovUtils {
 	 * @param filePath
 	 * @param lineNumber
 	 * @return Object[] {String MethodSourceCode, Integer RelativeLineNumber}
+	 * @throws FailToExtractMethodException 
 	 */
-	public static Object[] getSourceCodeOfMethodContainingLine(String filePath, int lineNumber) {
+	public static Object[] getSourceCodeOfMethodContainingLine(String filePath, int lineNumber) throws FailToExtractMethodException {
 		String line = null;
-		int methodStartLine = 0;
+		int methodStartLine = -1;
 
 		StringBuilder methodContent = new StringBuilder();
 
@@ -244,7 +246,7 @@ public class TraceRecovUtils {
 			while ((line = reader.readLine()) != null) {
 				line = line.strip();
 				currentLine++;
-				if (line.contains("(") && (line.contains("public ") || line.contains("private ")
+				if (line.contains("(") && !line.contains(";") && (line.contains("public ") || line.contains("private ")
 						|| line.contains("protected "))) {
 					methodStartLine = currentLine;
 				}
@@ -255,6 +257,10 @@ public class TraceRecovUtils {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+		
+		if (methodStartLine == -1) {
+			throw new FailToExtractMethodException(filePath, lineNumber);
 		}
 
 		// get method range: end

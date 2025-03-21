@@ -117,21 +117,26 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 
 	@Override
 	public String searchForExample(HashMap<String, String> datapoint, AppJavaClassPath appJavaClassPath) {
+		// datapoint keys
+		String sourceCodeKey = DatasetReader.METHOD_SOURCE_CODE;
+		String lineSourceCodeKey = DatasetReader.LINE_SOURCE_CODE;
+		String importsKey = DatasetReader.IMPORTS;
+		String lineNoKey = DatasetReader.LINE_NO;
+		String varTypeKey = DatasetReader.VAR_TYPE;
+		String varNameKey = DatasetReader.VAR_NAME;
+		String varValueKey = DatasetReader.VAR_VALUE;
+		String classStructureKey = DatasetReader.CLASS_STRUCTURE;
+		String groundTruthKey = DatasetReader.GROUND_TRUTH;
+
+		if (datapoint.get(sourceCodeKey).equals("")) {
+			return "";
+		}
+
 		Object[] existingExample = searchForExample(datapoint);
 		String closestExample = (String) existingExample[0];
 		double maxSimScore = (double) existingExample[1];
 
 		if (maxSimScore <= SIM_SCORE_THRESHOLD) {
-			// datapoint keys
-			String sourceCodeKey = DatasetReader.METHOD_SOURCE_CODE;
-			String lineSourceCodeKey = DatasetReader.LINE_SOURCE_CODE;
-			String importsKey = DatasetReader.IMPORTS;
-			String lineNoKey = DatasetReader.LINE_NO;
-			String varTypeKey = DatasetReader.VAR_TYPE;
-			String varNameKey = DatasetReader.VAR_NAME;
-			String varValueKey = DatasetReader.VAR_VALUE;
-			String classStructureKey = DatasetReader.CLASS_STRUCTURE;
-			String groundTruthKey = DatasetReader.GROUND_TRUTH;
 
 			// generate in-context learning examples
 			InContextLearningVariables recordedVariables = null;

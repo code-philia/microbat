@@ -21,6 +21,7 @@ import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.ExampleSearcher;
 import microbat.tracerecov.autoprompt.VarExpansionExampleSearcher;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
+import microbat.tracerecov.autoprompt.incontextlearning.FailToExtractMethodException;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.common.core.Pair;
 
@@ -98,9 +99,17 @@ public class VariableExpansionUtils {
 			TraceNode step) {
 		HashMap<String, String> datapoint = new HashMap<>();
 
-		Object[] methodSourceCodeAndLine = getMethodSourceCode(step);
-		String methodSourceCode = (String) methodSourceCodeAndLine[0];
-		int lineNoInMethod = (int) methodSourceCodeAndLine[1];
+		Object[] methodSourceCodeAndLine;
+		String methodSourceCode = "";
+		int lineNoInMethod = -1;
+		try {
+			methodSourceCodeAndLine = getMethodSourceCode(step);
+			methodSourceCode = (String) methodSourceCodeAndLine[0];
+			lineNoInMethod = (int) methodSourceCodeAndLine[1];
+		} catch (FailToExtractMethodException e) {
+			e.printStackTrace();
+		}
+		
 
 		List<String> importStatements = getImportStatements(step);
 		int lineNo = lineNoInMethod;
@@ -155,8 +164,9 @@ public class VariableExpansionUtils {
 	 * @param filePath
 	 * @param lineNumber
 	 * @return Object[] {String MethodSourceCode, Integer RelativeLineNumber}
+	 * @throws FailToExtractMethodException 
 	 */
-	private static Object[] getMethodSourceCode(TraceNode step) {
+	private static Object[] getMethodSourceCode(TraceNode step) throws FailToExtractMethodException {
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
 		return TraceRecovUtils.getSourceCodeOfMethodContainingLine(location, lineNo);
