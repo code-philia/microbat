@@ -31,6 +31,7 @@ public class DependencyRules {
 				"java.util.LinkedList",
 				"java.util.ArrayList",
 				
+				"java.util.Map",
 				"java.util.HashMap",
 				
 				"java.util.HashSet",
@@ -89,6 +90,28 @@ public class DependencyRules {
 						new MethodInfo("retainAll(Ljava/util/Collection;)Z", Type.SET, Action.REMOVE, Index.NA),
 						new MethodInfo("set(ILjava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.REPLACE, Index.INDEX),
 						new MethodInfo("sort(Ljava/util/Comparator;)V", Type.SET, Action.REPLACE, Index.NA)),
+				// map
+				Arrays.asList(new MethodInfo("clear()V", Type.SET, Action.REMOVE, Index.ALL),
+						new MethodInfo("forEach(Ljava/util/function/BiConsumer;)V", Type.SET, Action.REPLACE,
+								Index.ALL),
+						new MethodInfo(
+								"merge(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;",
+								Type.SET, Action.REPLACE, Index.KEY),
+						new MethodInfo("put(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.SET,
+								Action.ADD, Index.KEY),
+						new MethodInfo("putAll(Ljava/util/Map;)V", Type.SET, Action.ADD, Index.KEY),
+						new MethodInfo("putIfAbsent(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.SET,
+								Action.ADD, Index.KEY),
+						new MethodInfo("remove(Ljava/lang/Object;)Ljava/lang/Object;", Type.SET, Action.REMOVE,
+								Index.KEY),
+						new MethodInfo("remove(Ljava/lang/Object;Ljava/lang/Object;)Z", Type.SET, Action.REMOVE,
+								Index.KEY),
+						new MethodInfo("replace(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", Type.SET,
+								Action.REPLACE, Index.KEY),
+						new MethodInfo("replace(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z", Type.SET,
+								Action.REPLACE, Index.KEY),
+						new MethodInfo("replaceAll(Ljava/util/function/BiFunction;)V", Type.SET, Action.REPLACE,
+								Index.ALL)),
 				// hashmap
 				Arrays.asList(
 						new MethodInfo("clear()V", Type.SET, Action.REMOVE, Index.ALL),
@@ -221,6 +244,7 @@ public class DependencyRules {
 		List<List<String>> criticalDataStructures = Arrays.asList(
 				Arrays.asList("", ""), // linkedlist
 				Arrays.asList("elementData", "size"), // arraylist
+				Arrays.asList("table", "size"), // map
 				Arrays.asList("table", "size"), // hashmap
 				Arrays.asList("map.table", "map.size"), // hashset
 				Arrays.asList("queue", "size")// queue

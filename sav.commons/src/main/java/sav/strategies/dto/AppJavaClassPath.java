@@ -206,5 +206,9 @@ public class AppJavaClassPath {
 	public void setClassLoader(ClassLoader classLoader) {
 		this.classLoader = classLoader;
 	}
+
+	public void setClasspaths(List<String> classPaths) {
+		this.classpaths = classPaths;
+	}
 	
 }
