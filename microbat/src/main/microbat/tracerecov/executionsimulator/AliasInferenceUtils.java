@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.json.JSONObject;
-
+import com.github.javaparser.resolution.UnsolvedSymbolException;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.TraceRecovUtils;
@@ -25,30 +25,14 @@ public class AliasInferenceUtils {
 
 	private static final String ALIAS_INFERENCE_BACKGROUND = "<Background>\n"
 			+ "You are a Java expert, you need to analyze the alias relationships through static analysis. Given a variable and a method call, your task is to identify any alias relationship between (*Set 1*) the listed fields of the given variable and (*Set 2*) the variables involved in the method call and the return value of the method call."
-			+ "\n\n<Example>\n"
-			+ "Given code:\n"
-			+ "```list.add(item);```\n"
-			+ "\n"
-			+ "Given the source code of function calls in the code:\n"
-			+ "public boolean add(E e) {\n"
-			+ "modCount++;\n"
-			+ "add(e, elementData, size);\n"
-			+ "return true;\n"
-			+ "}\n"
-			+ "\n"
-			+ "Variables involved:\n"
-			+ "`list` is of type `java.util.ArrayList`,\n"
-			+ "`item` is of type `Integer`,\n"
-			+ "\n"
+			+ "\n\n<Example>\n" + "Given code:\n" + "```list.add(item);```\n" + "\n"
+			+ "Given the source code of function calls in the code:\n" + "public boolean add(E e) {\n" + "modCount++;\n"
+			+ "add(e, elementData, size);\n" + "return true;\n" + "}\n" + "\n" + "Variables involved:\n"
+			+ "`list` is of type `java.util.ArrayList`,\n" + "`item` is of type `Integer`,\n" + "\n"
 			+ "We know that another variable not in the code, `list`, with the following structure:\n"
-			+ "{\"list:java.util.ArrayList\":{\"elementData:java.lang.Object[]\":\"[]\",\"size:int\":\"0\"}}\n"
-			+ "\n"
-			+ "We are interested in the fields `list.elementData.elementData[0]`\n"
-			+ "\n"
-			+ "Your response should be:\n"
-			+ "{\n"
-			+ "\"list.elementData.elementData[0]\":\"item\"\n"
-			+ "}\n\n";
+			+ "{\"list:java.util.ArrayList\":{\"elementData:java.lang.Object[]\":\"[]\",\"size:int\":\"0\"}}\n" + "\n"
+			+ "We are interested in the fields `list.elementData.elementData[0]`\n" + "\n"
+			+ "Your response should be:\n" + "{\n" + "\"list.elementData.elementData[0]\":\"item\"\n" + "}\n\n";
 
 	/* Methods */
 
@@ -89,8 +73,12 @@ public class AliasInferenceUtils {
 				if (SourceCodeDatabase.sourceCodeMap.containsKey(methodSig)) {
 					methodSourceCode = SourceCodeDatabase.sourceCodeMap.get(methodSig);
 				} else {
-					methodSourceCode = sourceCodeRetriever.getMethodCode(methodSig,
-							step.getTrace().getAppJavaClassPath());
+					try {
+						methodSourceCode = sourceCodeRetriever.getMethodCode(methodSig,
+								step.getTrace().getAppJavaClassPath());
+					} catch (UnsolvedSymbolException e) {
+						methodSourceCode = methodSig;
+					}
 					SourceCodeDatabase.sourceCodeMap.put(methodSig, methodSourceCode);
 				}
 				question.append(methodSourceCode);
@@ -126,7 +114,7 @@ public class AliasInferenceUtils {
 		}
 		question.append(
 				"\n\nIf a variable has name of format `<TYPE>_instance`, it refers to the instance created by calling the constructor of `<TYPE>`.\n"
-				+ "If a variable has name of format `return_of_<method_signature>`, it refers to the variable returned by a method call of `<method_signature>`.");
+						+ "If a variable has name of format `return_of_<method_signature>`, it refers to the variable returned by a method call of `<method_signature>`.");
 
 		// target variable structure
 		question.append("\n\nWe know that another variable not in the code, `");
@@ -174,7 +162,8 @@ public class AliasInferenceUtils {
 		question.append("\n\nPerform static analysis. From the given code, identify all the aliases of `" + rootVarName
 				+ "` and the fields in `" + rootVarName + "`.");
 
-		question.append("\n\nIn your response, strictly follow the JSON format. The JSON keys are from the listed fields, JSON values are variables or their fields that are the corresponding aliases of the fields. Do not include explanation.");
+		question.append(
+				"\n\nIn your response, strictly follow the JSON format. The JSON keys are from the listed fields, JSON values are variables or their fields that are the corresponding aliases of the fields. Do not include explanation.");
 
 		return question.toString();
 	}
@@ -262,7 +251,7 @@ public class AliasInferenceUtils {
 			// fieldName has <= 1 layers OR rootVar not matched
 			return field;
 		}
-		
+
 		int lastIndex = fields.length - 1;
 		String lastField = fields[lastIndex];
 		if (lastField.contains("[") && lastField.contains("]")) {
@@ -281,7 +270,7 @@ public class AliasInferenceUtils {
 				return searchForField(nameBuilder.toString(), rootVar);
 			}
 		}
-		
+
 		int splitIndex = fieldName.indexOf(".");
 		if (splitIndex >= 0) {
 			String fName = fieldName.substring(fieldName.indexOf("."));
