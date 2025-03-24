@@ -93,7 +93,7 @@ public class DefinitionInferenceUtils {
 
 		/* type structure */
 		String jsonString = rootVar.isExpansionAbstracted() ? rootVar.getAbstractedValue()
-				: (rootVar.isExpanded() ? rootVar.getFullExpandedValue() : rootVar.getStringValue());
+				: (rootVar.isExpanded() ? rootVar.toJSON().toString() : rootVar.getStringValue());
 
 		/* all variables */
 		Set<VarValue> variablesInStep = step.getAllVariables();
@@ -126,13 +126,17 @@ public class DefinitionInferenceUtils {
 		// variables information (name, type, value)
 		question.append("\nVariables involved:");
 		for (VarValue var : step.getReadVariables()) {
+			String varType = var.getType();
+			if (varType.contains("$")) {
+				continue;
+			}
 			question.append("`");
 			question.append(var.getVarName());
 			question.append("` is of type `");
-			question.append(var.getType());
+			question.append(varType);
 			question.append("`, of runtime value \"");
 			String runtimeValue = var.isExpansionAbstracted() ? var.getAbstractedValue()
-					: (var.isExpanded() ? var.getFullExpandedValue() : var.getStringValue());
+					: (var.isExpanded() ? var.toJSON().toString() : var.getStringValue());
 			question.append(runtimeValue);
 			question.append("\",");
 		}
@@ -181,7 +185,7 @@ public class DefinitionInferenceUtils {
 		cascadeFieldName += targetVarName;
 
 		question.append(cascadeFieldName);
-		question.append("`, does the code ```" + sourceCode + "``` directly or indirectly write this field?"
+		question.append("`, does the code ```" + sourceCode + "``` directly or indirectly write field `" + cascadeFieldName + "`?"
 				+ "\nIn your response, return <T> for true and <F> for false. Briefly explain your answer.");
 
 		return question.toString();

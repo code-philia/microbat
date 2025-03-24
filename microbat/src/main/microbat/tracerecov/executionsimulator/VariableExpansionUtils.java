@@ -142,9 +142,11 @@ public class VariableExpansionUtils {
 		String isEnableIncontextLearningStr = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.ENABLE_IN_CONTEXT_LEARNING);
 		if (isEnableIncontextLearningStr != null && isEnableIncontextLearningStr.equals("true")) {
 			HashMap<String, String> datapoint = getDatapointFromStep(exampleVar, varSkeleton, step);
+			
+			String fullExpandedVal = exampleVar.isExpansionAbstracted() ? exampleVar.getFullExpandedValue() : exampleVar.toJSON().toString();
 
 			VarExpansionPromptTemplateFiller promptTemplateFiller = new VarExpansionPromptTemplateFiller();
-			return promptTemplateFiller.getExample(datapoint, exampleVar.getFullExpandedValue());
+			return promptTemplateFiller.getExample(datapoint, fullExpandedVal);
 		} else {
 			return "";
 		}
