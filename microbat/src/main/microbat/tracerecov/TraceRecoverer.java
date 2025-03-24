@@ -73,7 +73,7 @@ public class TraceRecoverer {
 //		end = currentStep.getOrder() - 1;
 
 		// definition inference
-		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables, variablesToCheck);
+		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables, variablesToCheck, currentStep);
 	}
 
 	/**
@@ -217,13 +217,13 @@ public class TraceRecoverer {
 	 * iterate through steps in scope, infer definition
 	 */
 	private void inferDefinition(Trace trace, int start, int end, VarValue rootVar, VarValue targetVar,
-			List<VarValue> criticalVariables, Set<String> variablesToCheck) {
+			List<VarValue> criticalVariables, Set<String> variablesToCheck, TraceNode currentStep) {
 
 		for (int i = end; i >= start; i--) {
 			TraceNode step = trace.getTraceNode(i);
 			if (isRelevantStep(step, variablesToCheck) && isStepToCheck(step)) {
 				// INFER DEFINITION STEP
-				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
+				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables, currentStep);
 
 				if (def) {
 					if (!step.getWrittenVariables().contains(targetVar)) {
