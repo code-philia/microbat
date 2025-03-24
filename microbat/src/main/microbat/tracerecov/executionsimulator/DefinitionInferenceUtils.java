@@ -1,5 +1,7 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -21,10 +23,21 @@ public class DefinitionInferenceUtils {
 	private static final String DEFINITION_INFERENCE_BACKGROUND = "<Background>\n"
 			+ "You are a Java expert, you need to analyze whether a variable is written.";
 
+	private static final String DEFINITION_INFERENCE_BACKGROUND_PAIR;
+
+	static {
+		try(InputStream is = DefinitionInferenceUtils.class.getClassLoader().getResourceAsStream("/resources/prompts/definition_inference_background.md")) {
+			DEFINITION_INFERENCE_BACKGROUND_PAIR = new String(is.readAllBytes());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	/* Methods */
 
 	public static String getBackgroundContent() {
-		return DEFINITION_INFERENCE_BACKGROUND;
+		// return DEFINITION_INFERENCE_BACKGROUND;
+		return DEFINITION_INFERENCE_BACKGROUND_PAIR;
 	}
 
 	public static String getBackgroundContent(VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
@@ -80,12 +93,16 @@ public class DefinitionInferenceUtils {
 	}
 
 	public static String getQuestionContent(TraceNode step, VarValue rootVar, VarValue targetVar,
-			List<VarValue> criticalVariables) {
+			List<VarValue> criticalVariables, TraceNode srcStep) {
 		/* source code */
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
 		String sourceCode = TraceRecovUtils
 				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(location, lineNo).trim());
+		String locationSrc = srcStep.getBreakPoint().getFullJavaFilePath();
+		String sourceCodeSrc = TraceRecovUtils
+				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(locationSrc, srcStep.getLineNumber()).trim());
+
 
 		/* variable properties */
 		String rootVarName = rootVar.getVarName();
@@ -100,7 +117,7 @@ public class DefinitionInferenceUtils {
 		/* invoked methods to be checked */
 		Set<String> invokedMethods = TraceRecovUtils.getInvokedMethodsToBeChecked(step.getInvokingMethod());
 
-		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n```");
+		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n**Target Line:**\n```");
 		question.append(sourceCode);
 		question.append("```");
 
@@ -123,7 +140,7 @@ public class DefinitionInferenceUtils {
 		}
 
 		// variables information (name, type, value)
-		question.append("\nVariables involved:");
+		question.append("\nVariables involved:\n**Variable:**\n");
 		for (VarValue var : step.getReadVariables()) {
 			question.append("`");
 			question.append(var.getVarName());
@@ -137,6 +154,10 @@ public class DefinitionInferenceUtils {
 		question.append("\n\nwe know that later `" + rootVarName + "` has the following structure and value:\n");
 		question.append(jsonString);
 		question.append("\n\nBut we don't know which step during the execution modified the value.\n");
+
+		question.append("\n\n**Usage Line:**\n```\n");
+		question.append(sourceCodeSrc);
+		question.append("\n```\n");
 
 		boolean isFirstVar = true;
 		for (VarValue var : variablesInStep) {

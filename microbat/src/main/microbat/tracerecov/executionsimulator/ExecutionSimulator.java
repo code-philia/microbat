@@ -253,7 +253,7 @@ public abstract class ExecutionSimulator {
 	}
 
 	public boolean inferDefinition(TraceNode step, VarValue rootVar, VarValue targetVar,
-			List<VarValue> criticalVariables) {
+			List<VarValue> criticalVariables, TraceNode srcStep) {
 
 		WriteStatus complication = WriteStatus.NO_GUARANTEE;
 		VarValue ancestorVarOnTrace = null;
@@ -285,7 +285,7 @@ public abstract class ExecutionSimulator {
 		} else if (complication == WriteStatus.GUARANTEE_NO_WRITE) {
 			return false;
 		} else {
-			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
+			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables, srcStep);
 		}
 	}
 
@@ -344,10 +344,14 @@ public abstract class ExecutionSimulator {
 	}
 
 	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar,
-			List<VarValue> criticalVariables) {
+			List<VarValue> criticalVariables, TraceNode srcStep) {
 
 		String background = DefinitionInferenceUtils.getBackgroundContent();
-		String content = DefinitionInferenceUtils.getQuestionContent(step, rootVar, targetVar, criticalVariables);
+		String content = DefinitionInferenceUtils.getQuestionContent(step, rootVar, targetVar, criticalVariables, srcStep);
+
+		System.out.println("Definition Inference------------------------------------------------");
+		System.out.println(background);
+		System.out.println(content);
 
 		this.logger.printInfoBeforeQuery("Definition Inference", targetVar, step, background + content);
 
