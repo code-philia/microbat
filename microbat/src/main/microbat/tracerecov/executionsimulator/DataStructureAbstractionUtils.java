@@ -1,5 +1,6 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -81,6 +82,7 @@ public class DataStructureAbstractionUtils {
 		JSONObject variable = new JSONObject(response);
 
 		selectedVariable.setAbstractedValue(response);
+		selectedVariable.setChildren(new ArrayList<>());
 
 		processResponseRecur(true, variable, selectedVariable);
 	}
@@ -125,8 +127,10 @@ public class DataStructureAbstractionUtils {
 
 					processResponseRecur(false, (JSONObject) value, varValue);
 				} else if (value instanceof String) {
+					var.setType("String");
 					varValue = new StringValue(String.valueOf(value), false, var);
 				} else if (value instanceof Integer) {
+					var.setType("int");
 					varValue = new PrimitiveValue(String.valueOf(value), false, var);
 				} else if (value == JSONObject.NULL) {
 					varValue = new ReferenceValue(true, false, var);

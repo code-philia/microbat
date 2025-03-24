@@ -317,6 +317,10 @@ public abstract class ExecutionSimulator {
 
 	public boolean inferDefinition(TraceNode step, VarValue rootVar, VarValue targetVar,
 			List<VarValue> criticalVariables) {
+		
+		if (shouldAbstract(rootVar.getType())) {
+			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables);
+		}
 
 		WriteStatus complication = WriteStatus.NO_GUARANTEE;
 		VarValue ancestorVarOnTrace = null;
