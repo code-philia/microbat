@@ -38,6 +38,9 @@ public abstract class VarValue implements GraphNode, Serializable {
 	protected List<VarValue> children = new ArrayList<>();
 	
 	private boolean isExpanded = false;
+	private boolean isExpansionAbstracted = false;
+	private String fullExpandedValue = "";
+	private String abstractedValue = "";
 	private boolean isRecoveryPerformed = false;
 	
 	/**
@@ -618,6 +621,30 @@ public abstract class VarValue implements GraphNode, Serializable {
 
 	public void setExpanded(boolean isExpanded) {
 		this.isExpanded = isExpanded;
+	}
+	
+	public boolean isExpansionAbstracted() {
+		return isExpansionAbstracted;
+	}
+
+	public void setExpansionAbstracted(boolean isExpansionAbstracted) {
+		this.isExpansionAbstracted = isExpansionAbstracted;
+	}
+	
+	public String getFullExpandedValue() {
+		return fullExpandedValue;
+	}
+
+	public void setFullExpandedValue(String fullExpandedValue) {
+		this.fullExpandedValue = fullExpandedValue;
+	}
+	
+	public String getAbstractedValue() {
+		return abstractedValue;
+	}
+
+	public void setAbstractedValue(String abstractedValue) {
+		this.abstractedValue = abstractedValue;
 	}
 
 	public boolean isRecoveryPerformed() {

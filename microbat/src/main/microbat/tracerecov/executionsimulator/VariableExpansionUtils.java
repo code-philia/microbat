@@ -20,6 +20,7 @@ import microbat.preference.RecovSlicingPreference;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.ExampleSearcher;
 import microbat.tracerecov.autoprompt.VarExpansionExampleSearcher;
+import microbat.tracerecov.autoprompt.VarExpansionPromptTemplateFiller;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.autoprompt.incontextlearning.FailToExtractMethodException;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
@@ -90,6 +91,10 @@ public class VariableExpansionUtils {
 	public static String getBackgroundContent() {
 		return VAR_EXPAND_BACKGROUND + VAR_EXPAND_EXAMPLE;
 	}
+	
+	public static String getBackgroundContentGivenExample(VarValue exampleVar, VariableSkeleton varSkeleton, TraceNode step) {
+		return VAR_EXPAND_BACKGROUND + formatGivenExample(exampleVar, varSkeleton, step);
+	}
 
 	public static String getBackgroundContent(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {
 		return VAR_EXPAND_BACKGROUND + getExample(varValue, varSkeleton, step);
@@ -131,6 +136,18 @@ public class VariableExpansionUtils {
 		datapoint.put(DatasetReader.GROUND_TRUTH, ""); // not available yet
 
 		return datapoint;
+	}
+	
+	private static String formatGivenExample(VarValue exampleVar, VariableSkeleton varSkeleton, TraceNode step) {
+		String isEnableIncontextLearningStr = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.ENABLE_IN_CONTEXT_LEARNING);
+		if (isEnableIncontextLearningStr != null && isEnableIncontextLearningStr.equals("true")) {
+			HashMap<String, String> datapoint = getDatapointFromStep(exampleVar, varSkeleton, step);
+
+			VarExpansionPromptTemplateFiller promptTemplateFiller = new VarExpansionPromptTemplateFiller();
+			return promptTemplateFiller.getExample(datapoint, exampleVar.getFullExpandedValue());
+		} else {
+			return "";
+		}
 	}
 
 	private static String getExample(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {

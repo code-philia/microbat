@@ -49,6 +49,9 @@ public abstract class ExecutionSimulator {
 
 	protected abstract String getAPIKey();
 
+	public final static String[] NEED_ABSTRACT_WORD = new String[] { "linkedlist", "queue", "set", "deque", "bitset",
+			"map", "hashtable", "stream", };
+
 	/* concrete methods */
 	public String sendRequest(String backgroundContent, String questionContent, LLMResponseType responseType)
 			throws IOException, RuntimeException {
@@ -160,7 +163,7 @@ public abstract class ExecutionSimulator {
 		return segments;
 	}
 
-	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String, String> preValueResponse)
+	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String, String> preValueResponse, VarValue exampleVar)
 			throws IOException {
 
 		if (selectedVar.isExpanded()) {
@@ -192,11 +195,64 @@ public abstract class ExecutionSimulator {
 			variableSkeletons.add(childSkeleton);
 		}
 
-		String background = VariableExpansionUtils.getBackgroundContent(selectedVar, parentSkeleton, step);
+		String background = exampleVar == null
+				? VariableExpansionUtils.getBackgroundContent(selectedVar, parentSkeleton, step)
+				: VariableExpansionUtils.getBackgroundContentGivenExample(exampleVar, parentSkeleton, step);
 		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step,
 				preValueResponse);
 
 		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, background + content);
+
+		for (int i = 0; i < 2; i++) {
+			try {
+				// variable expansion
+				long timeStart = System.currentTimeMillis();
+				String response = sendRequest(background, content, LLMResponseType.JSON);
+				long timeEnd = System.currentTimeMillis();
+				LLMTimer.varExpansionTime += timeEnd - timeStart;
+
+				this.logger.printResponse(i, response);
+				VariableExpansionUtils.processResponse(selectedVar, response);
+				
+				selectedVar.setExpanded(true);
+
+				// data structure abstraction
+				if (shouldAbstract(selectedVar.getType())) {
+					String fullExpandedValue = TraceRecovUtils.processInputStringForLLM(selectedVar.toJSON().toString());
+					selectedVar.setFullExpandedValue(fullExpandedValue);
+					return abstractDataStructure(selectedVar, step, exampleVar);
+				}
+				return response;
+			} catch (RuntimeException | IOException e) {
+				this.logger.printError(e.getMessage());
+				selectedVar.setExpanded(false);
+			}
+		}
+
+		return null;
+	}
+
+	private static boolean shouldAbstract(String typeString) {
+		typeString = typeString.toLowerCase();
+		for (String word : NEED_ABSTRACT_WORD) {
+			if (typeString.contains(word)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public String abstractDataStructure(VarValue selectedVar, TraceNode step, VarValue exampleVar)
+			throws IOException {
+
+		if (selectedVar.isExpansionAbstracted()) {
+			return null;
+		}
+
+		String background = DataStructureAbstractionUtils.getBackgroundContent(exampleVar);
+		String content = DataStructureAbstractionUtils.getQuestionContent(selectedVar);
+
+		this.logger.printInfoBeforeQuery("Data Structure Abstraction", selectedVar, step, background + content);
 
 		for (int i = 0; i < 2; i++) {
 			try {
@@ -205,13 +261,14 @@ public abstract class ExecutionSimulator {
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.varExpansionTime += timeEnd - timeStart;
 
-//				response = TraceRecovUtils.processOutputStringForLLM(response);
 				this.logger.printResponse(i, response);
-				VariableExpansionUtils.processResponse(selectedVar, response);
+				DataStructureAbstractionUtils.processResponse(selectedVar, response);
+
+				selectedVar.setExpansionAbstracted(true);
 				return response;
-				// break;
 			} catch (RuntimeException | IOException e) {
 				this.logger.printError(e.getMessage());
+				selectedVar.setExpansionAbstracted(false);
 			}
 		}
 
@@ -225,9 +282,15 @@ public abstract class ExecutionSimulator {
 			List<VarValue> criticalVariables) throws IOException {
 		return inferAliasRelationsByLLM(step, rootVar, criticalVariables);
 	}
-
+	
 	public Map<VarValue, VarValue> inferAliasRelationsByLLM(TraceNode step, VarValue rootVar,
 			List<VarValue> criticalVariables) throws IOException {
+		
+		VarValue matchedVar = findMatchingVar(step, rootVar);
+		
+		if (!matchedVar.isExpanded()) {
+			expandVariable(matchedVar, step, null, rootVar);
+		}
 
 		String background = AliasInferenceUtils.getBackgroundContent();
 		String content = AliasInferenceUtils.getQuestionContent(step, rootVar, criticalVariables);
@@ -289,6 +352,23 @@ public abstract class ExecutionSimulator {
 		}
 	}
 
+	private VarValue findMatchingVar(TraceNode step, VarValue rootVar) {
+		for (VarValue var : step.getAllVariables()) {
+			String aliasVarID = var.getAliasVarID();
+			String varID = var.getVarID();
+
+			// TODO: check whether fields of rootVar match with vars in step
+			// This check is omitted since alias inference is disabled
+			if (rootVar.getAliasVarID() != null && rootVar.getAliasVarID().equals(aliasVarID)) {
+				return var;
+			}
+			if (rootVar.getVarID() != null && rootVar.getVarID().equals(varID)) {
+				return var;
+			}
+		}
+		return null;
+	}
+
 	/**
 	 * deterministic flow: guarantee_write, guarantee_no_write 
 	 * must-analysis by LLM: no_guarantee
@@ -345,6 +425,16 @@ public abstract class ExecutionSimulator {
 
 	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar,
 			List<VarValue> criticalVariables) {
+
+		VarValue matchedVar = findMatchingVar(step, rootVar);
+
+		if (!matchedVar.isExpanded()) {
+			try {
+				expandVariable(matchedVar, step, null, rootVar);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 
 		String background = DefinitionInferenceUtils.getBackgroundContent();
 		String content = DefinitionInferenceUtils.getQuestionContent(step, rootVar, targetVar, criticalVariables);

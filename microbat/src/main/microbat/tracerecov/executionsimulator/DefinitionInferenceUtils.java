@@ -92,7 +92,8 @@ public class DefinitionInferenceUtils {
 		String targetVarName = targetVar.getVarName();
 
 		/* type structure */
-		String jsonString = TraceRecovUtils.processInputStringForLLM(rootVar.toJSON().toString());
+		String jsonString = rootVar.isExpansionAbstracted() ? rootVar.getAbstractedValue()
+				: (rootVar.isExpanded() ? rootVar.getFullExpandedValue() : rootVar.getStringValue());
 
 		/* all variables */
 		Set<VarValue> variablesInStep = step.getAllVariables();
@@ -130,7 +131,9 @@ public class DefinitionInferenceUtils {
 			question.append("` is of type `");
 			question.append(var.getType());
 			question.append("`, of runtime value \"");
-			question.append(var.getStringValue());
+			String runtimeValue = var.isExpansionAbstracted() ? var.getAbstractedValue()
+					: (var.isExpanded() ? var.getFullExpandedValue() : var.getStringValue());
+			question.append(runtimeValue);
 			question.append("\",");
 		}
 

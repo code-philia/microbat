@@ -17,7 +17,7 @@ public class ExecutionSimulatorForPromptCollection extends GPTExecutionSimulator
 	}
 
 	@Override
-	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String,String> preValueResponse) throws IOException {
+	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String,String> preValueResponse, VarValue exampleVar) throws IOException {
 
 		if (selectedVar.isExpanded()) {
 			return null;
