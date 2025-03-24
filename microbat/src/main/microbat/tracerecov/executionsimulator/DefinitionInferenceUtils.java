@@ -87,6 +87,10 @@ public class DefinitionInferenceUtils {
 		String sourceCode = TraceRecovUtils
 				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(location, lineNo).trim());
 
+		if (sourceCode.startsWith("/* write */")) {
+			sourceCode = sourceCode.substring(11, sourceCode.length());
+		}
+		
 		/* variable properties */
 		String rootVarName = rootVar.getVarName();
 		String targetVarName = targetVar.getVarName();

@@ -20,14 +20,39 @@ public class DataStructureAbstractionUtils {
 	/* Request content */
 
 	private static final String VAR_EXPAND_BACKGROUND = "<Background>\r\n"
-			+ "You are an expert in java who wants to extract out the semantic meanings of a given data structure."
-			+ "\r\n";
+			+ "You are an expert in java who wants to extract out the semantic meanings of a given data structure. If a data structure contains key-value pairs, such as Maps, then the pairs should be the key-value pairs in JSON.";
+	
+	private static final String VAR_EXPAND_EXAMPLE = "<Example>\r\n"
+			+ "Given `java.util.concurrent.ConcurrentHashMap` with structure:\r\n"
+			+ "{\"map|java.util.concurrent.ConcurrentHashMap\":{\"cellsBusy|int\":\"0\",\"transferIndex|int\":\"0\",\"sizeCtl|int\":\"12\",\"baseCount|long\":\"6\",\"table|java.util.concurrent.ConcurrentHashMap$Node[]\":[\"key1=10\",\"key2=20\",\"null\",\"null\",\"key5=50\",\"null\",\"key3=30\",\"key4=40\", \"null\", \"null\", \"null\", \"null\", \"key=42\"],\"nextTable|null\": null,\"counterCells|null\": null}}\r\n"
+			+ "\r\n"
+			+ "Return a simplified abstracted version in JSON.\r\n"
+			+ "\r\n"
+			+ "Your response should be:\r\n"
+			+ "{\r\n"
+			+ "  \"ConcurrentHashMap\": {\r\n"
+			+ "    \"metadata\": {\r\n"
+			+ "      \"cellsBusy\": 0,\r\n"
+			+ "      \"transferIndex\": 0,\r\n"
+			+ "      \"sizeCtl\": 12,\r\n"
+			+ "      \"baseCount\": 6\r\n"
+			+ "    },\r\n"
+			+ "    \"table\": {\r\n"
+			+ "      \"key1\": 10,\r\n"
+			+ "      \"key2\": 20,\r\n"
+			+ "      \"key5\": 50,\r\n"
+			+ "      \"key3\": 30,\r\n"
+			+ "      \"key4\": 40,\r\n"
+			+ "      \"key\": 42\r\n"
+			+ "    }\r\n"
+			+ "  }\r\n"
+			+ "}";
 
 	/* Methods */
 
 	public static String getBackgroundContent(VarValue exampleVar) {
 		if (exampleVar == null) {
-			return VAR_EXPAND_BACKGROUND;
+			return VAR_EXPAND_BACKGROUND + VAR_EXPAND_EXAMPLE;
 		}
 		return VAR_EXPAND_BACKGROUND + getContent(exampleVar, true);
 	}
@@ -174,13 +199,13 @@ public class DataStructureAbstractionUtils {
 
 				processResponseRecur(false, (JSONObject) value, varValue);
 			} else if (value instanceof String) {
-				varType = value.getClass().toString();
-				var.setType(varType);
+//				varType = value.getClass().toString();
+				var.setType("String");
 
 				varValue = new StringValue(String.valueOf(value), false, var);
 			} else if (value instanceof Integer) {
-				varType = value.getClass().toString();
-				var.setType(varType);
+//				varType = value.getClass().toString();
+				var.setType("int");
 
 				varValue = new PrimitiveValue(String.valueOf(value), false, var);
 			} else if (value == null) {
