@@ -225,8 +225,10 @@ public class TraceRecoverer {
 				// INFER DEFINITION STEP
 				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
 
-				if (def && !step.getWrittenVariables().contains(targetVar)) {
-					step.getWrittenVariables().add(targetVar);
+				if (def) {
+					if (!step.getWrittenVariables().contains(targetVar)) {
+						step.getWrittenVariables().add(targetVar);
+					}
 					break;
 				}
 			}

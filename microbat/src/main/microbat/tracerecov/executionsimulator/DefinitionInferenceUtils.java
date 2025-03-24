@@ -181,14 +181,16 @@ public class DefinitionInferenceUtils {
 		cascadeFieldName += targetVarName;
 
 		question.append(cascadeFieldName);
-		question.append("`, does the code directly or indirectly write this field?"
-				+ "\nIn your response, return T for true and F for false. Do not include explanation.");
+		question.append("`, does the code ```" + sourceCode + "``` directly or indirectly write this field?"
+				+ "\nIn your response, return <T> for true and <F> for false. Briefly explain your answer.");
 
 		return question.toString();
 	}
 
 	public static boolean isModified(String response) {
-		response = response.trim();
+		int begin = response.indexOf("<");
+		int end = response.indexOf(">");
+		response = response.substring(begin + 1, end);
 		return response.equals("T") ? true : false;
 	}
 
