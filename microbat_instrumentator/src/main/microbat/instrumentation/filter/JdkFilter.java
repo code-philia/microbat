@@ -53,6 +53,31 @@ public class JdkFilter {
 			"javax.",
 	};
 
+	public static void notExcludeAllJava() {
+		excludePrefixes = new String[] {
+			"sun.",
+			"com.sun.",
+			"microbat.",
+			"java.lang.",
+			"jdk.",
+			"org.junit.",
+			"sav.common.",
+			"sav.commons.",
+			"sav.strategies.",
+			"java.nio.",
+			"java.util.concurrent.",
+			"java.io.",
+			"java.net.",
+			"java.security.",
+			"junit.",
+			"org.testng.",
+			"java.util.regex.",
+			"org.apache.bcel.",
+			"java.time.",
+			"javax.",
+		};
+	}
+
 	static {
 		jdkExclusives = new HashSet<>();
 		for (String className : jdkExclusivesArray) {

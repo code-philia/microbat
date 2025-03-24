@@ -67,6 +67,8 @@ public class VMRunner {
 	private int vmDebugPort = -1;
 	
 	private String workingDir;
+
+	public boolean setToTenSecondsTimeout = false;
 	
 	public boolean startVm(VMConfiguration config) throws SavException {
 		this.isLog = config.isVmLogEnable();
@@ -181,14 +183,19 @@ public class VMRunner {
 //			executorService.
 			timer = null;
 			timerTask = null;
-			timeout = 20 * 60 * 1000; // timeout: 20 minutes
+			System.err.println("settoten: " + setToTenSecondsTimeout);
+			if(setToTenSecondsTimeout) {
+				timeout = 10000;
+			} else {
+				timeout = 20 * 60 * 1000; // timeout: 20 minutes
+			}
 			if (timeout != NO_TIME_OUT) {
 				timerTask = timeoutExecutor.schedule(new Runnable() {
 					
 					@Override
 					public void run() {
-						stop();
 						processTimeout = true;
+						stop();
 						log.info("destroy thread due to timeout!");
 					}
 				}, timeout, TimeUnit.MILLISECONDS);

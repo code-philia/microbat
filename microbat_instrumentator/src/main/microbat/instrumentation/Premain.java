@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarFile;
 
+import microbat.instrumentation.filter.JdkFilter;
 import microbat.instrumentation.instr.TestRunnerTranformer;
 import microbat.instrumentation.utils.CollectionUtils;
 import microbat.instrumentation.utils.FileUtils;
@@ -33,6 +34,10 @@ public class Premain {
 		installBootstrap(inst);
 		CommandLine cmd = CommandLine.parse(agentArgs);
 		AgentFactory.cmd = cmd;
+		if(cmd.getBoolean("no_exclude_all_java", false)) {
+			System.err.println("no_exclude_all_java");
+			JdkFilter.notExcludeAllJava();
+		}
 		
 		debug("start instrumentation...");
 		agentPreStartup = System.currentTimeMillis() - agentPreStartup;

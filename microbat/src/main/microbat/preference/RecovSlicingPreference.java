@@ -44,6 +44,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	public static final String SLICE_BUGS_TO_RUN = "slice_bugs_to_run";
 	public static final String ENABLE_IN_CONTEXT_LEARNING = "enable_incontext";
 	public static final String ENABLE_ALIAS_INFERENCE = "enable_alias";
+	public static final String ENABLE_RE_EXECUTION = "enable_re_execution";
 
 	/* constants before update */
 	private boolean isEnableTraceRecov;
@@ -63,6 +64,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	private String sliceBugsToRun;
 	private boolean isEnableInContextLearning;
 	private boolean isEnableAliasInference;
+	private boolean isEnableReexecution;
 
 	/* constants after update */
 	private Button isEnableTraceRecovButton;
@@ -82,6 +84,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 	private Text sliceBugsToRunText;
 	private Button isEnableInContextLearningButton;
 	private Button isEnableAliasInferenceButton;
+	private Button isEnableReexecutionButton;
 
 	public RecovSlicingPreference() {
 	}
@@ -181,6 +184,13 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 			this.isEnableAliasInference = true;
 		} else {
 			this.isEnableAliasInference = false;
+		}
+
+		String enableReexecutionStr = Activator.getDefault().getPreferenceStore().getString(ENABLE_RE_EXECUTION);
+		if (enableReexecutionStr != null && enableReexecutionStr.equals("true")) {
+			this.isEnableReexecution = true;
+		} else {
+			this.isEnableReexecution = false;
 		}
 	}
 
@@ -292,6 +302,9 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		String enableAliasInferenceLabel = "enable alias inference";
 		this.isEnableAliasInferenceButton = createCheckButton(slicingSettingGroup, enableAliasInferenceLabel,
 				this.isEnableAliasInference);
+
+		String enableReexecutionLabel = "enable re-execution";
+		this.isEnableReexecutionButton = createCheckButton(slicingSettingGroup, enableReexecutionLabel, this.isEnableReexecution);
 	}
 
 	private Group initGroup(final Composite parent, String title) {
@@ -371,6 +384,7 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 		preferences.put(ENABLE_IN_CONTEXT_LEARNING,
 				String.valueOf(this.isEnableInContextLearningButton.getSelection()));
 		preferences.put(ENABLE_ALIAS_INFERENCE, String.valueOf(this.isEnableAliasInferenceButton.getSelection()));
+		preferences.put(ENABLE_RE_EXECUTION, String.valueOf(this.isEnableReexecutionButton.getSelection()));
 
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_TRACERECOV,
 				String.valueOf(this.isEnableTraceRecovButton.getSelection()));
@@ -400,6 +414,8 @@ public class RecovSlicingPreference extends PreferencePage implements IWorkbench
 				String.valueOf(this.isEnableInContextLearningButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_ALIAS_INFERENCE,
 				String.valueOf(this.isEnableAliasInferenceButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(ENABLE_RE_EXECUTION,
+				String.valueOf(this.isEnableReexecutionButton.getSelection()));
 
 		Settings.isEnableGPTInference = this.isEnableLLMButton.getSelection();
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();
