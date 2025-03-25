@@ -361,11 +361,11 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 				}
 			}
 			else {
-//				value = String.valueOf(obj);// obj.toString();	
+				value = String.valueOf(obj);// obj.toString();	
 				
-//				if(isClassNameAndObjectId(value)) {
+				if(isClassNameAndObjectId(value)) {
 					value = parseFields(obj, layer);
-//				}
+				}
 			}
 			
 			long t2 = System.currentTimeMillis();

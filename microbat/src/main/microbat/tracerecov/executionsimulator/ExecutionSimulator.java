@@ -203,7 +203,7 @@ public abstract class ExecutionSimulator {
 
 		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, background + content);
 
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 5; i++) {
 			try {
 				// variable expansion
 				long timeStart = System.currentTimeMillis();
@@ -254,7 +254,7 @@ public abstract class ExecutionSimulator {
 
 		this.logger.printInfoBeforeQuery("Data Structure Abstraction", selectedVar, step, background + content);
 
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 5; i++) {
 			try {
 				long timeStart = System.currentTimeMillis();
 				String response = sendRequest(background, content, LLMResponseType.JSON);

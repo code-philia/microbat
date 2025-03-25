@@ -49,7 +49,7 @@ public class CriticalVarUtils {
 		content.append(sourceCode);
 		content.append("```");
 
-		content.append("\n\nFrom the above data structure, identify the field name that is most likely to be `");
+		content.append("\n\nFrom the above data structure, identify one field name that is most likely to be `");
 		content.append(criticalVar);
 		content.append("`");
 
