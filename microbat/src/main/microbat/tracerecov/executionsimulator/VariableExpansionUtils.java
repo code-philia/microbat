@@ -118,9 +118,9 @@ public class VariableExpansionUtils {
 
 		List<String> importStatements = getImportStatements(step);
 		int lineNo = lineNoInMethod;
-		if (importStatements.size() != 0) {
-			lineNo = lineNoInMethod + importStatements.size() + 1;
-		}
+//		if (importStatements.size() != 0) {
+//			lineNo = lineNoInMethod + importStatements.size() + 1;
+//		}
 
 		StringBuilder imports = new StringBuilder();
 		importStatements.stream().forEach(i -> imports.append(i + "\n"));
