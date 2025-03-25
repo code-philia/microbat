@@ -59,7 +59,7 @@ public class TraceRecoverer {
 		int start = scopeStart.getOrder() + 1;
 		int end = currentStep.getOrder() - 1;
 
-		// alias inference
+//		// alias inference
 //		String isEnableAliasInferenceStr = Activator.getDefault().getPreferenceStore()
 //				.getString(RecovSlicingPreference.ENABLE_ALIAS_INFERENCE);
 //		if (isEnableAliasInferenceStr != null && isEnableAliasInferenceStr.equals("true")) {
@@ -112,16 +112,20 @@ public class TraceRecoverer {
 
 		for (VarValue criticalVar : criticalVariables) {
 			String aliasID = criticalVar.getAliasVarID();
-			if (isValidAliasID(aliasID)) {
+			String varID = criticalVar.getVarID();
+			if (isValidID(aliasID)) {
 				variablesToCheck.add(aliasID);
+			}
+			if (isValidID(varID)) {
+				variablesToCheck.add(varID);
 			}
 		}
 
 		return variablesToCheck;
 	}
 
-	private boolean isValidAliasID(String aliasID) {
-		return aliasID != null && !aliasID.equals("0") && !aliasID.equals("");
+	private boolean isValidID(String id) {
+		return id != null && !id.equals("0") && !id.equals("");
 	}
 
 	/**
@@ -185,7 +189,7 @@ public class TraceRecoverer {
 								aliasIdOfCriticalVar = aliasIdOfCriticalVar.split(":")[0];
 							}
 
-							if (isValidAliasID(aliasIdOfCriticalVar)) {
+							if (isValidID(aliasIdOfCriticalVar)) {
 								updateAliasIDOfField(writtenField, variableOnTrace, criticalVariables);
 								variablesToCheck.add(aliasIdOfCriticalVar);
 							}
@@ -193,7 +197,7 @@ public class TraceRecoverer {
 							/*
 							 * key and value: variable on trace. Field in variable is not recorded.
 							 */
-							if (isValidAliasID(writtenField.getAliasVarID())) {
+							if (isValidID(writtenField.getAliasVarID())) {
 								String aliasIdOfCriticalVar = writtenField.getAliasVarID();
 								if (aliasIdOfCriticalVar != null && aliasIdOfCriticalVar.contains(":")) {
 									aliasIdOfCriticalVar = aliasIdOfCriticalVar.split(":")[0];
@@ -241,7 +245,7 @@ public class TraceRecoverer {
 	private boolean isRelevantStep(TraceNode step, Set<String> variablesToCheck) {
 		Set<VarValue> variablesInStep = step.getAllVariables();
 		for (VarValue variable : variablesInStep) {
-			if (variablesToCheck.contains(variable.getAliasVarID())
+			if ((variablesToCheck.contains(variable.getAliasVarID()) || variablesToCheck.contains(variable.getVarID()))
 					&& (variable.getVarName() != null && !variable.getVarName().contains("this"))) {
 				return true;
 			}

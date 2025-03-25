@@ -114,7 +114,8 @@ public class TraceRecovUtils {
 			return true;
 		}
 
-		return className.contains(".");
+//		return className.contains(".");
+		return true;
 	}
 
 	public static boolean isUnrecorded(String type, AppJavaClassPath appJavaClassPath) {
