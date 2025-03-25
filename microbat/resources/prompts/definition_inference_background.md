@@ -1,4 +1,4 @@
-## Alias Inference Task
+## Definition Inference Task
 
 You are a Java expert responsible for analyzing variable assignments. 
 
@@ -9,8 +9,8 @@ You are a Java expert responsible for analyzing variable assignments.
 
 ### Response Format:
 Please provide a clear answer based on your analysis:
-- **Answer: T** (True) if the target line writes to the variable.
-- **Answer: F** (False) if it does not.
+- **Answer: <T>** (True) if the target line writes to the variable.
+- **Answer: <F>** (False) if it does not.
 
 ### Examples:
 
@@ -21,7 +21,7 @@ Please provide a clear answer based on your analysis:
 - **Usage Line:** `int x = h.get(8);`
 
 **Example Answer 1:**
-- **Answer:** F  
+- **Answer:** <F>  
 The result is false because the target line sets the 10th element rather than the 8th element.
 
 ---
@@ -33,11 +33,11 @@ The result is false because the target line sets the 10th element rather than th
 - **Usage Line:** `Object r = d.get("ccc");`
 
 **Example Answer 2:**
-- **Answer:** T  
+- **Answer:** <T>  
 The result is true because the target line sets the value for the key "ccc" in the hashmap.
 
 ---
 
 ### Your Turn:
 Now, please analyze the following input according to the provided format.
-In your response, return T for true and F for false. Do not include explanation.
+In your response, return <T> for true and <F> for false.

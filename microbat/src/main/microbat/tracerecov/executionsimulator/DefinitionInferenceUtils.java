@@ -23,21 +23,21 @@ public class DefinitionInferenceUtils {
 	private static final String DEFINITION_INFERENCE_BACKGROUND = "<Background>\n"
 			+ "You are a Java expert, you need to analyze whether a variable is written.";
 
-//	private static final String DEFINITION_INFERENCE_BACKGROUND_PAIR;
-//
-//	static {
-//		try(InputStream is = DefinitionInferenceUtils.class.getClassLoader().getResourceAsStream("/resources/prompts/definition_inference_background.md")) {
-//			DEFINITION_INFERENCE_BACKGROUND_PAIR = new String(is.readAllBytes());
-//		} catch (IOException e) {
-//			throw new RuntimeException(e);
-//		}
-//	}
+	private static final String DEFINITION_INFERENCE_BACKGROUND_PAIR;
+
+	static {
+		try(InputStream is = DefinitionInferenceUtils.class.getClassLoader().getResourceAsStream("/resources/prompts/definition_inference_background.md")) {
+			DEFINITION_INFERENCE_BACKGROUND_PAIR = new String(is.readAllBytes());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	/* Methods */
 
 	public static String getBackgroundContent() {
-		return DEFINITION_INFERENCE_BACKGROUND;
-//		return DEFINITION_INFERENCE_BACKGROUND_PAIR;
+//		return DEFINITION_INFERENCE_BACKGROUND;
+		return DEFINITION_INFERENCE_BACKGROUND_PAIR;
 	}
 
 	public static String getBackgroundContent(VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
