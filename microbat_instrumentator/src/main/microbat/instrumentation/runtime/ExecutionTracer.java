@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.bcel.Const;
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.LocalVariable;
 import org.apache.bcel.classfile.LocalVariableTable;
@@ -57,6 +58,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 
 	public static AppJavaClassPath appJavaClassPath;
 	public static int variableLayer = 2;
+	public static int toStringValLayer = 3;
 	public static int stepLimit = Integer.MAX_VALUE;
 	public static int expectedSteps = Integer.MAX_VALUE;
 //	private static int tolerantExpectedSteps = expectedSteps;
@@ -162,9 +164,9 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		boolean isRoot = (parent == null);
 		VarValue varValue = null;
 		if (PrimitiveUtils.isString(var.getType())) {
-			varValue = new StringValue(getStringValue(value, null), isRoot, var);
+			varValue = new StringValue(getStringValue(value, toStringValLayer), isRoot, var);
 		} else if (PrimitiveUtils.isPrimitive(var.getType())) {
-			varValue = new PrimitiveValue(getStringValue(value, null), isRoot, var);
+			varValue = new PrimitiveValue(getStringValue(value, toStringValLayer), isRoot, var);
 		} else if (var.getType().endsWith("[]")) {
 			if(value != null) {
 				var.setType(value.getClass().getTypeName());				
@@ -193,7 +195,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			
 			varValue = arrVal;
 			// varValue.setStringValue(getStringValue(value, arrVal.getComponentType()));
-			varValue.setStringValue(getStringValue(value, var.getType()));
+			varValue.setStringValue(getStringValue(value, toStringValLayer));
 			if (value == null) {
 				arrVal.setNull(true);
 			} else {
@@ -219,7 +221,7 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 			ReferenceValue refVal = new ReferenceValue(value == null, TraceUtils.getUniqueId(value), isRoot, var);
 			varValue = refVal;
 			// varValue.setStringValue(getStringValue(value, var.getType()));
-			varValue.setStringValue(getStringValue(value, null));
+			varValue.setStringValue(getStringValue(value, toStringValLayer));
 			if (value != null) {
 				Class<?> objClass = value.getClass();
 				var.setRtType(objClass.getName());
@@ -307,24 +309,11 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 
 	private static Set<Class<?>> stringValueBlackList = new HashSet<>();
 	
-	private String getStringValue(final Object obj, String type) {
+	private String getStringValue(final Object obj, int layer) {
 		try {
 			if (obj == null) {
 				return "null";
 			}
-
-			// if (FilterChecker.isCustomizedToStringClass(obj.getClass().getName())) {
-			// java.lang.reflect.Method toStringMethod = null;
-			// for (java.lang.reflect.Method method : obj.getClass().getDeclaredMethods()) {
-			// if (method.getName().equals(TraceInstrumenter.NEW_TO_STRING_METHOD)) {
-			// toStringMethod = method;
-			// break;
-			// }
-			// }
-			// if (toStringMethod != null) {
-			// return (String) toStringMethod.invoke(obj);
-			// }
-			// }
 
 			if (avoidProxyToString && isProxyClass(obj.getClass())) {
 				return obj.getClass().getName();
@@ -360,17 +349,22 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 					value = Arrays.toString((float[])(obj));
 				}
 				else if(obj instanceof boolean[]) {
-					value = Arrays.toString((Object[])(obj));
+					value = Arrays.toString((boolean[])(obj));
 				}
 				else if(obj instanceof Object[]) {
-					value = Arrays.toString((Object[])(obj));
+					value = "[";
+					Object[] array = (Object[]) obj;
+					for (Object o : array) {
+						value += getStringValue(o, layer - 1);
+					}
+					value += "]";
 				}
 			}
 			else {
 //				value = String.valueOf(obj);// obj.toString();	
-//				
+				
 //				if(isClassNameAndObjectId(value)) {
-					value = parseFields(obj);
+					value = parseFields(obj, layer);
 //				}
 			}
 			
@@ -385,7 +379,10 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
 		}
 	}
 	
-	private String parseFields(Object obj) {
+	private String parseFields(Object obj, int layer) {
+		if (layer == 0) {
+			return obj.toString();
+		}
 		
 		StringBuffer buffer = new StringBuffer();
 		buffer.append("{");
@@ -399,13 +396,17 @@ public class ExecutionTracer implements IExecutionTracer, ITracer {
             for (Field field : fields) {
                 field.setAccessible(true); // Make private fields accessible
                 
+                if ((field.getModifiers() & Const.ACC_FINAL) != 0) {
+                	continue;
+                }
+                
                 buffer.append(field.getName() + "=");
                 
                 try {
                     // Get and print the value of the field
                     Object value = field.get(obj);
                     
-                    String valString = getStringValue(value);
+                    String valString = getStringValue(value, layer - 1);
                     
                     buffer.append(valString + ", ");
                     

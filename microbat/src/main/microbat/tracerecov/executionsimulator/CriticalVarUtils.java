@@ -8,7 +8,31 @@ public class CriticalVarUtils {
 
 	/* Methods */
 
-	public static String getPrompt(VarValue rootVar, TraceNode slicingCriterion, String criticalVar) {
+	public static String getPromptForVarIdentification(TraceNode slicingCriterion, String criticalVar) {
+		StringBuilder content = new StringBuilder();
+		
+		content.append("Given code ```");
+		int lineNo = slicingCriterion.getLineNumber();
+		String location = slicingCriterion.getBreakPoint().getFullJavaFilePath();
+		String sourceCode = TraceRecovUtils
+				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(location, lineNo).trim());
+		content.append(sourceCode);
+		content.append("```");
+		
+		content.append("\n\nIdentify the variable name that is most likely to contain `");
+		content.append(criticalVar);
+		content.append("`");
+		
+		content.append("\r\n" + "Chose from the following variable names:\n");
+		for (VarValue v : slicingCriterion.getReadVariables()) {
+			content.append(v.getVarName() + "\n");
+		}
+		content.append("Do not include explanation.");
+		
+		return content.toString();
+	}
+	
+	public static String getPromptForFieldIdentification(VarValue rootVar, TraceNode slicingCriterion, String criticalVar) {
 
 		StringBuilder content = new StringBuilder();
 

@@ -465,9 +465,28 @@ public abstract class ExecutionSimulator {
 
 		return false;
 	}
+	
+	public String getCriticalVar(TraceNode slicingCriterion, String criticalVarName) {
+		String prompt = CriticalVarUtils.getPromptForVarIdentification(slicingCriterion, criticalVarName);
+		
+		System.out.println(prompt);
 
-	public String getCriticalVariable(VarValue rootVar, TraceNode slicingCriterion, String criticalVarName) {
-		String prompt = CriticalVarUtils.getPrompt(rootVar, slicingCriterion, criticalVarName);
+		for (int i = 0; i < 2; i++) {
+			try {
+
+				String response = sendRequest("", prompt, LLMResponseType.TEXT);
+				this.logger.printResponse(i, response);
+				return response.strip();
+			} catch (IOException | RuntimeException e) {
+				this.logger.printError(e.getMessage());
+			}
+		}
+
+		return "";
+	}
+
+	public String getCriticalField(VarValue rootVar, TraceNode slicingCriterion, String criticalVarName) {
+		String prompt = CriticalVarUtils.getPromptForFieldIdentification(rootVar, slicingCriterion, criticalVarName);
 
 		System.out.println(prompt);
 
