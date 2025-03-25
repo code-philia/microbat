@@ -202,6 +202,7 @@ public class InContextExecutor {
         executor.getAgentRunner().addAgentParam(CommonParams.OPT_MANUALLY_TEST_RUNNING_CLASS, "SampleTest");
         executor.getAgentRunner().addAgentParam(AgentParams.OPT_VARIABLE_LAYER, Integer.toString(3));
         executor.getAgentRunner().addAgentParam(AgentParams.OPT_TRACKING_ALL_FIELDS, "true");
+        executor.getAgentRunner().setToTenSecondsTimeout = true;
         RunningInfo results = null;
         try {
             results = executor.run();

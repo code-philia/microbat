@@ -299,7 +299,7 @@ public class TraceRecovUtils {
 
 		Object[] outputArray = new Object[2];
 		outputArray[0] = methodContent.toString();
-		outputArray[1] = lineNumber - methodStartLine + 1;
+		outputArray[1] = lineNumber - methodStartLine;
 		return outputArray;
 	}
 
