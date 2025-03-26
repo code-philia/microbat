@@ -59,18 +59,18 @@ public class TraceRecoverer {
 		int start = scopeStart.getOrder() + 1;
 		int end = currentStep.getOrder() - 1;
 
-//		// alias inference
-//		String isEnableAliasInferenceStr = Activator.getDefault().getPreferenceStore()
-//				.getString(RecovSlicingPreference.ENABLE_ALIAS_INFERENCE);
-//		if (isEnableAliasInferenceStr != null && isEnableAliasInferenceStr.equals("true")) {
-//			inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck);
-//		}
-//		// update scope of searching
-//		scopeStart = determineScopeOfSearching(criticalVariables, trace, currentStep);
-//		if (scopeStart == null)
-//			return;
-//		start = scopeStart.getOrder() + 1;
-//		end = currentStep.getOrder() - 1;
+		// alias inference
+		String isEnableAliasInferenceStr = Activator.getDefault().getPreferenceStore()
+				.getString(RecovSlicingPreference.ENABLE_ALIAS_INFERENCE);
+		if (isEnableAliasInferenceStr != null && isEnableAliasInferenceStr.equals("true")) {
+			inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck);
+		}
+		// update scope of searching
+		scopeStart = determineScopeOfSearching(criticalVariables, trace, currentStep);
+		if (scopeStart == null)
+			return;
+		start = scopeStart.getOrder() + 1;
+		end = currentStep.getOrder() - 1;
 
 		// definition inference
 		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables, variablesToCheck, currentStep);

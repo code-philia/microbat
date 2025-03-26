@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.json.JSONObject;
 
 import microbat.codeanalysis.bytecode.CFG;
@@ -286,12 +287,6 @@ public abstract class ExecutionSimulator {
 	public Map<VarValue, VarValue> inferAliasRelationsByLLM(TraceNode step, VarValue rootVar,
 			List<VarValue> criticalVariables) throws IOException {
 		
-		VarValue matchedVar = findMatchingVar(step, rootVar);
-		
-		if (!matchedVar.isExpanded()) {
-			expandVariable(matchedVar, step, null, rootVar);
-		}
-
 		String background = AliasInferenceUtils.getBackgroundContent();
 		String content = AliasInferenceUtils.getQuestionContent(step, rootVar, criticalVariables);
 
