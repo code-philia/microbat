@@ -71,7 +71,8 @@ public class ExecuteWithConfig<T> {
                 return;
             }
 
-            log.info("Config loaded: {}", config);
+            String configString = gson.toJson(config);
+            log.info("Config loaded for task {}: {}", taskName, configString);
 
             T configInner = config;
 
