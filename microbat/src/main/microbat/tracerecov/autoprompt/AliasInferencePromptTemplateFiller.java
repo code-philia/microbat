@@ -45,7 +45,7 @@ public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
 	@Override
 	public String getPromptQuestion(HashMap<String, String> datapoint) {
 		/* datapoint features */
-		String sourceCode = datapoint.get(DatasetReader.SOURCE_CODE);
+		String sourceCode = datapoint.get(DatasetReader.LINE_SOURCE_CODE);
 		JSONObject variablesInStep = new JSONObject(datapoint.get(DatasetReader.VARS_IN_STEP));
 
 		JSONObject fieldsOfVariablesInStep = new JSONObject(datapoint.get(DatasetReader.FIELDS_OF_VARS_IN_STEP));
@@ -148,7 +148,7 @@ public class AliasInferencePromptTemplateFiller extends PromptTemplateFiller {
 	@Override
 	public String getExample(HashMap<String, String> datapoint, String groundTruth) {
 		/* datapoint features */
-		String sourceCode = datapoint.get(DatasetReader.SOURCE_CODE);
+		String sourceCode = datapoint.get(DatasetReader.LINE_SOURCE_CODE);
 		JSONObject variablesInStep = new JSONObject(datapoint.get(DatasetReader.VARS_IN_STEP));
 
 		String targetVar = datapoint.get(DatasetReader.TARGET_VAR);

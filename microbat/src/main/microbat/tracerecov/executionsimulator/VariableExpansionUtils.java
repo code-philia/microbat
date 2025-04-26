@@ -7,6 +7,7 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import microbat.Activator;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.ArrayValue;
 import microbat.model.value.PrimitiveValue;
@@ -15,10 +16,13 @@ import microbat.model.value.StringValue;
 import microbat.model.value.VarValue;
 import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
+import microbat.preference.RecovSlicingPreference;
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.ExampleSearcher;
 import microbat.tracerecov.autoprompt.VarExpansionExampleSearcher;
+import microbat.tracerecov.autoprompt.VarExpansionPromptTemplateFiller;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
+import microbat.tracerecov.autoprompt.incontextlearning.FailToExtractMethodException;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.common.core.Pair;
 
@@ -87,6 +91,10 @@ public class VariableExpansionUtils {
 	public static String getBackgroundContent() {
 		return VAR_EXPAND_BACKGROUND + VAR_EXPAND_EXAMPLE;
 	}
+	
+	public static String getBackgroundContentGivenExample(VarValue exampleVar, VariableSkeleton varSkeleton, TraceNode step) {
+		return VAR_EXPAND_BACKGROUND + formatGivenExample(exampleVar, varSkeleton, step);
+	}
 
 	public static String getBackgroundContent(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {
 		return VAR_EXPAND_BACKGROUND + getExample(varValue, varSkeleton, step);
@@ -96,40 +104,102 @@ public class VariableExpansionUtils {
 			TraceNode step) {
 		HashMap<String, String> datapoint = new HashMap<>();
 
+		Object[] methodSourceCodeAndLine;
+		String methodSourceCode = "";
+		int lineNoInMethod = -1;
+		try {
+			methodSourceCodeAndLine = getMethodSourceCode(step);
+			methodSourceCode = (String) methodSourceCodeAndLine[0];
+			lineNoInMethod = (int) methodSourceCodeAndLine[1];
+		} catch (FailToExtractMethodException e) {
+			e.printStackTrace();
+		}
+		
+
+		List<String> importStatements = getImportStatements(step);
+		int lineNo = lineNoInMethod;
+//		if (importStatements.size() != 0) {
+//			lineNo = lineNoInMethod + importStatements.size() + 1;
+//		}
+
+		StringBuilder imports = new StringBuilder();
+		importStatements.stream().forEach(i -> imports.append(i + "\n"));
+
 		datapoint.put(DatasetReader.VAR_NAME, varValue.getVarName());
 		datapoint.put(DatasetReader.VAR_TYPE, varValue.getType());
 		datapoint.put(DatasetReader.VAR_VALUE, TraceRecovUtils.processInputStringForLLM(varValue.getStringValue()));
 		datapoint.put(DatasetReader.CLASS_STRUCTURE, varSkeleton.toString());
-		datapoint.put(DatasetReader.SOURCE_CODE, getSourceCode(step));
+		datapoint.put(DatasetReader.LINE_SOURCE_CODE, getLineSourceCode(step));
+		datapoint.put(DatasetReader.METHOD_SOURCE_CODE, methodSourceCode);
+		datapoint.put(DatasetReader.IMPORTS, imports.toString());
+		datapoint.put(DatasetReader.LINE_NO, String.valueOf(lineNo));
 		datapoint.put(DatasetReader.GROUND_TRUTH, ""); // not available yet
 
 		return datapoint;
 	}
+	
+	private static String formatGivenExample(VarValue exampleVar, VariableSkeleton varSkeleton, TraceNode step) {
+		String isEnableIncontextLearningStr = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.ENABLE_IN_CONTEXT_LEARNING);
+		if (isEnableIncontextLearningStr != null && isEnableIncontextLearningStr.equals("true")) {
+			HashMap<String, String> datapoint = getDatapointFromStep(exampleVar, varSkeleton, step);
+			
+			String fullExpandedVal = exampleVar.isExpansionAbstracted() ? exampleVar.getFullExpandedValue() : exampleVar.toJSON().toString();
 
-	private static String getExample(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {
-		HashMap<String, String> datapoint = getDatapointFromStep(varValue, varSkeleton, step);
-
-		ExampleSearcher exampleSearcher = new VarExpansionExampleSearcher(true);
-		String closestExample = exampleSearcher.searchForExample(datapoint);
-
-		if (closestExample == null || closestExample.equals("")) {
-			return VAR_EXPAND_EXAMPLE;
+			VarExpansionPromptTemplateFiller promptTemplateFiller = new VarExpansionPromptTemplateFiller();
+			return promptTemplateFiller.getExample(datapoint, fullExpandedVal);
+		} else {
+			return "";
 		}
-		return closestExample;
 	}
 
-	private static String getSourceCode(TraceNode step) {
+	private static String getExample(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {
+		String isEnableIncontextLearningStr = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.ENABLE_IN_CONTEXT_LEARNING);
+		if (isEnableIncontextLearningStr != null && isEnableIncontextLearningStr.equals("true")) {
+			HashMap<String, String> datapoint = getDatapointFromStep(varValue, varSkeleton, step);
+
+			ExampleSearcher exampleSearcher = new VarExpansionExampleSearcher(true);
+			String closestExample = exampleSearcher.searchForExample(datapoint, step.getTrace().getAppJavaClassPath());
+
+			if (closestExample == null || closestExample.equals("")) {
+				return VAR_EXPAND_EXAMPLE;
+			}
+			return closestExample;
+		} else {
+			return "";
+		}
+	}
+
+	private static String getLineSourceCode(TraceNode step) {
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
 		String sourceCode = TraceRecovUtils
 				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(location, lineNo).trim());
 		return sourceCode;
 	}
+	
+	/**
+	 * Get method code and the relative line number of the given line within the method.
+	 * 
+	 * @param filePath
+	 * @param lineNumber
+	 * @return Object[] {String MethodSourceCode, Integer RelativeLineNumber}
+	 * @throws FailToExtractMethodException 
+	 */
+	private static Object[] getMethodSourceCode(TraceNode step) throws FailToExtractMethodException {
+		int lineNo = step.getLineNumber();
+		String location = step.getBreakPoint().getFullJavaFilePath();
+		return TraceRecovUtils.getSourceCodeOfMethodContainingLine(location, lineNo);
+	}
+	
+	private static List<String> getImportStatements(TraceNode step) {
+		String location = step.getBreakPoint().getFullJavaFilePath();
+		return TraceRecovUtils.getImportStatements(location);
+	}
 
 	public static String getQuestionContent(VarValue selectedVariable, List<VariableSkeleton> variableSkeletons,
 			TraceNode step, Pair<String, String> preValueResponse) {
 		/* source code */
-		String sourceCode = getSourceCode(step);
+		String sourceCode = getLineSourceCode(step);
 
 		/* type of selected variable */
 		String variableType = selectedVariable.getType();
@@ -167,7 +237,7 @@ public class VariableExpansionUtils {
 				+ "* as the root. Do not include explanation in your response.\n");
 
 		question.append("You must follow the JSON format as \"var_name|var_type\": var_value. "
-				+ "Do not include duplicate keys. Do not include extra characters like `\\t`, `\\n` or `\\r`. You must infer all var_value.");
+				+ "Do not include duplicate keys. Make sure to include all the fields relevant to the given line of code. Do not include extra characters like `\\t`, `\\n` or `\\r`. You must infer all var_value.");
 
 //		/*
 //		 * Added to enforce identical variable structure in buggy and correct trace
@@ -264,7 +334,8 @@ public class VariableExpansionUtils {
 
 			String headAddress = selectedVariable.getAliasVarID().equals("0") ? selectedVariable.getVarID()
 					: selectedVariable.getAliasVarID();
-			String varID = Variable.concanateFieldVarID(headAddress, varName);
+			String varID = headAddress + "[" + index + "]";
+//			String varID = Variable.concanateFieldVarID(headAddress, varName);
 
 			Variable var = new FieldVar(false, varName, varType, varType);
 			var.setVarID(varID);

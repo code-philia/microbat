@@ -7,13 +7,22 @@ import java.util.function.Function;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 import microbat.tracerecov.executionsimulator.LLMResponseType;
+import sav.strategies.dto.AppJavaClassPath;
 
 /**
  * This class is used to search for the most relevant example from the database.
  */
 public abstract class ExampleSearcher {
+	
+	/**
+	 * For internal use only.
+	 * 
+	 * @param datapoint
+	 * @return Object[] {String Example, Double Score}
+	 */
+	protected abstract Object[] searchForExample(HashMap<String, String> datapoint);
 
-	public abstract String searchForExample(HashMap<String, String> datapoint);
+	public abstract String searchForExample(HashMap<String, String> datapoint, AppJavaClassPath appJavaClassPath);
 
 	/**
 	 * For testing purpose
@@ -34,7 +43,7 @@ public abstract class ExampleSearcher {
 			int begin = output.indexOf("{");
 			int end = output.lastIndexOf("}");
 			return output.substring(begin, end + 1);
-		} catch (IOException e) {
+		} catch (IOException | RuntimeException e) {
 			e.printStackTrace();
 		}
 		return null;

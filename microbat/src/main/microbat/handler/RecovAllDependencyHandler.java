@@ -146,7 +146,7 @@ public class RecovAllDependencyHandler extends StartDebugHandler {
 							&& TraceRecovUtils.isUnrecorded(readVar.getType(), appJavaClassPath)) {
 						try {
 							// variable expansion
-							executionSimulator.expandVariable(readVar, step, null);
+							executionSimulator.expandVariable(readVar, step, null, null);
 
 							for (VarValue targetVar : readVar.getAllDescedentChildren()) {
 								// find all data dominators

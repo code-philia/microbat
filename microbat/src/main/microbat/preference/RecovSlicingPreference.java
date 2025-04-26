@@ -20,68 +20,80 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import microbat.Activator;
-import microbat.tracerecov.autoprompt.PromptType;
 import microbat.tracerecov.executionsimulator.LLMModel;
 import microbat.tracerecov.executionsimulator.SimulatorConstants;
 import microbat.util.Settings;
 
-public class TraceRecovPreference extends PreferencePage implements IWorkbenchPreferencePage {
+public class RecovSlicingPreference extends PreferencePage implements IWorkbenchPreferencePage {
 
 	public static final String ENABLE_TRACERECOV = "enable_tracerecov";
 	public static final String ENABLE_LLM = "enable_llm";
 	public static final String USE_MUTATION_CONFIG = "use_mutation_config";
 	public static final String API_KEY = "api_key";
+	public static final String TB_API_KEY = "tb_api_key";
 	public static final String MODEL_TYPE = "model_type";
+	public static final String IS_OPENAI_ENDPOINT = "openai_endpoint";
 	public static final String METHOD_LAYER = "method_layer";
-	public static final String COLLECT_PROMPT = "collect_prompt";
 	public static final String ENABLE_LOGGING = "enable_logging";
 	public static final String LOG_DEBUG_INFO = "log_debug_info";
-	public static final String VAR_EXPAND_FILE_PATH = "var_expand_file_path";
-	public static final String ALIAS_FILE_PATH = "alias_file_path";
-	public static final String DEF_FILE_PATH = "definition_file_path";
+	public static final String INCONTEXT_FILE_PATH = "incontext_file_path";
 	public static final String COLLECT_GROUND_TRUTH = "collect_ground_truth";
 	public static final String PROMPT_TYPE = "prompt_type";
+	public static final String IS_JUNIT = "junit";
+	public static final String SLICE_DATASET_PATH = "slice_dataset_path";
+	public static final String SLICE_BUGS_TO_RUN = "slice_bugs_to_run";
+	public static final String ENABLE_IN_CONTEXT_LEARNING = "enable_incontext";
+	public static final String ENABLE_ALIAS_INFERENCE = "enable_alias";
+	public static final String ENABLE_RE_EXECUTION = "enable_re_execution";
 
 	/* constants before update */
 	private boolean isEnableTraceRecov;
 	private boolean isEnableLLMInference;
 	private boolean isMutationExperiment;
 	private String apiKey;
+	private String tbAPIKey;
 	private LLMModel llmModelType = LLMModel.GPT4O; // default model
+	private boolean isOpenAIEndpoint;
 	private String methodLayer;
-	private boolean isCollectingPrompt;
 	private boolean isEnableLogging;
 	private boolean logDebugInfo;
-	private String varExpansionFilePath; // variable expansion
-	private String aliasFilePath; // alias inference
-	private String definitionFilePath; // definition inference
+	private String incontextLearningDatasetPath;
 	private boolean collectGroundTruth;
-	private PromptType promptType = PromptType.VAR_EXPANSION; // default prompt type for incontext learning
+	private boolean isJunit;
+	private String sliceDatasetPath;
+	private String sliceBugsToRun;
+	private boolean isEnableInContextLearning;
+	private boolean isEnableAliasInference;
+	private boolean isEnableReexecution;
 
 	/* constants after update */
 	private Button isEnableTraceRecovButton;
 	private Button isEnableLLMButton;
 	private Button useMutationConfigButton;
 	private Combo modelTypeCombo;
+	private Button isOpenAIEndpointButton;
 	private Text apiKeyText;
+	private Text tbAPIKeyText;
 	private Text methodLayerText;
-	private Button isCollectingPromptButton;
 	private Button isEnableLoggingButton;
 	private Button logDebugInfoButton;
 	private Button collectGroundTruthButton;
-	private Text varExpansionFilePathText;
-	private Text aliasFilePathText;
-	private Text definitionFilePathText;
-	private Combo promptTypeCombo;
+	private Text incontextLearningDatasetText;
+	private Button isJunitButton;
+	private Text sliceDatasetText;
+	private Text sliceBugsToRunText;
+	private Button isEnableInContextLearningButton;
+	private Button isEnableAliasInferenceButton;
+	private Button isEnableReexecutionButton;
 
-	public TraceRecovPreference() {
+	public RecovSlicingPreference() {
 	}
 
-	public TraceRecovPreference(String title) {
+	public RecovSlicingPreference(String title) {
 		super(title);
 	}
 
-	public TraceRecovPreference(String title, ImageDescriptor image) {
+	public RecovSlicingPreference(String title, ImageDescriptor image) {
 		super(title, image);
 	}
 
@@ -109,6 +121,7 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		}
 
 		this.apiKey = Activator.getDefault().getPreferenceStore().getString(API_KEY);
+		this.tbAPIKey = Activator.getDefault().getPreferenceStore().getString(TB_API_KEY);
 
 		String modelType = Activator.getDefault().getPreferenceStore().getString(MODEL_TYPE);
 		if (modelType != null && !modelType.equals("")) {
@@ -119,14 +132,14 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 			}
 		}
 
-		this.methodLayer = Activator.getDefault().getPreferenceStore().getString(METHOD_LAYER);
-
-		String isCollectingPromptString = Activator.getDefault().getPreferenceStore().getString(COLLECT_PROMPT);
-		if (isCollectingPromptString != null && isCollectingPromptString.equals("true")) {
-			this.isCollectingPrompt = true;
+		String isOpenAIEndpointStr = Activator.getDefault().getPreferenceStore().getString(IS_OPENAI_ENDPOINT);
+		if (isOpenAIEndpointStr != null && isOpenAIEndpointStr.equals("true")) {
+			this.isOpenAIEndpoint = true;
 		} else {
-			this.isCollectingPrompt = false;
+			this.isOpenAIEndpoint = false;
 		}
+
+//		this.methodLayer = Activator.getDefault().getPreferenceStore().getString(METHOD_LAYER);
 
 		String isEnableLoggingString = Activator.getDefault().getPreferenceStore().getString(ENABLE_LOGGING);
 		if (isEnableLoggingString != null && isEnableLoggingString.equals("true")) {
@@ -149,17 +162,35 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 			this.collectGroundTruth = false;
 		}
 
-		this.varExpansionFilePath = Activator.getDefault().getPreferenceStore().getString(VAR_EXPAND_FILE_PATH);
-		this.aliasFilePath = Activator.getDefault().getPreferenceStore().getString(ALIAS_FILE_PATH);
-		this.definitionFilePath = Activator.getDefault().getPreferenceStore().getString(DEF_FILE_PATH);
+		this.incontextLearningDatasetPath = Activator.getDefault().getPreferenceStore().getString(INCONTEXT_FILE_PATH);
 
-		String promptType = Activator.getDefault().getPreferenceStore().getString(PROMPT_TYPE);
-		if (promptType != null && !promptType.equals("")) {
-			try {
-				this.promptType = PromptType.valueOf(promptType);
-			} catch (IllegalArgumentException e) {
-				this.promptType = PromptType.VAR_EXPANSION; // default prompt type if unknown value
-			}
+		String isJunitStr = Activator.getDefault().getPreferenceStore().getString(IS_JUNIT);
+		if (isJunitStr != null && isJunitStr.equals("true")) {
+			this.isJunit = true;
+		} else {
+			this.isJunit = false;
+		}
+		this.sliceDatasetPath = Activator.getDefault().getPreferenceStore().getString(SLICE_DATASET_PATH);
+		this.sliceBugsToRun = Activator.getDefault().getPreferenceStore().getString(SLICE_BUGS_TO_RUN);
+		String enableInContextLearningStr = Activator.getDefault().getPreferenceStore()
+				.getString(ENABLE_IN_CONTEXT_LEARNING);
+		if (enableInContextLearningStr != null && enableInContextLearningStr.equals("true")) {
+			this.isEnableInContextLearning = true;
+		} else {
+			this.isEnableInContextLearning = false;
+		}
+		String enableAliasInferenceStr = Activator.getDefault().getPreferenceStore().getString(ENABLE_ALIAS_INFERENCE);
+		if (enableAliasInferenceStr != null && enableAliasInferenceStr.equals("true")) {
+			this.isEnableAliasInference = true;
+		} else {
+			this.isEnableAliasInference = false;
+		}
+
+		String enableReexecutionStr = Activator.getDefault().getPreferenceStore().getString(ENABLE_RE_EXECUTION);
+		if (enableReexecutionStr != null && enableReexecutionStr.equals("true")) {
+			this.isEnableReexecution = true;
+		} else {
+			this.isEnableReexecution = false;
 		}
 	}
 
@@ -176,18 +207,21 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		// LLM Model Settings
 		createModelConfigGroup(composite);
 
-		// RQ1: Shorten Trace Settings
-		createShortenTraceSettingGroup(composite);
+//		// Shorten Trace Settings
+//		createShortenTraceSettingGroup(composite);
 
-		// RQ3: Logging Settings
+		// Logging Settings
 		createLogSettingGroup(composite);
+
+		// TODO: add slicing settings group
+		createSlicingSettingGroup(composite);
 
 		performOk();
 		return composite;
 	}
 
 	private void createExperimentSettingGroup(final Composite parent) {
-		String title = "Experiment Settings";
+		String title = "General Settings";
 		Group experimentSettingGroup = initGroup(parent, title);
 
 		String enableTraceRecovLabel = "Enable TraceRecov";
@@ -214,8 +248,19 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		this.modelTypeCombo = createDropDown(modelSelectionGroup, modelSelectionLabel, LLMModel.values(),
 				this.llmModelType.ordinal());
 
-		String apiKeyLabel = "API Key:";
+		String apiKeyLabel = "OpenAI (or Gemini) API Key:";
 		this.apiKeyText = createText(modelSelectionGroup, apiKeyLabel, this.apiKey);
+
+		String tbAPIKeyLabel = "TB API Key:";
+		this.tbAPIKeyText = createText(modelSelectionGroup, tbAPIKeyLabel, this.tbAPIKey);
+
+		String isOpenAIEndpointLabel = "use OpenAI API (instead of TB)";
+		this.isOpenAIEndpointButton = createCheckButton(modelSelectionGroup, isOpenAIEndpointLabel,
+				this.isOpenAIEndpoint);
+
+		String varExpansionPathLabel = "Path for folder containing In-context Learning dataset:";
+		this.incontextLearningDatasetText = createText(modelSelectionGroup, varExpansionPathLabel,
+				this.incontextLearningDatasetPath);
 	}
 
 	private void createShortenTraceSettingGroup(Composite parent) {
@@ -230,27 +275,36 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		String title = "Log Settings";
 		Group logSettingGroup = initGroup(parent, title);
 
-		String collectPromptLabel = "RQ3: Collect and Label Prompts";
-		this.isCollectingPromptButton = createCheckButton(logSettingGroup, collectPromptLabel, this.isCollectingPrompt);
-
 		String enableLogLabel = "Enable Logging";
 		this.isEnableLoggingButton = createCheckButton(logSettingGroup, enableLogLabel, this.isEnableLogging);
 
 		String logDebugInfoLabel = "Log Debug Info";
 		this.logDebugInfoButton = createCheckButton(logSettingGroup, logDebugInfoLabel, this.logDebugInfo);
+	}
 
-		String promptSelectionLabel = "Type of Prompt (for auto incontext learning experiment, independent from TraceRecov):";
-		this.promptTypeCombo = createDropDown(logSettingGroup, promptSelectionLabel, PromptType.values(),
-				this.promptType.ordinal());
+	private void createSlicingSettingGroup(Composite parent) {
+		String title = "Slicing Experiments Settings (RQ1 & RQ3)";
+		Group slicingSettingGroup = initGroup(parent, title);
 
-		String varExpansionPathLabel = "Path for Variable Expansion File:";
-		this.varExpansionFilePathText = createText(logSettingGroup, varExpansionPathLabel, this.varExpansionFilePath);
+		String isJunitLabel = "slicing dataset is in the form of junit (not main)";
+		this.isJunitButton = createCheckButton(slicingSettingGroup, isJunitLabel, this.isJunit);
 
-		String aliasFilePathLabel = "Path for Alias Inference File:";
-		this.aliasFilePathText = createText(logSettingGroup, aliasFilePathLabel, this.aliasFilePath);
-		
-		String definitionFilePathLabel = "Path for Definition Inference File:";
-		this.definitionFilePathText = createText(logSettingGroup, definitionFilePathLabel, this.definitionFilePath);
+		String slicingDatasetPathLabel = "Path to folder containing slicing dataset";
+		this.sliceDatasetText = createText(slicingSettingGroup, slicingDatasetPathLabel, this.sliceDatasetPath);
+
+		String slicingBugsToRunLabel = "bugs.txt file name";
+		this.sliceBugsToRunText = createText(slicingSettingGroup, slicingBugsToRunLabel, this.sliceBugsToRun);
+
+		String enableInContextLearningLabel = "enable in-context learning";
+		this.isEnableInContextLearningButton = createCheckButton(slicingSettingGroup, enableInContextLearningLabel,
+				this.isEnableInContextLearning);
+
+		String enableAliasInferenceLabel = "enable alias inference";
+		this.isEnableAliasInferenceButton = createCheckButton(slicingSettingGroup, enableAliasInferenceLabel,
+				this.isEnableAliasInference);
+
+		String enableReexecutionLabel = "enable re-execution";
+		this.isEnableReexecutionButton = createCheckButton(slicingSettingGroup, enableReexecutionLabel, this.isEnableReexecution);
 	}
 
 	private Group initGroup(final Composite parent, String title) {
@@ -317,15 +371,20 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		preferences.put(USE_MUTATION_CONFIG, String.valueOf(this.useMutationConfigButton.getSelection()));
 		preferences.put(COLLECT_GROUND_TRUTH, String.valueOf(this.collectGroundTruthButton.getSelection()));
 		preferences.put(API_KEY, this.apiKeyText.getText());
+		preferences.put(TB_API_KEY, this.tbAPIKeyText.getText());
 		preferences.put(MODEL_TYPE, this.modelTypeCombo.getText());
-		preferences.put(METHOD_LAYER, this.methodLayerText.getText());
-		preferences.put(COLLECT_PROMPT, String.valueOf(this.isCollectingPromptButton.getSelection()));
+		preferences.put(IS_OPENAI_ENDPOINT, String.valueOf(isOpenAIEndpointButton.getSelection()));
+//		preferences.put(METHOD_LAYER, this.methodLayerText.getText());
 		preferences.put(ENABLE_LOGGING, String.valueOf(this.isEnableLoggingButton.getSelection()));
 		preferences.put(LOG_DEBUG_INFO, String.valueOf(this.logDebugInfoButton.getSelection()));
-		preferences.put(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
-		preferences.put(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
-		preferences.put(DEF_FILE_PATH, this.definitionFilePathText.getText());
-		preferences.put(PROMPT_TYPE, this.promptTypeCombo.getText());
+		preferences.put(INCONTEXT_FILE_PATH, this.incontextLearningDatasetText.getText());
+		preferences.put(IS_JUNIT, String.valueOf(this.isJunitButton.getSelection()));
+		preferences.put(SLICE_DATASET_PATH, this.sliceDatasetText.getText());
+		preferences.put(SLICE_BUGS_TO_RUN, this.sliceBugsToRunText.getText());
+		preferences.put(ENABLE_IN_CONTEXT_LEARNING,
+				String.valueOf(this.isEnableInContextLearningButton.getSelection()));
+		preferences.put(ENABLE_ALIAS_INFERENCE, String.valueOf(this.isEnableAliasInferenceButton.getSelection()));
+		preferences.put(ENABLE_RE_EXECUTION, String.valueOf(this.isEnableReexecutionButton.getSelection()));
 
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_TRACERECOV,
 				String.valueOf(this.isEnableTraceRecovButton.getSelection()));
@@ -336,18 +395,27 @@ public class TraceRecovPreference extends PreferencePage implements IWorkbenchPr
 		Activator.getDefault().getPreferenceStore().putValue(COLLECT_GROUND_TRUTH,
 				String.valueOf(this.collectGroundTruthButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(API_KEY, this.apiKeyText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(TB_API_KEY, this.tbAPIKeyText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(MODEL_TYPE, this.modelTypeCombo.getText());
-		Activator.getDefault().getPreferenceStore().putValue(METHOD_LAYER, this.methodLayerText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(COLLECT_PROMPT,
-				String.valueOf(this.isCollectingPromptButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(IS_OPENAI_ENDPOINT,
+				String.valueOf(isOpenAIEndpointButton.getSelection()));
+//		Activator.getDefault().getPreferenceStore().putValue(METHOD_LAYER, this.methodLayerText.getText());
 		Activator.getDefault().getPreferenceStore().putValue(ENABLE_LOGGING,
 				String.valueOf(this.isEnableLoggingButton.getSelection()));
 		Activator.getDefault().getPreferenceStore().putValue(LOG_DEBUG_INFO,
 				String.valueOf(this.logDebugInfoButton.getSelection()));
-		Activator.getDefault().getPreferenceStore().putValue(VAR_EXPAND_FILE_PATH, this.varExpansionFilePathText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(ALIAS_FILE_PATH, this.aliasFilePathText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(DEF_FILE_PATH, this.definitionFilePathText.getText());
-		Activator.getDefault().getPreferenceStore().putValue(PROMPT_TYPE, this.promptTypeCombo.getText());
+		Activator.getDefault().getPreferenceStore().putValue(INCONTEXT_FILE_PATH,
+				this.incontextLearningDatasetText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(IS_JUNIT,
+				String.valueOf(this.isJunitButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(SLICE_DATASET_PATH, this.sliceDatasetText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(SLICE_BUGS_TO_RUN, this.sliceBugsToRunText.getText());
+		Activator.getDefault().getPreferenceStore().putValue(ENABLE_IN_CONTEXT_LEARNING,
+				String.valueOf(this.isEnableInContextLearningButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(ENABLE_ALIAS_INFERENCE,
+				String.valueOf(this.isEnableAliasInferenceButton.getSelection()));
+		Activator.getDefault().getPreferenceStore().putValue(ENABLE_RE_EXECUTION,
+				String.valueOf(this.isEnableReexecutionButton.getSelection()));
 
 		Settings.isEnableGPTInference = this.isEnableLLMButton.getSelection();
 		SimulatorConstants.API_KEY = this.apiKeyText.getText();

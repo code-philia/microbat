@@ -4,5 +4,7 @@ Original code snippet:
 ```java
 {original_code}
 ```
+Target Variable: `{target_var}`
+Target Value: "{target_val}"
 
 Please output the target 

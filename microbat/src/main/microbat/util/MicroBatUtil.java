@@ -140,6 +140,33 @@ public class MicroBatUtil {
 		
 	}
 
+	public static List<String> getJunitJars() {
+		List<String> jars = new ArrayList<>();
+
+		String dropinsDir = IResourceUtils.getDropinsDir();
+		String junitDir = dropinsDir + File.separator + "junit_lib";
+
+		String junitPath = junitDir + File.separator + "junit.jar";
+		String hamcrestCorePath = junitDir + File.separator + "org.hamcrest.core.jar";
+		jars.add(junitPath);
+		jars.add(hamcrestCorePath);
+
+		String testRunnerDir = junitDir + File.separator + "testrunner.jar";
+		jars.add(testRunnerDir);
+
+		// JUnit5
+		String junit5Path = junitDir + File.separator + "junit-platform-console-standalone-1.0.0.jar";
+		jars.add(junit5Path);
+		String junit5RunnerPath = junitDir + File.separator + "junit-platform-runner-1.0.0.jar";
+		jars.add(junit5RunnerPath);
+
+		// TestNG
+		String testNG = junitDir + File.separator + "testng-6.0.jar";
+		jars.add(testNG);
+
+		return jars;
+	}
+
 	/** for centralization */
 	public static void setSystemJars(AppJavaClassPath appClassPath) {
 

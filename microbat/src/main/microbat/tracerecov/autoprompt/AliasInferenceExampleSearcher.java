@@ -15,8 +15,11 @@ import microbat.tracerecov.autoprompt.dataset.LossDataCollector;
 import microbat.tracerecov.executionsimulator.LLMResponseType;
 import microbat.tracerecov.varskeleton.VarSkeletonParser;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
+import sav.strategies.dto.AppJavaClassPath;
 
 public class AliasInferenceExampleSearcher extends ExampleSearcher {
+	private static double DIFF_THRESHOLD = 0.5;
+
 	private ArrayList<HashMap<String, String>> trainingDataset;
 	private ArrayList<HashMap<String, String>> testingDataset;
 	private VarSkeletonParser varSkeletonParser;
@@ -42,7 +45,7 @@ public class AliasInferenceExampleSearcher extends ExampleSearcher {
 	}
 
 	@Override
-	public String searchForExample(HashMap<String, String> datapoint) {
+	public Object[] searchForExample(HashMap<String, String> datapoint) {
 		/* keys */
 		String varsInStepKey = DatasetReader.VARS_IN_STEP;
 		String targetVarKey = DatasetReader.TARGET_VAR;
@@ -95,7 +98,26 @@ public class AliasInferenceExampleSearcher extends ExampleSearcher {
 
 		HashMap<String, String> closestExample = trainingDataset.get(datapointIndex);
 		String groundTruth = TraceRecovUtils.processInputStringForLLM(closestExample.get(DatasetReader.GROUND_TRUTH));
-		return promptTemplateFiller.getExample(closestExample, groundTruth);
+
+		Object[] outputArray = new Object[2];
+		outputArray[0] = promptTemplateFiller.getExample(closestExample, groundTruth);
+		outputArray[1] = minDiffScore;
+		return outputArray;
+	}
+
+	@Override
+	public String searchForExample(HashMap<String, String> datapoint, AppJavaClassPath appJavaClassPath) {
+		Object[] existingExample = searchForExample(datapoint);
+		String closestExample = (String) existingExample[0];
+		double minDiffScore = (double) existingExample[1];
+
+		if (minDiffScore >= DIFF_THRESHOLD) {
+			// TODO
+		} else {
+			return closestExample;
+		}
+
+		return null;
 	}
 
 	@Override
@@ -108,7 +130,7 @@ public class AliasInferenceExampleSearcher extends ExampleSearcher {
 
 			System.out.println("Experiment:\n");
 			double experimentLoss = getLoss(datapoint,
-					x -> promptTemplateFiller.getPrompt(x, this.searchForExample(x)));
+					x -> promptTemplateFiller.getPrompt(x, (String) this.searchForExample(x)[0]));
 
 			System.out.println("baseline loss: " + baselineLoss);
 			System.out.println("experiment loss: " + experimentLoss);

@@ -182,6 +182,7 @@ Export-Package:
  microbat.trace,
  microbat.tracerecov,
  microbat.tracerecov.autoprompt,
+ microbat.tracerecov.autoprompt.incontextlearning,
  microbat.tracerecov.executionsimulator,
  microbat.tracerecov.staticverifiers,
  microbat.tracerecov.varskeleton,

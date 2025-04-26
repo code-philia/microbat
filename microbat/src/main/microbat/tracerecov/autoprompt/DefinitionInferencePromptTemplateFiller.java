@@ -35,7 +35,7 @@ public class DefinitionInferencePromptTemplateFiller extends PromptTemplateFille
 		String targetField = datapoint.get(DatasetReader.TARGET_FIELD);
 		String rootVarName = datapoint.get(DatasetReader.VAR_NAME);
 		String classStructure = datapoint.get(DatasetReader.TARGET_VAR);
-		String sourceCode = datapoint.get(DatasetReader.SOURCE_CODE);
+		String sourceCode = datapoint.get(DatasetReader.LINE_SOURCE_CODE);
 		String invokedMethods = datapoint.get(DatasetReader.INVOKED_METHODS).strip().replace("\\n", "\n")
 				.replace("\\r", "\r").replace("***", "\n");
 		String[] varsInStep = datapoint.get(DatasetReader.VARS_IN_STEP).split(",");

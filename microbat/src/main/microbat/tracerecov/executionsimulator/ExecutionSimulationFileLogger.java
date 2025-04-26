@@ -9,7 +9,7 @@ import org.json.JSONObject;
 import microbat.Activator;
 import microbat.codeanalysis.runtime.Condition;
 import microbat.model.trace.Trace;
-import microbat.preference.TraceRecovPreference;
+import microbat.preference.RecovSlicingPreference;
 
 public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
 
@@ -20,9 +20,9 @@ public class ExecutionSimulationFileLogger extends ExecutionSimulationLogger {
 		// TODO: move this to preference page
 		String fileName = "var_expansion.txt";
 		String aliasFileName = "aliases.txt";
-		this.filePath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.VAR_EXPAND_FILE_PATH)
+		this.filePath = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.INCONTEXT_FILE_PATH)
 				+ File.separator + fileName;
-		this.aliasFilePath = Activator.getDefault().getPreferenceStore().getString(TraceRecovPreference.VAR_EXPAND_FILE_PATH)
+		this.aliasFilePath = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.INCONTEXT_FILE_PATH)
 				+ File.separator + aliasFileName;
 	}
 

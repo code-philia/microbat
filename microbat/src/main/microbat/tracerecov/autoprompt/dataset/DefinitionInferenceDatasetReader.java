@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import microbat.Activator;
-import microbat.preference.TraceRecovPreference;
+import microbat.preference.RecovSlicingPreference;
 
 public class DefinitionInferenceDatasetReader extends DatasetReader {
 	
@@ -19,7 +19,7 @@ public class DefinitionInferenceDatasetReader extends DatasetReader {
 		String definitionInferenceFile = "definition_inference.txt";
 
 		this.definitionInferencePath = Activator.getDefault().getPreferenceStore()
-				.getString(TraceRecovPreference.DEF_FILE_PATH) + File.separator + definitionInferenceFile;
+				.getString(RecovSlicingPreference.INCONTEXT_FILE_PATH) + File.separator + definitionInferenceFile;
 	}
 
 	/**
@@ -46,7 +46,7 @@ public class DefinitionInferenceDatasetReader extends DatasetReader {
 				datapoint.put(TARGET_FIELD, columns[0]);
 				datapoint.put(VAR_NAME, columns[1]);
 				datapoint.put(TARGET_VAR, columns[2]);
-				datapoint.put(SOURCE_CODE, columns[3]);
+				datapoint.put(LINE_SOURCE_CODE, columns[3]);
 				datapoint.put(INVOKED_METHODS, columns[4]);
 				datapoint.put(VARS_IN_STEP, columns[5]);
 				datapoint.put(GROUND_TRUTH, columns[6]);

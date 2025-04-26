@@ -33,6 +33,31 @@ public class JdkFilter {
 			"sun.",
 			"com.sun.",
 			"microbat.",
+//			"java.lang.",
+			"jdk.",
+			"org.junit.",
+			"sav.common.",
+			"sav.commons.",
+			"sav.strategies.",
+//			"java.nio.",
+//			"java.util.concurrent.",
+//			"java.io.",
+//			"java.net.",
+//			"java.security.",
+			"java.",
+			"junit.",
+			"org.testng.",
+//			"java.util.regex.",
+			"org.apache.bcel.",
+//			"java.time.",
+			"javax.",
+	};
+
+	public static void notExcludeAllJava() {
+		excludePrefixes = new String[] {
+			"sun.",
+			"com.sun.",
+			"microbat.",
 			"java.lang.",
 			"jdk.",
 			"org.junit.",
@@ -44,13 +69,14 @@ public class JdkFilter {
 			"java.io.",
 			"java.net.",
 			"java.security.",
-			// "java.",
 			"junit.",
 			"org.testng.",
 			"java.util.regex.",
 			"org.apache.bcel.",
 			"java.time.",
-	};
+			"javax.",
+		};
+	}
 
 	static {
 		jdkExclusives = new HashSet<>();

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import microbat.Activator;
 import microbat.model.trace.Trace;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.ArrayValue;
@@ -16,6 +17,7 @@ import microbat.model.value.StringValue;
 import microbat.model.value.VarValue;
 import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
+import microbat.preference.RecovSlicingPreference;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 
@@ -58,8 +60,11 @@ public class TraceRecoverer {
 		int end = currentStep.getOrder() - 1;
 
 		// alias inference
-		inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck);
-
+		String isEnableAliasInferenceStr = Activator.getDefault().getPreferenceStore()
+				.getString(RecovSlicingPreference.ENABLE_ALIAS_INFERENCE);
+		if (isEnableAliasInferenceStr != null && isEnableAliasInferenceStr.equals("true")) {
+			inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck);
+		}
 		// update scope of searching
 		scopeStart = determineScopeOfSearching(criticalVariables, trace, currentStep);
 		if (scopeStart == null)
@@ -68,7 +73,7 @@ public class TraceRecoverer {
 		end = currentStep.getOrder() - 1;
 
 		// definition inference
-		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables, variablesToCheck);
+		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables, variablesToCheck, currentStep);
 	}
 
 	/**
@@ -107,16 +112,20 @@ public class TraceRecoverer {
 
 		for (VarValue criticalVar : criticalVariables) {
 			String aliasID = criticalVar.getAliasVarID();
-			if (isValidAliasID(aliasID)) {
+			String varID = criticalVar.getVarID();
+			if (isValidID(aliasID)) {
 				variablesToCheck.add(aliasID);
+			}
+			if (isValidID(varID)) {
+				variablesToCheck.add(varID);
 			}
 		}
 
 		return variablesToCheck;
 	}
 
-	private boolean isValidAliasID(String aliasID) {
-		return aliasID != null && !aliasID.equals("0") && !aliasID.equals("");
+	private boolean isValidID(String id) {
+		return id != null && !id.equals("0") && !id.equals("");
 	}
 
 	/**
@@ -180,7 +189,7 @@ public class TraceRecoverer {
 								aliasIdOfCriticalVar = aliasIdOfCriticalVar.split(":")[0];
 							}
 
-							if (isValidAliasID(aliasIdOfCriticalVar)) {
+							if (isValidID(aliasIdOfCriticalVar)) {
 								updateAliasIDOfField(writtenField, variableOnTrace, criticalVariables);
 								variablesToCheck.add(aliasIdOfCriticalVar);
 							}
@@ -188,7 +197,7 @@ public class TraceRecoverer {
 							/*
 							 * key and value: variable on trace. Field in variable is not recorded.
 							 */
-							if (isValidAliasID(writtenField.getAliasVarID())) {
+							if (isValidID(writtenField.getAliasVarID())) {
 								String aliasIdOfCriticalVar = writtenField.getAliasVarID();
 								if (aliasIdOfCriticalVar != null && aliasIdOfCriticalVar.contains(":")) {
 									aliasIdOfCriticalVar = aliasIdOfCriticalVar.split(":")[0];
@@ -212,16 +221,18 @@ public class TraceRecoverer {
 	 * iterate through steps in scope, infer definition
 	 */
 	private void inferDefinition(Trace trace, int start, int end, VarValue rootVar, VarValue targetVar,
-			List<VarValue> criticalVariables, Set<String> variablesToCheck) {
+			List<VarValue> criticalVariables, Set<String> variablesToCheck, TraceNode currentStep) {
 
 		for (int i = end; i >= start; i--) {
 			TraceNode step = trace.getTraceNode(i);
 			if (isRelevantStep(step, variablesToCheck) && isStepToCheck(step)) {
 				// INFER DEFINITION STEP
-				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables);
+				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables, currentStep);
 
-				if (def && !step.getWrittenVariables().contains(targetVar)) {
-					step.getWrittenVariables().add(targetVar);
+				if (def) {
+					if (!step.getWrittenVariables().contains(targetVar)) {
+						step.getWrittenVariables().add(targetVar);
+					}
 					break;
 				}
 			}
@@ -234,7 +245,7 @@ public class TraceRecoverer {
 	private boolean isRelevantStep(TraceNode step, Set<String> variablesToCheck) {
 		Set<VarValue> variablesInStep = step.getAllVariables();
 		for (VarValue variable : variablesInStep) {
-			if (variablesToCheck.contains(variable.getAliasVarID())
+			if ((variablesToCheck.contains(variable.getAliasVarID()) || variablesToCheck.contains(variable.getVarID()))
 					&& (variable.getVarName() != null && !variable.getVarName().contains("this"))) {
 				return true;
 			}
