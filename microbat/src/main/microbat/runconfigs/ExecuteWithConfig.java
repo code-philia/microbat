@@ -1,6 +1,8 @@
 package microbat.runconfigs;
 
+import java.io.File;
 import java.io.FileReader;
+import java.nio.file.Files;
 import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -20,6 +22,8 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -29,11 +33,19 @@ public class ExecuteWithConfig<T> {
     private final Consumer<T> consumer;
     private final Gson gson;
 
+    @Getter
+    @Setter
+    private static String baseFolder = null;
+
     public ExecuteWithConfig(Class<T> clazz, String taskName, Consumer<T> consumer) {
         this.clazz = clazz;
         this.taskName = taskName;
         this.consumer = consumer;
         this.gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
+    }
+
+    public boolean isAbsolutePath(String path) {
+        return path.charAt(1) == ':' || path.charAt(0) == '/' || path.charAt(0) == '\\';
     }
 
     public void execute() {
@@ -63,8 +75,17 @@ public class ExecuteWithConfig<T> {
             String selectedTextInEditor = textSelection.getText();
             log.info("Selected text: {}", selectedTextInEditor);
 
+            String fullPath;
+            if (isAbsolutePath(selectedTextInEditor)) {
+                log.info("Selected text is an absolute path: {}", selectedTextInEditor);
+                fullPath = selectedTextInEditor;
+            } else {
+                log.info("Selected text is a relative path: {}", selectedTextInEditor);
+                fullPath = baseFolder + File.separator + selectedTextInEditor;
+            }
+
             T config = null;
-            try (FileReader fis = new FileReader(selectedTextInEditor)) {
+            try (FileReader fis = new FileReader(fullPath)) {
                 config = gson.fromJson(fis, clazz);
             } catch (Exception e) {
                 log.error("Error reading config file: {}", selectedTextInEditor, e);
