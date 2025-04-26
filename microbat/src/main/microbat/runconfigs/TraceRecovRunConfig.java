@@ -18,4 +18,5 @@ public class TraceRecovRunConfig {
     private boolean enableInContextLearning = true;
     private boolean enableAliasInference = true;
     private boolean enableReExecution = false;
+    private boolean generatedDataset = true;
 }

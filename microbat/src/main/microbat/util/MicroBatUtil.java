@@ -247,6 +247,24 @@ public class MicroBatUtil {
 		/**
 		 * setting java agent lib
 		 */
+		String agentLib = getAgentLib();
+
+		appClassPath.setAgentLib(agentLib);
+	}
+
+	public static String getAgentLib() {
+		String dropinsDir = IResourceUtils.getDropinsDir();
+		String junitDir = dropinsDir + File.separator + "junit_lib";
+
+		long currentJarModifyTime = -1;
+		try{
+			String selfJarFile = MicroBatUtil.class.getProtectionDomain().getCodeSource().getLocation().getFile();
+			File file = new File(selfJarFile);
+			currentJarModifyTime = file.lastModified();
+		} catch (Exception e) {
+			log.error("Cannot get current jar modify time", e);
+		}
+
 		String agentLib = junitDir + File.separator + "instrumentator.jar";
 		File jar = new File(agentLib);
 		boolean needExportJar = false;
@@ -275,7 +293,7 @@ public class MicroBatUtil {
 			jar = new File(agentLib);
 		}
 
-		appClassPath.setAgentLib(agentLib);
+		return agentLib;
 	}
 
 	public static IJavaProject getJavaProject(String projectName) {

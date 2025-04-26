@@ -13,6 +13,7 @@ import microbat.instrumentation.output.RunningInfo;
 import microbat.instrumentation.precheck.PrecheckInfo;
 import microbat.model.trace.Trace;
 import microbat.util.IResourceUtils;
+import microbat.util.MicroBatUtil;
 import sav.common.core.SavException;
 import sav.common.core.SavRtException;
 import sav.common.core.utils.ClassUtils;
@@ -61,8 +62,7 @@ public class TraceConstructor {
 	
 	
 	public Trace getTrace(AppJavaClassPath appClassPath) throws Exception {
-		String instrumentationJarPath = IResourceUtils.getResourceAbsolutePath(Activator.PLUGIN_ID, "lib")
-				+ "/instrumentation.jar";
+		String instrumentationJarPath = MicroBatUtil.getAgentLib();
 
 		VMConfiguration config = new VMConfiguration(appClassPath);
 		TraceAgentRunner agentRunner = new TraceAgentRunner(instrumentationJarPath, config);

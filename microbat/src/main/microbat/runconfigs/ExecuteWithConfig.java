@@ -2,7 +2,6 @@ package microbat.runconfigs;
 
 import java.io.File;
 import java.io.FileReader;
-import java.nio.file.Files;
 import java.util.function.Consumer;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -44,12 +43,24 @@ public class ExecuteWithConfig<T> {
         this.gson = new GsonBuilder().setPrettyPrinting().serializeNulls().create();
     }
 
-    public boolean isAbsolutePath(String path) {
+    public static boolean isAbsolutePath(String path) {
         return path.charAt(1) == ':' || path.charAt(0) == '/' || path.charAt(0) == '\\';
     }
 
+    public static String resolvePath(String path) {
+        if (isAbsolutePath(path)) {
+            return path;
+        } else {
+            return baseFolder + File.separator + path;
+        }
+    }
+
     public void execute() {
+        log.info("Executing task: {}", taskName);
+
         Display.getDefault().asyncExec(() -> {
+            log.info("Executing task in UI thread: {}", taskName);
+
             IWorkbench wb = PlatformUI.getWorkbench();
             IWorkbenchWindow window = wb.getActiveWorkbenchWindow();
             if (window == null) {
