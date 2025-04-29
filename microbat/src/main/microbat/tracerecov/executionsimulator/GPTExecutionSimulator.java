@@ -17,6 +17,9 @@ public class GPTExecutionSimulator extends ExecutionSimulator {
 
 	@Override
 	protected String getUrl() {
+		if(SimulatorConstants.GPT_API_ENDPOINT_OVERRIDE != null) {
+			return SimulatorConstants.GPT_API_ENDPOINT_OVERRIDE;
+		}
 		if (isOpenAIEndpointStr != null && isOpenAIEndpointStr.equals("true")) {
 			return SimulatorConstants.GPT_API_ENDPOINT;
 		} else {

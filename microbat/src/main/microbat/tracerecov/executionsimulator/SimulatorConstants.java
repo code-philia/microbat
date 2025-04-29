@@ -19,13 +19,20 @@ public class SimulatorConstants {
 	public static final String CLAUDE35 = "claude-3.5";
 	public static final String GEMINI = "gemini-1.5-flash";
 
+	public static String MODEL_OVERRIDE = null;
+
 	public static final String GPT_API_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 	public static final String GPT_TB_API_ENDPOINT = "https://api.key77qiqi.cn/v1/chat/completions";
 	public static final String CLAUDE3_API_ENDPOINT = "https://api.claude.ai/v3";
 	public static final String CLAUDE35_API_ENDPOINT = "https://api.claude.ai/v3.5";
 	public static final String GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1/models/";
 
+	public static String GPT_API_ENDPOINT_OVERRIDE = null;
+
 	public static String getSelectedModel() {
+		if(MODEL_OVERRIDE != null) {
+			return MODEL_OVERRIDE;
+		}
 		switch (modelType) {
 		case GPT3:
 			return SimulatorConstants.GPT3;

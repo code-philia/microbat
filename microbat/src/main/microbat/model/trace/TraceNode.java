@@ -1060,7 +1060,7 @@ public class TraceNode implements Comparator<TraceNode> {
 	}
 
 	public boolean isWrongPathNode() {
-		return Settings.wrongPathNodeOrder.contains(new Integer(this.getOrder()));
+		return Settings.wrongPathNodeOrder.contains(Integer.valueOf(this.getOrder()));
 	}
 	
 	public List<VarValue> getWrongReadVars(UserInterestedVariables interestedVariables) {

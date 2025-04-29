@@ -122,7 +122,7 @@ class Commands {
                                     MessageOutput.println("Current thread isnt suspended.");
                                 } catch (ArrayIndexOutOfBoundsException e) {
                                     MessageOutput.println("Requested stack frame is no longer active:",
-                                                          new Object []{new Integer(stackFrame)});
+                                                          new Object []{Integer.valueOf(stackFrame)});
                                 }
                             }
                             MessageOutput.printPrompt();
@@ -516,7 +516,7 @@ class Commands {
             ThreadGroupReference tg = it.nextThreadGroup();
             ++cnt;
             MessageOutput.println("thread group number description name",
-                                  new Object [] { new Integer (cnt),
+                                  new Object [] { Integer.valueOf (cnt),
                                                   Env.description(tg),
                                                   tg.name()});
         }
@@ -973,21 +973,21 @@ class Commands {
             try {
                 methodInfo = loc.sourceName() +
                     MessageOutput.format("line number",
-                                         new Object [] {new Long(lineNumber)});
+                                         new Object [] {Long.valueOf(lineNumber)});
             } catch (AbsentInformationException e) {
                 methodInfo = MessageOutput.format("unknown");
             }
         }
         if (pc != -1) {
             MessageOutput.println("stack frame dump with pc",
-                                  new Object [] {new Integer(frameNumber + 1),
+                                  new Object [] {Integer.valueOf(frameNumber + 1),
                                                  meth.declaringType().name(),
                                                  meth.name(),
                                                  methodInfo,
-                                                 new Long(pc)});
+                                                 Long.valueOf(pc)});
         } else {
             MessageOutput.println("stack frame dump",
-                                  new Object [] {new Integer(frameNumber + 1),
+                                  new Object [] {Integer.valueOf(frameNumber + 1),
                                                  meth.declaringType().name(),
                                                  meth.name(),
                                                  methodInfo});

@@ -7,10 +7,10 @@ import microbat.preference.RecovSlicingPreference;
 
 public class ExecutionSimulationLogger {
 
-	public static boolean isLoggingEnabled = Activator.getDefault().getPreferenceStore()
+	public boolean isLoggingEnabled = Activator.getDefault().getPreferenceStore()
 			.getString(RecovSlicingPreference.ENABLE_LOGGING).equals("true");
 
-	public static boolean showDebugInfo = Activator.getDefault().getPreferenceStore()
+	public boolean showDebugInfo = Activator.getDefault().getPreferenceStore()
 			.getString(RecovSlicingPreference.LOG_DEBUG_INFO).equals("true");
 
 	public ExecutionSimulationLogger() {

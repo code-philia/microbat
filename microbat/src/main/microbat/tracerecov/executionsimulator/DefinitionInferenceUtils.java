@@ -26,7 +26,8 @@ public class DefinitionInferenceUtils {
 	private static final String DEFINITION_INFERENCE_BACKGROUND_PAIR;
 
 	static {
-		try(InputStream is = DefinitionInferenceUtils.class.getClassLoader().getResourceAsStream("/resources/prompts/definition_inference_background.md")) {
+		try (InputStream is = DefinitionInferenceUtils.class.getClassLoader()
+				.getResourceAsStream("/prompts/definition_inference_background.md")) {
 			DEFINITION_INFERENCE_BACKGROUND_PAIR = new String(is.readAllBytes());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -36,7 +37,7 @@ public class DefinitionInferenceUtils {
 	/* Methods */
 
 	public static String getBackgroundContent() {
-//		return DEFINITION_INFERENCE_BACKGROUND;
+		// return DEFINITION_INFERENCE_BACKGROUND;
 		return DEFINITION_INFERENCE_BACKGROUND_PAIR;
 	}
 
@@ -101,13 +102,13 @@ public class DefinitionInferenceUtils {
 				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(location, lineNo).trim());
 		String locationSrc = srcStep.getBreakPoint().getFullJavaFilePath();
 		String sourceCodeSrc = TraceRecovUtils
-				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(locationSrc, srcStep.getLineNumber()).trim());
-
+				.processInputStringForLLM(
+						TraceRecovUtils.getSourceCodeOfALine(locationSrc, srcStep.getLineNumber()).trim());
 
 		if (sourceCode.startsWith("/* write */")) {
 			sourceCode = sourceCode.substring(11, sourceCode.length());
 		}
-		
+
 		/* variable properties */
 		String rootVarName = rootVar.getVarName();
 		String targetVarName = targetVar.getVarName();
@@ -210,7 +211,8 @@ public class DefinitionInferenceUtils {
 		cascadeFieldName += targetVarName;
 
 		question.append(cascadeFieldName);
-		question.append("`, does the code ```" + sourceCode + "``` directly or indirectly write field `" + cascadeFieldName + "`?"
+		question.append("`, does the code ```" + sourceCode + "``` directly or indirectly write field `"
+				+ cascadeFieldName + "`?"
 				+ "\nIn your response, strictly return <T> for true and <F> for false. Briefly explain your answer.");
 
 		return question.toString();

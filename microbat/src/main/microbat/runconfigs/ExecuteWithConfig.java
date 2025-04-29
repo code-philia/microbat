@@ -44,10 +44,13 @@ public class ExecuteWithConfig<T> {
     }
 
     public static boolean isAbsolutePath(String path) {
-        return path.charAt(1) == ':' || path.charAt(0) == '/' || path.charAt(0) == '\\';
+        return (path.length() > 1 && path.charAt(1) == ':') || path.charAt(0) == '/' || path.charAt(0) == '\\';
     }
 
     public static String resolvePath(String path) {
+        if(path.equals(".")) {
+            return baseFolder;
+        }
         if (isAbsolutePath(path)) {
             return path;
         } else {
@@ -114,7 +117,7 @@ public class ExecuteWithConfig<T> {
                     try {
                         consumer.accept(configInner);
                         return Status.OK_STATUS;
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         log.error("Error executing task: {}", taskName, e);
                         return new Status(IStatus.ERROR, taskName, "Error executing task", e);
                     }
