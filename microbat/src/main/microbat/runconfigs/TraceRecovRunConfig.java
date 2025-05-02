@@ -8,6 +8,7 @@ import microbat.Activator;
 import microbat.perspectives.MicroBatPerspective;
 import microbat.preference.MicrobatPreference;
 import microbat.preference.RecovSlicingPreference;
+import microbat.tracerecov.executionsimulator.ExecutionSimulator;
 import microbat.tracerecov.executionsimulator.SimulatorConstants;
 
 @Getter
@@ -28,6 +29,8 @@ public class TraceRecovRunConfig {
     private boolean generatedDataset = true;
 
     private String inContextLearningPath = ".";
+
+    private String dumpGptPath = null;
 
     public void setToGlobal() {
         IPreferenceStore preferences = Activator.getDefault().getPreferenceStore();
@@ -55,5 +58,8 @@ public class TraceRecovRunConfig {
 
         preferences.putValue(RecovSlicingPreference.INCONTEXT_FILE_PATH,
                 String.valueOf(inContextLearningPath));
+
+        ExecutionSimulator.dumpFilePath = dumpGptPath;
+        ExecutionSimulator.initDumpOutputStream();
     }
 }

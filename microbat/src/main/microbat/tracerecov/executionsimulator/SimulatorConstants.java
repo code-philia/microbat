@@ -5,8 +5,16 @@ import microbat.preference.RecovSlicingPreference;
 
 public class SimulatorConstants {
 	
-	public static LLMModel modelType = LLMModel
-			.valueOf(Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.MODEL_TYPE));
+	public static LLMModel modelType ;
+
+	static {
+		try {
+		modelType = LLMModel.valueOf(Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.MODEL_TYPE));
+		} catch (Exception e) {
+			modelType = LLMModel.GPT4O;
+		}
+	}
+
 	public static String API_KEY = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.API_KEY);
 	public static String TB_API_KEY = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.TB_API_KEY);
 	

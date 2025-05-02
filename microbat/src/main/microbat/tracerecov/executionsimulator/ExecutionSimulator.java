@@ -1,6 +1,8 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -12,6 +14,10 @@ import java.util.Map;
 
 import org.json.JSONObject;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+import lombok.extern.slf4j.Slf4j;
 import microbat.codeanalysis.bytecode.CFG;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
@@ -29,6 +35,7 @@ import sav.common.core.Pair;
  * 
  * @author hongshuwang
  */
+@Slf4j
 public abstract class ExecutionSimulator {
 
 	protected ExecutionSimulationLogger logger;
@@ -66,12 +73,42 @@ public abstract class ExecutionSimulator {
 		}
 	}
 
+	public static String dumpFilePath;
+	public static BufferedOutputStream dumpOutputStream;
+
+	public static void initDumpOutputStream() {
+		if(dumpFilePath == null) {
+			dumpOutputStream = null;
+		} else {
+			try {
+				dumpOutputStream = new BufferedOutputStream(new FileOutputStream(dumpFilePath, true));
+			} catch (IOException e) {
+				log.error("Failed to initialize dump output stream: " + e.getMessage());
+			}
+		}
+	}
+
+	public static synchronized void dumpToFile(JSONObject object) {
+		if (dumpOutputStream == null) {
+			return;
+		}
+		try {
+			byte[] bytes = object.toString().getBytes("utf-8");
+			dumpOutputStream.write(bytes);
+			dumpOutputStream.write('\n');
+			dumpOutputStream.flush();
+		} catch (IOException e) {
+			log.error("Failed to write to dump file: " + e.getMessage());
+		}
+	}
+
 	// Method to send the complete prompt in a single request
 	private String sendSingleRequest(String combinedPrompt, LLMResponseType responseType)
 			throws IOException, RuntimeException {
 		HttpURLConnection connection = getConnection();
 		JSONObject request = getSingleRequest(combinedPrompt, responseType);
 
+		dumpToFile(request);
 		try (OutputStream os = connection.getOutputStream()) {
 			byte[] input = request.toString().getBytes("utf-8");
 			os.write(input, 0, input.length);
@@ -87,6 +124,7 @@ public abstract class ExecutionSimulator {
 				}
 
 				JSONObject responseObject = new JSONObject(response.toString());
+				dumpToFile(responseObject);
 				return getSingleResponse(responseObject);
 			}
 		} else {
