@@ -14,9 +14,6 @@ import java.util.Map;
 
 import org.json.JSONObject;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-
 import lombok.extern.slf4j.Slf4j;
 import microbat.codeanalysis.bytecode.CFG;
 import microbat.model.trace.TraceNode;

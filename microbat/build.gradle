@@ -89,6 +89,7 @@ dependencies {
 
     implementation 'commons-lang:commons-lang:2.6'
     implementation 'org.soot-oss:soot:4.6.0'
+    implementation 'com.openai:openai-java:1.5.1'
 
     compileOnly files("../../local-deps/jdimodel.jar")
     implementation files("../../local-deps/belief-propagation-java.jar")
