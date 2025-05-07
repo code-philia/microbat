@@ -1,11 +1,12 @@
 package microbat.runconfigs;
 
+import java.util.List;
+
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import lombok.Getter;
 import lombok.Setter;
 import microbat.Activator;
-import microbat.perspectives.MicroBatPerspective;
 import microbat.preference.MicrobatPreference;
 import microbat.preference.RecovSlicingPreference;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
@@ -28,9 +29,11 @@ public class TraceRecovRunConfig {
     private boolean enableReExecution = false;
     private boolean generatedDataset = true;
 
+    private String resultFolderName = null;
     private String inContextLearningPath = ".";
-
     private String dumpGptPath = null;
+
+    private List<String> onlyRun = null;
 
     public void setToGlobal() {
         IPreferenceStore preferences = Activator.getDefault().getPreferenceStore();
