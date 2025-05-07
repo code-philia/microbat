@@ -21,6 +21,8 @@ public class TraceRecovRunConfig {
 
     private boolean enableTraceRecov = true;
     private boolean enableLogging = true;
+    private boolean guava = false;
+    private boolean multiFiles = true;
 
     private String datasetFolder = null;
     private boolean utilizeJunitInsteadOfMain = false;
@@ -34,6 +36,7 @@ public class TraceRecovRunConfig {
     private String dumpGptPath = null;
 
     private List<String> onlyRun = null;
+    private List<String> skip = null;
 
     public void setToGlobal() {
         IPreferenceStore preferences = Activator.getDefault().getPreferenceStore();
