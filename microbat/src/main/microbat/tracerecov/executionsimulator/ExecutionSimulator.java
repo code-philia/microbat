@@ -85,6 +85,12 @@ public abstract class ExecutionSimulator {
 		}
 	}
 
+	public static void dumpTaskName(String taskName) {
+		JSONObject object = new JSONObject();
+		object.put("taskName", taskName);
+		dumpToFile(object);
+	}
+
 	public static synchronized void dumpToFile(JSONObject object) {
 		if (dumpOutputStream == null) {
 			return;
