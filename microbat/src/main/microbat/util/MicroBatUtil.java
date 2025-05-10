@@ -151,7 +151,7 @@ public class MicroBatUtil {
 		jars.add(junitPath);
 		jars.add(hamcrestCorePath);
 
-		String testRunnerDir = junitDir + File.separator + "testrunner.jar";
+		String testRunnerDir = junitDir + File.separator + "runner.jar";
 		jars.add(testRunnerDir);
 
 		// JUnit5
