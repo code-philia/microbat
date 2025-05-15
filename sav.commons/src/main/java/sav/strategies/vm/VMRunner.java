@@ -183,7 +183,7 @@ public class VMRunner {
 //			executorService.
 			timer = null;
 			timerTask = null;
-			System.err.println("settoten: " + setToTenSecondsTimeout);
+			// System.err.println("settoten: " + setToTenSecondsTimeout);
 			if(setToTenSecondsTimeout) {
 				timeout = 10000;
 			} else {

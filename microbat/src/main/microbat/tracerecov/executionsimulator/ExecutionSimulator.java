@@ -74,7 +74,7 @@ public abstract class ExecutionSimulator {
 	public static BufferedOutputStream dumpOutputStream;
 
 	public static void initDumpOutputStream() {
-		if(dumpFilePath == null) {
+		if (dumpFilePath == null) {
 			dumpOutputStream = null;
 		} else {
 			try {
@@ -205,7 +205,8 @@ public abstract class ExecutionSimulator {
 		return segments;
 	}
 
-	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String, String> preValueResponse, VarValue exampleVar)
+	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String, String> preValueResponse,
+			VarValue exampleVar)
 			throws IOException {
 
 		if (selectedVar.isExpanded()) {
@@ -255,12 +256,13 @@ public abstract class ExecutionSimulator {
 
 				this.logger.printResponse(i, response);
 				VariableExpansionUtils.processResponse(selectedVar, response);
-				
+
 				selectedVar.setExpanded(true);
 
 				// data structure abstraction
 				if (shouldAbstract(selectedVar.getType())) {
-					String fullExpandedValue = TraceRecovUtils.processInputStringForLLM(selectedVar.toJSON().toString());
+					String fullExpandedValue = TraceRecovUtils
+							.processInputStringForLLM(selectedVar.toJSON().toString());
 					selectedVar.setFullExpandedValue(fullExpandedValue);
 					return abstractDataStructure(selectedVar, step, exampleVar);
 				}
@@ -291,15 +293,15 @@ public abstract class ExecutionSimulator {
 			return null;
 		}
 
-		String background = DataStructureAbstractionUtils.getBackgroundContent(exampleVar);
-		String content = DataStructureAbstractionUtils.getQuestionContent(selectedVar);
+		String background = "";
+		String content = DataStructureAbstractionUtils.generatePrompt(exampleVar, selectedVar);
 
 		this.logger.printInfoBeforeQuery("Data Structure Abstraction", selectedVar, step, background + content);
 
 		for (int i = 0; i < 5; i++) {
 			try {
 				long timeStart = System.currentTimeMillis();
-				String response = sendRequest(background, content, LLMResponseType.JSON);
+				String response = sendRequest(background, content, LLMResponseType.TEXT);
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.varExpansionTime += timeEnd - timeStart;
 
@@ -324,10 +326,10 @@ public abstract class ExecutionSimulator {
 			List<VarValue> criticalVariables) throws IOException {
 		return inferAliasRelationsByLLM(step, rootVar, criticalVariables);
 	}
-	
+
 	public Map<VarValue, VarValue> inferAliasRelationsByLLM(TraceNode step, VarValue rootVar,
 			List<VarValue> criticalVariables) throws IOException {
-		
+
 		String background = AliasInferenceUtils.getBackgroundContent();
 		String content = AliasInferenceUtils.getQuestionContent(step, rootVar, criticalVariables);
 
@@ -410,13 +412,15 @@ public abstract class ExecutionSimulator {
 	}
 
 	/**
-	 * deterministic flow: guarantee_write, guarantee_no_write 
+	 * deterministic flow: guarantee_write, guarantee_no_write
 	 * must-analysis by LLM: no_guarantee
 	 * 
 	 * Algorithm:
 	 * 1. if any method writes the targetVar, stop and return GUARANTEE_WRITE
-	 * 2. if the write status of any method cannot be determined, the overall status is NO_GUARANTEE
-	 * 3. if all methods are guaranteed not to write to targetVar, the overall status is GUARANTEE_NO_WRITE
+	 * 2. if the write status of any method cannot be determined, the overall status
+	 * is NO_GUARANTEE
+	 * 3. if all methods are guaranteed not to write to targetVar, the overall
+	 * status is GUARANTEE_NO_WRITE
 	 */
 	private WriteStatus estimateComplication(TraceNode step, VarValue parentVar, List<VarValue> criticalVariables) {
 
@@ -477,7 +481,8 @@ public abstract class ExecutionSimulator {
 		}
 
 		String background = DefinitionInferenceUtils.getBackgroundContent();
-		String content = DefinitionInferenceUtils.getQuestionContent(step, rootVar, targetVar, criticalVariables, srcStep);
+		String content = DefinitionInferenceUtils.getQuestionContent(step, rootVar, targetVar, criticalVariables,
+				srcStep);
 
 		System.out.println("Definition Inference------------------------------------------------");
 		System.out.println(background);
@@ -501,18 +506,17 @@ public abstract class ExecutionSimulator {
 
 		return false;
 	}
-	
+
 	public String getCriticalVar(TraceNode slicingCriterion, String criticalVarName) {
 		String prompt = CriticalVarUtils.getPromptForVarIdentification(slicingCriterion, criticalVarName);
-		
+
 		System.out.println(prompt);
 
 		for (int i = 0; i < 2; i++) {
 			try {
-
 				String response = sendRequest("", prompt, LLMResponseType.TEXT);
 				this.logger.printResponse(i, response);
-				return response.strip();
+				return GptTaskInfo.findLabelIn("variable", response);
 			} catch (IOException | RuntimeException e) {
 				this.logger.printError(e.getMessage());
 			}

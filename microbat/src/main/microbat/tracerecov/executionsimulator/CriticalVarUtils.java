@@ -1,38 +1,41 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.util.Map;
+
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.TraceRecovUtils;
 
 public class CriticalVarUtils {
 
-	/* Methods */
+	private final static GptTaskInfo taskInfo;
+	private final static String promptUser;
+
+	static {
+		taskInfo = GptTaskInfo.IDENTIFY_CRITICAL_VARIABLE;
+		promptUser = taskInfo.loadPromptUser();
+	}
 
 	public static String getPromptForVarIdentification(TraceNode slicingCriterion, String criticalVar) {
-		StringBuilder content = new StringBuilder();
-		
-		content.append("Given code ```");
 		int lineNo = slicingCriterion.getLineNumber();
 		String location = slicingCriterion.getBreakPoint().getFullJavaFilePath();
-		String sourceCode = TraceRecovUtils
-				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(location, lineNo).trim());
-		content.append(sourceCode);
-		content.append("```");
-		
-		content.append("\n\nIdentify the variable name that is most likely to contain `");
-		content.append(criticalVar);
-		content.append("`");
-		
-		content.append("\r\n" + "Chose from the following variable names:\n");
+		String sourceCode = TraceRecovUtils.getSourceCodeOfALine(location, lineNo).trim();
+
+		StringBuilder variableNames = new StringBuilder();
 		for (VarValue v : slicingCriterion.getReadVariables()) {
-			content.append(v.getVarName() + "\n");
+			variableNames.append("- ").append(v.getVarName()).append("\n");
 		}
-		content.append("Do not include explanation.");
-		
-		return content.toString();
+
+		Map<String, String> values = Map.of(
+				"line", sourceCode,
+				"variableNames", variableNames.toString(),
+				"targetName", criticalVar);
+
+		return GptTaskInfo.formatPromptString(promptUser, values);
 	}
-	
-	public static String getPromptForFieldIdentification(VarValue rootVar, TraceNode slicingCriterion, String criticalVar) {
+
+	public static String getPromptForFieldIdentification(VarValue rootVar, TraceNode slicingCriterion,
+			String criticalVar) {
 
 		StringBuilder content = new StringBuilder();
 
