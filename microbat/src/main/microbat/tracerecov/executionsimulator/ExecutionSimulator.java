@@ -181,6 +181,7 @@ public abstract class ExecutionSimulator {
 		try {
 			JsonElement jsonElement = com.google.gson.JsonParser.parseString(response);
 			JsonObject jsonObject = jsonElement.getAsJsonObject();
+			dumpToFile(jsonObject);
 			return getSingleResponse(jsonObject);
 		} catch (Exception e) {
 			log.error("Failed to parse response: {}", response, e);
