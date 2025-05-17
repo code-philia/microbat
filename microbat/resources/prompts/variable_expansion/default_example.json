@@ -1,0 +1,43 @@
+{
+    "structures": [
+        "java.util.HashMap { java.util.HashMap$Node[] table; java.util.Set entrySet; int size; int modCount; int threshold; float loadFactor; java.util.Set keySet; java.util.Collection values; }"
+    ],
+    "value": "{{k1=1, k2=2} = [v1, v2], {kA=100, kB=200} = [vA, vB]}",
+    "expanded": {
+        "map| java.util.HashMap<HashMap, ArrayList>": {
+            "key[0]| java.util.HashMap": {
+                "map": {
+                    "key[0]| java.lang.String": "k1",
+                    "key[1]| java.lang.String": "k2",
+                    "value[0]| java.lang.Integer": 1,
+                    "value[1]| java.lang.Integer": 2,
+                    "size| int": 2
+                }
+            },
+            "key[1]| java.util.HashMap": {
+                "map": {
+                    "key[0]| java.lang.String": "kA",
+                    "key[1]| java.lang.String": "kB",
+                    "value[0]| java.lang.Integer": 100,
+                    "value[1]| java.lang.Integer": 200,
+                    "size| int": 2
+                }
+            },
+            "value[0]| java.util.ArrayList<String>": {
+                "elementData| java.lang.Object[]": [
+                    "v1",
+                    "v2"
+                ],
+                "size| int": 2
+            },
+            "value[1]| java.util.ArrayList<String>": {
+                "elementData| java.lang.Object[]": [
+                    "vA",
+                    "vB"
+                ],
+                "size| int": 2
+            },
+            "size| int": 2
+        }
+    }
+}

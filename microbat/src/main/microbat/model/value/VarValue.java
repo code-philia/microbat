@@ -36,86 +36,84 @@ public abstract class VarValue implements GraphNode, Serializable {
 	protected List<VarValue> parents = new ArrayList<>();
 	protected Variable variable;
 	protected List<VarValue> children = new ArrayList<>();
-	
+
 	private boolean isExpanded = false;
 	private boolean isExpansionAbstracted = false;
 	private String fullExpandedValue = "";
 	private String abstractedValue = "";
 	private boolean isRecoveryPerformed = false;
-	
+
 	/**
 	 * indicate whether this variable is a top-level variable in certain step.
 	 */
 	protected boolean isRoot = false;
-	
+
 	protected double correctness = -1.0d;
 	protected double suspiciousness = -1.0d;
 
 	public static final int NOT_NULL_VAL = 1;
-	
+
 	public static final String VALUE_TBD = "<?>";
-	
-	public VarValue(){
+
+	public VarValue() {
 	}
-	
+
 	protected VarValue(boolean isRoot, Variable variable) {
 		this.isRoot = isRoot;
 		this.variable = variable;
 	}
-	
+
 	public abstract VarValue clone();
-	
+
 	/**
-	 * if the toString() of an object is undefined, the default toString() may return something like
+	 * if the toString() of an object is undefined, the default toString() may
+	 * return something like
 	 * "pack.Class@12fa231". Based on this observation, I build this method.
+	 * 
 	 * @param stringValue
 	 * @return
 	 */
-	public boolean isDefinedToStringMethod(){
-		if(stringValue == null){
+	public boolean isDefinedToStringMethod() {
+		if (stringValue == null) {
 			return false;
-		}
-		else{
-			if(stringValue.contains("@") && stringValue.contains(".")){
+		} else {
+			if (stringValue.contains("@") && stringValue.contains(".")) {
 				return false;
-			}
-			else{
+			} else {
 				return true;
 			}
 		}
 	}
-	
-	public VarValue findVarValue(String varID){
+
+	public VarValue findVarValue(String varID) {
 		Set<String> visitedIDs = new HashSet<>();
 		VarValue value = findVarValue(varID, visitedIDs);
 		return value;
 	}
-	
-	protected VarValue findVarValue(String varID, Set<String> visitedIDs ){
-		
-		if(getChildren() != null){
-			for(VarValue value: getChildren()){
-				if(visitedIDs.contains(value.getVarID())){
+
+	protected VarValue findVarValue(String varID, Set<String> visitedIDs) {
+
+		if (getChildren() != null) {
+			for (VarValue value : getChildren()) {
+				if (visitedIDs.contains(value.getVarID())) {
 					continue;
-				}
-				else if(value.getVarID().equals(varID)){
+				} else if (value.getVarID().equals(varID)) {
 					return value;
-				}
-				else{
-					
+				} else {
+
 					visitedIDs.add(value.getVarID());
 					VarValue targetValue = value.findVarValue(varID, visitedIDs);
-					
-					if(targetValue != null){
+
+					if (targetValue != null) {
 						return targetValue;
 					}
 				}
 			}
 		}
-		
+
 		return null;
 	}
-	
+
 	@Override
 	public List<VarValue> getChildren() {
 		if (children == null) {
@@ -123,33 +121,33 @@ public abstract class VarValue implements GraphNode, Serializable {
 		}
 		return children;
 	}
-	
+
 	@Override
-	public int hashCode(){
+	public int hashCode() {
 		return variable.getVarID().hashCode();
 	}
-	
+
 	@Override
-	public boolean equals(Object obj){
-		if(obj instanceof VarValue){
-			VarValue otherVal = (VarValue)obj;
-			
-			if(this.variable!=null && otherVal.getVariable()!=null){
-				return this.variable.getVarID().equals(otherVal.getVariable().getVarID());				
+	public boolean equals(Object obj) {
+		if (obj instanceof VarValue) {
+			VarValue otherVal = (VarValue) obj;
+
+			if (this.variable != null && otherVal.getVariable() != null) {
+				return this.variable.getVarID().equals(otherVal.getVariable().getVarID());
 			}
-			
+
 		}
-		
+
 		return false;
 	}
-	
-	public List<VarValue> getAllDescedentChildren(){
+
+	public List<VarValue> getAllDescedentChildren() {
 		HashSet<VarValue> valueSet = new HashSet<>();
-		
-		if(this.children != null){
-			increaseVariableSet(valueSet, this.children);			
+
+		if (this.children != null) {
+			increaseVariableSet(valueSet, this.children);
 		}
-		
+
 		ArrayList<VarValue> list = new ArrayList<>(valueSet);
 		Collections.sort(list, new Comparator<VarValue>() {
 			@Override
@@ -159,112 +157,109 @@ public abstract class VarValue implements GraphNode, Serializable {
 		});
 		return list;
 	}
-	
 
 	private void increaseVariableSet(HashSet<VarValue> valueSet, List<VarValue> parsedChildren) {
-		for(VarValue value: parsedChildren){
-			if(!valueSet.contains(value)){
+		for (VarValue value : parsedChildren) {
+			if (!valueSet.contains(value)) {
 				valueSet.add(value);
 				increaseVariableSet(valueSet, value.getChildren());
 			}
 		}
 	}
 
-	public String getVarName(){
+	public String getVarName() {
 		return this.variable.getName();
 	}
-	
+
 	public String getVarID() {
 		return this.variable.getVarID();
 	}
 
 	public void setVarID(String varID) {
-		if(varID == null){
+		if (varID == null) {
 			System.currentTimeMillis();
 		}
 		this.variable.setVarID(varID);
 	}
-	
+
 	public void setAliasVarID(String aliasVarID) {
 		this.variable.setAliasVarID(aliasVarID);
 	}
 
 	public String getVariablePath() {
-		
+
 		String varPath = this.variable.getName();
 		VarValue parentValue = this;
-//		while(!parentValue.isRoot()){
-//			parentValue = parentValue.getParents().get(0);
-//			varId = parentValue.getVarName() + "." + varId;
-//		}
-		
+		// while(!parentValue.isRoot()){
+		// parentValue = parentValue.getParents().get(0);
+		// varId = parentValue.getVarName() + "." + varId;
+		// }
+
 		ArrayList<ArrayList<VarValue>> paths = new ArrayList<>();
 		ArrayList<VarValue> initialPath = new ArrayList<>();
 		findValidatePathsToRoot(parentValue, initialPath, paths);
-		
+
 		ArrayList<VarValue> shortestPath = findShortestPath(paths);
-		
-		for(int i=1; i<shortestPath.size(); i++){
+
+		for (int i = 1; i < shortestPath.size(); i++) {
 			VarValue node = shortestPath.get(i);
 			varPath = node.getVarName() + "." + varPath;
 		}
-		
-		parentValue = shortestPath.get(shortestPath.size()-1);
-		
-		if(parentValue.isField()){
+
+		parentValue = shortestPath.get(shortestPath.size() - 1);
+
+		if (parentValue.isField()) {
 			varPath = "this." + varPath;
 		}
-		
+
 		return varPath;
 	}
-	
-	private ArrayList<VarValue> findShortestPath(ArrayList<ArrayList<VarValue>> paths){
+
+	private ArrayList<VarValue> findShortestPath(ArrayList<ArrayList<VarValue>> paths) {
 		int length = -1;
 		ArrayList<VarValue> shortestPath = null;
-		
-		for(ArrayList<VarValue> path: paths){
-			if(length == -1){
+
+		for (ArrayList<VarValue> path : paths) {
+			if (length == -1) {
 				shortestPath = path;
 				length = path.size();
-			}
-			else{
-				if(length < path.size()){
+			} else {
+				if (length < path.size()) {
 					shortestPath = path;
 					length = path.size();
 				}
 			}
 		}
-		
+
 		return shortestPath;
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	private void findValidatePathsToRoot(VarValue node, ArrayList<VarValue> path, 
+	private void findValidatePathsToRoot(VarValue node, ArrayList<VarValue> path,
 			ArrayList<ArrayList<VarValue>> paths) {
 		path.add(node);
-		
-		if(node.isRoot()){
+
+		if (node.isRoot()) {
 			paths.add(path);
-		}
-		else if(!isCyclic(path)){
-			for(VarValue parent: node.getParents()){
+		} else if (!isCyclic(path)) {
+			for (VarValue parent : node.getParents()) {
 				ArrayList<VarValue> clonedPath = (ArrayList<VarValue>) path.clone();
 				findValidatePathsToRoot(parent, clonedPath, paths);
 			}
 		}
 	}
-	
-	private boolean isCyclic(ArrayList<VarValue> path){
-		for(int i=0; i<path.size(); i++){
+
+	private boolean isCyclic(ArrayList<VarValue> path) {
+		for (int i = 0; i < path.size(); i++) {
 			VarValue node1 = path.get(i);
-			for(int j=i+1; j<path.size(); j++){
+			for (int j = i + 1; j < path.size(); j++) {
 				VarValue node2 = path.get(j);
-				if(node1 == node2){
+				if (node1 == node2) {
 					return true;
 				}
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -274,89 +269,89 @@ public abstract class VarValue implements GraphNode, Serializable {
 		}
 		children.add(child);
 	}
-	
+
 	public String getType() {
 		return variable.getType();
 	}
-	
-//	public void setType(String type){
-//		variable.setType(type);
-//	}
-	
-//	public double getDoubleVal() {
-//		return NOT_NULL_VAL;
-//	}
-	
-//	public String getChildId(String childCode) {
-//		return String.format("%s.%s", varName, childCode);
-//	}
-//	
-//	public String getChildId(int i) {
-//		return getChildId(String.valueOf(i));
-//	}
-	
-//	/**
-//	 * the value of this node will be stored in allLongsVals.get(varId)[i];
-//	 * 
-//	 * @param allLongsVals: a map of Variable and its values in all testcases.
-//	 * @param i: current index of allLongsVals.get(varId)
-//	 * @param size: size of allLongsVals
-//	 */
-//	public void retrieveValue(Map<String, double[]> allLongsVals, int i,
-//			int size) {
-//		if (needToRetrieveValue()) {
-//			if (!allLongsVals.containsKey(varName)) {
-//				allLongsVals.put(varName, new double[size]);
-//			}
-//			
-//			double[] valuesOfVarId = allLongsVals.get(varName);
-//			valuesOfVarId[i] = getDoubleVal();
-//		}
-//		if (children != null) {
-//			for (VarValue child : children) {
-//				child.retrieveValue(allLongsVals, i, size);
-//			}
-//		}
-//	}
-	
-//	public List<Double> appendVal(List<Double> values) {
-//		if (needToRetrieveValue()) {
-//			values.add(getDoubleVal());
-//		}
-//		for (VarValue child : CollectionUtils.initIfEmpty(children)) {
-//			child.appendVal(values);
-//		}
-//		return values;
-//	}
-	
-//	public List<String> appendVarId(List<String> vars) {
-//		if (needToRetrieveValue()) {
-//			vars.add(varName);
-//		}
-//		for (VarValue child : CollectionUtils.initIfEmpty(children)) {
-//			child.appendVarId(vars);
-//		}
-//		return vars;
-//	}
-	
-//	/**
-//	 * TODO: to improve, varId of a child is always 
-//	 * started with its parent's varId
-//	 */
-//	public VarValue findVariableById(String varId) {
-//		if (this.varName.equals(varId)) {
-//			return this;
-//		} else {
-//			for (VarValue child : CollectionUtils.initIfEmpty(children)) {
-//				VarValue match = child.findVariableById(varId);
-//				if (match != null) {
-//					return match;
-//				}
-//			}
-//			return null;
-//		}
-//	}
-	
+
+	// public void setType(String type){
+	// variable.setType(type);
+	// }
+
+	// public double getDoubleVal() {
+	// return NOT_NULL_VAL;
+	// }
+
+	// public String getChildId(String childCode) {
+	// return String.format("%s.%s", varName, childCode);
+	// }
+	//
+	// public String getChildId(int i) {
+	// return getChildId(String.valueOf(i));
+	// }
+
+	// /**
+	// * the value of this node will be stored in allLongsVals.get(varId)[i];
+	// *
+	// * @param allLongsVals: a map of Variable and its values in all testcases.
+	// * @param i: current index of allLongsVals.get(varId)
+	// * @param size: size of allLongsVals
+	// */
+	// public void retrieveValue(Map<String, double[]> allLongsVals, int i,
+	// int size) {
+	// if (needToRetrieveValue()) {
+	// if (!allLongsVals.containsKey(varName)) {
+	// allLongsVals.put(varName, new double[size]);
+	// }
+	//
+	// double[] valuesOfVarId = allLongsVals.get(varName);
+	// valuesOfVarId[i] = getDoubleVal();
+	// }
+	// if (children != null) {
+	// for (VarValue child : children) {
+	// child.retrieveValue(allLongsVals, i, size);
+	// }
+	// }
+	// }
+
+	// public List<Double> appendVal(List<Double> values) {
+	// if (needToRetrieveValue()) {
+	// values.add(getDoubleVal());
+	// }
+	// for (VarValue child : CollectionUtils.initIfEmpty(children)) {
+	// child.appendVal(values);
+	// }
+	// return values;
+	// }
+
+	// public List<String> appendVarId(List<String> vars) {
+	// if (needToRetrieveValue()) {
+	// vars.add(varName);
+	// }
+	// for (VarValue child : CollectionUtils.initIfEmpty(children)) {
+	// child.appendVarId(vars);
+	// }
+	// return vars;
+	// }
+
+	// /**
+	// * TODO: to improve, varId of a child is always
+	// * started with its parent's varId
+	// */
+	// public VarValue findVariableById(String varId) {
+	// if (this.varName.equals(varId)) {
+	// return this;
+	// } else {
+	// for (VarValue child : CollectionUtils.initIfEmpty(children)) {
+	// VarValue match = child.findVariableById(varId);
+	// if (match != null) {
+	// return match;
+	// }
+	// }
+	// return null;
+	// }
+	// }
+
 	/* only affect for the current execValue, not for its children */
 	protected boolean needToRetrieveValue() {
 		return true;
@@ -366,15 +361,15 @@ public abstract class VarValue implements GraphNode, Serializable {
 	public String toString() {
 		return String.format("(%s:%s)", this.variable.getName(), getChildren());
 	}
-	
+
 	public boolean isElementOfArray() {
 		return variable instanceof ArrayElementVar;
 	}
 
-//	public void setElementOfArray(boolean isElementOfArray) {
-//		this.isElementOfArray = isElementOfArray;
-//	}
-	
+	// public void setElementOfArray(boolean isElementOfArray) {
+	// this.isElementOfArray = isElementOfArray;
+	// }
+
 	@Override
 	public List<VarValue> getParents() {
 		if (parents == null) {
@@ -386,28 +381,28 @@ public abstract class VarValue implements GraphNode, Serializable {
 	public void setParents(List<VarValue> parents) {
 		this.parents = parents;
 	}
-	
+
 	public void addParent(VarValue parent) {
 		if (parents == null) {
 			parents = new ArrayList<>();
 		}
-		if(!this.parents.contains(parent)){
+		if (!this.parents.contains(parent)) {
 			this.parents.add(parent);
 		}
 	}
-	
+
 	@Override
 	public boolean match(GraphNode node) {
-		if(node instanceof GraphNode){
-			VarValue thatValue = (VarValue)node;
-			if(thatValue.getVarName().equals(this.getVarName()) && 
-					thatValue.getType().equals(this.getType())){
+		if (node instanceof GraphNode) {
+			VarValue thatValue = (VarValue) node;
+			if (thatValue.getVarName().equals(this.getVarName()) &&
+					thatValue.getType().equals(this.getType())) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	public boolean isRoot() {
 		return isRoot;
 	}
@@ -415,56 +410,56 @@ public abstract class VarValue implements GraphNode, Serializable {
 	public void setRoot(boolean isRoot) {
 		this.isRoot = isRoot;
 	}
-	
-//	public ExecValue getFirstRootParent(){
-//		if(this.isRoot()){
-//			return this;
-//		}
-//		else{
-//			ExecValue parentValue = this;
-//			while(!parentValue.isRoot()){
-//				parentValue = parentValue.getParents().get(0);
-//				System.out.println("loop");
-//			}
-//			
-//			return parentValue;
-//		}
-//	}
-	
+
+	// public ExecValue getFirstRootParent(){
+	// if(this.isRoot()){
+	// return this;
+	// }
+	// else{
+	// ExecValue parentValue = this;
+	// while(!parentValue.isRoot()){
+	// parentValue = parentValue.getParents().get(0);
+	// System.out.println("loop");
+	// }
+	//
+	// return parentValue;
+	// }
+	// }
+
 	public boolean isField() {
 		return this.variable instanceof FieldVar;
 	}
-	
-	public boolean isLocalVariable(){
+
+	public boolean isLocalVariable() {
 		return this.variable instanceof LocalVar;
 	}
-	
+
 	public boolean isThisVariable() {
 		return this.getVarName().equals("this") || this.getVarName().startsWith("this$");
 	}
 
 	public boolean isStatic() {
-		if(this.variable instanceof FieldVar){
-			FieldVar var = (FieldVar)this.variable;
+		if (this.variable instanceof FieldVar) {
+			FieldVar var = (FieldVar) this.variable;
 			return var.isStatic();
 		}
-		
+
 		return false;
 	}
 
 	public void setChildren(List<VarValue> children) {
 		this.children = children;
 	}
-	
+
 	public String getManifestationValue() {
 		return stringValue;
 	}
-	
-	public String getStringValue(){
-		if(stringValue==null) {
+
+	public String getStringValue() {
+		if (stringValue == null) {
 			return "null";
 		}
-		
+
 		return stringValue;
 	}
 
@@ -479,12 +474,12 @@ public abstract class VarValue implements GraphNode, Serializable {
 	public void setVariable(Variable variable) {
 		this.variable = variable;
 	}
-	
+
 	public abstract String getHeapID();
-	
-	public String getAliasVarID(){
+
+	public String getAliasVarID() {
 		String aliasVarID = this.variable.getAliasVarID();
-		if(aliasVarID != null) 
+		if (aliasVarID != null)
 			return aliasVarID;
 		else {
 			return getHeapID();
@@ -497,31 +492,30 @@ public abstract class VarValue implements GraphNode, Serializable {
 	}
 
 	public VarValue findVarValue(String... varIDs) {
-		for(String varID: varIDs) {
+		for (String varID : varIDs) {
 			VarValue value = findVarValue(varID);
-			if(value != null) {
+			if (value != null) {
 				return value;
 			}
 		}
-		
+
 		return null;
 	}
-	
+
 	public double getCorrectness() {
 		return this.correctness;
 	}
 
-	
 	public void setCorrectness(double probability) {
-		if (Double.isNaN(probability) || 
-			Double.isInfinite(probability) || 
-			probability < 0.0d || 
-			probability > 1.0d) {
+		if (Double.isNaN(probability) ||
+				Double.isInfinite(probability) ||
+				probability < 0.0d ||
+				probability > 1.0d) {
 			throw new IllegalArgumentException(Log.genMsg(getClass(), "Invalid probability: "));
 		}
 		this.correctness = probability;
 	}
-	
+
 	public boolean id_equals(final Object otherObj) {
 		if (otherObj instanceof VarValue) {
 			VarValue otherVar = (VarValue) otherObj;
@@ -529,87 +523,107 @@ public abstract class VarValue implements GraphNode, Serializable {
 			final String headID = Variable.truncateSimpleID(this.getAliasVarID());
 			final String otherVarID = Variable.truncateSimpleID(otherVar.getVarID());
 			final String otherHeadID = Variable.truncateSimpleID(otherVar.getAliasVarID());
-			if(otherVarID != null && otherVarID.equals(varID)) {
-				return true;						
-			}
-			
-			if(otherHeadID != null && otherHeadID.equals(headID)) {
+			if (otherVarID != null && otherVarID.equals(varID)) {
 				return true;
 			}
-			
+
+			if (otherHeadID != null && otherHeadID.equals(headID)) {
+				return true;
+			}
+
 			VarValue childValue = otherVar.findVarValue(varID, headID);
-			if(childValue != null) {
+			if (childValue != null) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	public boolean isArray() {
 		return this.getType().endsWith("[]");
 	}
-	
+
 	public boolean isConditionResult() {
 		return this.getVarID().startsWith(ConditionVar.CONDITION_RESULT_ID);
 	}
-	
+
 	public double getSuspiciousness() {
 		return this.suspiciousness;
 	}
-	
+
 	public void setSuspiciousness(final double suspiciousness) {
 		this.suspiciousness = suspiciousness;
 	}
-	
+
 	public void clearValue() {
 		this.stringValue = "";
 		for (VarValue child : this.children) {
 			child.clearValue();
 		}
 	}
-	
+
 	public JSONObject toJSON() {
+		return toJSON(true);
+	}
+
+	public JSONObject toJSON(boolean includeStatic) {
 		JSONObject jsonObject = new JSONObject();
 		String key = this.getVarName() + "|" + this.getType();
-		
+
 		if (this instanceof PrimitiveValue || this.getChildren() == null || this.getChildren().isEmpty()) {
 			jsonObject.put(key, this.getStringValue());
 			return jsonObject;
 		} else if (this instanceof ArrayValue) {
-			jsonObject.put(key, getChildrenJSONArrayRecur());
+			jsonObject.put(key, getChildrenJSONArrayRecur(includeStatic));
 			return jsonObject;
 		} else if (this instanceof ReferenceValue) {
-			jsonObject.put(key, getChildrenJSONObjectRecur());
+			jsonObject.put(key, getChildrenJSONObjectRecur(includeStatic));
 		}
-		
+
 		return jsonObject;
 	}
-	
-	private JSONObject getChildrenJSONObjectRecur() {
+
+	private boolean isStaticByName(String name) {
+		if (name.length() <= 1) {
+			return false;
+		}
+		for (char c : name.toCharArray()) {
+			if ((c != '_') && !(c >= 'A' && c <= 'Z')) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private JSONObject getChildrenJSONObjectRecur(boolean includeStatic) {
 		JSONObject childrenJSON = new JSONObject();
 		for (VarValue child : this.getChildren()) {
+			if (!includeStatic && child.isStaticByName(child.getVarName())) {
+				continue;
+			}
+
 			String key = child.getVarName() + "|" + child.getType();
-			
+
 			if (child instanceof PrimitiveValue || child.getChildren() == null || child.getChildren().isEmpty()) {
 				childrenJSON.put(key, child.getStringValue());
 			} else if (child instanceof ArrayValue) {
-				childrenJSON.put(key, child.getChildrenJSONArrayRecur());
+				childrenJSON.put(key, child.getChildrenJSONArrayRecur(includeStatic));
 			} else if (child instanceof ReferenceValue) {
-				childrenJSON.put(key, child.getChildrenJSONObjectRecur());
+				childrenJSON.put(key, child.getChildrenJSONObjectRecur(includeStatic));
 			}
 		}
 		return childrenJSON;
 	}
-	
-	private JSONArray getChildrenJSONArrayRecur() {
+
+	private JSONArray getChildrenJSONArrayRecur(boolean includeStatic) {
 		JSONArray childrenJSONArray = new JSONArray();
 		for (VarValue child : this.getChildren()) {
 			if (child instanceof PrimitiveValue || child.getChildren() == null || child.getChildren().isEmpty()) {
 				childrenJSONArray.put(child.getStringValue());
 			} else if (child instanceof ArrayValue) {
-				childrenJSONArray.put(child.getChildrenJSONArrayRecur());
+				childrenJSONArray.put(child.getChildrenJSONArrayRecur(includeStatic));
 			} else if (child instanceof ReferenceValue) {
-				childrenJSONArray.put(child.getChildrenJSONObjectRecur());
+				childrenJSONArray.put(child.getChildrenJSONObjectRecur(includeStatic));
 			}
 		}
 		return childrenJSONArray;
@@ -622,7 +636,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 	public void setExpanded(boolean isExpanded) {
 		this.isExpanded = isExpanded;
 	}
-	
+
 	public boolean isExpansionAbstracted() {
 		return isExpansionAbstracted;
 	}
@@ -630,7 +644,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 	public void setExpansionAbstracted(boolean isExpansionAbstracted) {
 		this.isExpansionAbstracted = isExpansionAbstracted;
 	}
-	
+
 	public String getFullExpandedValue() {
 		return fullExpandedValue;
 	}
@@ -638,7 +652,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 	public void setFullExpandedValue(String fullExpandedValue) {
 		this.fullExpandedValue = fullExpandedValue;
 	}
-	
+
 	public String getAbstractedValue() {
 		return abstractedValue;
 	}
@@ -654,7 +668,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 	public void setRecoveryPerformed(boolean isRecoveryPerformed) {
 		this.isRecoveryPerformed = isRecoveryPerformed;
 	}
-	
+
 	public void updateChild(VarValue child) {
 		VarValue existingChild = this.getChildren().stream()
 				.filter(c -> c.getVarName().equals(child.getVarName())).findFirst()
@@ -674,7 +688,7 @@ public abstract class VarValue implements GraphNode, Serializable {
 		if (!oldVar.getStringValue().equals(VarValue.VALUE_TBD)) {
 			newVar.setStringValue(oldVar.getStringValue());
 		}
-		
+
 		for (VarValue childInNewVar : newVar.getChildren()) {
 			for (VarValue childInOldVar : oldVar.getChildren()) {
 				if (childInOldVar.getAliasVarID() != null

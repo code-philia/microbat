@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import microbat.tracerecov.TraceRecovUtils;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
+import microbat.tracerecov.executionsimulator.VariableExpansionUtils.VariableExpansionExample;
 
 public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 
@@ -11,8 +12,7 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \r\n"
 			+ "\r\n";
 
-	private static String variableExpansionPromptExample = 
-			"<Example>\r\n"
+	private static String variableExpansionPromptExample = "<Example>\r\n"
 			+ "Class Name: java.util.HashMap<HashMap, ArrayList>\r\n"
 			+ "Structure: {\r\n"
 			+ "	java.util.HashMap$Node[] table;\r\n"
@@ -116,6 +116,15 @@ public class VarExpansionPromptTemplateFiller extends PromptTemplateFiller {
 		stringBuilder.append("\nWe can summarize the structure as:\n```json\n" + groundTruth + "\n```");
 
 		return stringBuilder.toString();
+	}
+
+	public VariableExpansionExample getExampleStructured(HashMap<String, String> datapoint, String groundTruth) {
+		String type = datapoint.get(DatasetReader.VAR_TYPE);
+		String value = TraceRecovUtils.processInputStringForLLM(datapoint.get(DatasetReader.VAR_VALUE));
+		String structure = datapoint.get(DatasetReader.CLASS_STRUCTURE);
+		String structures = "- `" + structure + "`\n";
+
+		return new VariableExpansionExample(value, type, structures, groundTruth);
 	}
 
 }

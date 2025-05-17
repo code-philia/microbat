@@ -3,7 +3,6 @@ package microbat.tracerecov.executionsimulator;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -12,6 +11,9 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.text.StringSubstitutor;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,32 +21,47 @@ import lombok.extern.slf4j.Slf4j;
 @Getter
 public enum GptTaskInfo {
     DATA_STRUCTURE_ABSTRACTION("data_structure_abstraction"),
-    IDENTIFY_CRITICAL_VARIABLE("identify_critical_variable");
+    IDENTIFY_CRITICAL_VARIABLE("identify_critical_variable"),
+    VARIABLE_EXPANSION("variable_expansion");
+
+    private final String promptFolder;
+    private final Map<String, String> loadedPrompts;
+    private final Map<String, String> loadedJson;
 
     private GptTaskInfo(String promptFolder) {
         this.promptFolder = promptFolder;
-        this.loadedPrompts = new HashMap<>();
+        this.loadedPrompts = new ConcurrentHashMap<>();
+        this.loadedJson = new ConcurrentHashMap<>();
     }
 
-    private final String promptFolder;
-    private final HashMap<String, String> loadedPrompts;
+    private String loadFile(String fileName) {
+        String promptPath = "prompts/" + promptFolder + "/" + fileName;
+        try (InputStream is = GptTaskInfo.class.getClassLoader().getResourceAsStream(promptPath)) {
+            if (is == null) {
+                RuntimeException e = new RuntimeException("Failed to load prompt file.");
+                log.error("Failed to load prompt file. Path: {}", promptPath, e);
+                throw e;
+            }
+            String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            return content;
+        } catch (Exception e) {
+            log.error("Failed to load from prompts. File: {}", fileName, e);
+            throw new RuntimeException("Failed to load prompt.", e);
+        }
+    }
+
+    public JsonElement loadJson(String jsonFileName) {
+        if (!loadedJson.containsKey(jsonFileName)) {
+            loadedJson.put(jsonFileName, loadFile(jsonFileName + ".json"));
+        }
+        String jsonString = loadedJson.get(jsonFileName);
+        JsonElement jsonElement = JsonParser.parseString(jsonString);
+        return jsonElement;
+    }
 
     public String loadPrompt(String promptFile) {
         if (!loadedPrompts.containsKey(promptFile)) {
-            String promptPath = "prompts/" + promptFolder + "/" + promptFile + ".md";
-            try (InputStream is = GptTaskInfo.class.getClassLoader().getResourceAsStream(promptPath)) {
-                if (is == null) {
-                    RuntimeException e = new RuntimeException("Failed to load prompt file.");
-                    log.error("Failed to load prompt file. Path: {}", promptPath, e);
-                    throw e;
-                }
-                String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-                loadedPrompts.put(promptFile, content);
-            } catch (Exception e) {
-                log.error("Failed to load prompt file. GPTTask: {}, promptFile: {}",
-                        this.name(), promptFile, e);
-                throw new RuntimeException("Failed to load prompt.", e);
-            }
+            loadedPrompts.put(promptFile, loadFile(promptFile + ".md"));
         }
         return loadedPrompts.get(promptFile);
     }

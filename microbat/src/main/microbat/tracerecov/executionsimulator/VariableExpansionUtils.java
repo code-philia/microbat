@@ -3,10 +3,22 @@ package microbat.tracerecov.executionsimulator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.text.StringSubstitutor;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import microbat.Activator;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.ArrayValue;
@@ -18,7 +30,6 @@ import microbat.model.variable.FieldVar;
 import microbat.model.variable.Variable;
 import microbat.preference.RecovSlicingPreference;
 import microbat.tracerecov.TraceRecovUtils;
-import microbat.tracerecov.autoprompt.ExampleSearcher;
 import microbat.tracerecov.autoprompt.VarExpansionExampleSearcher;
 import microbat.tracerecov.autoprompt.VarExpansionPromptTemplateFiller;
 import microbat.tracerecov.autoprompt.dataset.DatasetReader;
@@ -26,78 +37,70 @@ import microbat.tracerecov.autoprompt.incontextlearning.FailToExtractMethodExcep
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.common.core.Pair;
 
+@Slf4j
 public class VariableExpansionUtils {
+	private static final Gson gson;
 
-	/* Request content */
+	private static final GptTaskInfo taskInfo;
+	private static final String promptUser;
+	private static final JsonElement defaultExampleJson;
+	private static final VariableExpansionExample defaultExample;
 
-	private static final String VAR_EXPAND_BACKGROUND = 
-			"<Background>\r\n"
-			+ "When executing a Java third-party library, some of its internal variables are critical for debugging. Please identify the most critical internal variables of a Java data structure for debugging. \r\n"
-			+ "\r\n";
+	static {
+		gson = new GsonBuilder().setPrettyPrinting().create();
 
-	private static final String VAR_EXPAND_EXAMPLE = 
-			"<Example>\r\n"
-			+ "Class Name: java.util.HashMap<HashMap, ArrayList>\r\n"
-			+ "Structure: {\r\n"
-			+ "	java.util.HashMap$Node[] table;\r\n"
-			+ "	java.util.Set entrySet;\r\n"
-			+ "	int size;\r\n"
-			+ "	int modCount;\r\n"
-			+ "	int threshold;\r\n"
-			+ "	float loadFactor;\r\n"
-			+ "	java.util.Set keySet;\r\n"
-			+ "	java.util.Collection values;\r\n"
-			+ "}\r\n"
-			+ "\r\n"
-			+ "Given “map.toString()” has output value:\r\n"
-			+ "{{k1=1, k2=2} = [v1, v2], {kA=100, kB=200} = [vA, vB]}\r\n"
-			+ "\r\n"
-			+ "We can summarize the structure as \r\n"
-			+ "Here is the given structure converted to JSON format (every variable shall strictly have a Java type, followed by its value):\r\n"
-			+ "{\r\n"
-			+ "  \"map| java.util.HashMap<HashMap, ArrayList>\": {\r\n"
-			+ "    \"key[0]| java.util.HashMap\": {\r\n"
-			+ "      \"map\":{\r\n"
-			+ "        \"key[0]| java.lang.String\": \"k1\",\r\n"
-			+ "        \"key[1]| java.lang.String\": \"k2\",\r\n"
-			+ "        \"value[0]| java.lang.Integer\": 1,\r\n"
-			+ "        \"value[1]| java.lang.Integer\": 2,\r\n"
-			+ "        \"size| int\": 2	\r\n"
-			+ "       }\r\n"
-			+ "    },\r\n"
-			+ "    \"key[1]| java.util.HashMap\": {\r\n"
-			+ "      \"map\": {\r\n"
-			+ "        \"key[0]| java.lang.String\": \"kA\",\r\n"
-			+ "        \"key[1]| java.lang.String\": \"kB\",\r\n"
-			+ "        \"value[0]| java.lang.Integer\": 100,\r\n"
-			+ "        \"value[1]| java.lang.Integer\": 200,\r\n"
-			+ "         \"size| int\": 2\r\n"
-			+ "       }\r\n"
-			+ "     },\r\n"
-			+ "     \"value[0]| java.util.ArrayList<String>\": { \r\n"
-			+ "			\"elementData| java.lang.Object[]\": [ \"v1\", \"v2\"], \r\n"
-			+ "  		\"size| int\": 2 \r\n"
-			+ "       }, \r\n"
-			+ "     \"value[1]| java.util.ArrayList<String>\": { \r\n"
-			+ "			\"elementData| java.lang.Object[]\": [ \"vA\", \"vB\"], \r\n"
-			+ "  		\"size| int\": 2 \r\n"
-			+ "       },\r\n"
-			+ "     \"size| int\": 2\r\n"
-			+ "  },\r\n"
-			+ " }";
-
-	/* Methods */
-
-	public static String getBackgroundContent() {
-		return VAR_EXPAND_BACKGROUND + VAR_EXPAND_EXAMPLE;
-	}
-	
-	public static String getBackgroundContentGivenExample(VarValue exampleVar, VariableSkeleton varSkeleton, TraceNode step) {
-		return VAR_EXPAND_BACKGROUND + formatGivenExample(exampleVar, varSkeleton, step);
+		taskInfo = GptTaskInfo.VARIABLE_EXPANSION;
+		promptUser = taskInfo.loadPromptUser();
+		defaultExampleJson = taskInfo.loadJson("default_example");
+		defaultExample = new VariableExpansionExample(defaultExampleJson);
 	}
 
-	public static String getBackgroundContent(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {
-		return VAR_EXPAND_BACKGROUND + getExample(varValue, varSkeleton, step);
+	@Getter
+	@AllArgsConstructor
+	@ToString
+	public static class VariableExpansionExample {
+		private final String value;
+		private final String type;
+		private final String structures;
+		private final String expanded;
+
+		public VariableExpansionExample(JsonElement example) {
+			try {
+				JsonObject jsonObject = example.getAsJsonObject();
+
+				JsonArray structures = jsonObject.get("structures").getAsJsonArray();
+				StringBuilder sb = new StringBuilder();
+				for (JsonElement s : structures) {
+					sb.append("- `");
+					sb.append(s.getAsString());
+					sb.append("`\n");
+				}
+				String structuresStr = sb.toString();
+
+				String value = jsonObject.get("value").getAsString();
+				String expanded = gson.toJson(jsonObject.get("expanded"));
+				this.value = value;
+				this.type = "";
+				this.structures = structuresStr;
+				this.expanded = expanded;
+
+			} catch (Exception e) {
+				log.error("Failed to load example from JSON: {}", example, e);
+				RuntimeException ex = new RuntimeException("Failed to load Example", e);
+				throw ex;
+			}
+		}
+	}
+
+	public static VariableExpansionExample getBackgroundContentGivenExample(VarValue exampleVar,
+			VariableSkeleton varSkeleton,
+			TraceNode step) {
+		return formatGivenExample(exampleVar, varSkeleton, step);
+	}
+
+	public static VariableExpansionExample getBackgroundContent(VarValue varValue, VariableSkeleton varSkeleton,
+			TraceNode step) {
+		return getExample(varValue, varSkeleton, step);
 	}
 
 	private static HashMap<String, String> getDatapointFromStep(VarValue varValue, VariableSkeleton varSkeleton,
@@ -114,13 +117,12 @@ public class VariableExpansionUtils {
 		} catch (FailToExtractMethodException e) {
 			e.printStackTrace();
 		}
-		
 
 		List<String> importStatements = getImportStatements(step);
 		int lineNo = lineNoInMethod;
-//		if (importStatements.size() != 0) {
-//			lineNo = lineNoInMethod + importStatements.size() + 1;
-//		}
+		// if (importStatements.size() != 0) {
+		// lineNo = lineNoInMethod + importStatements.size() + 1;
+		// }
 
 		StringBuilder imports = new StringBuilder();
 		importStatements.stream().forEach(i -> imports.append(i + "\n"));
@@ -137,36 +139,41 @@ public class VariableExpansionUtils {
 
 		return datapoint;
 	}
-	
-	private static String formatGivenExample(VarValue exampleVar, VariableSkeleton varSkeleton, TraceNode step) {
-		String isEnableIncontextLearningStr = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.ENABLE_IN_CONTEXT_LEARNING);
-		if (isEnableIncontextLearningStr != null && isEnableIncontextLearningStr.equals("true")) {
-			HashMap<String, String> datapoint = getDatapointFromStep(exampleVar, varSkeleton, step);
-			
-			String fullExpandedVal = exampleVar.isExpansionAbstracted() ? exampleVar.getFullExpandedValue() : exampleVar.toJSON().toString();
 
-			VarExpansionPromptTemplateFiller promptTemplateFiller = new VarExpansionPromptTemplateFiller();
-			return promptTemplateFiller.getExample(datapoint, fullExpandedVal);
+	private static VariableExpansionExample formatGivenExample(VarValue exampleVar, VariableSkeleton varSkeleton,
+			TraceNode step) {
+		if (isEnabledInContextLearning()) {
+			HashMap<String, String> datapoint = getDatapointFromStep(exampleVar, varSkeleton, step);
+			String expanded = exampleVar.isExpansionAbstracted() ? exampleVar.getFullExpandedValue()
+					: exampleVar.toJSON().toString();
+			return new VarExpansionPromptTemplateFiller().getExampleStructured(datapoint, expanded);
 		} else {
-			return "";
+			return defaultExample;
 		}
 	}
 
-	private static String getExample(VarValue varValue, VariableSkeleton varSkeleton, TraceNode step) {
-		String isEnableIncontextLearningStr = Activator.getDefault().getPreferenceStore().getString(RecovSlicingPreference.ENABLE_IN_CONTEXT_LEARNING);
-		if (isEnableIncontextLearningStr != null && isEnableIncontextLearningStr.equals("true")) {
+	private static VariableExpansionExample getExample(VarValue varValue, VariableSkeleton varSkeleton,
+			TraceNode step) {
+		if (isEnabledInContextLearning()) {
 			HashMap<String, String> datapoint = getDatapointFromStep(varValue, varSkeleton, step);
 
-			ExampleSearcher exampleSearcher = new VarExpansionExampleSearcher(true);
-			String closestExample = exampleSearcher.searchForExample(datapoint, step.getTrace().getAppJavaClassPath());
+			VarExpansionExampleSearcher exampleSearcher = new VarExpansionExampleSearcher(true);
+			VariableExpansionExample closestExample = exampleSearcher.searchForExampleStructured(datapoint,
+					step.getTrace().getAppJavaClassPath());
 
-			if (closestExample == null || closestExample.equals("")) {
-				return VAR_EXPAND_EXAMPLE;
+			if (closestExample == null) {
+				return defaultExample;
 			}
 			return closestExample;
 		} else {
-			return "";
+			return defaultExample;
 		}
+	}
+
+	private static boolean isEnabledInContextLearning() {
+		String isEnabledInContextLearningStr = Activator.getDefault().getPreferenceStore()
+				.getString(RecovSlicingPreference.ENABLE_IN_CONTEXT_LEARNING);
+		return isEnabledInContextLearningStr != null && isEnabledInContextLearningStr.equals("true");
 	}
 
 	private static String getLineSourceCode(TraceNode step) {
@@ -176,78 +183,66 @@ public class VariableExpansionUtils {
 				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(location, lineNo).trim());
 		return sourceCode;
 	}
-	
+
 	/**
-	 * Get method code and the relative line number of the given line within the method.
+	 * Get method code and the relative line number of the given line within the
+	 * method.
 	 * 
 	 * @param filePath
 	 * @param lineNumber
 	 * @return Object[] {String MethodSourceCode, Integer RelativeLineNumber}
-	 * @throws FailToExtractMethodException 
+	 * @throws FailToExtractMethodException
 	 */
 	private static Object[] getMethodSourceCode(TraceNode step) throws FailToExtractMethodException {
 		int lineNo = step.getLineNumber();
 		String location = step.getBreakPoint().getFullJavaFilePath();
 		return TraceRecovUtils.getSourceCodeOfMethodContainingLine(location, lineNo);
 	}
-	
+
 	private static List<String> getImportStatements(TraceNode step) {
 		String location = step.getBreakPoint().getFullJavaFilePath();
 		return TraceRecovUtils.getImportStatements(location);
 	}
 
-	public static String getQuestionContent(VarValue selectedVariable, List<VariableSkeleton> variableSkeletons,
-			TraceNode step, Pair<String, String> preValueResponse) {
-		/* source code */
-		String sourceCode = getLineSourceCode(step);
+	public static String getQuestionContent(
+			VariableExpansionExample example,
+			VarValue selectedVariable,
+			List<VariableSkeleton> variableSkeletons,
+			TraceNode step,
+			Pair<String, String> preValueResponse) {
 
-		/* type of selected variable */
-		String variableType = selectedVariable.getType();
-		// assume var layer == 1, then only elementArray will be recorded in ArrayList
+		String code = getLineSourceCode(step);
+		String name = selectedVariable.getVarName();
+		String value = TraceRecovUtils.processInputStringForLLM(selectedVariable.getStringValue());
+
+		String type = selectedVariable.getType();
 		if (!selectedVariable.getChildren().isEmpty()) {
 			VarValue child = selectedVariable.getChildren().get(0);
 			String childType = child.getType();
 			if (childType.contains("[]")) {
-				childType = childType.substring(0, childType.length() - 2); // remove [] at the end
+				childType = childType.substring(0, childType.length() - 2);
 			}
-			variableType = variableType.concat("\\<" + childType + "\\>");
+			type = type.concat("\\<" + childType + "\\>");
 		}
 
-		/* variable properties */
-		String variableValue = TraceRecovUtils.processInputStringForLLM(selectedVariable.getStringValue());
-		String variableName = selectedVariable.getVarName();
-
-		StringBuilder question = new StringBuilder("\n\n<Question>\n" + "Given the following data structure:\n");
-
+		StringBuilder classStructures = new StringBuilder();
 		for (VariableSkeleton v : variableSkeletons) {
 			if (v != null) {
-				question.append(v.toString() + "\n");
+				classStructures.append("- `").append(v.toString()).append("`\n");
 			}
 		}
 
-		question.append("with the input value of executing ```");
-		question.append(sourceCode + "```, ");
-		question.append("we have the value of *" + selectedVariable.getVarName() + "* of type `");
-		question.append(variableType);
-		question.append("`, value \"");
-		question.append(variableValue);
-		question.append("\", strictly return in JSON format for *" + variableName
-				+ "* as the above example, each key must has a value and a type. "
-				+ "The JSON object must start with variable *" + variableName
-				+ "* as the root. Do not include explanation in your response.\n");
-
-		question.append("You must follow the JSON format as \"var_name|var_type\": var_value. "
-				+ "Do not include duplicate keys. Make sure to include all the fields relevant to the given line of code. Do not include extra characters like `\\t`, `\\n` or `\\r`. You must infer all var_value.");
-
-//		/*
-//		 * Added to enforce identical variable structure in buggy and correct trace
-//		 */
-//		if (preValueResponse != null) {
-//			question.append("\n For example, you may return\n" + preValueResponse.second() + " when *"
-//					+ selectedVariable.getVarName() + "* has the value: \"" + preValueResponse.first() + "\".");
-//		}
-
-		return question.toString();
+		Map<String, String> values = Map.of("exampleValue", example.getValue(),
+				"exampleType", example.getType(),
+				"exampleClassStructures", example.getStructures(),
+				"exampleExpanded", example.getExpanded(),
+				"name", name,
+				"type", type,
+				"value", value,
+				"classStructures", classStructures.toString(),
+				"code", code);
+		StringSubstitutor sub = new StringSubstitutor(values);
+		return sub.replace(promptUser);
 	}
 
 	/**
@@ -335,7 +330,7 @@ public class VariableExpansionUtils {
 			String headAddress = selectedVariable.getAliasVarID().equals("0") ? selectedVariable.getVarID()
 					: selectedVariable.getAliasVarID();
 			String varID = headAddress + "[" + index + "]";
-//			String varID = Variable.concanateFieldVarID(headAddress, varName);
+			// String varID = Variable.concanateFieldVarID(headAddress, varName);
 
 			Variable var = new FieldVar(false, varName, varType, varType);
 			var.setVarID(varID);
