@@ -16,8 +16,10 @@ import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONObject;
 
@@ -592,15 +594,30 @@ public abstract class ExecutionSimulator {
 	public String getCriticalField(VarValue rootVar, TraceNode slicingCriterion, String criticalVarName) {
 		String prompt = CriticalVarUtils.getPromptForFieldIdentification(rootVar, slicingCriterion, criticalVarName);
 
+		Set<String> fieldNames = new HashSet<>();
+		for (VarValue field : rootVar.getAllDescedentChildren()) {
+			fieldNames.add(field.getVarName());
+		}
+
+		if (fieldNames.isEmpty()) {
+			return "";
+		}
+
 		System.out.println(prompt);
 
 		for (int i = 0; i < 3; i++) {
 			try {
 				String response = sendRequest("", prompt, LLMResponseType.TEXT);
 				response = GptTaskInfo.findLabelIn("field", response);
+				if (!fieldNames.contains(response)) {
+					RuntimeException e = new RuntimeException("The field name is not in the list of field names.");
+					log.error("The field name is not in the list of field names. Expected: {}, Found: {}", fieldNames,
+							response, e);
+					throw e;
+				}
 				this.logger.printResponse(i, response);
 				return response.strip();
-			} catch (IOException | RuntimeException e) {
+			} catch (Exception e) {
 				this.logger.printError(e.getMessage());
 			}
 		}
