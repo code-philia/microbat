@@ -48,6 +48,7 @@ public class TraceRecovRunConfig {
         SimulatorConstants.TB_API_KEY = gptConfig.getGptApiKey();
         SimulatorConstants.MODEL_OVERRIDE = gptConfig.getGptModel();
         SimulatorConstants.GPT_API_ENDPOINT_OVERRIDE = gptConfig.getGptBaseUrl();
+        SimulatorConstants.MAX_TOKENS = gptConfig.getMaxTokens();
 
         preferences.putValue(MicrobatPreference.JAVA7HOME_PATH, jdkConfig.getJavaHome());
         preferences.putValue(MicrobatPreference.STEP_LIMIT, String.valueOf(traceConfig.getStepLimit()));

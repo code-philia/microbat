@@ -2,11 +2,18 @@ package microbat.tracerecov.executionsimulator;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,12 +21,16 @@ import java.util.Map;
 
 import org.json.JSONObject;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 import lombok.extern.slf4j.Slf4j;
 import microbat.codeanalysis.bytecode.CFG;
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
 import microbat.tracerecov.CannotBuildCFGException;
 import microbat.tracerecov.TraceRecovUtils;
+import microbat.tracerecov.executionsimulator.VariableExpansionUtils.VariableExpansionExample;
 import microbat.tracerecov.staticverifiers.CandidateVarVerifier;
 import microbat.tracerecov.staticverifiers.WriteStatus;
 import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
@@ -48,9 +59,9 @@ public abstract class ExecutionSimulator {
 
 	protected abstract String getResponseTypeString(LLMResponseType responseType);
 
-	protected abstract JSONObject getSingleRequest(String combinedPrompt, LLMResponseType responseType);
+	protected abstract JsonObject getSingleRequest(String combinedPrompt, LLMResponseType responseType);
 
-	protected abstract String getSingleResponse(JSONObject responseObject);
+	protected abstract String getSingleResponse(JsonObject responseObject);
 
 	protected abstract String getAPIKey();
 
@@ -86,12 +97,12 @@ public abstract class ExecutionSimulator {
 	}
 
 	public static void dumpTaskName(String taskName) {
-		JSONObject object = new JSONObject();
-		object.put("taskName", taskName);
+		JsonObject object = new JsonObject();
+		object.addProperty("taskName", taskName);
 		dumpToFile(object);
 	}
 
-	public static synchronized void dumpToFile(JSONObject object) {
+	public static synchronized void dumpToFile(JsonObject object) {
 		if (dumpOutputStream == null) {
 			return;
 		}
@@ -107,9 +118,9 @@ public abstract class ExecutionSimulator {
 
 	// Method to send the complete prompt in a single request
 	private String sendSingleRequest(String combinedPrompt, LLMResponseType responseType)
-			throws IOException, RuntimeException {
+			throws IOException {
 		HttpURLConnection connection = getConnection();
-		JSONObject request = getSingleRequest(combinedPrompt, responseType);
+		JsonObject request = getSingleRequest(combinedPrompt, responseType);
 
 		dumpToFile(request);
 		try (OutputStream os = connection.getOutputStream()) {
@@ -118,20 +129,60 @@ public abstract class ExecutionSimulator {
 		}
 
 		int responseCode = connection.getResponseCode();
-		if (responseCode == HttpURLConnection.HTTP_OK) {
-			try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
-				StringBuilder response = new StringBuilder();
-				String responseLine;
-				while ((responseLine = br.readLine()) != null) {
-					response.append(responseLine.trim());
-				}
 
-				JSONObject responseObject = new JSONObject(response.toString());
-				dumpToFile(responseObject);
-				return getSingleResponse(responseObject);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+		Exception readException = null;
+		InputStream is = null;
+		try {
+			if (responseCode >= 400) {
+				is = connection.getErrorStream();
+			} else {
+				is = connection.getInputStream();
 			}
-		} else {
-			throw new RuntimeException("Failed : HTTP error code : " + responseCode);
+
+			byte[] buffer = new byte[65536];
+			int bytesRead;
+			while ((bytesRead = is.read(buffer)) != -1) {
+				baos.write(buffer, 0, bytesRead);
+			}
+		} catch (Exception e) {
+			readException = e;
+		} finally {
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException e) {
+					log.error("Failed to close input stream: " + e.getMessage());
+				}
+			}
+		}
+
+		byte[] bytes = baos.toByteArray();
+		CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+		decoder.onMalformedInput(CodingErrorAction.REPLACE);
+		decoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+		CharBuffer charBuffer = decoder.decode(ByteBuffer.wrap(bytes));
+		String response = charBuffer.toString();
+
+		if (readException != null) {
+			log.error("Failed to read response {}", response, readException);
+			throw new IOException("Failed to read response.", readException);
+		}
+
+		if (responseCode != HttpURLConnection.HTTP_OK) {
+			RuntimeException e = new RuntimeException("Failed : HTTP error code : " + responseCode);
+			log.error("Failed to send LLM request. HTTP code: {}. Content: {}", responseCode, response, e);
+			throw e;
+		}
+
+		try {
+			JsonElement jsonElement = com.google.gson.JsonParser.parseString(response);
+			JsonObject jsonObject = jsonElement.getAsJsonObject();
+			return getSingleResponse(jsonObject);
+		} catch (Exception e) {
+			log.error("Failed to parse response: {}", response, e);
+			throw new IOException("Failed to parse response.", e);
 		}
 	}
 
@@ -145,7 +196,7 @@ public abstract class ExecutionSimulator {
 		String segment = promptSegments.get(0);
 
 		HttpURLConnection connection = getConnection();
-		JSONObject request = getSingleRequest(segment, responseType);
+		JsonObject request = getSingleRequest(segment, responseType);
 
 		try (OutputStream os = connection.getOutputStream()) {
 			byte[] input = request.toString().getBytes("utf-8");
@@ -238,24 +289,34 @@ public abstract class ExecutionSimulator {
 			variableSkeletons.add(childSkeleton);
 		}
 
-		String background = exampleVar == null
-				? VariableExpansionUtils.getBackgroundContent(selectedVar, parentSkeleton, step)
-				: VariableExpansionUtils.getBackgroundContentGivenExample(exampleVar, parentSkeleton, step);
-		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step,
+		// String background = exampleVar == null
+		// ? VariableExpansionUtils.getBackgroundContent(selectedVar, parentSkeleton,
+		// step)
+		// : VariableExpansionUtils.getBackgroundContentGivenExample(exampleVar,
+		// parentSkeleton, step);
+		VariableExpansionExample example = exampleVar == null
+				? VariableExpansionUtils.getExample(selectedVar, parentSkeleton, step)
+				: VariableExpansionUtils.formatGivenExample(exampleVar, parentSkeleton, step);
+		String content = VariableExpansionUtils.getQuestionContent(
+				example,
+				selectedVar,
+				variableSkeletons,
+				step,
 				preValueResponse);
 
-		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, background + content);
+		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, content);
 
 		for (int i = 0; i < 5; i++) {
 			try {
 				// variable expansion
 				long timeStart = System.currentTimeMillis();
-				String response = sendRequest(background, content, LLMResponseType.JSON);
+				String response = sendRequest("", content, LLMResponseType.TEXT);
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.varExpansionTime += timeEnd - timeStart;
 
 				this.logger.printResponse(i, response);
-				VariableExpansionUtils.processResponse(selectedVar, response);
+				String jsonResponse = GptTaskInfo.findPatternIn("json", response);
+				VariableExpansionUtils.processResponse(selectedVar, jsonResponse);
 
 				selectedVar.setExpanded(true);
 
@@ -357,6 +418,9 @@ public abstract class ExecutionSimulator {
 			List<VarValue> criticalVariables, TraceNode srcStep) {
 
 		if (shouldAbstract(rootVar.getType())) {
+			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables, srcStep);
+		}
+		if (1 + 1 == 2) {
 			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables, srcStep);
 		}
 
@@ -512,7 +576,7 @@ public abstract class ExecutionSimulator {
 
 		System.out.println(prompt);
 
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 3; i++) {
 			try {
 				String response = sendRequest("", prompt, LLMResponseType.TEXT);
 				this.logger.printResponse(i, response);
@@ -530,10 +594,10 @@ public abstract class ExecutionSimulator {
 
 		System.out.println(prompt);
 
-		for (int i = 0; i < 2; i++) {
+		for (int i = 0; i < 3; i++) {
 			try {
-
 				String response = sendRequest("", prompt, LLMResponseType.TEXT);
+				response = GptTaskInfo.findLabelIn("field", response);
 				this.logger.printResponse(i, response);
 				return response.strip();
 			} catch (IOException | RuntimeException e) {

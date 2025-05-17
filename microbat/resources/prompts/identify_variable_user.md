@@ -10,5 +10,5 @@ Identify the root variable name that is most likely to contain the nested variab
 The following variables are candidates:
 {candidates}
 
-If needed, you can use <thought>xxxx</thought> tags to express your thought process.
+If needed, you can use <thought>xxxx</thought> tags to express your thought process. The thoughts should be as short as possible.
 Please output with <variable_name>xxxx</variable_name> tags.

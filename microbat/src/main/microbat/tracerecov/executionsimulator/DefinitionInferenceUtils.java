@@ -140,6 +140,9 @@ public class DefinitionInferenceUtils {
 							step.getTrace().getAppJavaClassPath());
 					SourceCodeDatabase.sourceCodeMap.put(methodSig, methodSourceCode);
 				}
+				if(methodSourceCode.contains("UnsupportedOperationException")) {
+					continue;
+				}
 				question.append(methodSourceCode);
 				question.append("\n");
 			}

@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 public class GeminiExecutionSimulator extends ExecutionSimulator {
 
@@ -32,50 +32,63 @@ public class GeminiExecutionSimulator extends ExecutionSimulator {
 	@Override
 	protected String getResponseTypeString(LLMResponseType responseType) {
 		switch (responseType) {
-		case JSON:
-			return "application/json";
-		case TEXT:
-			return "text/plain";
-		default:
-			return "text/plain";
+			case JSON:
+				return "application/json";
+			case TEXT:
+				return "text/plain";
+			default:
+				return "text/plain";
 		}
 	}
 
 	@Override
-	protected JSONObject getSingleRequest(String combinedPrompt, LLMResponseType responseType) {
+	protected JsonObject getSingleRequest(String combinedPrompt, LLMResponseType responseType) {
 		/* content */
-		JSONObject part = new JSONObject();
-		part.put("text", combinedPrompt);
+		JsonObject part = new JsonObject();
+		part.addProperty("text", combinedPrompt);
 
-		JSONArray parts = new JSONArray();
-		parts.put(part);
+		JsonArray parts = new JsonArray();
+		parts.add(part);
 
-		JSONObject content = new JSONObject();
-		content.put("parts", parts);
+		JsonObject content = new JsonObject();
+		content.add("parts", parts);
 
-		JSONArray contents = new JSONArray();
-		contents.put(content);
+		JsonArray contents = new JsonArray();
+		contents.add(content);
 
 		/* generationConfig */
-		JSONObject generationConfig = new JSONObject();
-//		generationConfig.put("responseMimeType", getResponseTypeString(responseType));
-		generationConfig.put("maxOutputTokens", SimulatorConstants.MAX_TOKENS);
-		generationConfig.put("temperature", SimulatorConstants.TEMPERATURE);
-//		generationConfig.put("topP", SimulatorConstants.GEMINI_TOP_P);
-//		generationConfig.put("topK", SimulatorConstants.GEMINI_TOP_K);
+		JsonObject generationConfig = new JsonObject();
+		// generationConfig.put("responseMimeType",
+		// getResponseTypeString(responseType));
+		generationConfig.addProperty("maxOutputTokens", SimulatorConstants.MAX_TOKENS);
+		generationConfig.addProperty("temperature", SimulatorConstants.TEMPERATURE);
+		// generationConfig.put("topP", SimulatorConstants.GEMINI_TOP_P);
+		// generationConfig.put("topK", SimulatorConstants.GEMINI_TOP_K);
 
 		/* request */
-		JSONObject request = new JSONObject();
-		request.put("contents", contents);
-		request.put("generationConfig", generationConfig);
+		JsonObject request = new JsonObject();
+		request.add("contents", contents);
+		request.add("generationConfig", generationConfig);
 
 		return request;
 	}
 
 	@Override
-	protected String getSingleResponse(JSONObject responseObject) {
-		return responseObject.getJSONArray("candidates").getJSONObject(0).getJSONObject("content").getJSONArray("parts")
-				.getJSONObject(0).getString("text").trim();
+	protected String getSingleResponse(JsonObject responseObject) {
+		return responseObject
+				.get("candidates")
+				.getAsJsonArray()
+				.get(0)
+				.getAsJsonObject()
+				.get("content")
+				.getAsJsonObject()
+				.get("parts")
+				.getAsJsonArray()
+				.get(0)
+				.getAsJsonObject()
+				.get("text")
+				.getAsString()
+				.trim();
 	}
 
 	@Override

@@ -6,18 +6,20 @@ import java.util.List;
 
 import microbat.model.trace.TraceNode;
 import microbat.model.value.VarValue;
+import microbat.tracerecov.executionsimulator.VariableExpansionUtils.VariableExpansionExample;
 import microbat.tracerecov.varskeleton.VarSkeletonBuilder;
 import microbat.tracerecov.varskeleton.VariableSkeleton;
 import sav.common.core.Pair;
 
 public class ExecutionSimulatorForPromptCollection extends GPTExecutionSimulator {
-	
+
 	public ExecutionSimulatorForPromptCollection() {
 		this.logger = new ExecutionSimulationFileLogger();
 	}
 
 	@Override
-	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String,String> preValueResponse, VarValue exampleVar) throws IOException {
+	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String, String> preValueResponse,
+			VarValue exampleVar) throws IOException {
 
 		if (selectedVar.isExpanded()) {
 			return null;
@@ -44,22 +46,24 @@ public class ExecutionSimulatorForPromptCollection extends GPTExecutionSimulator
 			variableSkeletons.add(childSkeleton);
 		}
 
-		String background = VariableExpansionUtils.getBackgroundContent();
-		String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step, preValueResponse);
+		// VariableExpansionExample background = VariableExpansionUtils.getBackgroundContent();
+		// String content = VariableExpansionUtils.getQuestionContent(selectedVar, variableSkeletons, step,
+		// 		preValueResponse);
 
-		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, background + content);
+		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, "");
 
 		return null;
-//		for (int i = 0; i < 2; i++) {
-//			try {
-//				String response = sendRequest(background, content);
-//				this.logger.printResponse(i, response);
-//				VariableExpansionUtils.processResponse(selectedVar, response);
-//				break;
-//			} catch (org.json.JSONException | java.lang.StringIndexOutOfBoundsException e) {
-//				this.logger.printError(e.getMessage());
-//			}
-//		}
+		// for (int i = 0; i < 2; i++) {
+		// try {
+		// String response = sendRequest(background, content);
+		// this.logger.printResponse(i, response);
+		// VariableExpansionUtils.processResponse(selectedVar, response);
+		// break;
+		// } catch (org.json.JSONException | java.lang.StringIndexOutOfBoundsException
+		// e) {
+		// this.logger.printError(e.getMessage());
+		// }
+		// }
 	}
-	
+
 }

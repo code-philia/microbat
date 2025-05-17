@@ -63,7 +63,7 @@ public class SimulatorConstants {
 
 	/* common parameters */
 	public static final double TEMPERATURE = 0;
-	public static final int MAX_TOKENS = 16384;
+	public static int MAX_TOKENS = 16384;
 	
 	/* GPT parameters */
 	public static final double TOP_P = 1;

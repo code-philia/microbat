@@ -22,7 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 public enum GptTaskInfo {
     DATA_STRUCTURE_ABSTRACTION("data_structure_abstraction"),
     IDENTIFY_CRITICAL_VARIABLE("identify_critical_variable"),
-    VARIABLE_EXPANSION("variable_expansion");
+    IDENTIFY_CRITICAL_FIELD("identify_critical_field"),
+    VARIABLE_EXPANSION("variable_expansion"),
+    ;
 
     private final String promptFolder;
     private final Map<String, String> loadedPrompts;

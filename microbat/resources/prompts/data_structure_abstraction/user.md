@@ -14,8 +14,8 @@ Specifically:
 - Type annotations (e.g., `|java.util.HashMap`) should be removed from keys in the output.
 - You should combine the toString value with the concrete value to generate the output.
 - If there are inconsistent between toString values and concrete values, you should use the toString value as the main reference.
-- If necessary, you can use <thought></thought> to express your reasoning process.
-- Wrap your output in a json code block (i.e., ```json ```).
+- If necessary, you can use <thought></thought> to express your reasoning process. The thoughts should be as short as possible.
+- Wrap your output in a json code block (i.e., ```json ```) and do not include any comment inside json code block.
 
 ---
 

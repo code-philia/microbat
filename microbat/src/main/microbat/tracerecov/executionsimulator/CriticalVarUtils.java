@@ -8,12 +8,16 @@ import microbat.tracerecov.TraceRecovUtils;
 
 public class CriticalVarUtils {
 
-	private final static GptTaskInfo taskInfo;
-	private final static String promptUser;
+	private final static GptTaskInfo taskInfoVar;
+	private final static String promptUserVar;
+	private final static GptTaskInfo taskInfoField;
+	private final static String promptUserField;
 
 	static {
-		taskInfo = GptTaskInfo.IDENTIFY_CRITICAL_VARIABLE;
-		promptUser = taskInfo.loadPromptUser();
+		taskInfoVar = GptTaskInfo.IDENTIFY_CRITICAL_VARIABLE;
+		promptUserVar = taskInfoVar.loadPromptUser();
+		taskInfoField = GptTaskInfo.IDENTIFY_CRITICAL_FIELD;
+		promptUserField = taskInfoField.loadPromptUser();
 	}
 
 	public static String getPromptForVarIdentification(TraceNode slicingCriterion, String criticalVar) {
@@ -31,39 +35,34 @@ public class CriticalVarUtils {
 				"variableNames", variableNames.toString(),
 				"targetName", criticalVar);
 
-		return GptTaskInfo.formatPromptString(promptUser, values);
+		return GptTaskInfo.formatPromptString(promptUserVar, values);
 	}
 
 	public static String getPromptForFieldIdentification(VarValue rootVar, TraceNode slicingCriterion,
 			String criticalVar) {
-
-		StringBuilder content = new StringBuilder();
-
-		content.append("Given the following data structure:\n");
-		String fullValue = rootVar.isExpansionAbstracted() ? rootVar.getAbstractedValue()
-				: (rootVar.isExpanded() ? rootVar.toJSON().toString() : rootVar.getStringValue());
-		content.append(fullValue);
-
-		content.append("\r\n" + "The variable is extracted from code ```");
 		int lineNo = slicingCriterion.getLineNumber();
 		String location = slicingCriterion.getBreakPoint().getFullJavaFilePath();
-		String sourceCode = TraceRecovUtils
+		String code = TraceRecovUtils
 				.processInputStringForLLM(TraceRecovUtils.getSourceCodeOfALine(location, lineNo).trim());
-		content.append(sourceCode);
-		content.append("```");
 
-		content.append("\n\nFrom the above data structure, identify one field name that is most likely to be `");
-		content.append(criticalVar);
-		content.append("`");
+		String value = rootVar.isExpansionAbstracted() ? rootVar.getAbstractedValue()
+				: (rootVar.isExpanded() ? rootVar.toJSON().toString() : rootVar.getStringValue());
 
-		content.append("\r\n" + "Chose from the following field names:\n");
+		String target = criticalVar;
+		String name = rootVar.getVarName();
+
+		StringBuilder options = new StringBuilder();
 		for (VarValue v : rootVar.getAllDescedentChildren()) {
-			content.append(v.getVarName() + "\n");
+			options.append("- ").append(v.getVarName()).append("\n");
 		}
-		content.append("Do not include explanation.");
 
-		return content.toString();
-
+		Map<String, String> values = Map.of(
+				"code", code,
+				"target", target,
+				"name", name,
+				"value", value,
+				"options", options.toString());
+		return GptTaskInfo.formatPromptString(promptUserField, values);
 	}
 
 }

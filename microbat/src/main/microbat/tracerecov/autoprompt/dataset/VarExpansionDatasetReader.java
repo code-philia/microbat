@@ -7,9 +7,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import lombok.extern.slf4j.Slf4j;
 import microbat.Activator;
 import microbat.preference.RecovSlicingPreference;
 
+@Slf4j
 public class VarExpansionDatasetReader extends DatasetReader {
 
 	private String variableExpansionPath;
@@ -31,9 +33,7 @@ public class VarExpansionDatasetReader extends DatasetReader {
 	public ArrayList<HashMap<String, String>> readCompleteDataset() {
 		ArrayList<HashMap<String, String>> dataset = new ArrayList<>();
 
-		try {
-			BufferedReader bufferReader = new BufferedReader(new FileReader(variableExpansionPath));
-
+		try (BufferedReader bufferReader = new BufferedReader(new FileReader(variableExpansionPath))) {
 			String line;
 			// read content
 			while ((line = bufferReader.readLine()) != null) {
@@ -53,7 +53,8 @@ public class VarExpansionDatasetReader extends DatasetReader {
 				dataset.add(datapoint);
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("Error reading variable expansion dataset file: " + variableExpansionPath, e);
+			return new ArrayList<>();
 		}
 
 		return dataset;

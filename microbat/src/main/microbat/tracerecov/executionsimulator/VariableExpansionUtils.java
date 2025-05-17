@@ -76,11 +76,12 @@ public class VariableExpansionUtils {
 					sb.append("`\n");
 				}
 				String structuresStr = sb.toString();
-
+				String type = jsonObject.get("type").getAsString();
 				String value = jsonObject.get("value").getAsString();
 				String expanded = gson.toJson(jsonObject.get("expanded"));
+
 				this.value = value;
-				this.type = "";
+				this.type = type;
 				this.structures = structuresStr;
 				this.expanded = expanded;
 
@@ -90,17 +91,6 @@ public class VariableExpansionUtils {
 				throw ex;
 			}
 		}
-	}
-
-	public static VariableExpansionExample getBackgroundContentGivenExample(VarValue exampleVar,
-			VariableSkeleton varSkeleton,
-			TraceNode step) {
-		return formatGivenExample(exampleVar, varSkeleton, step);
-	}
-
-	public static VariableExpansionExample getBackgroundContent(VarValue varValue, VariableSkeleton varSkeleton,
-			TraceNode step) {
-		return getExample(varValue, varSkeleton, step);
 	}
 
 	private static HashMap<String, String> getDatapointFromStep(VarValue varValue, VariableSkeleton varSkeleton,
@@ -140,7 +130,7 @@ public class VariableExpansionUtils {
 		return datapoint;
 	}
 
-	private static VariableExpansionExample formatGivenExample(VarValue exampleVar, VariableSkeleton varSkeleton,
+	public static VariableExpansionExample formatGivenExample(VarValue exampleVar, VariableSkeleton varSkeleton,
 			TraceNode step) {
 		if (isEnabledInContextLearning()) {
 			HashMap<String, String> datapoint = getDatapointFromStep(exampleVar, varSkeleton, step);
@@ -152,7 +142,7 @@ public class VariableExpansionUtils {
 		}
 	}
 
-	private static VariableExpansionExample getExample(VarValue varValue, VariableSkeleton varSkeleton,
+	public static VariableExpansionExample getExample(VarValue varValue, VariableSkeleton varSkeleton,
 			TraceNode step) {
 		if (isEnabledInContextLearning()) {
 			HashMap<String, String> datapoint = getDatapointFromStep(varValue, varSkeleton, step);

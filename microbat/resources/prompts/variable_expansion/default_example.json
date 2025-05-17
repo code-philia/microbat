@@ -2,6 +2,7 @@
     "structures": [
         "java.util.HashMap { java.util.HashMap$Node[] table; java.util.Set entrySet; int size; int modCount; int threshold; float loadFactor; java.util.Set keySet; java.util.Collection values; }"
     ],
+    "type": "java.util.HashMap",
     "value": "{{k1=1, k2=2} = [v1, v2], {kA=100, kB=200} = [vA, vB]}",
     "expanded": {
         "map| java.util.HashMap<HashMap, ArrayList>": {
