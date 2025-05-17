@@ -9,6 +9,7 @@ The expanded JSON representation should:
 - Be rooted at the top-level variable (e.g., `set`).
 - Wrap your output within a json code block (i.e., ```json ... ```). Do not include any comments inside the json code block.
 - If needed, use <thought>xxxx</thought> tags to express your thought process first. The thoughts should be as short as possible.
+- If the focal variable contains a deep recursive structure (e.g., a tree or a linked list), you should only expand the first level of the structure. For example, if the focal variable is a tree, you should only expand the root node and its immediate children, but not the entire tree.
 
 # Example
 

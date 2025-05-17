@@ -595,6 +595,15 @@ public abstract class VarValue implements GraphNode, Serializable {
 		return true;
 	}
 
+	private boolean isPrimaryTypeWrapper() {
+		String type = this.getType();
+		return type.equals("java.lang.Integer") || type.equals("java.lang.String")
+				|| type.equals("java.lang.Boolean") || type.equals("java.lang.Double")
+				|| type.equals("java.lang.Float") || type.equals("java.lang.Long")
+				|| type.equals("java.lang.Short") || type.equals("java.lang.Byte")
+				|| type.equals("sun.misc.Unsafe") || type.equals("java.lang.Character");
+	}
+
 	private JSONObject getChildrenJSONObjectRecur(boolean includeStatic) {
 		JSONObject childrenJSON = new JSONObject();
 		for (VarValue child : this.getChildren()) {
@@ -604,7 +613,8 @@ public abstract class VarValue implements GraphNode, Serializable {
 
 			String key = child.getVarName() + "|" + child.getType();
 
-			if (child instanceof PrimitiveValue || child.getChildren() == null || child.getChildren().isEmpty()) {
+			if (child instanceof PrimitiveValue || child.getChildren() == null || child.getChildren().isEmpty()
+					|| child.isPrimaryTypeWrapper()) {
 				childrenJSON.put(key, child.getStringValue());
 			} else if (child instanceof ArrayValue) {
 				childrenJSON.put(key, child.getChildrenJSONArrayRecur(includeStatic));
@@ -618,7 +628,8 @@ public abstract class VarValue implements GraphNode, Serializable {
 	private JSONArray getChildrenJSONArrayRecur(boolean includeStatic) {
 		JSONArray childrenJSONArray = new JSONArray();
 		for (VarValue child : this.getChildren()) {
-			if (child instanceof PrimitiveValue || child.getChildren() == null || child.getChildren().isEmpty()) {
+			if (child instanceof PrimitiveValue || child.getChildren() == null || child.getChildren().isEmpty()
+					|| child.isPrimaryTypeWrapper()) {
 				childrenJSONArray.put(child.getStringValue());
 			} else if (child instanceof ArrayValue) {
 				childrenJSONArray.put(child.getChildrenJSONArrayRecur(includeStatic));
