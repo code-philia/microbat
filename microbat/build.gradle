@@ -40,10 +40,18 @@ task copyInstrumentatorJar {
                 "microbat_instrumentator.jar"
             }
         }
+        copy {
+            from project(':debugging-package-jar').tasks.findByName('shadowJar').outputs.files.singleFile
+            into extraLibDir
+            rename { fileName ->
+                "packages.jar"
+            }
+        }
     }
 }
 processResources.dependsOn(copyInstrumentatorJar)
 copyInstrumentatorJar.dependsOn(':microbat:microbat_instrumentator:shadowJar')
+copyInstrumentatorJar.dependsOn(':debugging-package-jar:shadowJar')
 copyInstrumentatorJar.dependsOn(createExtraLibDir)
 
 task copyTestRunnerJar {

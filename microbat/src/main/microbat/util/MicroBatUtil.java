@@ -34,9 +34,6 @@ import sav.common.core.utils.FileUtils;
 import sav.common.core.utils.StringUtils;
 import sav.strategies.dto.AppJavaClassPath;
 
-// Modify by wenjie, GRADLE build
-// directly read classes from the jar file
-
 public class MicroBatUtil {
 	private static Logger log = LoggerFactory.getLogger(MicroBatUtil.class);
 	private MicroBatUtil(){}
@@ -164,6 +161,10 @@ public class MicroBatUtil {
 		String testNG = junitDir + File.separator + "testng-6.0.jar";
 		jars.add(testNG);
 
+		// All in one jar
+		String allInOne = exportJarFile("packages.jar", "packages.jar");
+		jars.add(allInOne);
+
 		return jars;
 	}
 
@@ -253,47 +254,7 @@ public class MicroBatUtil {
 	}
 
 	public static String getAgentLib() {
-		String dropinsDir = IResourceUtils.getDropinsDir();
-		String junitDir = dropinsDir + File.separator + "junit_lib";
-
-		long currentJarModifyTime = -1;
-		try{
-			String selfJarFile = MicroBatUtil.class.getProtectionDomain().getCodeSource().getLocation().getFile();
-			File file = new File(selfJarFile);
-			currentJarModifyTime = file.lastModified();
-		} catch (Exception e) {
-			log.error("Cannot get current jar modify time", e);
-		}
-
-		String agentLib = junitDir + File.separator + "instrumentator.jar";
-		File jar = new File(agentLib);
-		boolean needExportJar = false;
-		if(jar.exists()) {
-			long lastModified = jar.lastModified();
-			if(lastModified < currentJarModifyTime || currentJarModifyTime < 0) {
-				needExportJar = true;
-			}
-		} else {
-			needExportJar = true;
-		}
-		if (needExportJar) {
-			try (InputStream is = MicroBatUtil.class.getClassLoader()
-					.getResourceAsStream("microbat_instrumentator.jar");
-					FileOutputStream fos = new FileOutputStream(agentLib)) {
-				byte[] buffer = new byte[1024];
-				int len;
-				while ((len = is.read(buffer)) != -1) {
-					fos.write(buffer, 0, len);
-				}
-			} catch (IOException e) {
-				log.error("Cannot load microbat_instrumentator.jar", e);
-				throw new RuntimeException("Cannot load microbat_instrumentator.jar", e);
-			}
-
-			jar = new File(agentLib);
-		}
-
-		return agentLib;
+		return exportJarFile("instrumentator.jar", "microbat_instrumentator.jar");
 	}
 
 	public static IJavaProject getJavaProject(String projectName) {
@@ -618,4 +579,60 @@ public class MicroBatUtil {
 		sav.common.core.utils.FileUtils.createFolder(traceFolder);
 		return traceFolder;
 	}
+
+
+	public static void initJarFiles() {
+		exportJarFile("packages.jar", "packages.jar");
+		exportJarFile("instrumentator.jar", "microbat_instrumentator.jar");
+	}
+
+	public String exportJarFile(String exportFileName, String inJarFileName) {
+		String dropinsDir = IResourceUtils.getDropinsDir();
+		String junitDir = dropinsDir + File.separator + "junit_lib";
+		File junitDirFile = new File(junitDir);
+		if (!junitDirFile.exists()) {
+			junitDirFile.mkdirs();
+		}
+
+		long currentJarModifyTime = -1;
+		try{
+			String selfJarFile = MicroBatUtil.class.getProtectionDomain().getCodeSource().getLocation().getFile();
+			File file = new File(selfJarFile);
+			currentJarModifyTime = file.lastModified();
+		} catch (Exception e) {
+			log.error("Cannot get current jar modify time", e);
+		}
+
+		String agentLib = junitDir + File.separator + exportFileName;
+		File jar = new File(agentLib);
+		boolean needExportJar = false;
+		if(jar.exists()) {
+			long lastModified = jar.lastModified();
+			if(lastModified < currentJarModifyTime || currentJarModifyTime < 0) {
+				needExportJar = true;
+			}
+		} else {
+			needExportJar = true;
+		}
+		if (needExportJar) {
+			log.info("Updating jar file: {}", agentLib);
+			try (InputStream is = MicroBatUtil.class.getClassLoader()
+					.getResourceAsStream(inJarFileName);
+					FileOutputStream fos = new FileOutputStream(agentLib)) {
+				byte[] buffer = new byte[1024];
+				int len;
+				while ((len = is.read(buffer)) != -1) {
+					fos.write(buffer, 0, len);
+				}
+			} catch (Exception e) {
+				log.error("Cannot export Jar file. exportFileName: {}, inJarFileName: {}", exportFileName, inJarFileName, e);
+				throw new RuntimeException("Cannot export jars", e);
+			}
+
+			jar = new File(agentLib);
+		}
+
+		return agentLib;
+	}
+
 }
