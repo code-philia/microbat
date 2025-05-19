@@ -3,8 +3,12 @@ package microbat.util;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -23,7 +27,6 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jdi.TimeoutException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
@@ -49,21 +52,21 @@ import com.sun.jdi.InvalidTypeException;
 import com.sun.jdi.InvocationException;
 import com.sun.jdi.Method;
 import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.StringReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.Value;
 
+import lombok.extern.slf4j.Slf4j;
 import microbat.codeanalysis.ast.MethodDeclarationFinder;
 import microbat.codeanalysis.ast.MethodInvocationFinder;
-import microbat.codeanalysis.runtime.ProgramExecutor;
 import microbat.codeanalysis.runtime.herustic.HeuristicIgnoringFieldRule;
 import microbat.codeanalysis.runtime.jpda.expr.ExpressionParser;
 import microbat.codeanalysis.runtime.jpda.expr.ParseException;
 import microbat.model.trace.TraceNode;
 import sav.strategies.dto.AppJavaClassPath;
 
+@Slf4j
 @SuppressWarnings("restriction")
 public class JavaUtil {
 	private static final String TO_STRING_SIGN= "()Ljava/lang/String;";
@@ -367,7 +370,7 @@ public class JavaUtil {
 					for(String sourceFolder: appPath.getAllSourceFolders()){
 						String fileName = sourceFolder + File.separator + qualifiedName.replace(".", File.separator) + ".java";
 						if(new File(fileName).exists()){
-							cu = findCompiltionUnitBySourcePath(fileName, qualifiedName);
+							cu = findCompiltionUnitBySourcePath(fileName, qualifiedName, appPath);
 							isFound = true;
 							break;
 						}
@@ -691,9 +694,67 @@ public class JavaUtil {
 	}
 
 	public static HashMap<String, CompilationUnit> sourceFile2CUMap = new HashMap<>();
-	
+
+
 	public static CompilationUnit findCompiltionUnitBySourcePath(String javaFilePath, 
 			String declaringCompilationUnitName) {
+		return findCompiltionUnitBySourcePath(javaFilePath, declaringCompilationUnitName, null);
+	}
+
+	private static void updateParserEnv(AppJavaClassPath p, ASTParser parser) {
+		List<String> allSrcFolders = p.getAllSourceFolders();
+		String javaHome = p.getJavaHome();
+
+		List<String> classPaths = new ArrayList<>();
+		classPaths.addAll(p.getClasspaths());
+		classPaths.addAll(allSrcFolders);
+		classPaths.add(p.getWorkingDirectory());
+
+		try {
+			Files.walkFileTree(Path.of(javaHome), new FileVisitor<Path>() {
+
+				@Override
+				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					String fileName = file.toString();
+					if (fileName.toLowerCase().endsWith(".jar")) {
+						classPaths.add(fileName);
+					}
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
+				public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
+				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+					return FileVisitResult.CONTINUE;
+				}
+				
+			});
+		} catch (Exception e) {
+		}
+
+		String[] srcPathArray = allSrcFolders.toArray(new String[0]);
+		String[] classPathArray = classPaths.toArray(new String[0]);
+		String[] encodings = new String[srcPathArray.length];
+		for (int i = 0; i < srcPathArray.length; i++) {
+			encodings[i] = "UTF-8";
+		}
+
+		log.info("Setting classpath: {}, srcpath: {}, encoding: {}", classPathArray, srcPathArray, encodings);
+
+		parser.setEnvironment(classPathArray, srcPathArray, encodings, true);
+	}
+	
+	public static CompilationUnit findCompiltionUnitBySourcePath(String javaFilePath, 
+			String declaringCompilationUnitName, AppJavaClassPath classPath) {
 		
 		CompilationUnit parsedCU = sourceFile2CUMap.get(javaFilePath);
 		if(parsedCU != null) {
@@ -712,8 +773,12 @@ public class JavaUtil {
 				parser.setKind(ASTParser.K_COMPILATION_UNIT);
 				parser.setSource(contents.toCharArray());
 				parser.setResolveBindings(true);
+
+				if(classPath != null) {
+					updateParserEnv(classPath, parser);
+				}
 				
-				Map options = JavaCore.getOptions();
+				Map<String, String> options = JavaCore.getOptions();
 				options.put(JavaCore.COMPILER_SOURCE, JavaCore.VERSION_1_8);
 				parser.setCompilerOptions(options);
 				

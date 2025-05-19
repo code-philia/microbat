@@ -56,7 +56,7 @@ public class TraceRecoverer {
 		TraceNode scopeStart = determineScopeOfSearching(criticalVariables, trace, currentStep);
 		if (scopeStart == null)
 			return;
-		int start = scopeStart.getOrder() + 1;
+		int start = scopeStart.getOrder();
 		int end = currentStep.getOrder() - 1;
 
 		// alias inference
@@ -142,8 +142,11 @@ public class TraceRecoverer {
 				break;
 			}
 
+			// lastWrittenVariable = scopeStart.getWrittenVariables().stream()
+			// 		.filter(v -> v.getVarName() != null && !v.getVarName().contains("#")).findFirst().orElse(null);
+
 			lastWrittenVariable = scopeStart.getWrittenVariables().stream()
-					.filter(v -> v.getVarName() != null && !v.getVarName().contains("#")).findFirst().orElse(null);
+					.filter(v -> v.getVarName() != null).findFirst().orElse(null);
 		}
 		return scopeStart;
 	}
