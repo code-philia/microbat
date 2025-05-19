@@ -586,7 +586,7 @@ public class MicroBatUtil {
 		exportJarFile("instrumentator.jar", "microbat_instrumentator.jar");
 	}
 
-	public String exportJarFile(String exportFileName, String inJarFileName) {
+	public static String exportJarFile(String exportFileName, String inJarFileName) {
 		String dropinsDir = IResourceUtils.getDropinsDir();
 		String junitDir = dropinsDir + File.separator + "junit_lib";
 		File junitDirFile = new File(junitDir);
