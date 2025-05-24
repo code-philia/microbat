@@ -1,7 +1,9 @@
 package microbat.tracerecov;
 
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +55,7 @@ public class TraceRecoverer {
 		Set<String> variablesToCheck = getVariablesToCheck(criticalVariables);
 
 		// determine scope of searching
-		TraceNode scopeStart = determineScopeOfSearching(criticalVariables, trace, currentStep);
+		TraceNode scopeStart = determineScopeOfSearchingExtended(criticalVariables, trace, currentStep);
 		if (scopeStart == null)
 			return;
 		int start = scopeStart.getOrder();
@@ -66,7 +68,7 @@ public class TraceRecoverer {
 			inferAliasRelations(trace, start, end, rootVar, criticalVariables, variablesToCheck);
 		}
 		// update scope of searching
-		scopeStart = determineScopeOfSearching(criticalVariables, trace, currentStep);
+		scopeStart = determineScopeOfSearchingExtended(criticalVariables, trace, currentStep);
 		if (scopeStart == null)
 			return;
 		start = scopeStart.getOrder() + 1;
@@ -149,6 +151,54 @@ public class TraceRecoverer {
 					.filter(v -> v.getVarName() != null).findFirst().orElse(null);
 		}
 		return scopeStart;
+	}
+
+	private TraceNode determineScopeOfSearchingExtended(
+			List<VarValue> criticalVariables,
+			Trace trace,
+			TraceNode currentStep) {
+		TraceNode scopeDefault = determineScopeOfSearching(criticalVariables, trace, currentStep);
+		int scopeDefaultOrder = scopeDefault.getOrder();
+
+		int currentStepOrder = currentStep.getOrder();
+
+		Set<String> varHeapIds = new HashSet<>();
+		for (VarValue var : criticalVariables) {
+			String aliasId = var.getAliasVarID();
+			if (aliasId != null && !aliasId.equals("0") && !aliasId.equals("")) {
+				varHeapIds.add(aliasId);
+			}
+		}
+
+		int firstSeen = -1;
+		for (int i = 0; i <= currentStepOrder; i++) {
+			TraceNode step = trace.getTraceNode(i);
+			Deque<VarValue> vars = new ArrayDeque<>();
+			vars.addAll(step.getAllVariables());
+
+			boolean found = false;
+			while (!vars.isEmpty()) {
+				VarValue var = vars.pollFirst();
+				String aliasId = var.getAliasVarID();
+				if (aliasId != null && !aliasId.equals("0") && !aliasId.equals("")) {
+					if (varHeapIds.contains(aliasId)) {
+						found = true;
+						break;
+					}
+				}
+			}
+			if (found) {
+				firstSeen = i;
+				break;
+			}
+		}
+
+		if (firstSeen == -1) {
+			return scopeDefault;
+		} else {
+			int scopeStart = Math.min(firstSeen, scopeDefaultOrder);
+			return trace.getTraceNode(scopeStart);
+		}
 	}
 
 	private TraceNode determineScopeOfSearching(List<VarValue> criticalVariables, Trace trace, TraceNode currentStep) {
