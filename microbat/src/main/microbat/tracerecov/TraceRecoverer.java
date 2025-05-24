@@ -171,7 +171,7 @@ public class TraceRecoverer {
 		}
 
 		int firstSeen = -1;
-		for (int i = 0; i <= currentStepOrder; i++) {
+		for (int i = 1; i <= currentStepOrder; i++) {
 			TraceNode step = trace.getTraceNode(i);
 			Deque<VarValue> vars = new ArrayDeque<>();
 			vars.addAll(step.getAllVariables());
