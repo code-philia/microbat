@@ -1,5 +1,6 @@
 package microbat;
 
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -8,11 +9,13 @@ import org.eclipse.jface.resource.ImageRegistry;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import lombok.extern.slf4j.Slf4j;
 import microbat.views.ImageUI;
 
 /**
  * The activator class controls the plug-in life cycle
  */
+@Slf4j
 public class Activator extends AbstractUIPlugin {
 
 	// The plug-in ID
@@ -55,6 +58,7 @@ public class Activator extends AbstractUIPlugin {
 		
 		System.setOut(MicrobatConsole.getPrintStream());
 	}
+
 	
 	/**
 	 * Returns an image descriptor for the image file at the given
