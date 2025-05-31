@@ -79,17 +79,28 @@ public class GPTExecutionSimulator extends ExecutionSimulator {
 
 	@Override
 	protected String getSingleResponse(JsonObject responseObject) {
-		return responseObject
-				.get("choices")
-				.getAsJsonArray()
-				.get(0)
-				.getAsJsonObject()
-				.get("message")
-				.getAsJsonObject()
+		JsonObject choice = responseObject
+			.getAsJsonArray("choices")
+			.get(0)
+			.getAsJsonObject();
+
+		// Check if "message" field exists to detect Chat Completion format
+		if (choice.has("message")) {
+			return choice
+				.getAsJsonObject("message")
 				.get("content")
 				.getAsString()
 				.trim();
+		} else if (choice.has("text")) {
+			return choice
+				.get("text")
+				.getAsString()
+				.trim();
+		} else {
+			throw new IllegalArgumentException("Unexpected response format: missing 'message' or 'text'");
+		}
 	}
+
 
 	@Override
 	protected String getAPIKey() {

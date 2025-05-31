@@ -16,7 +16,25 @@ Assume that `${target}` is a low-level internal component involved in evaluating
 
 Based on the structure above, which of the following field names is **most likely** to correspond to or contain the information of `${target}`?
 
-Choose only **one** from the following field names:
+Your answer **must be one of the following**:
 ${options}
 
-Wrap your answer with <field></field> tags (e.g., <field>table</field>). If needed, you can use <thought></thought> to first think about the problem before answering. Generate thoughts as short as possible.
+Instructions:
+
+You must choose **only one** field name from the list above.
+
+*Do not invent new field names, use the same exact wording in your output.*
+
+*Do not modify the names (e.g., changing capitalization or spelling).*
+
+*Do not return "none", "unknown"*
+
+*Never consider other options or doubt the correctness of the field names provided, you must choose one from above*
+
+If needed, you can use to first think about the problem before answering. Generate thoughts as short as possible.
+
+Strictly follow below output format:
+<think>{think process}</think>
+Answer: <field>{fieldName}</field>
+
+*Only include <field></field> tags in your final answer*
