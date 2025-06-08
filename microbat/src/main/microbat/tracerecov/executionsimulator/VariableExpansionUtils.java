@@ -43,6 +43,7 @@ public class VariableExpansionUtils {
 
 	private static final GptTaskInfo taskInfo;
 	private static final String promptUser;
+	private static final String promptUserFeedback;
 	private static final JsonElement defaultExampleJson;
 	private static final VariableExpansionExample defaultExample;
 
@@ -51,6 +52,7 @@ public class VariableExpansionUtils {
 
 		taskInfo = GptTaskInfo.VARIABLE_EXPANSION;
 		promptUser = taskInfo.loadPromptUser();
+		promptUserFeedback = taskInfo.loadPromptUserwithfeedback();
 		defaultExampleJson = taskInfo.loadJson("default_example");
 		defaultExample = new VariableExpansionExample(defaultExampleJson);
 	}
@@ -199,7 +201,9 @@ public class VariableExpansionUtils {
 			VarValue selectedVariable,
 			List<VariableSkeleton> variableSkeletons,
 			TraceNode step,
-			Pair<String, String> preValueResponse) {
+			Pair<String, String> preValueResponse,
+			String errorMessage,
+			String previousResponse) {
 
 		String code = getLineSourceCode(step);
 		String name = selectedVariable.getVarName();
@@ -221,18 +225,42 @@ public class VariableExpansionUtils {
 				classStructures.append("- `").append(v.toString()).append("`\n");
 			}
 		}
-
-		Map<String, String> values = Map.of("exampleValue", example.getValue(),
-				"exampleType", example.getType(),
-				"exampleClassStructures", example.getStructures(),
-				"exampleExpanded", example.getExpanded(),
-				"name", name,
-				"type", type,
-				"value", value,
-				"classStructures", classStructures.toString(),
-				"code", code);
-		StringSubstitutor sub = new StringSubstitutor(values);
-		return sub.replace(promptUser);
+		if (errorMessage == null || previousResponse == null) {
+			Map<String, String> values = Map.of("exampleValue", example.getValue(),
+					"exampleType", example.getType(),
+					"exampleClassStructures", example.getStructures(),
+					"exampleExpanded", example.getExpanded(),
+					"name", name,
+					"type", type,
+					"value", value,
+					"classStructures", classStructures.toString(),
+					"code", code);
+			StringSubstitutor sub = new StringSubstitutor(values);
+			return sub.replace(promptUser);
+		} else {
+			String jsonString;
+			try {
+				jsonString = GptTaskInfo.findPatternIn("json", previousResponse);
+			}
+			catch (Exception e) {
+				jsonString = "No JSON found in previous response. Possibly malformed response.";
+			}
+			Map<String, String> values = Map.ofEntries(
+				Map.entry("exampleValue", example.getValue()),
+				Map.entry("exampleType", example.getType()),
+				Map.entry("exampleClassStructures", example.getStructures()),
+				Map.entry("exampleExpanded", example.getExpanded()),
+				Map.entry("name", name),
+				Map.entry("type", type),
+				Map.entry("value", value),
+				Map.entry("classStructures", classStructures.toString()),
+				Map.entry("code", code),
+				Map.entry("previousErrorMessage", errorMessage),
+				Map.entry("previousOutputJson", jsonString)
+			);
+			StringSubstitutor sub = new StringSubstitutor(values);
+			return sub.replace(promptUserFeedback);
+		}
 	}
 
 	/**

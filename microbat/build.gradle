@@ -84,6 +84,7 @@ dependencies {
     implementation 'org.apache.poi:poi-ooxml-schemas:3.11'
     implementation 'org.xerial:sqlite-jdbc:3.32.3.2'
     implementation 'mysql:mysql-connector-java:5.1.44'
+    implementation 'org.scala-sbt.ipcsocket:ipcsocket:1.6.3'
 
     compileOnly 'org.eclipse.jdt:org.eclipse.jdt.core:3.40.0'
     compileOnly 'org.eclipse.jdt:org.eclipse.jdt.ui:3.33.200'
