@@ -1,9 +1,12 @@
 package microbat.tracerecov.executionsimulator;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.text.StringSubstitutor;
 import org.json.JSONArray;
@@ -194,12 +197,84 @@ public class VariableExpansionUtils {
 		return TraceRecovUtils.getImportStatements(location);
 	}
 
+	public static final Pattern ALL_PATTERNS = Pattern
+			.compile("([a-zA-Z_][a-zA-Z0-9_]*)|(\\.[a-zA-Z_][a-zA-Z0-9_]*)|(\\[\\d+\\])");
+
+	public static String pruneOtherFields(String example, String fieldName) {
+		List<String> components = new ArrayList<>();
+		Matcher matcher = ALL_PATTERNS.matcher(example);
+		while (matcher.find()) {
+			String component = matcher.group();
+			components.add(component);
+		}
+
+		JsonElement jsonElement = gson.fromJson(example, JsonElement.class);
+		JsonElement prunedElement = pruneFieldsRecur(jsonElement, components, 0);
+		return gson.toJson(prunedElement);
+	}
+
+	private static JsonElement pruneFieldsRecur(JsonElement jsonElement, List<String> components, int beginIndex) {
+		if (beginIndex >= components.size()) {
+			return jsonElement;
+		}
+		String component = components.get(beginIndex);
+		if (component.charAt(0) == '[') {
+			if (!jsonElement.isJsonArray()) {
+				return jsonElement;
+			}
+			JsonArray jsonArray = jsonElement.getAsJsonArray();
+			JsonArray mapped = new JsonArray();
+			for (JsonElement element : jsonArray) {
+				JsonElement pruned = pruneFieldsRecur(element, components, beginIndex + 1);
+				mapped.add(pruned);
+			}
+			return mapped;
+		} else {
+			if (!jsonElement.isJsonObject()) {
+				return jsonElement;
+			}
+
+			String name;
+			if (component.charAt(0) == '.') {
+				name = component.substring(1);
+			} else {
+				name = component;
+			}
+
+			JsonObject jsonObject = jsonElement.getAsJsonObject();
+			for (String key : jsonObject.keySet()) {
+				if (!key.contains("|")) {
+					continue;
+				}
+				String keyName = key.split("\\|")[0];
+				if (keyName.equals(name)) {
+					JsonElement value = jsonObject.get(key);
+					JsonElement pruned = pruneFieldsRecur(value, components, beginIndex + 1);
+					JsonObject mapped = new JsonObject();
+					mapped.add(name, pruned);
+					// mapped.addProperty("...", "...");
+					return mapped;
+				}
+			}
+			return jsonElement;
+		}
+	}
+
 	public static String getQuestionContent(
 			VariableExpansionExample example,
 			VarValue selectedVariable,
 			List<VariableSkeleton> variableSkeletons,
 			TraceNode step,
-			Pair<String, String> preValueResponse) {
+			Pair<String, String> preValueResponse,
+			String focalPath) {
+
+		String exampleGroundTruth = example.getExpanded();
+		if (focalPath == null || focalPath.isEmpty()) {
+			focalPath = "#all_fields#";
+		} else {
+			exampleGroundTruth = pruneOtherFields(exampleGroundTruth, focalPath);
+		}
+		log.error("focalPath: {}", focalPath);
 
 		String code = getLineSourceCode(step);
 		String name = selectedVariable.getVarName();
@@ -222,15 +297,18 @@ public class VariableExpansionUtils {
 			}
 		}
 
-		Map<String, String> values = Map.of("exampleValue", example.getValue(),
-				"exampleType", example.getType(),
-				"exampleClassStructures", example.getStructures(),
-				"exampleExpanded", example.getExpanded(),
-				"name", name,
-				"type", type,
-				"value", value,
-				"classStructures", classStructures.toString(),
-				"code", code);
+		Map<String, String> values = new HashMap<>();
+		values.put("exampleValue", example.getValue());
+		values.put("exampleType", example.getType());
+		values.put("exampleClassStructures", example.getStructures());
+		values.put("exampleExpanded", exampleGroundTruth);
+		values.put("name", name);
+		values.put("type", type);
+		values.put("value", value);
+		values.put("classStructures", classStructures.toString());
+		values.put("code", code);
+		values.put("exampleFocalPath", focalPath);
+		values.put("focalPath", focalPath);
 		StringSubstitutor sub = new StringSubstitutor(values);
 		return sub.replace(promptUser);
 	}
@@ -252,6 +330,9 @@ public class VariableExpansionUtils {
 		Iterator<String> keys = jsonObject.keys();
 		while (keys.hasNext()) {
 			String key = keys.next();
+			if (key.equals("...")) {
+				continue;
+			}
 
 			if (isRoot) {
 				Object value = jsonObject.get(key);

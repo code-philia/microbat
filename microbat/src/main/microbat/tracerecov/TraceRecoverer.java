@@ -48,7 +48,11 @@ public class TraceRecoverer {
 	 * Build a variable graph. Identify relevant steps and alias relationships in
 	 * this process.
 	 */
+
 	public void recoverDataDependency(TraceNode currentStep, VarValue targetVar, VarValue rootVar) {
+		recoverDataDependency(currentStep, targetVar, rootVar, null);
+	}
+	public void recoverDataDependency(TraceNode currentStep, VarValue targetVar, VarValue rootVar, String focalVarName) {
 
 		Trace trace = currentStep.getTrace();
 		List<VarValue> criticalVariables = createQueue(targetVar, rootVar);
@@ -71,11 +75,11 @@ public class TraceRecoverer {
 		scopeStart = determineScopeOfSearchingExtended(criticalVariables, trace, currentStep);
 		if (scopeStart == null)
 			return;
-		start = scopeStart.getOrder() + 1;
+		start = scopeStart.getOrder();
 		end = currentStep.getOrder() - 1;
 
 		// definition inference
-		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables, variablesToCheck, currentStep);
+		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables, variablesToCheck, currentStep, focalVarName);
 	}
 
 	/**
@@ -274,13 +278,13 @@ public class TraceRecoverer {
 	 * iterate through steps in scope, infer definition
 	 */
 	private void inferDefinition(Trace trace, int start, int end, VarValue rootVar, VarValue targetVar,
-			List<VarValue> criticalVariables, Set<String> variablesToCheck, TraceNode currentStep) {
+			List<VarValue> criticalVariables, Set<String> variablesToCheck, TraceNode currentStep, String focalVarName) {
 
 		for (int i = end; i >= start; i--) {
 			TraceNode step = trace.getTraceNode(i);
 			if (isRelevantStep(step, variablesToCheck) && isStepToCheck(step)) {
 				// INFER DEFINITION STEP
-				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables, currentStep);
+				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables, currentStep, focalVarName);
 
 				if (def) {
 					if (!step.getWrittenVariables().contains(targetVar)) {

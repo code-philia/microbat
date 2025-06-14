@@ -331,7 +331,7 @@ public class VarExpansionExampleSearcher extends ExampleSearcher {
 			newDP.put(varNameKey, mostSuitableVar.getVarName());
 			newDP.put(varValueKey, mostSuitableVar.getStringValue());
 			newDP.put(classStructureKey, mostSuitableVarSkeleton.toString());
-			String gt = mostSuitableVar.toJSON().toString();
+			String gt = mostSuitableVar.toJSON(false).toString();
 			newDP.put(groundTruthKey, gt);
 
 			VariableExpansionExample generatedExample = promptTemplateFiller.getExampleStructured(newDP, gt);

@@ -20,6 +20,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONObject;
 
@@ -260,7 +262,12 @@ public abstract class ExecutionSimulator {
 	}
 
 	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String, String> preValueResponse,
-			VarValue exampleVar)
+			VarValue exampleVar) throws IOException {
+		return expandVariable(selectedVar, step, preValueResponse, exampleVar, null);
+	}
+
+	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String, String> preValueResponse,
+			VarValue exampleVar, String focalVarName)
 			throws IOException {
 
 		if (selectedVar.isExpanded()) {
@@ -305,7 +312,8 @@ public abstract class ExecutionSimulator {
 				selectedVar,
 				variableSkeletons,
 				step,
-				preValueResponse);
+				preValueResponse,
+				focalVarName);
 
 		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, content);
 
@@ -418,13 +426,13 @@ public abstract class ExecutionSimulator {
 	}
 
 	public boolean inferDefinition(TraceNode step, VarValue rootVar, VarValue targetVar,
-			List<VarValue> criticalVariables, TraceNode srcStep) {
+			List<VarValue> criticalVariables, TraceNode srcStep, String focalVarName) {
 
 		if (shouldAbstract(rootVar.getType())) {
-			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables, srcStep);
+			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables, srcStep, focalVarName);
 		}
 		if (1 + 1 == 2) {
-			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables, srcStep);
+			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables, srcStep, focalVarName);
 		}
 
 		WriteStatus complication = WriteStatus.NO_GUARANTEE;
@@ -457,7 +465,7 @@ public abstract class ExecutionSimulator {
 		} else if (complication == WriteStatus.GUARANTEE_NO_WRITE) {
 			return false;
 		} else {
-			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables, srcStep);
+			return inferDefinitionByLLM(step, rootVar, targetVar, criticalVariables, srcStep, focalVarName);
 		}
 	}
 
@@ -535,13 +543,18 @@ public abstract class ExecutionSimulator {
 	}
 
 	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar,
-			List<VarValue> criticalVariables, TraceNode srcStep) {
+			List<VarValue> criticalVariables, TraceNode srcStep, String focalVarName) {
 
 		VarValue matchedVar = findMatchingVar(step, rootVar);
 
+		if (matchedVar == null) {
+			log.error("Cannot find matching variable for rootVar: {}", rootVar.getVarName());
+			return false;
+		}
+
 		if (!matchedVar.isExpanded()) {
 			try {
-				expandVariable(matchedVar, step, null, rootVar);
+				expandVariable(matchedVar, step, null, rootVar, focalVarName);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -574,7 +587,22 @@ public abstract class ExecutionSimulator {
 		return false;
 	}
 
+	public static final Pattern VARIABLE_ROOT_NAME = Pattern.compile("^([a-zA-Z_][a-zA-Z0-9_]*)[\\.\\[]?.*$");
+
 	public String getCriticalVar(TraceNode slicingCriterion, String criticalVarName) {
+		Set<String> variableNames = new HashSet<>();
+		for (VarValue var : slicingCriterion.getAllVariables()) {
+			String name = var.getVarName();
+			variableNames.add(name);
+		}
+		Matcher matcher = VARIABLE_ROOT_NAME.matcher(criticalVarName);
+		if (matcher.find()) {
+			String rootName = matcher.group(1);
+			if (variableNames.contains(rootName)) {
+				return rootName;
+			}
+		}
+
 		String prompt = CriticalVarUtils.getPromptForVarIdentification(slicingCriterion, criticalVarName);
 
 		System.out.println(prompt);
