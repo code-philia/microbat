@@ -560,8 +560,8 @@ public abstract class ExecutionSimulator {
 			}
 		}
 
-		String background = DefinitionInferenceUtils.getBackgroundContent();
-		String content = DefinitionInferenceUtils.getQuestionContent(step, rootVar, targetVar, criticalVariables,
+		String background = ""
+		String content = DefinitionInferenceUtils.generatePrompt(step, rootVar, targetVar, criticalVariables,
 				srcStep);
 
 		System.out.println("Definition Inference------------------------------------------------");

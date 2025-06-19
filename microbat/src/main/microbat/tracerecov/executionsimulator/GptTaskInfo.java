@@ -24,6 +24,7 @@ public enum GptTaskInfo {
     IDENTIFY_CRITICAL_VARIABLE("identify_critical_variable"),
     IDENTIFY_CRITICAL_FIELD("identify_critical_field"),
     VARIABLE_EXPANSION("variable_expansion"),
+    DEFINITION_INFERENCE("definition_inference"),
     ;
 
     private final String promptFolder;

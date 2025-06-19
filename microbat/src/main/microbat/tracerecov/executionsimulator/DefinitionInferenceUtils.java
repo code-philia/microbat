@@ -17,7 +17,19 @@ import microbat.tracerecov.autoprompt.dataset.DatasetReader;
 import microbat.tracerecov.coderetriever.SourceCodeRetriever;
 
 public class DefinitionInferenceUtils {
+	private static final GptTaskInfo taskInfo;
+	private static final String promptUser;
+	private static final String promptExampleMap;
+	private static final String promptExampleTemplate;
+	private static final String promptVar;
 
+	static {
+		taskInfo = GptTaskInfo.DEFINITION_INFERENCE;
+		promptUser = taskInfo.loadPromptUser();
+		promptExampleMap = taskInfo.loadPrompt("example_map");
+		promptExampleTemplate = taskInfo.loadPrompt("example_template");
+		promptVar = taskInfo.loadPrompt("variables_info");
+	}
 	/* Request content */
 
 	private static final String DEFINITION_INFERENCE_BACKGROUND = "<Background>\n"
@@ -74,6 +86,15 @@ public class DefinitionInferenceUtils {
 		return datapoint;
 	}
 
+	public static String generatePrompt(TraceNode step, VarValue rootVar, VarValue targetVar,
+			List<VarValue> criticalVariables, TraceNode srcStep) {
+		String example;
+		example = promptExampleMap;
+		String partial = getQuestionContent(step, rootVar, targetVar, criticalVariables, srcStep);
+		String fullprompt = GptTaskInfo.formatPromptString(partial, Map.of("example", example));
+		return fullprompt;
+	}
+
 	private static String getExample(VarValue rootVar, VarValue targetVar, List<VarValue> criticalVariables) {
 		String isEnableIncontextLearningStr = Activator.getDefault().getPreferenceStore()
 				.getString(RecovSlicingPreference.ENABLE_IN_CONTEXT_LEARNING);
@@ -123,14 +144,14 @@ public class DefinitionInferenceUtils {
 		/* invoked methods to be checked */
 		Set<String> invokedMethods = TraceRecovUtils.getInvokedMethodsToBeChecked(step.getInvokingMethod());
 
-		StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n**Target Line:**\n```");
-		question.append(sourceCode);
-		question.append("```");
+		// StringBuilder question = new StringBuilder("<Question>\n" + "Given the code as:\n**Target Line:**\n```");
+		// question.append(sourceCode);
+		// question.append("```");
 
 		// invoked methods
 		SourceCodeRetriever sourceCodeRetriever = new SourceCodeRetriever();
 		if (!invokedMethods.isEmpty()) {
-			question.append("\n\nGiven the source code of function calls in the code:\n");
+			// question.append("\n\nGiven the source code of function calls in the code:\n");
 			for (String methodSig : invokedMethods) {
 				String methodSourceCode = methodSig;
 				if (SourceCodeDatabase.sourceCodeMap.containsKey(methodSig)) {
@@ -143,38 +164,49 @@ public class DefinitionInferenceUtils {
 				if(methodSourceCode.contains("UnsupportedOperationException")) {
 					continue;
 				}
-				question.append(methodSourceCode);
-				question.append("\n");
+				// question.append(methodSourceCode);
+				// question.append("\n");
 			}
 		}
 
 		// variables information (name, type, value)
-		question.append("\nVariables involved:\n**Variable:**\n");
+		// question.append("\nVariables involved:\n**Variable:**\n");
+		StringBuilder variablesInfo = new StringBuilder();
 		for (VarValue var : step.getReadVariables()) {
 			String varType = var.getType();
 			if (varType.contains("$")) {
 				continue;
 			}
-			question.append("`");
-			question.append(var.getVarName());
-			question.append("` is of type `");
-			question.append(varType);
-			question.append("`, of runtime value \"");
+			// question.append("`");
+			// question.append(var.getVarName());
+			// question.append("` is of type `");
+			// question.append(varType);
+			// question.append("`, of runtime value \"");
 			String runtimeValue = var.isExpansionAbstracted() ? var.getAbstractedValue()
 					: (var.isExpanded() ? var.toJSON().toString() : var.getStringValue());
-			question.append(runtimeValue);
-			question.append("\",");
+			// question.append(runtimeValue);
+			// question.append("\",");
+			Map<String, String> valuesMap = Map.of(
+				"var_name", var.getVarName(),
+				"var_type", varType,
+				"var_value", runtimeValue
+			);
+
+			variablesInfo.append(GptTaskInfo.formatPromptString(promptVar, valuesMap));
+			variablesInfo.append("\n");
 		}
 
-		question.append("\n\nwe know that later `" + rootVarName + "` has the following structure and value:\n");
-		question.append(jsonString);
-		question.append("\n\nBut we don't know which step during the execution modified the value.\n");
+		// question.append("\n\nwe know that later `" + rootVarName + "` has the following structure and value:\n");
+		// question.append(jsonString);
+		// question.append("\n\nBut we don't know which step during the execution modified the value.\n");
 
-		question.append("\n\n**Usage Line:**\n```\n");
-		question.append(sourceCodeSrc);
-		question.append("\n```\n");
+		// question.append("\n\n**Usage Line:**\n```\n");
+		// question.append(sourceCodeSrc);
+		// question.append("\n```\n");
 
 		boolean isFirstVar = true;
+		String aliasVar;
+		String aliasVarSrc;
 		for (VarValue var : variablesInStep) {
 			VarValue criticalVariable = null;
 			if (var.getAliasVarID() != null) {
@@ -194,16 +226,18 @@ public class DefinitionInferenceUtils {
 			}
 
 			if (!cascadeFieldName.equals(var.getVarName())) {
-				question.append(isFirstVar ? "where\n`" : "`");
-				question.append(var.getVarName());
-				question.append("` has the same memory address as `");
-				question.append(cascadeFieldName);
-				question.append("`,\n");
+				// question.append(isFirstVar ? "where\n`" : "`");
+				// question.append(var.getVarName());
+				// question.append("` has the same memory address as `");
+				// question.append(cascadeFieldName);
+				// question.append("`,\n");
+				aliasVar = var.getVarName();
+				aliasVarSrc = cascadeFieldName;
 				isFirstVar = false;
 			}
 		}
 
-		question.append("`" + rootVarName + "` has a field called `");
+		// question.append("`" + rootVarName + "` has a field called `");
 
 		String cascadeFieldName = "";
 		int stopIndex = criticalVariables.size() - 1;
@@ -213,12 +247,23 @@ public class DefinitionInferenceUtils {
 		}
 		cascadeFieldName += targetVarName;
 
-		question.append(cascadeFieldName);
-		question.append("`, does the code ```" + sourceCode + "``` directly or indirectly write field `"
-				+ cascadeFieldName + "`?"
-				+ "\nIn your response, strictly return <T> for true and <F> for false. Briefly explain your answer.");
-
-		return question.toString();
+		// question.append(cascadeFieldName);
+		// question.append("`, does the code ```" + sourceCode + "``` directly or indirectly write field `"
+		// 		+ cascadeFieldName + "`?"
+		// 		+ "\nIn your response, strictly return <T> for true and <F> for false. Briefly explain your answer.");
+		Map <String, String> valuesMap = Map.of(
+			"targetLine", sourceCode,
+			"functionCalls", methodSourceCode,
+			"variables", variablesInfo.toString(),
+			"rootVariable", rootVarName,
+			"abstractVariableInfo", jsonString,
+			"usageLine", sourceCodeSrc,
+			"aliasVar", aliasVar,
+			"aliasVarSrc", aliasVarSrc,
+			"cascadeFieldName", cascadeFieldName
+		);
+		String question = GptTaskInfo.formatPromptString(promptUser, valuesMap);
+		return question;
 	}
 
 	public static boolean isModified(String response) {
