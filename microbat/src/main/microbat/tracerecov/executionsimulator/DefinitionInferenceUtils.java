@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
 
 import microbat.Activator;
 import microbat.model.trace.TraceNode;
@@ -20,14 +21,12 @@ public class DefinitionInferenceUtils {
 	private static final GptTaskInfo taskInfo;
 	private static final String promptUser;
 	private static final String promptExampleMap;
-	private static final String promptExampleTemplate;
 	private static final String promptVar;
 
 	static {
 		taskInfo = GptTaskInfo.DEFINITION_INFERENCE;
 		promptUser = taskInfo.loadPromptUser();
 		promptExampleMap = taskInfo.loadPrompt("example_map");
-		promptExampleTemplate = taskInfo.loadPrompt("example_template");
 		promptVar = taskInfo.loadPrompt("variables_info");
 	}
 	/* Request content */
@@ -150,8 +149,9 @@ public class DefinitionInferenceUtils {
 
 		// invoked methods
 		SourceCodeRetriever sourceCodeRetriever = new SourceCodeRetriever();
+		StringBuilder fullmethodSourceCode = new StringBuilder();
 		if (!invokedMethods.isEmpty()) {
-			// question.append("\n\nGiven the source code of function calls in the code:\n");
+			fullmethodSourceCode.append("\n\n**Function Calls in Source Code:**\n");
 			for (String methodSig : invokedMethods) {
 				String methodSourceCode = methodSig;
 				if (SourceCodeDatabase.sourceCodeMap.containsKey(methodSig)) {
@@ -164,6 +164,8 @@ public class DefinitionInferenceUtils {
 				if(methodSourceCode.contains("UnsupportedOperationException")) {
 					continue;
 				}
+				fullmethodSourceCode.append(methodSourceCode);
+				fullmethodSourceCode.append("\n");
 				// question.append(methodSourceCode);
 				// question.append("\n");
 			}
@@ -205,8 +207,7 @@ public class DefinitionInferenceUtils {
 		// question.append("\n```\n");
 
 		boolean isFirstVar = true;
-		String aliasVar;
-		String aliasVarSrc;
+		String aliasInfo = "";
 		for (VarValue var : variablesInStep) {
 			VarValue criticalVariable = null;
 			if (var.getAliasVarID() != null) {
@@ -231,8 +232,7 @@ public class DefinitionInferenceUtils {
 				// question.append("` has the same memory address as `");
 				// question.append(cascadeFieldName);
 				// question.append("`,\n");
-				aliasVar = var.getVarName();
-				aliasVarSrc = cascadeFieldName;
+				aliasInfo = "where `" + var.getVarName() + "` has the same memory address as `" + cascadeFieldName + "`";
 				isFirstVar = false;
 			}
 		}
@@ -253,13 +253,12 @@ public class DefinitionInferenceUtils {
 		// 		+ "\nIn your response, strictly return <T> for true and <F> for false. Briefly explain your answer.");
 		Map <String, String> valuesMap = Map.of(
 			"targetLine", sourceCode,
-			"functionCalls", methodSourceCode,
+			"functionCalls", fullmethodSourceCode.toString(),
 			"variables", variablesInfo.toString(),
 			"rootVariable", rootVarName,
 			"abstractVariableInfo", jsonString,
 			"usageLine", sourceCodeSrc,
-			"aliasVar", aliasVar,
-			"aliasVarSrc", aliasVarSrc,
+			"aliasInfo", aliasInfo,
 			"cascadeFieldName", cascadeFieldName
 		);
 		String question = GptTaskInfo.formatPromptString(promptUser, valuesMap);

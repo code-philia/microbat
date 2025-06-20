@@ -25,8 +25,7 @@ In your response, return <T> for true and <F> for false.
 **Target Line:**
 `${targetLine}`
 
-**Function Calls in Source Code:**
-`${functionCalls}`
+${functionCalls}
 
 **Variables Involved:**
 
@@ -39,8 +38,7 @@ But we don't know which step during the execution modified the value.
 **Usage Line:**
 `${usageLine}`
 
-where
-`${aliasVar}` has the same memory address as `${aliasVarSrc}`,
+${aliasInfo}
 `${rootVariable}` has a field `${cascadeFieldName}`, does the code `${targetLine}` directly or indirectly write field `${cascadeFieldName}`?
 In your response, strictly return <T> for true and <F> for false. Briefly explain your answer.
 

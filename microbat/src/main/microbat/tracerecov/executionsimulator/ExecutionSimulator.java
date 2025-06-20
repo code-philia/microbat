@@ -560,7 +560,7 @@ public abstract class ExecutionSimulator {
 			}
 		}
 
-		String background = ""
+		String background = "";
 		String content = DefinitionInferenceUtils.generatePrompt(step, rootVar, targetVar, criticalVariables,
 				srcStep);
 
