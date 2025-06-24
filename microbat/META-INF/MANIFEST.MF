@@ -45,6 +45,7 @@ Bundle-ClassPath: .,
  lib/jheaps-0.14.jar,
  lib/belief-propagation-java-jar-with-dependencies.jar
 Export-Package: 
+ fj.data.vector,
  microbat;uses:="org.osgi.framework,org.eclipse.jface.resource,org.eclipse.ui.plugin",
  microbat.agent,
  microbat.algorithm.graphdiff;uses:="microbat.model.value",
