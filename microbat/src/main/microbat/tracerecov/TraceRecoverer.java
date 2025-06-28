@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,16 @@ import microbat.tracerecov.executionsimulator.ExecutionSimulatorFactory;
 
 public class TraceRecoverer {
 
+	public static interface AliasInferencer {
+		public Map<VarValue, VarValue> inferAliasBetween(TraceNode slicingCreteria, TraceNode targetLine);
+	}
+
+	private AliasInferencer aliasInferencer;
+
+	public void setAliasInferencer(AliasInferencer aliasInferencer) {
+		this.aliasInferencer = aliasInferencer;
+	}
+
 	private ExecutionSimulator executionSimulator;
 
 	public TraceRecoverer() {
@@ -37,12 +48,15 @@ public class TraceRecoverer {
 	 * (aliasID *) => heap address is known
 	 * {aliasID ?} => heap address is unknown
 	 * 
-	 * input: {@code currentStep}, {@code rootVar} (aliasID *) -> ... (aliasID ?) -> {@code targetVar} (aliasID ?)
+	 * input: {@code currentStep}, {@code rootVar} (aliasID *) -> ... (aliasID ?) ->
+	 * {@code targetVar} (aliasID ?)
 	 * <p>
-	 * output:  
-	 * {@code rootVar} (aliasID *) -> ... (aliasID ?) -> {@code targetVar} (aliasID *)
+	 * output:
+	 * {@code rootVar} (aliasID *) -> ... (aliasID ?) -> {@code targetVar} (aliasID
+	 * *)
 	 * 
-	 * in other words, we want to recover the heap address of the {@code targetVar} if the memory address is recorded in the trace;
+	 * in other words, we want to recover the heap address of the {@code targetVar}
+	 * if the memory address is recorded in the trace;
 	 * Otherwise, we create a new heap address (i.e., aliasID) for {@code targetVar}
 	 * <p>
 	 * Build a variable graph. Identify relevant steps and alias relationships in
@@ -52,7 +66,9 @@ public class TraceRecoverer {
 	public void recoverDataDependency(TraceNode currentStep, VarValue targetVar, VarValue rootVar) {
 		recoverDataDependency(currentStep, targetVar, rootVar, null);
 	}
-	public void recoverDataDependency(TraceNode currentStep, VarValue targetVar, VarValue rootVar, String focalVarName) {
+
+	public void recoverDataDependency(TraceNode currentStep, VarValue targetVar, VarValue rootVar,
+			String focalVarName) {
 
 		Trace trace = currentStep.getTrace();
 		List<VarValue> criticalVariables = createQueue(targetVar, rootVar);
@@ -79,7 +95,8 @@ public class TraceRecoverer {
 		end = currentStep.getOrder() - 1;
 
 		// definition inference
-		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables, variablesToCheck, currentStep, focalVarName);
+		inferDefinition(trace, start, end, rootVar, targetVar, criticalVariables, variablesToCheck, currentStep,
+				focalVarName);
 	}
 
 	/**
@@ -149,7 +166,8 @@ public class TraceRecoverer {
 			}
 
 			// lastWrittenVariable = scopeStart.getWrittenVariables().stream()
-			// 		.filter(v -> v.getVarName() != null && !v.getVarName().contains("#")).findFirst().orElse(null);
+			// .filter(v -> v.getVarName() != null &&
+			// !v.getVarName().contains("#")).findFirst().orElse(null);
 
 			lastWrittenVariable = scopeStart.getWrittenVariables().stream()
 					.filter(v -> v.getVarName() != null).findFirst().orElse(null);
@@ -235,8 +253,26 @@ public class TraceRecoverer {
 					&& isStepToCheck(step)) {
 				// INFER ADDERSS
 				try {
-					Map<VarValue, VarValue> fieldToVarOnTraceMap = this.executionSimulator.inferAliasRelations(step,
+					Map<VarValue, VarValue> fieldToVarOnTraceMap = new HashMap<>();
+					Map<VarValue, VarValue> byLLM = this.executionSimulator.inferAliasRelations(step,
 							rootVar, criticalVariables);
+					for (Map.Entry<VarValue, VarValue> entry : byLLM.entrySet()) {
+						VarValue field = entry.getKey();
+						VarValue variableOnTrace = entry.getValue();
+						if (field != null && variableOnTrace != null) {
+							fieldToVarOnTraceMap.put(field, variableOnTrace);
+						}
+					}
+					if (aliasInferencer != null) {
+						Map<VarValue, VarValue> byAliasInferencer = aliasInferencer.inferAliasBetween(step, step);
+						for (Map.Entry<VarValue, VarValue> entry : byAliasInferencer.entrySet()) {
+							VarValue field = entry.getKey();
+							VarValue variableOnTrace = entry.getValue();
+							if (field != null && variableOnTrace != null) {
+								fieldToVarOnTraceMap.put(field, variableOnTrace);
+							}
+						}
+					}
 
 					for (VarValue writtenField : fieldToVarOnTraceMap.keySet()) {
 						if (isCriticalVariable(criticalVariables, writtenField)) {
@@ -278,13 +314,15 @@ public class TraceRecoverer {
 	 * iterate through steps in scope, infer definition
 	 */
 	private void inferDefinition(Trace trace, int start, int end, VarValue rootVar, VarValue targetVar,
-			List<VarValue> criticalVariables, Set<String> variablesToCheck, TraceNode currentStep, String focalVarName) {
+			List<VarValue> criticalVariables, Set<String> variablesToCheck, TraceNode currentStep,
+			String focalVarName) {
 
 		for (int i = end; i >= start; i--) {
 			TraceNode step = trace.getTraceNode(i);
 			if (isRelevantStep(step, variablesToCheck) && isStepToCheck(step)) {
 				// INFER DEFINITION STEP
-				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables, currentStep, focalVarName);
+				boolean def = this.executionSimulator.inferDefinition(step, rootVar, targetVar, criticalVariables,
+						currentStep, focalVarName);
 
 				if (def) {
 					if (!step.getWrittenVariables().contains(targetVar)) {
@@ -315,12 +353,12 @@ public class TraceRecoverer {
 		if (!step.isCallingAPI()) {
 			return false;
 		}
-		
+
 		String invokingMethod = step.getInvokingMethod();
 		if (invokingMethod == null || invokingMethod.equals("%")) {
 			return false;
 		}
-		
+
 		if (invokingMethod.contains("%")) {
 			String[] invokedMethods = invokingMethod.split("%");
 			List<TraceNode> children = step.getInvocationChildren();
