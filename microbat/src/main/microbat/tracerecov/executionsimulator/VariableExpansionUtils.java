@@ -243,11 +243,16 @@ public class VariableExpansionUtils {
 
 			JsonObject jsonObject = jsonElement.getAsJsonObject();
 			for (String key : jsonObject.keySet()) {
-				if (!key.contains("|")) {
-					continue;
+				String keyName = key;
+				if (key.contains("|")) {
+					keyName = key.split("\\|")[0];
+				} else {
+					if (beginIndex != 0) {
+						continue;
+					}
 				}
-				String keyName = key.split("\\|")[0];
-				if (keyName.equals(name)) {
+
+				if (keyName.equals(name) || beginIndex == 0) {
 					JsonElement value = jsonObject.get(key);
 					JsonElement pruned = pruneFieldsRecur(value, components, beginIndex + 1);
 					JsonObject mapped = new JsonObject();
