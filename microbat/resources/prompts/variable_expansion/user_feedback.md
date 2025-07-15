@@ -68,8 +68,18 @@ ${classStructures}
 ${code}
 ```
 
+You are also given the previous output json and error message, include this information in your thinking process and avoid repeating the same mistakes.
+**Previous Output Json:**
+```json
+${previousOutputJson}
+```
+
+**Previous error message:**
+`${previousErrorMessage}`
+
 *Only include your json block in the final answer, never include your json block in the think process.*
 *Make sure your json output is complete and valid*
+*Make sure you are not missing any `,` or `:`, all braces should be matched in pairs*
 Strictly Follow below output format:
 <think>{think process}</think>
 Answer: 

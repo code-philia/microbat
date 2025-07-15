@@ -72,7 +72,9 @@ public enum GptTaskInfo {
     public String loadPromptUser() {
         return loadPrompt("user");
     }
-
+    public String loadPromptUserwithfeedback() {
+        return loadPrompt("user_feedback");
+    }
     public static String formatPromptString(String format, Map<String, String> values) {
         StringSubstitutor sub = new StringSubstitutor(values);
         return sub.replace(format);

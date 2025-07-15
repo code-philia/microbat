@@ -21,17 +21,19 @@ import microbat.tracerecov.TraceRecovUtils;
 public class DataStructureAbstractionUtils {
 	private static final GptTaskInfo taskInfo;
 	private static final String promptUser;
+	private static final String promptUserFeedback;
 	private static final String promptExampleMap;
 	private static final String promptExampleTemplate;
 
 	static {
 		taskInfo = GptTaskInfo.DATA_STRUCTURE_ABSTRACTION;
 		promptUser = taskInfo.loadPromptUser();
+		promptUserFeedback = taskInfo.loadPromptUserwithfeedback();
 		promptExampleMap = taskInfo.loadPrompt("example_map");
 		promptExampleTemplate = taskInfo.loadPrompt("example_template");
 	}
 
-	public static String generatePrompt(VarValue exampleVar, VarValue var) {
+	public static String generatePrompt(VarValue exampleVar, VarValue var, String errorMessage, String previousResponse) {
 		String example;
 		if (exampleVar == null) {
 			example = promptExampleMap;
@@ -42,13 +44,37 @@ public class DataStructureAbstractionUtils {
 		String typeName = processVarType(var);
 		String toStringValue = var.getStringValue();
 		String concreteValueJson = var.toJSON().toString();
+		if (errorMessage == null || previousResponse == null) {	
+			Map<String, String> valuesMap = Map.of(
+					"typeName", typeName,
+					"toStringValue", toStringValue,
+					"concreteValueJson", concreteValueJson,
+					"example", example);
+			return GptTaskInfo.formatPromptString(promptUser, valuesMap);
+		} else {
+			String jsonString;
+			try {
+				jsonString = GptTaskInfo.findPatternIn("json", previousResponse);
+			}
+			catch (Exception e) {
+				jsonString = "No JSON found in previous response. Possibly malformed response.";
+			}
+			Map<String, String> valuesMap = Map.of(
+					"typeName", typeName,
+					"toStringValue", toStringValue,
+					"concreteValueJson", concreteValueJson,
+					"example", example,
+					"previousErrorMessage", errorMessage,
+					"previousOutputJson", jsonString);
+			return GptTaskInfo.formatPromptString(promptUserFeedback, valuesMap);
+		}
 
-		Map<String, String> valuesMap = Map.of(
-				"typeName", typeName,
-				"toStringValue", toStringValue,
-				"concreteValueJson", concreteValueJson,
-				"example", example);
-		return GptTaskInfo.formatPromptString(promptUser, valuesMap);
+		// return GptTaskInfo.formatPromptString(promptUser, valuesMap);
+
+
+
+
+
 	}
 
 	private static String generateExample(VarValue var) {

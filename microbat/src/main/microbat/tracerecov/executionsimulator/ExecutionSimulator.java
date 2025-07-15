@@ -307,25 +307,29 @@ public abstract class ExecutionSimulator {
 		VariableExpansionExample example = exampleVar == null
 				? VariableExpansionUtils.getExample(selectedVar, parentSkeleton, step)
 				: VariableExpansionUtils.formatGivenExample(exampleVar, parentSkeleton, step);
-		String content = VariableExpansionUtils.getQuestionContent(
-				example,
-				selectedVar,
-				variableSkeletons,
-				step,
-				preValueResponse,
-				focalVarName);
-
-		this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, content);
+		String errorMessage = null;
+		String previousResponse = null;
+		// this.logger.printInfoBeforeQuery("Variable Expansion", selectedVar, step, content);
 
 		for (int i = 0; i < 5; i++) {
 			try {
 				// variable expansion
+				String content = VariableExpansionUtils.getQuestionContent(
+					example,
+					selectedVar,
+					variableSkeletons,
+					step,
+					preValueResponse,
+					errorMessage,
+					previousResponse,
+					focalVarName);
 				long timeStart = System.currentTimeMillis();
 				String response = sendRequest("", content, LLMResponseType.TEXT);
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.varExpansionTime += timeEnd - timeStart;
 
 				this.logger.printResponse(i, response);
+				previousResponse = response;
 				String jsonResponse = GptTaskInfo.findPatternIn("json", response);
 				VariableExpansionUtils.processResponse(selectedVar, jsonResponse);
 
@@ -340,7 +344,8 @@ public abstract class ExecutionSimulator {
 				}
 				return response;
 			} catch (RuntimeException | IOException e) {
-				this.logger.printError(e.getMessage());
+				errorMessage = e.getMessage();
+				this.logger.printError(errorMessage);
 				selectedVar.setExpanded(false);
 			}
 		}
@@ -366,24 +371,29 @@ public abstract class ExecutionSimulator {
 		}
 
 		String background = "";
-		String content = DataStructureAbstractionUtils.generatePrompt(exampleVar, selectedVar);
-
-		this.logger.printInfoBeforeQuery("Data Structure Abstraction", selectedVar, step, background + content);
+		String errorMessage = null;
+		String previousResponse = null;
+		
 
 		for (int i = 0; i < 5; i++) {
 			try {
+				String content = DataStructureAbstractionUtils.generatePrompt(exampleVar, selectedVar, errorMessage, previousResponse);
+				this.logger.printInfoBeforeQuery("Data Structure Abstraction", selectedVar, step, background + content);
+
 				long timeStart = System.currentTimeMillis();
 				String response = sendRequest(background, content, LLMResponseType.TEXT);
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.varExpansionTime += timeEnd - timeStart;
 
 				this.logger.printResponse(i, response);
+				previousResponse = response;
 				DataStructureAbstractionUtils.processResponse(selectedVar, response);
 
 				selectedVar.setExpansionAbstracted(true);
 				return response;
 			} catch (RuntimeException | IOException e) {
-				this.logger.printError(e.getMessage());
+				errorMessage = e.getMessage();
+				this.logger.printError(errorMessage);
 				selectedVar.setExpansionAbstracted(false);
 			}
 		}

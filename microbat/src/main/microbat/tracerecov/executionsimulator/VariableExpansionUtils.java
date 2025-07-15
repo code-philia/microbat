@@ -46,6 +46,7 @@ public class VariableExpansionUtils {
 
 	private static final GptTaskInfo taskInfo;
 	private static final String promptUser;
+	private static final String promptUserFeedback;
 	private static final JsonElement defaultExampleJson;
 	private static final VariableExpansionExample defaultExample;
 
@@ -54,6 +55,7 @@ public class VariableExpansionUtils {
 
 		taskInfo = GptTaskInfo.VARIABLE_EXPANSION;
 		promptUser = taskInfo.loadPromptUser();
+		promptUserFeedback = taskInfo.loadPromptUserwithfeedback();
 		defaultExampleJson = taskInfo.loadJson("default_example");
 		defaultExample = new VariableExpansionExample(defaultExampleJson);
 	}
@@ -271,6 +273,8 @@ public class VariableExpansionUtils {
 			List<VariableSkeleton> variableSkeletons,
 			TraceNode step,
 			Pair<String, String> preValueResponse,
+			String errorMessage,
+			String previousResponse,
 			String focalPath) {
 
 		String exampleGroundTruth = example.getExpanded();
@@ -301,21 +305,47 @@ public class VariableExpansionUtils {
 				classStructures.append("- `").append(v.toString()).append("`\n");
 			}
 		}
-
-		Map<String, String> values = new HashMap<>();
-		values.put("exampleValue", example.getValue());
-		values.put("exampleType", example.getType());
-		values.put("exampleClassStructures", example.getStructures());
-		values.put("exampleExpanded", exampleGroundTruth);
-		values.put("name", name);
-		values.put("type", type);
-		values.put("value", value);
-		values.put("classStructures", classStructures.toString());
-		values.put("code", code);
-		values.put("exampleFocalPath", focalPath);
-		values.put("focalPath", focalPath);
-		StringSubstitutor sub = new StringSubstitutor(values);
-		return sub.replace(promptUser);
+		if (errorMessage == null || previousResponse == null) {
+			Map<String, String> values = new HashMap<>();
+			values.put("exampleValue", example.getValue());
+			values.put("exampleType", example.getType());
+			values.put("exampleClassStructures", example.getStructures());
+			values.put("exampleExpanded", exampleGroundTruth);
+			values.put("name", name);
+			values.put("type", type);
+			values.put("value", value);
+			values.put("classStructures", classStructures.toString());
+			values.put("code", code);
+			values.put("exampleFocalPath", focalPath);
+			values.put("focalPath", focalPath);
+			StringSubstitutor sub = new StringSubstitutor(values);
+			return sub.replace(promptUser);
+		}
+		else {
+			String jsonString;
+			try {
+				jsonString = GptTaskInfo.findPatternIn("json", previousResponse);
+			}
+			catch (Exception e) {
+				jsonString = "No JSON found in previous response. Possibly malformed response.";
+			}
+			Map<String, String> values = new HashMap<>();
+			values.put("exampleValue", example.getValue());
+			values.put("exampleType", example.getType());
+			values.put("exampleClassStructures", example.getStructures());
+			values.put("exampleExpanded", exampleGroundTruth);
+			values.put("name", name);
+			values.put("type", type);
+			values.put("value", value);
+			values.put("classStructures", classStructures.toString());
+			values.put("code", code);
+			values.put("exampleFocalPath", focalPath);
+			values.put("focalPath", focalPath);
+			values.put("previousErrorMessage", errorMessage);
+			values.put("previousOutputJson", jsonString);
+			StringSubstitutor sub = new StringSubstitutor(values);
+			return sub.replace(promptUserFeedback);
+		}
 	}
 
 	/**
