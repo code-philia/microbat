@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -542,6 +543,10 @@ public abstract class ExecutionSimulator {
 		return WriteStatus.GUARANTEE_NO_WRITE;
 	}
 
+	public static String targetFileName = null;
+	public static int targetLineNumber = -1;
+	public static Writer defInfWriter = null;
+
 	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar,
 			List<VarValue> criticalVariables, TraceNode srcStep, String focalVarName) {
 
@@ -560,15 +565,18 @@ public abstract class ExecutionSimulator {
 			}
 		}
 
+		String targetClass = step.getClassCanonicalName();
+		int targetLine = step.getLineNumber();
+		Writer w = defInfWriter;
+
 		String background = "";
 		String content = DefinitionInferenceUtils.generatePrompt(step, rootVar, targetVar, criticalVariables,
 				srcStep);
 
-		System.out.println("Definition Inference------------------------------------------------");
-		System.out.println(background);
-		System.out.println(content);
-
-		this.logger.printInfoBeforeQuery("Definition Inference", targetVar, step, background + content);
+		// System.out.println("Definition Inference------------------------------------------------");
+		// System.out.println(background);
+		// System.out.println(content);
+		// this.logger.printInfoBeforeQuery("Definition Inference", targetVar, step, background + content);
 
 		for (int i = 0; i < 2; i++) {
 			try {
@@ -577,8 +585,24 @@ public abstract class ExecutionSimulator {
 				long timeEnd = System.currentTimeMillis();
 				LLMTimer.defInferTime += timeEnd - timeStart;
 
-				this.logger.printResponse(i, response);
-				return DefinitionInferenceUtils.isModified(response);
+				// this.logger.printResponse(i, response);
+				boolean res = DefinitionInferenceUtils.isModified(response);
+				if(w != null) {
+					JSONObject obj = new JSONObject();
+					obj.put("tgt_file", targetFileName);
+					obj.put("tgt_line", targetLineNumber);
+					obj.put("gt_class", targetClass);
+					obj.put("gt_line", targetLine);
+					obj.put("prompt", content);
+					obj.put("response", response);
+					obj.put("result", res);
+
+					synchronized (w) {
+						w.write(obj.toString() + "\n");
+						w.flush();
+					}
+				}
+				return res;
 			} catch (IOException | RuntimeException e) {
 				this.logger.printError(e.getMessage());
 			}

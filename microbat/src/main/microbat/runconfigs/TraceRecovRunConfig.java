@@ -38,6 +38,8 @@ public class TraceRecovRunConfig {
     private List<String> onlyRun = null;
     private List<String> skip = null;
 
+    private String dumpDefInf = null;
+
     private String methodProcessUrl = "http://127.0.0.1:3322/process";
 
     public void setToGlobal() {
