@@ -132,9 +132,3 @@ Final constraint:
 Return strictly one of:
 - Answer: <T>
 - Answer: <F>
-
----
-
-### Your Turn:
-Now, please analyze the following input according to the provided format.
-In your response, return <T> for true and <F> for false.

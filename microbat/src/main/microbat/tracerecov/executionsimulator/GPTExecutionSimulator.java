@@ -69,10 +69,10 @@ public class GPTExecutionSimulator extends ExecutionSimulator {
 		request.add("messages", messages);
 		request.addProperty("temperature", SimulatorConstants.TEMPERATURE);
 		request.addProperty("max_tokens", SimulatorConstants.MAX_TOKENS);
-		request.addProperty("top_p", SimulatorConstants.TOP_P);
-		request.addProperty("frequency_penalty", SimulatorConstants.FREQUENCY_PENALTY);
-		request.addProperty("presence_penalty", SimulatorConstants.PRESENCE_PENALTY);
-		request.add("response_format", responseFormat);
+		// request.addProperty("top_p", SimulatorConstants.TOP_P);
+		// request.addProperty("frequency_penalty", SimulatorConstants.FREQUENCY_PENALTY);
+		// request.addProperty("presence_penalty", SimulatorConstants.PRESENCE_PENALTY);
+		// request.add("response_format", responseFormat);
 
 		return request;
 	}
