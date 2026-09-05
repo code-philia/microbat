@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,12 +78,32 @@ public abstract class ExecutionSimulator {
 	public String sendRequest(String backgroundContent, String questionContent, LLMResponseType responseType)
 			throws IOException, RuntimeException {
 		String combinedPrompt = backgroundContent + questionContent;
+		long start = System.currentTimeMillis();
+		String requestId = UUID.randomUUID().toString();
+		InstanceJsonlLogger logger = InstanceJsonlLogger.current();
+		if (logger != null) {
+			logger.event("llm_request_start", InstanceJsonlLogger.details("requestId", requestId,
+					"responseType", responseType, "prompt", combinedPrompt));
+		}
 
-		// Check if prompt exceeds max token
-		if (isExceedingMaxTokens(combinedPrompt)) {
-			return sendInSegments(backgroundContent, questionContent, responseType);
-		} else {
-			return sendSingleRequest(combinedPrompt, responseType);
+		try {
+			String response;
+			if (isExceedingMaxTokens(combinedPrompt)) {
+				response = sendInSegments(backgroundContent, questionContent, responseType);
+			} else {
+				response = sendSingleRequest(combinedPrompt, responseType);
+			}
+			if (logger != null) {
+				logger.event("llm_request_end", InstanceJsonlLogger.details("requestId", requestId,
+						"durationMs", System.currentTimeMillis() - start, "response", response));
+			}
+			return response;
+		} catch (IOException | RuntimeException e) {
+			if (logger != null) {
+				logger.event("llm_request_error", InstanceJsonlLogger.details("requestId", requestId,
+						"durationMs", System.currentTimeMillis() - start, "error", e.toString()));
+			}
+			throw e;
 		}
 	}
 
@@ -269,7 +290,14 @@ public abstract class ExecutionSimulator {
 
 	public String expandVariable(VarValue selectedVar, TraceNode step, Pair<String, String> preValueResponse,
 			VarValue exampleVar, String focalVarName)
-			throws IOException {
+				throws IOException {
+		long moduleStart = System.currentTimeMillis();
+		InstanceJsonlLogger instanceLogger = InstanceJsonlLogger.current();
+		if (instanceLogger != null) {
+			instanceLogger.event("module_start", InstanceJsonlLogger.details("module", "variable_expansion",
+					"step", step.getOrder(), "line", step.getLineNumber(), "variable", selectedVar.getVarName()));
+		}
+		try {
 
 		if (selectedVar.isExpanded()) {
 			return null;
@@ -347,6 +375,12 @@ public abstract class ExecutionSimulator {
 		}
 
 		return null;
+		} finally {
+			if (instanceLogger != null) {
+				instanceLogger.event("module_end", InstanceJsonlLogger.details("module", "variable_expansion",
+						"durationMs", System.currentTimeMillis() - moduleStart, "success", selectedVar.isExpanded()));
+			}
+		}
 	}
 
 	private static boolean shouldAbstract(String typeString) {
@@ -361,6 +395,13 @@ public abstract class ExecutionSimulator {
 
 	public String abstractDataStructure(VarValue selectedVar, TraceNode step, VarValue exampleVar)
 			throws IOException {
+		long moduleStart = System.currentTimeMillis();
+		InstanceJsonlLogger instanceLogger = InstanceJsonlLogger.current();
+		if (instanceLogger != null) {
+			instanceLogger.event("module_start", InstanceJsonlLogger.details("module", "data_structure_expansion",
+					"step", step.getOrder(), "line", step.getLineNumber(), "variable", selectedVar.getVarName()));
+		}
+		try {
 
 		if (selectedVar.isExpansionAbstracted()) {
 			return null;
@@ -390,6 +431,13 @@ public abstract class ExecutionSimulator {
 		}
 
 		return null;
+		} finally {
+			if (instanceLogger != null) {
+				instanceLogger.event("module_end", InstanceJsonlLogger.details("module", "data_structure_expansion",
+						"durationMs", System.currentTimeMillis() - moduleStart,
+						"success", selectedVar.isExpansionAbstracted()));
+			}
+		}
 	}
 
 	/**
@@ -402,6 +450,14 @@ public abstract class ExecutionSimulator {
 
 	public Map<VarValue, VarValue> inferAliasRelationsByLLM(TraceNode step, VarValue rootVar,
 			List<VarValue> criticalVariables) throws IOException {
+		long moduleStart = System.currentTimeMillis();
+		InstanceJsonlLogger instanceLogger = InstanceJsonlLogger.current();
+		if (instanceLogger != null) {
+			instanceLogger.event("module_start", InstanceJsonlLogger.details("module", "alias_inference",
+					"step", step.getOrder(), "line", step.getLineNumber(), "rootVariable", rootVar.getVarName(),
+					"criticalVariableCount", criticalVariables.size()));
+		}
+		try {
 
 		String background = AliasInferenceUtils.getBackgroundContent();
 		String content = AliasInferenceUtils.getQuestionContent(step, rootVar, criticalVariables);
@@ -424,6 +480,12 @@ public abstract class ExecutionSimulator {
 		}
 
 		return new HashMap<>();
+		} finally {
+			if (instanceLogger != null) {
+				instanceLogger.event("module_end", InstanceJsonlLogger.details("module", "alias_inference",
+						"durationMs", System.currentTimeMillis() - moduleStart));
+			}
+		}
 	}
 
 	public boolean inferDefinition(TraceNode step, VarValue rootVar, VarValue targetVar,
@@ -549,6 +611,13 @@ public abstract class ExecutionSimulator {
 
 	private boolean inferDefinitionByLLM(TraceNode step, VarValue rootVar, VarValue targetVar,
 			List<VarValue> criticalVariables, TraceNode srcStep, String focalVarName) {
+		long moduleStart = System.currentTimeMillis();
+		InstanceJsonlLogger instanceLogger = InstanceJsonlLogger.current();
+		if (instanceLogger != null) {
+			instanceLogger.event("module_start", InstanceJsonlLogger.details("module", "definition_inference",
+					"step", step.getOrder(), "line", step.getLineNumber(), "targetVariable", targetVar.getVarName()));
+		}
+		try {
 
 		VarValue matchedVar = findMatchingVar(step, rootVar);
 
@@ -609,11 +678,25 @@ public abstract class ExecutionSimulator {
 		}
 
 		return false;
+		} finally {
+			if (instanceLogger != null) {
+				instanceLogger.event("module_end", InstanceJsonlLogger.details("module", "definition_inference",
+						"durationMs", System.currentTimeMillis() - moduleStart));
+			}
+		}
 	}
 
 	public static final Pattern VARIABLE_ROOT_NAME = Pattern.compile("^([a-zA-Z_][a-zA-Z0-9_]*)[\\.\\[]?.*$");
 
 	public String getCriticalVar(TraceNode slicingCriterion, String criticalVarName) {
+		long moduleStart = System.currentTimeMillis();
+		InstanceJsonlLogger instanceLogger = InstanceJsonlLogger.current();
+		if (instanceLogger != null) {
+			instanceLogger.event("module_start", InstanceJsonlLogger.details("module", "critical_variable_identification",
+					"step", slicingCriterion.getOrder(), "line", slicingCriterion.getLineNumber(),
+					"criticalVariable", criticalVarName));
+		}
+		try {
 		Set<String> variableNames = new HashSet<>();
 		for (VarValue var : slicingCriterion.getAllVariables()) {
 			String name = var.getVarName();
@@ -642,9 +725,23 @@ public abstract class ExecutionSimulator {
 		}
 
 		return "";
+		} finally {
+			if (instanceLogger != null) {
+				instanceLogger.event("module_end", InstanceJsonlLogger.details("module", "critical_variable_identification",
+						"durationMs", System.currentTimeMillis() - moduleStart));
+			}
+		}
 	}
 
 	public String getCriticalField(VarValue rootVar, TraceNode slicingCriterion, String criticalVarName) {
+		long moduleStart = System.currentTimeMillis();
+		InstanceJsonlLogger instanceLogger = InstanceJsonlLogger.current();
+		if (instanceLogger != null) {
+			instanceLogger.event("module_start", InstanceJsonlLogger.details("module", "critical_field_identification",
+					"step", slicingCriterion.getOrder(), "line", slicingCriterion.getLineNumber(),
+					"rootVariable", rootVar.getVarName()));
+		}
+		try {
 		String prompt = CriticalVarUtils.getPromptForFieldIdentification(rootVar, slicingCriterion, criticalVarName);
 
 		Set<String> fieldNames = new HashSet<>();
@@ -676,5 +773,11 @@ public abstract class ExecutionSimulator {
 		}
 
 		return "";
+		} finally {
+			if (instanceLogger != null) {
+				instanceLogger.event("module_end", InstanceJsonlLogger.details("module", "critical_field_identification",
+						"durationMs", System.currentTimeMillis() - moduleStart));
+			}
+		}
 	}
 }

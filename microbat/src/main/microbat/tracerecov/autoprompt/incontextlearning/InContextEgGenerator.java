@@ -16,6 +16,7 @@ import microbat.model.value.VarValue;
 import microbat.model.value.VirtualValue;
 import microbat.tracerecov.autoprompt.incontextlearning.InContextExecutor.SourceCodeWritter;
 import microbat.tracerecov.executionsimulator.ExecutionSimulator;
+import microbat.tracerecov.executionsimulator.InstanceJsonlLogger;
 import microbat.tracerecov.executionsimulator.LLMResponseType;
 import microbat.util.StringFormatUtils;
 import sav.strategies.dto.AppJavaClassPath;
@@ -58,29 +59,61 @@ public class InContextEgGenerator implements InContextLearning {
 		String gptUser = getQuestionContent(input, targetVariable, targetValue);
 		log.info("GPT system: {}", gptSystem);
 		log.info("GPT user: {}", gptUser);
+		InstanceJsonlLogger instanceLogger = InstanceJsonlLogger.current();
+		long inContextStart = System.currentTimeMillis();
+		if (instanceLogger != null) {
+			instanceLogger.event("in_context_learning_start", InstanceJsonlLogger.details(
+					"targetMethod", targetMethod, "targetLine", targetLineNumber, "targetVariable", targetVariable,
+					"targetValue", targetValue, "type", type, "imports", imports, "inputCode", input,
+					"systemPrompt", gptSystem, "userPrompt", gptUser, "allowedAttempts", allowedAttempts));
+		}
 
 		String response = null;
 		try {
 			response = executionSimulator.sendRequest(gptSystem, gptUser, LLMResponseType.TEXT);
 		} catch (Exception e) {
 			log.error("Failed to execute in context learning", e);
+			if (instanceLogger != null) {
+				instanceLogger.event("in_context_learning_end", InstanceJsonlLogger.details("success", false,
+						"stage", "llm_request", "durationMs", System.currentTimeMillis() - inContextStart,
+						"error", e.toString()));
+			}
 			return null;
 		}
 
 		log.info("Response: {}", response);
+		if (instanceLogger != null) {
+			instanceLogger.event("in_context_learning_response", InstanceJsonlLogger.details("response", response));
+		}
 
 		InContextLearningCode generatedCode = null;
 		try {
 			generatedCode = processCodeGeneratedByLLM(response);
 		} catch (IllegalArgumentException e) {
+			if (instanceLogger != null) {
+				instanceLogger.event("in_context_learning_parse_error", InstanceJsonlLogger.details(
+						"error", e.toString(), "response", response, "remainingAttempts", allowedAttempts));
+			}
 			// regenerate
 			if (allowedAttempts == 0) {
+				if (instanceLogger != null) {
+					instanceLogger.event("in_context_learning_end", InstanceJsonlLogger.details("success", false,
+							"stage", "parse_response", "durationMs", System.currentTimeMillis() - inContextStart,
+							"error", e.toString(), "response", response));
+				}
 				return null;
 			}
 			return getGeneratedExampleCode(imports, targetMethod, targetLineNumber, targetVariable, targetValue, type,
 					contextToString, allowedAttempts - 1);
 		}
 
+		if (instanceLogger != null) {
+			instanceLogger.event("in_context_learning_example", InstanceJsonlLogger.details("success", true,
+					"code", generatedCode.getCode(), "codeToView", generatedCode.getCodeToView(),
+					"markerLine", generatedCode.getMarkerLine()));
+			instanceLogger.event("in_context_learning_end", InstanceJsonlLogger.details("success", true,
+					"stage", "parse_response", "durationMs", System.currentTimeMillis() - inContextStart));
+		}
 		return generatedCode;
 	}
 
@@ -89,19 +122,37 @@ public class InContextEgGenerator implements InContextLearning {
 			throws CompilationFailureException, IllegalStateException {
 		log.info("Generated code: {}", generatedCode.getCode());
 		log.info("Marker line: {}", generatedCode.getMarkerLine());
+		InstanceJsonlLogger instanceLogger = InstanceJsonlLogger.current();
+		if (instanceLogger != null) {
+			instanceLogger.event("in_context_example_execution_start", InstanceJsonlLogger.details(
+					"code", generatedCode.getCode(), "codeToView", generatedCode.getCodeToView(),
+					"markerLine", generatedCode.getMarkerLine(), "type", type));
+		}
 		InContextExecutor executor = new InContextExecutor(generatedCode, appJavaClassPath);
 
 		Trace trace = null;
 		try {
 			trace = executor.run();
 		} catch (CompilationFailureException e0) {
+			if (instanceLogger != null) {
+				instanceLogger.event("in_context_example_execution_end", InstanceJsonlLogger.details("success", false,
+						"stage", "compilation", "error", e0.toString()));
+			}
 			throw e0;
 		} catch (Exception e) {
 			log.error("Failed to execute generated code", e);
+			if (instanceLogger != null) {
+				instanceLogger.event("in_context_example_execution_end", InstanceJsonlLogger.details("success", false,
+						"error", e.toString()));
+			}
 			return null;
 		}
 
 		if (trace == null) {
+			if (instanceLogger != null) {
+				instanceLogger.event("in_context_example_execution_end", InstanceJsonlLogger.details("success", false,
+						"error", "null trace"));
+			}
 			return null;
 		}
 
@@ -109,9 +160,18 @@ public class InContextEgGenerator implements InContextLearning {
 		try {
 			variables = postProcessTrace(trace, type, generatedCode);
 		} catch (IllegalStateException e) {
+			if (instanceLogger != null) {
+				instanceLogger.event("in_context_example_execution_end", InstanceJsonlLogger.details("success", false,
+						"stage", "trace_post_processing", "error", e.toString()));
+			}
 			throw e;
 		}
 
+		if (instanceLogger != null) {
+			instanceLogger.event("in_context_example_execution_end", InstanceJsonlLogger.details("success", true,
+					"writtenVariables", variables.getAllWrittenVariables().size(),
+					"readVariables", variables.getAllReadVariables().size()));
+		}
 		return variables;
 	}
 
